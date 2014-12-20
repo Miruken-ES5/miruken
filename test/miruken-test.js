@@ -9,7 +9,7 @@ new function () { // closure
 
     var miruken_test = new base2.Package(this, {
         name:    "miruken_test",
-        exports: "Animal,Tricks,CircusAnimal,Dog,Elephant,AsianElephant,TreeNode"
+        exports: "Animal,Tricks,CircusAnimal,Dog,Elephant,AsianElephant,Tracked,TreeNode"
     });
 
     eval(this.imports);
@@ -35,6 +35,10 @@ new function () { // closure
     });
     
     var AsianElephant = Elephant.extend({});
+
+	var Tracked = Protocol.extend({
+		getTag: function () {}
+	});
     
     var TreeNode = Base.extend({
         constructor: function (data) { 
@@ -62,12 +66,12 @@ eval(base2.miruken_test.namespace);
 
 describe("$isClass", function () {
     it("should identify miruken classes", function () {
-	expect($isClass(Dog)).to.be.true;
+    expect($isClass(Dog)).to.be.true;
     });
 
     it("should reject non-miruken classes", function () {
-	var SomeClass = function () {};
-	expect($isClass(SomeClass)).to.be.false;
+    var SomeClass = function () {};
+    expect($isClass(SomeClass)).to.be.false;
     });
 });
 
@@ -75,7 +79,7 @@ describe("Modifier", function () {
     describe("$createModifier", function () {
         it("should create a new modifier", function () {
             var wrap    = $createModifier('wrap');
-	    expect(wrap.prototype).to.be.instanceOf(Modifier);
+        expect(wrap.prototype).to.be.instanceOf(Modifier);
         });
 
         it("should apply a  modifier using function call", function () {
@@ -88,7 +92,7 @@ describe("Modifier", function () {
         it("should not apply a modifier the using new operator", function () {
             var wrap    = $createModifier('wrap');
             expect(function () { 
-		new wrap(22);
+        new wrap(22);
             }).to.throw(Error, /Modifiers should not be called with the new operator./);
         });
         
@@ -150,8 +154,8 @@ describe("Protocol", function () {
     describe("#conformsTo", function () {
         it("should conform to protocols by class", function () {
             expect(Dog.conformsTo()).to.be.false;
-            expect(Dog.conformsTo(Animal)).to.be.true;
-            expect(Dog.conformsTo(Tricks)).to.be.true;
+			expect(Dog.conformsTo(Animal)).to.be.true;
+		    expect(Dog.conformsTo(Tricks)).to.be.true;
             expect(TreeNode.conformsTo(Animal)).to.be.false;
         });
 
@@ -233,6 +237,29 @@ describe("Protocol", function () {
             expect(Animal.adoptedBy(new TreeNode)).to.be.false;
         });
     });
+
+    describe("#addProtocol", function () {
+        it("should add protocol to class", function () {
+            var Bird  = Base.extend(Animal),
+                eagle = (new Bird).extend({
+                   getTag : function () { return "Eagle"; }
+				});
+            Bird.addProtocol(Tracked);
+            expect(Bird.conformsTo(Tracked)).to.be.true;
+			expect(eagle.getTag()).to.equal("Eagle");
+        });
+
+        it("should add protocol to protocol", function () {
+            var Bear      = Base.extend(Animal),
+                polarBear = (new Bear).extend({
+                getTag : function () { return "Polar Bear"; }
+            });
+			Animal.addProtocol(Tracked);
+            expect(polarBear.conformsTo(Tracked)).to.be.true;
+			expect(polarBear.getTag()).to.equal("Polar Bear");
+			expect(Animal(polarBear).getTag()).to.equal("Polar Bear");
+        });
+    })
 });
 
 // =========================================================================
@@ -256,8 +283,8 @@ describe("Proxy", function () {
             dog.eat('bug');
         });
 
-	it("should support specialization", function () {
-	    expect(CircusAnimal(new Dog).fetch("bone")).to.equal('Fetched bone');
+        it("should support specialization", function () {
+            expect(CircusAnimal(new Dog).fetch("bone")).to.equal('Fetched bone');
         });
 
         it("should ignore if strict and protocol not adopted", function () {
@@ -498,8 +525,8 @@ describe("Package", function () {
             miruken_test.getProtocols(function (protocol) {
                 protocols.push(protocol);
             });
-            expect(protocols).to.have.length(3);
-            expect(protocols).to.have.members([Animal, Tricks, CircusAnimal]);
+            expect(protocols).to.have.length(4);
+            expect(protocols).to.have.members([Animal, Tricks, CircusAnimal, Tracked]);
         });
     });
 

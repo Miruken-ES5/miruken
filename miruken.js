@@ -20,17 +20,6 @@ new function () { // closure
         $promise = $createModifier();
 
     /**
-     * @function $lift
-     * @param  {Any} value  - any value
-     * @returs {Function} function that returns value.
-     */
-    function $lift(value) {
-      return function() {
-          return value;
-      };
-    }
-
-    /**
      * Variance enum
      * @enum {Number}
      */
@@ -79,7 +68,7 @@ new function () { // closure
     var Protocol = Base.extend({
         constructor: function (proxy, strict) {
             if (proxy === null || proxy === undefined) {
-                proxy = new Proxy();
+                proxy = new Proxy;
             } else if ((proxy instanceof Proxy) === false) {
                 if (typeOf(proxy.toProxy) === 'function') {
                     proxy = proxy.toProxy();
@@ -99,30 +88,37 @@ new function () { // closure
         }
     }, {
         init: function () {
-            // Extract protocols
             var extend  = Base.extend;
             Base.extend = function () {
-                var protocols    = [],
-                    getProtocols = function () { return protocols.slice(0); },
+                var _protocols   = [],
+                    isProtocol   = (this === Protocol) || Protocol.ancestorOf(this),
+                    getProtocols = function () { return _protocols.slice(0); },
                     addProtocol  = function (protocol) {
-                        if (protocol !== Protocol && protocols.indexOf(protocol) === -1) {
-                            protocols.push(protocol);
+                        if (Protocol.ancestorOf(protocol) && _protocols.indexOf(protocol) === -1) {
+                            if (isProtocol) {
+                                _liftMethods.call(this.prototype, protocol);
+                            }
+                            _protocols.push(protocol);
                         }
                     };
-                if (this !== Protocol && Protocol.ancestorOf(this)) {
-                    protocols.push(this);
-                }
-                while (arguments.length > 0 && Protocol.ancestorOf(arguments[0])) {
-                    addProtocol(Array.prototype.shift.call(arguments));
-                }
-                var subclass          = extend.apply(this, arguments);
-                subclass.addProtocol  = addProtocol;
-                subclass.getProtocols = getProtocols;
-                subclass.conformsTo   = Base.conformsTo;
-                return subclass;
+                return (function (base, args) {
+                    var protocols = [];
+                    if (Protocol.ancestorOf(base)) {
+                        protocols.push(base);
+                    }
+                    while (args.length > 0 && Protocol.ancestorOf(args[0])) {
+                        protocols.push(args.shift());
+                    }
+                    var subclass = extend.apply(base, args);
+                    Array2.forEach(protocols, addProtocol, subclass);
+                    subclass.addProtocol  = addProtocol;
+                    subclass.getProtocols = getProtocols;
+                    subclass.conformsTo   = Base.conformsTo;
+                    return subclass;
+					})(this, Array.prototype.slice.call(arguments));
             };
 
-            // Check protocol conformance
+			// Conformance
             Base.conformsTo = function (protocol) {
                 if (!protocol) {
                     return false;
@@ -130,10 +126,9 @@ new function () { // closure
                 if (Protocol.ancestorOf(this) && protocol.ancestorOf(this)) {
                     return true;
                 }
-                var index = 0, proto,
-                    protocols = this.getProtocols();
-                while (index < protocols.length) {
-                    proto = protocols[index++];
+                var protocols = this.getProtocols();
+				for (var index = 0; index < protocols.length; ++index) {
+                    var proto = protocols[index];
                     if (protocol === proto || proto.conformsTo(protocol)) {
                         return true;
                     }
@@ -147,14 +142,12 @@ new function () { // closure
                 return this.constructor.conformsTo(protocol);
             };
 
+			// Proxying
             this.extend = function () {
-                var derived   = Base.extend.apply(this, arguments),
-                    protocols = derived.getProtocols(),
-                    prototype = derived.prototype;
-                // Proxy derived protocol methods
-                for (var key in prototype) {
+                var derived = Base.extend.apply(this, arguments);
+                for (var key in derived.prototype) {
                     if (!(key in Base.prototype)) {
-                        var member = prototype[key];
+                        var member = derived.prototype[key];
                         if (typeOf(member) === 'function') {
                             (function (methodName) {
                                 var proxiedMethod = {};
@@ -163,18 +156,6 @@ new function () { // closure
                                 }
                                 derived.implement(proxiedMethod);
                             })(key);
-                        }
-                    }
-                }
-                // Lift conforming protocol methods
-                for (var i = 0; i < protocols.length; ++i) {
-                    var protocol = protocols[i].prototype;
-                    for (var key in protocol) {
-                        if (!(key in prototype)) {
-                            var member = protocol[key];
-                            if (typeOf(member) === 'function') {
-                                prototype[key] = protocol[key];
-                            }
                         }
                     }
                 }
@@ -267,12 +248,21 @@ new function () { // closure
 
     /**
      * @function $isClass
-     * @param  {Object} source  - object to test
-     * @returs {Boolean} true if source is a class (not a protocol)
+     * @param    {Object} source  - object to test
+     * @returs   {Boolean} true if source is a class (not a protocol)
      */
     function $isClass(source) {
         return source && (source.ancestorOf === Base.ancestorOf)
             && !Protocol.isProtocol(source);
+    }
+
+    /**
+     * @function $lift
+     * @param    {Any} value  - any value
+     * @returs   {Function} function that returns value.
+     */
+    function $lift(value) {
+        return function() { return value; };
     }
 
     // =========================================================================
@@ -548,6 +538,22 @@ new function () { // closure
         while (stack.length > 0) {
             if (visitor.call(context, stack.pop())) {
                 return;
+            }
+        }
+    }
+
+    /**
+     * @function _liftMethods
+     * @param    {Object} source  - object to lift
+     */
+    function _liftMethods(source) {
+        source = source.prototype;
+        for (var key in source) {
+            if (!(key in this)) {
+                var member = source[key];
+                if (typeOf(member) === 'function') {
+                    this[key] = member;
+                }
             }
         }
     }

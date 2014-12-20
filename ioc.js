@@ -66,12 +66,12 @@ new function () { // closure
          */
         effectiveFactory: function (factory) {},
         /**
-         * Collects all dependencies for the component.
+         * Collects all dependencies for this component.
          * @param   {Array} dependencies  - array receiving dependencies
          */
         collectDependencies: function (dependencies) {},
         /**
-         * Collects all interceptors for the component.
+         * Collects all interceptors for this component.
          * @param   {Array} interceptors  - array receiving interceptors
          */
         collectInterceptors: function (interceptors) {}
@@ -243,11 +243,11 @@ new function () { // closure
             this.base(key);
             this.extend({
                 claim: function (owner) { _owner = owner; },
-                isResolvingKey: function (dependency, requestor) {
+                isResolvingDependency: function (dependency, requestor) {
                     if ((dependency === key) && (requestor === owner)) {
                         return true;
                     }
-                    return parent && parent.isResolvingKey(dependency, requestor);
+                    return parent && parent.isResolvingDependency(dependency, requestor);
                 }
             });
         }
@@ -277,7 +277,7 @@ new function () { // closure
                         dependencies = [];
                         componentModel.collectDependencies(dependencies);
                     _registerHandler(this, key, factory, lifestyle, dependencies); 
-                }
+				}
             })
         },
         $validators:[
@@ -367,7 +367,7 @@ new function () { // closure
                     parameters.push(dependency);
                 }
                 function createInstance () {
-                    var instance = factory(parameters);
+                    var instance = factory.apply(container, parameters);
                     if (replace) {
                         unbind();
                         $provide(container, key, $lift(instance));

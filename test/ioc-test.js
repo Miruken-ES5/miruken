@@ -41,7 +41,7 @@ new function () { // closure
     });
       
     var Ferarri = Base.extend(Car, {
-		$inject: [ Engine ],
+        $inject: [ Engine ],
         constructor: function (engine) {
             this.extend({
                 getEngine: function () { return engine; }
@@ -216,8 +216,8 @@ describe("IoContainer", function () {
                         code: ValidationErrorCode.Required
                     })
                 ]);
-			    done();
-			});
+                done();
+            });
         });
 
         it("should reject registration if class does not conform to service", function (done) {
@@ -239,29 +239,89 @@ describe("IoContainer", function () {
                 container = new IoContainer;
             context.addHandlers(container, new ValidationCallbackHandler);
             Q.all([Container(context).register(Ferarri),
-				   Container(context).register(V12)]).then(function () {
-                Q.when(Container(context).resolve(Car), function (ferarri) {
-                    console.log('Found ' + ferarri);
+                   Container(context).register(V12)]).then(function () {
+                Q.when(Container(context).resolve(Car), function (car) {
+					console.log('Found ' + car + " " + car.getEngine());
                     done();
-				}, function (error) {
-					done(error);
-				});
+                }, function (error) {
+                    done(error);
+                });
             }, function (error) {
                     done(error);
             });
         });
 
-        it("should fail resolve class is missing dependencies", function (done) {
+        it("should resolve same instance for SingletonLifestyle", function (done) {
+            var context   = new Context(),
+                keyPolicy = new ComponentKeyPolicy,
+                policies  = [keyPolicy, new SingletonLifestyle],
+                container = new IoContainer;
+            keyPolicy.setClass(V12);
+            context.addHandlers(container, new ValidationCallbackHandler);
+            Q(Container(context).register(policies)).then(function () {
+                Q.all([Container(context).resolve(Engine),
+                       Container(context).resolve(Engine)]).spread(function (engine1, engine2) {
+					expect(engine1).to.equal(engine2);
+                    done();
+                });
+            });
+        });
+
+        it("should resolve diferent instance for TransientLifestyle", function (done) {
+            var context   = new Context(),
+                keyPolicy = new ComponentKeyPolicy,
+                policies  = [keyPolicy, new TransientLifestyle],
+                container = new IoContainer;
+            keyPolicy.setClass(V12);
+            context.addHandlers(container, new ValidationCallbackHandler);
+            Q(Container(context).register(policies)).then(function () {
+                Q.all([Container(context).resolve(Engine),
+                       Container(context).resolve(Engine)]).spread(function (engine1, engine2) {
+					expect(engine1).to.not.equal(engine2);
+                    done();
+                });
+            });
+        });
+
+        it("should resolve instance with supplied dependencies", function (done) {
+            var context   = new Context(),
+                keyPolicy = new ComponentKeyPolicy,
+                container = new IoContainer;
+            keyPolicy.setClass(V12);
+			keyPolicy.setDependencies([$use(917), $use(6.3)]);
+            context.addHandlers(container, new ValidationCallbackHandler);
+            Q(Container(context).register(keyPolicy)).then(function () {
+				Q(Container(context).resolve(Engine)).then(function (engine) {
+					expect(engine.getHorsepower()).to.equal(917);
+					expect(engine.getDisplacement()).to.equal(6.3);
+                    done();
+                });
+            });
+        });
+
+        it("should return nothing if component not found", function (done) {
+            var context   = new Context(),
+                container = new IoContainer;
+            context.addHandlers(container, new ValidationCallbackHandler);
+            Q.when(Container(context).resolve(Car), function (car) {
+                expect(car).to.be.undefined;
+                done();
+            }, function (error) {
+                done(error);
+            });
+        });
+
+        it("should fail resolve if missing dependencies", function (done) {
             var context   = new Context(),
                 container = new IoContainer;
             context.addHandlers(container, new ValidationCallbackHandler);
             Q.when(Container(context).register(Ferarri), function (model) {
                 Q.when(Container(context).resolve(Ferarri), function (ferarri) {
-				}, function (error) {
-					expect(error).to.be.instanceof(DependencyResolutionError);
-					expect(error.dependency.getKey()).to.equal(Engine);
-					done();
-				});
+                }, function (error) {
+                    expect(error).to.be.instanceof(DependencyResolutionError);
+                    expect(error.dependency.getKey()).to.equal(Engine);
+                    done();
+                });
             });
         });
     });

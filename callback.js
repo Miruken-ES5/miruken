@@ -622,7 +622,7 @@ new function () { // closure
     /**
      * @function $expandExtensions
      * Expands the registered extensions in owner
-     * @param {Object} owner  - owner of extensions
+     * @param    {Object} owner  - owner of extensions
      */
     function $expandExtensions(owner) {
         if ((typeOf(owner) !== 'function') && (typeOf(owner) !== 'object')) {
@@ -656,8 +656,8 @@ new function () { // closure
     /**
      * @function $registerExtension
      * Register a new extension named tag
-     * @param {String}   tag       - name of the extension
-     * @param {Variance} variance  - variance of the extension
+     * @param    {String}   tag       - name of the extension
+     * @param    {Variance} variance  - variance of the extension
      */
     function $registerExtension(tag, variance) {
         if (typeOf(tag) !== 'string' || tag.length === 0 || /\s/.test(tag)) {
