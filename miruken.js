@@ -1,0 +1,572 @@
+require('./base2.js');
+
+new function () { // closure
+
+    /**
+     * @namespace miruken
+     */
+    var miruken = new base2.Package(this, {
+        name:    "miruken",
+        version: "1.0",
+        exports: "Protocol,Proxy,TraversingAxis,Traversing,Traversal,Variance,Modifier,$lift,$isClass,$eq,$use,$copy,$lazy,$promise,$createModifier"
+    });
+
+    eval(this.imports);
+
+    var $eq      = $createModifier(),
+        $use     = $createModifier(),
+        $copy    = $createModifier(),
+        $lazy    = $createModifier(),
+        $promise = $createModifier();
+
+    /**
+     * @function $lift
+     * @param  {Any} value  - any value
+     * @returs {Function} function that returns value.
+     */
+    function $lift(value) {
+      return function() {
+          return value;
+      };
+    }
+
+    /**
+     * Variance enum
+     * @enum {Number}
+     */
+    var Variance = {
+        Covariant:     1,  // out
+        Contravariant: 2,  // in
+        Invariant:     3   // exact
+    };
+
+    /**
+     * @class {Proxy}
+     */
+    var Proxy = Base.extend({
+        /**
+         * Proxies the method invocation on the protocol.
+         * @param   {Protocol} protocol    - receiving protocol
+         * @param   {String}   methodName  - name of the method
+         * @param   {Array}    args        - method arguments
+         * @returns {Any}      the result of the proxied invocation.
+         */
+        proxyMethod: function (protocol, methodName, args) {}
+    });
+
+    /**
+     * @class {ObjectProxy}
+     */
+    var ObjectProxy = Proxy.extend({
+        constructor: function (object) {
+            if (typeOf(object) !== 'object') {
+                throw new TypeError("Invalid object: " + object + ".");
+            }
+            this.extend({
+                proxyMethod: function (protocol, methodName, args, strict) {
+                    var method = object[methodName];
+                    if (method && (!strict || protocol.adoptedBy(object))) {
+                        return method.apply(object, args);
+                    }
+                }
+            });
+        }
+    });
+
+    /**
+     * @class {Protocol}
+     */
+    var Protocol = Base.extend({
+        constructor: function (proxy, strict) {
+            if (proxy === null || proxy === undefined) {
+                proxy = new Proxy();
+            } else if ((proxy instanceof Proxy) === false) {
+                if (typeOf(proxy.toProxy) === 'function') {
+                    proxy = proxy.toProxy();
+                    if ((proxy instanceof Proxy) === false) {
+                        throw new TypeError("Invalid proxy: " + proxy +
+                            " is not a Proxy nor does it have a 'toProxy' method that returned a Proxy.");
+                    }
+                } else {
+                    proxy = new ObjectProxy(proxy);
+                }
+            }
+            this.extend({ 
+                proxyMethod: function (methodName, args) {
+                    return proxy && proxy.proxyMethod(this.constructor, methodName, args, strict);
+                }
+            });
+        }
+    }, {
+        init: function () {
+            // Extract protocols
+            var extend  = Base.extend;
+            Base.extend = function () {
+                var protocols    = [],
+                    getProtocols = function () { return protocols.slice(0); },
+                    addProtocol  = function (protocol) {
+                        if (protocol !== Protocol && protocols.indexOf(protocol) === -1) {
+                            protocols.push(protocol);
+                        }
+                    };
+                if (this !== Protocol && Protocol.ancestorOf(this)) {
+                    protocols.push(this);
+                }
+                while (arguments.length > 0 && Protocol.ancestorOf(arguments[0])) {
+                    addProtocol(Array.prototype.shift.call(arguments));
+                }
+                var subclass          = extend.apply(this, arguments);
+                subclass.addProtocol  = addProtocol;
+                subclass.getProtocols = getProtocols;
+                subclass.conformsTo   = Base.conformsTo;
+                return subclass;
+            };
+
+            // Check protocol conformance
+            Base.conformsTo = function (protocol) {
+                if (!protocol) {
+                    return false;
+                }
+                if (Protocol.ancestorOf(this) && protocol.ancestorOf(this)) {
+                    return true;
+                }
+                var index = 0, proto,
+                    protocols = this.getProtocols();
+                while (index < protocols.length) {
+                    proto = protocols[index++];
+                    if (protocol === proto || proto.conformsTo(protocol)) {
+                        return true;
+                    }
+                }
+                var ancestor = this.ancestor;
+                return (ancestor !== Base) && (ancestor !== Protocol)
+                     ? ancestor.conformsTo(protocol)
+                     : false;
+            };
+            Base.prototype.conformsTo = function (protocol) {
+                return this.constructor.conformsTo(protocol);
+            };
+
+            this.extend = function () {
+                var derived   = Base.extend.apply(this, arguments),
+                    protocols = derived.getProtocols(),
+                    prototype = derived.prototype;
+                // Proxy derived protocol methods
+                for (var key in prototype) {
+                    if (!(key in Base.prototype)) {
+                        var member = prototype[key];
+                        if (typeOf(member) === 'function') {
+                            (function (methodName) {
+                                var proxiedMethod = {};
+                                proxiedMethod[methodName] = function () {
+                                    return this.proxyMethod(methodName, [].slice.call(arguments, 0));
+                                }
+                                derived.implement(proxiedMethod);
+                            })(key);
+                        }
+                    }
+                }
+                // Lift conforming protocol methods
+                for (var i = 0; i < protocols.length; ++i) {
+                    var protocol = protocols[i].prototype;
+                    for (var key in protocol) {
+                        if (!(key in prototype)) {
+                            var member = protocol[key];
+                            if (typeOf(member) === 'function') {
+                                prototype[key] = protocol[key];
+                            }
+                        }
+                    }
+                }
+                derived.adoptedBy = Protocol.adoptedBy;
+                return derived;
+            };
+        },
+        isProtocol: function (target) {
+            return target && this.ancestorOf(target);
+        },
+        conformsTo: function (protocol) { return false; },
+        adoptedBy:  function (target) {
+            return target && typeOf(target.conformsTo) === 'function'
+                 ? target.conformsTo(this)
+                 : false;
+        },
+        coerce: function (object, strict) { return new this(object, strict); }
+    });
+
+    /**
+     * @class {Modifier}
+     */
+    function Modifier() {}
+    Modifier.isModified = function (source) {
+        return source instanceof Modifier;
+    };
+    Modifier.unwrap = function (source) {
+        return (source instanceof Modifier) 
+             ? Modifier.unwrap(source.getSource())
+             : source;
+    }
+    function $createModifier() {
+        var allowNew;
+        function modifier(source) {
+            if (this === global) {
+                if (modifier.test(source)) {
+                    return source;
+                }
+                allowNew = true;
+                var wrapped = new modifier(source);
+                allowNew = false;
+                return wrapped;
+            } else {
+                if (!allowNew) {
+                    throw new Error("Modifiers should not be called with the new operator.");
+                }
+                this.getSource = function () {
+                    return source;
+                }
+            }
+        }
+        modifier.prototype = new Modifier();
+        modifier.test      = function (source) {
+            if (source instanceof modifier) {
+                return true;
+            } else if (source instanceof Modifier) {
+                return modifier.test(source.getSource());
+            }
+            return false;
+        }
+        return modifier;
+    }
+
+    /**
+     * Package extensions
+     */
+    Package.implement({
+        getProtocols: function (cb) {
+            _listContents(this, cb, Protocol.isProtocol.bind(Protocol));
+        },
+        getClasses: function (cb) {
+            _listContents(this, cb, function (member, memberName) {
+                return (member.ancestorOf === Base.ancestorOf) 
+                    && !Protocol.isProtocol(member)
+                    && (memberName != "constructor");
+            });
+        }
+    });
+
+    function _listContents(package, cb, filter) {
+        if (typeOf(cb) === 'function') {
+            for (memberName in package) {
+                var member = package[memberName];
+                if (!filter || filter(member, memberName)) {
+                    cb(member, memberName);
+                }
+            }
+        }
+    }
+
+    /**
+     * @function $isClass
+     * @param  {Object} source  - object to test
+     * @returs {Boolean} true if source is a class (not a protocol)
+     */
+    function $isClass(source) {
+        return source && (source.ancestorOf === Base.ancestorOf)
+            && !Protocol.isProtocol(source);
+    }
+
+    // =========================================================================
+    // Traversing
+    // =========================================================================
+
+    /**
+     * Traversing enum
+     * @enum {Number}
+     */
+    var TraversingAxis = {
+        Self:                    1,
+        Root:                    2,
+        Child:                   3,
+        Sibling:                 4,
+        Ancestor:                5,
+        Descendant:              6,
+        DescendantReverse:       7,
+        ChildOrSelf:             8,
+        SiblingOrSelf:           9,
+        AncestorOrSelf:          10,
+        DescendantOrSelf:        11,
+        DescendantOrSelfReverse: 12,
+        ParentSiblingOrSelf:     13
+    }
+
+    /**
+     * Traversing module
+     * @class {Traversing}
+     */
+    var Traversing = Module.extend({
+        /**
+         * Traverse a graph of objects.
+         * @param {Object}         object     - graph to traverse
+         * @param {TraversingAxis} axis       - axis of traversal
+         * @param {Funcion}        visitor    - receives visited nodes
+         * @param {Object}         [context]  - visitor callback context
+         */
+        traverse: function (object, axis, visitor, context) {
+            if (typeOf(axis) === 'function') {
+                context = visitor;
+                visitor = axis;
+                axis    = TraversingAxis.Child;
+            }
+            if (typeOf(visitor) != 'function') return;
+            switch (axis) {
+            case TraversingAxis.Self:
+                _traverseSelf.call(object, visitor, context);
+                break;
+                
+            case TraversingAxis.Root:
+                _traverseRoot.call(object, visitor, context);
+                break;
+                
+            case TraversingAxis.Child:
+                _traverseChildren.call(object, visitor, false, context);
+                break;
+
+            case TraversingAxis.Sibling:
+                _traverseParentSiblingOrSelf.call(object, visitor, false, false, context);
+                break;
+                
+            case TraversingAxis.ChildOrSelf:
+                _traverseChildren.call(object, visitor, true, context);
+                break;
+
+            case TraversingAxis.SiblingOrSelf:
+                _traverseParentSiblingOrSelf.call(object, visitor, true, false, context);
+                break;
+                
+            case TraversingAxis.Ancestor:
+                _traverseAncestors.call(object, visitor, false, context);
+                break;
+                
+            case TraversingAxis.AncestorOrSelf:
+                _traverseAncestors.call(object, visitor, true, context);
+                break;
+                
+            case TraversingAxis.Descendant:
+                _traverseDescendants.call(object, visitor, false, context);
+                break;
+  
+            case TraversingAxis.DescendantReverse:
+                _traverseDescendantsReverse.call(object, visitor, false, context);
+                break;
+              
+            case TraversingAxis.DescendantOrSelf:
+                _traverseDescendants.call(object, visitor, true, context);
+                break;
+
+            case TraversingAxis.DescendantOrSelfReverse:
+                _traverseDescendantsReverse.call(object, visitor, true, context);
+                break;
+                
+            case TraversingAxis.ParentSiblingOrSelf:
+                _traverseParentSiblingOrSelf.call(object, visitor, true, true, context);
+                break;
+
+            default:
+                throw new Error("Unrecognized TraversingAxis " + axis + '.');
+            }
+        }
+    });
+
+    function checkCircularity(visited, node) {
+        if (visited.indexOf(node) !== -1) {
+            throw new Error('Circularity detected for node ' + node + '.');
+        }
+        visited.push(node);
+        return node;
+    }
+
+    function _traverseSelf(visitor, context) {
+        visitor.call(context, this);
+    }
+
+    function _traverseRoot(visitor, context) {
+        var parent, root = this, visited = [this];
+        while (typeOf(root.getParent) === 'function' &&
+               (parent = root.getParent())) {
+            checkCircularity(visited, parent);
+            root = parent;   
+        }
+        visitor.call(context, root);
+    }
+
+    function _traverseChildren(visitor, withSelf, context) {
+        if ((withSelf && visitor.call(context, this)) ||
+            (typeOf(this.getChildren) !== 'function')) {
+            return;
+        }
+        var children = this.getChildren();
+        for (var i = 0; i < children.length; ++i) {
+            if (visitor.call(context, children[i])) {
+                return;
+            }
+        }
+    }
+
+    function _traverseAncestors(visitor, withSelf, context) {
+        var parent = this, visited = [this];
+        if (withSelf && visitor.call(context, this)) {
+            return;
+        }
+        while (typeOf(parent.getParent) === 'function' &&
+               (parent = parent.getParent()) &&
+               !visitor.call(context, parent)) {
+            checkCircularity(visited, parent);
+        }
+    }
+
+    function _traverseDescendants(visitor, withSelf, context) {
+        if (withSelf) {
+            Traversal.levelOrder(this, visitor, context);
+        } else {
+            var self = this;
+            Traversal.levelOrder(this, function (node) {
+                if (node != self) {
+                    return visitor.call(context, node);
+                }
+            }, context);
+        }
+    }
+
+    function _traverseDescendantsReverse(visitor, withSelf, context) {
+        if (withSelf) {
+            Traversal.reverseLevelOrder(this, visitor, context);
+        } else {
+            var self = this;
+            Traversal.reverseLevelOrder(this, function (node) {
+                if (node != self) {
+                    return visitor.call(context, node);
+                }
+            }, context);
+        }
+    }
+
+    function _traverseParentSiblingOrSelf(visitor, withSelf, withParent, context) {
+        if (withSelf && visitor.call(context, this) ||
+            typeOf(this.getParent) !== 'function') {
+            return;
+        }
+        var self = this, parent = this.getParent();
+        if (parent) {
+            if (typeOf(parent.getChildren) === 'function') {
+                var children = parent.getChildren();
+                for (var i = 0; i < children.length; ++i) {
+                    var sibling = children[i];
+                    if (sibling != self && visitor.call(context, sibling)) {
+                        return;
+                    }
+                }
+            }
+            if (withParent) {
+                visitor.call(context, parent);
+            }
+        }
+    }
+
+    var Traversal = Abstract.extend({}, {
+        preOrder: function (node, visitor, context) {
+            return _preOrder(node, visitor, context, []);
+        },
+        postOrder: function (node, visitor, context) {
+            return _postOrder(node, visitor, context, []);
+        },
+        levelOrder: function (node, visitor, context) {
+            return _levelOrder(node, visitor, context, []);
+        },
+        reverseLevelOrder: function (node, visitor, context) {
+            return _reverseLevelOrder(node, visitor, context, []);
+        }
+    });
+
+    function _preOrder(node, visitor, context, visited) {
+        checkCircularity(visited, node);
+        if (!node || typeOf(visitor) !== 'function' ||
+            visitor.call(context, node)) {
+            return true;
+        }
+        if (typeOf(node.traverse) === 'function')
+            node.traverse(function (child) {
+                return Traversal.preOrder(child, visitor, context);
+            });
+        return false;
+    }
+
+    function _postOrder(node, visitor, context, visited) {
+        checkCircularity(visited, node);
+        if (!node || typeOf(visitor) !== 'function') return true;
+        if (typeOf(node.traverse) === 'function')
+            node.traverse(function (child) {
+                return Traversal.postOrder(child, visitor, context);
+            });
+        return visitor.call(context, node);
+    }
+
+    function _levelOrder(node, visitor, context, visited) {
+        if (!node || typeOf(visitor) !== 'function') {
+            return;
+        }
+        var queue = [node];
+        while (queue.length > 0) {
+            var next = queue.shift();
+            checkCircularity(visited, next);
+            if (visitor.call(context, next)) {
+                return;
+            }
+            if (typeOf(next.traverse) === 'function')
+                next.traverse(function (child) {
+                    if (child) queue.push(child);
+                });
+        }
+    }
+
+    function _reverseLevelOrder(node, visitor, context, visited) {
+        if (!node || typeOf(visitor) !== 'function') {
+            return;
+        }
+        var queue = [node],
+            stack = [];
+        while (queue.length > 0) {
+            var next = queue.shift();
+            checkCircularity(visited, next);
+            stack.push(next);
+            var level = [];
+            if (typeOf(next.traverse) === 'function')
+                next.traverse(function (child) {
+                    if (child) level.unshift(child);
+                });
+            queue.push.apply(queue, level);
+        }
+        while (stack.length > 0) {
+            if (visitor.call(context, stack.pop())) {
+                return;
+            }
+        }
+    }
+
+    /**
+     * @function new
+     */
+    if (Function.prototype.new === undefined)
+        Function.prototype.new = function () {
+            var args        = arguments,
+                constructor = this;
+            function Wrapper () { constructor.apply(this, args); }
+            Wrapper.prototype  = constructor.prototype;
+            return new Wrapper;
+        };
+
+    if (typeof module !== 'undefined' && module.exports)
+        module.exports = exports = miruken;
+
+    eval(this.exports);
+
+}
