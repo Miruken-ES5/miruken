@@ -15,7 +15,7 @@ new function () { // closure
 
     var ioc_test = new base2.Package(this, {
         name:    "ioc_test",
-        exports: "Car,Engine,V12,Ferarri"
+        exports: "Car,Engine,Diagnostics,V12,Ferarri,OBDII"
     });
 
     eval(this.imports);
@@ -26,25 +26,39 @@ new function () { // closure
         getDisplacement: function () {}
     });
 
+    var Car = Protocol.extend({
+        getEngine: function () {}
+    });
+
+    var Diagnostics = Protocol.extend({
+        getMPG: function () {}
+    });
+
     var V12 = Base.extend(Engine, {
-        constructor: function (horsepower, displacement) {
+        constructor: function (horsepower, displacement, diagnostics) {
             this.extend({
                 getHorsepower: function () { return horsepower; },
-                getDisplacement: function () { return displacement; }
+                getDisplacement: function () { return displacement; },
+                getDiagnostics: function () { return diagnostics; }
             });
         },
         getNumberOfCylinders: function () { return 12; },
     });
-    
-    var Car = Protocol.extend({
-        getEngine: function () {}
-    });
-      
+          
     var Ferarri = Base.extend(Car, {
         $inject: [ Engine ],
         constructor: function (engine) {
             this.extend({
                 getEngine: function () { return engine; }
+            });
+        }
+    });
+
+    var OBDII = Base.extend(Diagnostics, {
+        $inject: [ Engine ],
+        constructor: function (engine) {
+            this.extend({
+                getMPG: function () { return 22.0; }
             });
         }
     });
@@ -189,11 +203,22 @@ describe("IoContainer", function () {
             container = new IoContainer;
         context.addHandlers(container, new ValidationCallbackHandler);
 
-        it("should register class", function (done) {
-            Q.when(Container(context).register(Ferarri), function (model) {
-                expect(model.effectiveKey()).to.equal(Ferarri);
+        it("should register component", function (done) {
+            Q.when(Container(context).register(Ferarri), function (registration) {
+                expect(registration.componentModel.effectiveKey()).to.equal(Ferarri);
                 done();
             }, function (error) { done(error); });
+        });
+
+        it("should unregister component", function (done) {
+            Q.when(Container(context).register(V12), function (registration) {
+                Q(Container(context).resolve(Engine)).then(function (engine) {
+                    registration.unregister();
+                    expect(engine).to.be.instanceOf(V12);
+                    expect(Container(context).resolve(Engine)).to.be.undefined;
+                    done();
+                });
+                }, function (error) { done(error); });
         });
 
         it("should reject registration if no key", function (done) {
@@ -241,14 +266,11 @@ describe("IoContainer", function () {
             Q.all([Container(context).register(Ferarri),
                    Container(context).register(V12)]).then(function () {
                 Q.when(Container(context).resolve(Car), function (car) {
-					console.log('Found ' + car + " " + car.getEngine());
+                    expect(car).to.be.instanceOf(Ferarri);
+                    expect(car.getEngine()).to.be.instanceOf(V12);
                     done();
-                }, function (error) {
-                    done(error);
-                });
-            }, function (error) {
-                    done(error);
-            });
+                }, function (error) { done(error); });
+            }, function (error) { done(error); });
         });
 
         it("should resolve same instance for SingletonLifestyle", function (done) {
@@ -261,7 +283,7 @@ describe("IoContainer", function () {
             Q(Container(context).register(policies)).then(function () {
                 Q.all([Container(context).resolve(Engine),
                        Container(context).resolve(Engine)]).spread(function (engine1, engine2) {
-					expect(engine1).to.equal(engine2);
+                    expect(engine1).to.equal(engine2);
                     done();
                 });
             });
@@ -277,7 +299,7 @@ describe("IoContainer", function () {
             Q(Container(context).register(policies)).then(function () {
                 Q.all([Container(context).resolve(Engine),
                        Container(context).resolve(Engine)]).spread(function (engine1, engine2) {
-					expect(engine1).to.not.equal(engine2);
+                    expect(engine1).to.not.equal(engine2);
                     done();
                 });
             });
@@ -288,12 +310,12 @@ describe("IoContainer", function () {
                 keyPolicy = new ComponentKeyPolicy,
                 container = new IoContainer;
             keyPolicy.setClass(V12);
-			keyPolicy.setDependencies([$use(917), $use(6.3)]);
+            keyPolicy.setDependencies([$use(917), $use(6.3)]);
             context.addHandlers(container, new ValidationCallbackHandler);
             Q(Container(context).register(keyPolicy)).then(function () {
-				Q(Container(context).resolve(Engine)).then(function (engine) {
-					expect(engine.getHorsepower()).to.equal(917);
-					expect(engine.getDisplacement()).to.equal(6.3);
+                Q(Container(context).resolve(Engine)).then(function (engine) {
+                    expect(engine.getHorsepower()).to.equal(917);
+                    expect(engine.getDisplacement()).to.equal(6.3);
                     done();
                 });
             });
@@ -306,9 +328,7 @@ describe("IoContainer", function () {
             Q.when(Container(context).resolve(Car), function (car) {
                 expect(car).to.be.undefined;
                 done();
-            }, function (error) {
-                done(error);
-            });
+            }, function (error) { done(error); });
         });
 
         it("should fail resolve if missing dependencies", function (done) {
@@ -316,10 +336,30 @@ describe("IoContainer", function () {
                 container = new IoContainer;
             context.addHandlers(container, new ValidationCallbackHandler);
             Q.when(Container(context).register(Ferarri), function (model) {
-                Q.when(Container(context).resolve(Ferarri), function (ferarri) {
+                Q.when(Container(context).resolve(Car), function (ferarri) {
                 }, function (error) {
                     expect(error).to.be.instanceof(DependencyResolutionError);
+                    expect(error.message).to.match(/Dependency.*Engine.*<=.*Car.*could not be resolved./);
                     expect(error.dependency.getKey()).to.equal(Engine);
+                    done();
+                });
+            });
+        });
+
+        it("should detect circular dependencies", function (done) {
+            var context      = new Context(),
+                enginePolicy = new ComponentKeyPolicy,
+                container    = new IoContainer;
+            enginePolicy.setClass(V12);
+            enginePolicy.setDependencies([$use(917), $use(6.3), Engine]);
+            context.addHandlers(container, new ValidationCallbackHandler);
+            Q.all([Container(context).register(Ferarri),
+                   Container(context).register(enginePolicy)]).then(function () {
+                Q.when(Container(context).resolve(Car), function (ferarri) {
+                }, function (error) {
+                        expect(error).to.be.instanceof(DependencyResolutionError);
+                        expect(error.message).to.match(/Dependency cycle.*Engine.*<=.*Engine.*<=.*Car.*detected./);
+                        expect(error.dependency.getKey()).to.equal(Engine);
                     done();
                 });
             });

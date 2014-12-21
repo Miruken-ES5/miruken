@@ -658,6 +658,7 @@ new function () { // closure
      * Register a new extension named tag
      * @param    {String}   tag       - name of the extension
      * @param    {Variance} variance  - variance of the extension
+	 * @returns  {Function} function to add extension instances.
      */
     function $registerExtension(tag, variance) {
         if (typeOf(tag) !== 'string' || tag.length === 0 || /\s/.test(tag)) {

@@ -13,7 +13,7 @@ new function () { // closure
         version: miruken.version,
         parent:  miruken,
         imports: "miruken,miruken.callback,miruken.context,miruken.validate",
-        exports: "Container,Registration,ComponentPolicy,ComponentKeyPolicy,Lifestyle,TransientLifestyle,SingletonLifestyle,ComponentModel,IoContainer,DependencyResolution,DependencyResolutionError"
+        exports: "Container,Registration,ComponentPolicy,ComponentKeyPolicy,Lifestyle,TransientLifestyle,SingletonLifestyle,ContextualLifestyle,ComponentModel,IoContainer,DependencyResolution,DependencyResolutionError"
     });
 
     eval(this.imports);
@@ -27,8 +27,8 @@ new function () { // closure
         },
         /**
          * Registers on or more components in the container.
-         * @param   {Any*}    registration  - usually a Registration or
-         *                                    ComponentModel, but can be anything
+         * @param   {Any*}    registration  - usually a Registration,
+         *                                    ComponentModel or list of policies
          * @returns {Promise} a promise representing the registration.
          */
         register: function (registration) {},
@@ -132,7 +132,7 @@ new function () { // closure
     /**
      * @class {DependencyResolutionError}
      * @param {DependencyResolution} dependency  - failing dependency
-     * @param {String}                message    - error message
+     * @param {String}               message     - error message
      */
     function DependencyResolutionError(dependency, message) {
         this.message    = message;
@@ -234,6 +234,19 @@ new function () { // closure
         }
     });
 
+   /**
+     * @class {ContextualLifestyle}
+     */
+    var ContextualLifestyle = Lifestyle.extend({
+        constructor: function (instance) {
+            this.extend({
+				resolve: function (factory, composer) {
+					var context = composer.resolve(Context);
+                }
+            });
+        }
+    });
+
     /**
      * @class {DependencyResolution}
      */
@@ -242,12 +255,21 @@ new function () { // closure
             var _owner;
             this.base(key);
             this.extend({
-                claim: function (owner) { _owner = owner; },
+                claim: function (owner) { 
+                    if (this.isResolvingDependency(key, owner)) {
+                        return false;
+                    }
+                    _owner = owner;
+                    return true;
+                },
                 isResolvingDependency: function (dependency, requestor) {
-                    if ((dependency === key) && (requestor === owner)) {
+                    if ((dependency === key) && (requestor === _owner)) {
                         return true;
                     }
                     return parent && parent.isResolvingDependency(dependency, requestor);
+                },
+                formattedDependencyChain: function () {
+                    return parent ? (key + " <= " + parent.formattedDependencyChain()) : key;
                 }
             });
         }
@@ -266,8 +288,8 @@ new function () { // closure
                     var container      = this,
                         componentModel = new ComponentModel(arguments); 
                     return Validator($composer).validate(componentModel).then(function () {
-                        container.registerHandler(componentModel);
-                        return componentModel;
+                        var unregister = container.registerHandler(componentModel);
+						return { componentModel: componentModel, unregister: unregister };
                     });
                 },
                 registerHandler: function(componentModel) {
@@ -276,8 +298,8 @@ new function () { // closure
                         lifestyle    = componentModel.getLifestyle() || new SingletonLifestyle,
                         dependencies = [];
                         componentModel.collectDependencies(dependencies);
-                    _registerHandler(this, key, factory, lifestyle, dependencies); 
-				}
+                    return _registerHandler(this, key, factory, lifestyle, dependencies); 
+                }
             })
         },
         $validators:[
@@ -316,14 +338,21 @@ new function () { // closure
 
     /**
      * Performs the actual component registration in the container.
-     * @param {IoContainer} container     - container
-     * @param {Any}         key           - key to register
-     * @param {Function}    factory       - creates new instance
-     * @param {Lifestyle}   lifesyle      - manages component creation
-     * @param {Array}       dependencies  - component dependencies
+     * @param   {IoContainer} container     - container
+     * @param   {Any}         key           - key to register
+     * @param   {Function}    factory       - creates new instance
+     * @param   {Lifestyle}   lifesyle      - manages component creation
+     * @param   {Array}       dependencies  - component dependencies
+	 * @returns {Function} function to unregister the component.
      */
     function _registerHandler(container, key, factory, lifestyle, dependencies) {
         var unbind = $provide(container, key, function (resolution, composer) {
+            if ((resolution instanceof DependencyResolution) &&
+                (resolution.claim(container) === false) /* cycle */) {
+                return Q.reject(new DependencyResolutionError(resolution,
+                    lang.format("Dependency cycle %1 detected.",
+                                resolution.formattedDependencyChain())))
+            }
             return lifestyle.resolve(function (replace) {
                 var promises   = [],
                     parameters = [];
@@ -348,14 +377,14 @@ new function () { // closure
                         var paramDependency = new DependencyResolution(dependency, resolution);
                         if (lazy) {
                             dependency = function () {
-                                return Q(_resolveDependency(paramDependency, composer));
+                                return Q(_resolveDependency(paramDependency, true, composer));
                             };
                         } else {
-                            dependency = _resolveDependency(paramDependency, composer);
+                            dependency = _resolveDependency(paramDependency, true, composer);
                             if (promise) {
                                 dependency = Q(dependency);
                             } else if (Q.isPromiseAlike(dependency)) {
-								promises.push(dependency);
+                                promises.push(dependency);
                                 (function (paramDep, paramIndex) {
                                     paramDep.then(function (param) {
                                         parameters[paramIndex] = param;
@@ -370,7 +399,7 @@ new function () { // closure
                     var instance = factory.apply(container, parameters);
                     if (replace) {
                         unbind();
-                        $provide(container, key, $lift(instance));
+                        unbind = $provide(container, key, $lift(instance));
                     }
                     return instance;
                 }
@@ -381,15 +410,17 @@ new function () { // closure
                 } else {
                     return createInstance();
                 }
-            });
+            }, composer);
         });
+		return function () { unbind(); }
     }
 
-    function _resolveDependency(dependency, composer) {
+    function _resolveDependency(dependency, required, composer) {
         var result = composer.resolve(dependency);
-        return (result === undefined)
-             ? Q.reject(new DependencyResolutionError(
-                   dependency, "Unable to resolve one or more dependencies."))
+        return ((result === undefined) && required)
+             ? Q.reject(new DependencyResolutionError(dependency,
+                   lang.format("Dependency %1 could not be resolved.",
+                               dependency.formattedDependencyChain())))
              : result;
     }
 

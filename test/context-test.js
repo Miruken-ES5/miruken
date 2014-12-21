@@ -70,6 +70,20 @@ describe("Context", function() {
             expect(grandChild.getRootContext()).to.equal(context);
         });
     });
+
+    describe("#resolve", function() {
+        it("should resolve context to self", function() {
+            var context = new Context();
+            expect(context.resolve(Context)).to.equal(context);
+        });
+        
+        it("should return root context when descendant", function() {
+            var context    = new Context(),
+                child      = context.newChildContext(),
+                grandChild = child.newChildContext();
+            expect(grandChild.getRootContext()).to.equal(context);
+        });
+    });
     
     describe("#end", function() {
         it("should end the context", function() {

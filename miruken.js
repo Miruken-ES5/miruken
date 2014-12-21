@@ -8,16 +8,17 @@ new function () { // closure
     var miruken = new base2.Package(this, {
         name:    "miruken",
         version: "1.0",
-        exports: "Protocol,Proxy,TraversingAxis,Traversing,Traversal,Variance,Modifier,$lift,$isClass,$eq,$use,$copy,$lazy,$promise,$createModifier"
+        exports: "Protocol,Proxy,TraversingAxis,Traversing,Traversal,Variance,Modifier,$lift,$isClass,$eq,$use,$copy,$lazy,$optional,$promise,$createModifier"
     });
 
     eval(this.imports);
 
-    var $eq      = $createModifier(),
-        $use     = $createModifier(),
-        $copy    = $createModifier(),
-        $lazy    = $createModifier(),
-        $promise = $createModifier();
+    var $eq       = $createModifier(),
+        $use      = $createModifier(),
+        $copy     = $createModifier(),
+        $lazy     = $createModifier(),
+        $optional = $createModifier(),
+        $promise  = $createModifier();
 
     /**
      * Variance enum
@@ -142,7 +143,7 @@ new function () { // closure
                 return this.constructor.conformsTo(protocol);
             };
 
-			// Proxying
+			// Proxying methods
             this.extend = function () {
                 var derived = Base.extend.apply(this, arguments);
                 for (var key in derived.prototype) {
@@ -249,7 +250,7 @@ new function () { // closure
     /**
      * @function $isClass
      * @param    {Object} source  - object to test
-     * @returs   {Boolean} true if source is a class (not a protocol)
+     * @returns  {Boolean} true if source is a class (not a protocol)
      */
     function $isClass(source) {
         return source && (source.ancestorOf === Base.ancestorOf)
@@ -259,7 +260,7 @@ new function () { // closure
     /**
      * @function $lift
      * @param    {Any} value  - any value
-     * @returs   {Function} function that returns value.
+     * @returns  {Function} function that returns value.
      */
     function $lift(value) {
         return function() { return value; };

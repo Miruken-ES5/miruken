@@ -201,12 +201,6 @@ new function () { // closure
         }
     });
 
-    CallbackHandler.implement({
-        getContext: function () {
-            return (this instanceof Context) ? this : this.resolve(Context);
-        }
-    });
-
     /**
      * ContextualHelper mixin
      * @class {ContextualHelper}
