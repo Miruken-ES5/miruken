@@ -314,6 +314,19 @@ describe("IoContainer", function () {
             });
         });
 
+        it("should resolve nothing if context not available", function (done) {
+            var keyPolicy = new ComponentKeyPolicy,
+                policies  = [keyPolicy, new ContextualLifestyle],
+                container = (new ValidationCallbackHandler).next(new IoContainer);
+            keyPolicy.setClass(V12);
+            Q(Container(container).register(policies)).then(function () {
+                Q(Container(container).resolve(Engine)).then(function (engine) {
+                    expect(engine).to.be.undefined;
+                    done();
+                });
+            });
+        });
+
         it("should resolve instance with supplied dependencies", function (done) {
             var context   = new Context(),
                 keyPolicy = new ComponentKeyPolicy,
