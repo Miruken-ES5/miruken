@@ -68,10 +68,6 @@ new function () { // closure
 
 eval(base2.ioc_test.namespace);
 
-// =========================================================================
-// ComponentKeyPolicy
-// =========================================================================
-
 describe("ComponentKeyPolicy", function () {
     describe("#setClass", function () {
         it("should reject invalid class", function () {
@@ -136,10 +132,6 @@ describe("ComponentKeyPolicy", function () {
     });
 });
 
-// =========================================================================
-// ComponentModel
-// =========================================================================
-
 describe("ComponentModel", function () {
     describe("#configure", function () {
         it("should configure model from class only", function () {
@@ -192,10 +184,6 @@ describe("ComponentModel", function () {
         });
     });
 });
-
-// =========================================================================
-// IoContainer
-// =========================================================================
 
 describe("IoContainer", function () {
     describe("#register", function () {
@@ -301,6 +289,27 @@ describe("IoContainer", function () {
                        Container(context).resolve(Engine)]).spread(function (engine1, engine2) {
                     expect(engine1).to.not.equal(engine2);
                     done();
+                });
+            });
+        });
+
+        it("should resolve diferent instance per context for ContextualLifestyle", function (done) {
+            var context   = new Context(),
+                keyPolicy = new ComponentKeyPolicy,
+                policies  = [keyPolicy, new ContextualLifestyle],
+                container = new IoContainer;
+            keyPolicy.setClass(V12);
+            context.addHandlers(container, new ValidationCallbackHandler);
+            Q(Container(context).register(policies)).then(function () {
+                Q.all([Container(context).resolve(Engine),
+                       Container(context).resolve(Engine)]).spread(function (engine1, engine2) {
+                    expect(engine1).to.equal(engine2);
+                    context.newChildContext(function (ctx) {
+                        Q(Container(ctx).resolve(Engine)).then(function (engine3) {
+                            expect(engine3).to.not.equal(engine1);
+                            done();
+                        });
+                    })
                 });
             });
         });

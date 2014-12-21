@@ -8,7 +8,7 @@ new function () { // closure
     var miruken = new base2.Package(this, {
         name:    "miruken",
         version: "1.0",
-        exports: "Protocol,Proxy,TraversingAxis,Traversing,Traversal,Variance,Modifier,$lift,$isClass,$eq,$use,$copy,$lazy,$optional,$promise,$createModifier"
+        exports: "Protocol,Proxy,Disposing,TraversingAxis,Traversing,Traversal,Variance,Modifier,$lift,$isClass,$eq,$use,$copy,$lazy,$optional,$promise,$createModifier"
     });
 
     eval(this.imports);
@@ -174,6 +174,13 @@ new function () { // closure
                  : false;
         },
         coerce: function (object, strict) { return new this(object, strict); }
+    });
+
+    /**
+     * @protocol {Disposing}
+     */
+    var Disposing = Protocol.extend({
+        dispose: function () {}
     });
 
     /**

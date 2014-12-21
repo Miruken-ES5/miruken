@@ -42,7 +42,7 @@ new function () { // closure
     /**
      * @class {Context}
      */
-    var Context = CompositeCallbackHandler.extend({
+    var Context = CompositeCallbackHandler.extend(Disposing, {
         constructor: function (parent) {
             this.base();
 
@@ -72,7 +72,7 @@ new function () { // closure
                     }
                     return root;
                 },
-                newChildContext: function () {
+                newChildContext: function (block) {
                     _ensureActive();
                     var childContext = new this.constructor(this).extend({
                         end: function () {
@@ -87,6 +87,10 @@ new function () { // closure
                         }
                     });
                     _children.push(childContext);
+					if (typeOf(block) === 'function') {
+						block(childContext);
+						childContext.dispose();
+					}
                     return childContext;
                 },
                 store: function (object) {
@@ -162,6 +166,9 @@ new function () { // closure
                         }
                         _observers = null;
                     }
+                },
+                dispose: function () {
+				    this.end();
                 }
             });
 

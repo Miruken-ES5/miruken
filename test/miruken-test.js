@@ -126,10 +126,6 @@ describe("Modifier", function () {
     });
 });
 
-// =========================================================================
-// Protocol
-// =========================================================================
-
 describe("Protocol", function () {
     describe("#isProtocol", function () {
         it("should determine if type is a protocol", function () {
@@ -262,10 +258,6 @@ describe("Protocol", function () {
     })
 });
 
-// =========================================================================
-// Proxy
-// =========================================================================
-
 describe("Proxy", function () {
     describe("#proxyMethod", function () {
         it("should proxy calls to normal objects", function () {
@@ -296,10 +288,6 @@ describe("Proxy", function () {
         });
     });
 });
-
-// =========================================================================
-// Traversing
-// =========================================================================
 
 describe("Traversing", function () {
     describe("#traverse", function () {
@@ -514,10 +502,6 @@ describe("Traversing", function () {
     });
 });
 
-// =========================================================================
-// Package
-// =========================================================================
-
 describe("Package", function () {
     describe("#getProtocols", function () {
         it("should expose protocol definitions", function () {
@@ -541,10 +525,6 @@ describe("Package", function () {
         });
     });
 });
-
-// =========================================================================
-// Traversal
-// =========================================================================
 
 describe("Traversal", function () {
     var root     = new TreeNode('root'),

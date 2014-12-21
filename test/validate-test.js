@@ -61,10 +61,6 @@ new function () { // closure
 
 eval(base2.validate_test.namespace);
 
-// =========================================================================
-// ValidationResult
-// =========================================================================
-
 describe("ValidationResult", function () {
     describe("#getObject", function () {
         it("should get the validated object", function () {
@@ -148,10 +144,6 @@ describe("ValidationResult", function () {
 	});
     });
 });
-
-// =========================================================================
-// ValidationCallbackHandler
-// =========================================================================
 
 describe("ValidationCallbackHandler", function () {
     describe("#validate", function () {

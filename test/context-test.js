@@ -7,10 +7,6 @@ eval(base2.namespace);
 eval(miruken.namespace);
 eval(context.namespace);
 
-// =========================================================================
-// Context
-// =========================================================================
-
 describe("Context", function() {
     var Dog = Base.extend({});
     
@@ -52,7 +48,7 @@ describe("Context", function() {
         
         it("should have children when created", function() {
             var context = new Context(),
-            child   = context.newChildContext();
+                child   = context.newChildContext();
             expect(context.hasChildren()).to.be.true;
         });
     });
@@ -68,6 +64,23 @@ describe("Context", function() {
                 child      = context.newChildContext(),
                 grandChild = child.newChildContext();
             expect(grandChild.getRootContext()).to.equal(context);
+        });
+    });
+
+    describe("#newChildContext", function() {
+        it("should return new child context", function() {
+            var context      = new Context(),
+                childContext = context.newChildContext();
+            expect(childContext.getParent()).to.equal(context);
+        });
+
+        it("should execute block with new child context and then end it", function() {
+            var context = new Context(),
+                childContext = context.newChildContext(function (ctx) {
+                    expect(ctx.getState()).to.equal(ContextState.Active);
+                    expect(ctx.getParent()).to.equal(context);
+                });
+            expect(childContext.getState()).to.equal(ContextState.Ended);
         });
     });
 
@@ -98,6 +111,14 @@ describe("Context", function() {
             context.end();
             expect(context.getState()).to.equal(ContextState.Ended);
             expect(child.getState()).to.equal(ContextState.Ended);
+        });
+    });
+
+    describe("#dispose", function() {
+        it("should end the context", function() {
+            var context = new Context();
+            context.dispose();
+            expect(context.getState()).to.equal(ContextState.Ended);
         });
     });
     
@@ -385,10 +406,6 @@ describe("Context", function() {
         });
     });
 });
-
-// =========================================================================
-// Contextual
-// =========================================================================
 
 describe("Contextual", function() {
     var Shutdown = Base.extend({

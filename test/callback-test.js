@@ -172,10 +172,6 @@ new function () { // closure
 
 eval(base2.callback_test.namespace);
 
-// =========================================================================
-// HandleMethod
-// =========================================================================
-
 describe("HandleMethod", function () {
     describe("#getMethodName", function () {
         it("should get the method name", function () {
@@ -223,10 +219,6 @@ describe("HandleMethod", function () {
         });
     });
 });
-
-// =========================================================================
-// Register extensions
-// =========================================================================
 
 describe("Extensions", function () {
     describe("$registerExtension", function () {
@@ -390,10 +382,6 @@ describe("Extensions", function () {
         });
     });
 });
-
-// =========================================================================
-// CallbackHandler
-// =========================================================================
 
 describe("CallbackHandler", function () {
     describe("#handle", function () {

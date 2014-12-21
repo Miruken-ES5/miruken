@@ -21,7 +21,7 @@ new function () { // closure
     /**
      * @protocol {Container}
      */
-    var Container = Protocol.extend({
+    var Container = Protocol.extend(Disposing, {
         constructor: function (proxy, strict) {
             this.base(proxy, (strict === undefined) || strict);
         },
@@ -239,9 +239,24 @@ new function () { // closure
      */
     var ContextualLifestyle = Lifestyle.extend({
         constructor: function (instance) {
+            var _cache = {};
             this.extend({
-				resolve: function (factory, composer) {
-					var context = composer.resolve(Context);
+                resolve: function (factory, composer) {
+                    var context = composer.resolve(Context);
+                    if (context) {
+                        var id       = assignID(context),
+                            instance = _cache[id];
+                        if (!instance) {
+                            _cache[id] = instance = factory();
+                            var cancel = context.observe({
+                                contextEnded: function(ctx) {
+                                    delete _cache[id];
+                                    cancel();
+                                },
+                            });
+                        }
+                        return instance;
+                    }
                 }
             });
         }
@@ -289,7 +304,7 @@ new function () { // closure
                         componentModel = new ComponentModel(arguments); 
                     return Validator($composer).validate(componentModel).then(function () {
                         var unregister = container.registerHandler(componentModel);
-						return { componentModel: componentModel, unregister: unregister };
+                        return { componentModel: componentModel, unregister: unregister };
                     });
                 },
                 registerHandler: function(componentModel) {
@@ -299,6 +314,8 @@ new function () { // closure
                         dependencies = [];
                         componentModel.collectDependencies(dependencies);
                     return _registerHandler(this, key, factory, lifestyle, dependencies); 
+                    },
+                dispose: function () {
                 }
             })
         },
@@ -343,7 +360,7 @@ new function () { // closure
      * @param   {Function}    factory       - creates new instance
      * @param   {Lifestyle}   lifesyle      - manages component creation
      * @param   {Array}       dependencies  - component dependencies
-	 * @returns {Function} function to unregister the component.
+     * @returns {Function} function to unregister the component.
      */
     function _registerHandler(container, key, factory, lifestyle, dependencies) {
         var unbind = $provide(container, key, function (resolution, composer) {
@@ -412,7 +429,7 @@ new function () { // closure
                 }
             }, composer);
         });
-		return function () { unbind(); }
+        return function () { unbind(); }
     }
 
     function _resolveDependency(dependency, required, composer) {

@@ -160,7 +160,6 @@ new function () { // closure
             return $handle.dispatch(this, callback, null, composer) !== $NOT_HANDLED;
         },
         toProxy: function () { return new InvocationProxy(this); },
-
         $handlers:[
             HandleMethod, function (method, composer) { 
                 return method.invokeOn(this.getDelegate(), composer) 
@@ -178,7 +177,7 @@ new function () { // closure
             CallbackResolution, function (resolution, composer) {
                 var key    = resolution.getKey(),
                     result = $provide.dispatch(this, resolution, key, composer);
-                if (result === $NOT_HANDLED) {  // check if delegate or handler can satisfy key implicitly
+                if (result === $NOT_HANDLED) {  // check if delegate or handler implicitly satisfy key
                     var implied = _createNode(key),
                         delegate = this.getDelegate();
                     if (delegate && implied.match(delegate.constructor, Variance.Contravariant)) {
@@ -560,20 +559,20 @@ new function () { // closure
     CallbackHandler.implement({
         defer: function (callback) {
             var deferred = new Deferred(callback);
-            return this.handle(deferred)
+            return this.handle(deferred, false, global.$composer)
                  ? Q.all(deferred.getPending()).thenResolve(true)
                  : Q(false);
         },
         deferAll: function (callback) {
             var deferred = new Deferred(callback);
-            return this.handle(deferred, true)
+            return this.handle(deferred, true, global.$composer)
                  ? Q.all(deferred.getPending()).thenResolve(true)
                  : Q(false);
         },
         resolve: function (key) {
             var resolution = (key instanceof CallbackResolution) ? key
                            : new CallbackResolution(key);
-            if (this.handle(resolution)) {
+            if (this.handle(resolution, false, global.$composer)) {
                 var resolutions = resolution.getResolutions();
                 if (resolutions.length > 0) {
                     return resolutions[0];
@@ -583,7 +582,7 @@ new function () { // closure
         resolveAll: function (key) {
             var resolution = (key instanceof CallbackResolution) ? key
                            : new CallbackResolution(key, true);
-            if (this.handle(resolution, true)) {
+            if (this.handle(resolution, true, global.$composer)) {
                 var resolutions = resolution.getResolutions();
                 if (resolutions.length > 0) {
                     return Q.all(resolutions).then(Array2.flatten);

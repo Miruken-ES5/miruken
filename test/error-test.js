@@ -10,10 +10,6 @@ eval(miruken.namespace);
 eval(miruken.context.namespace);
 eval(error.namespace);
 
-// =========================================================================
-// ErrorCallbackHandler
-// =========================================================================
-
 describe("ErrorCallbackHandler", function () {
     describe("#handleError", function () {
         it("should handle errors", function () {
