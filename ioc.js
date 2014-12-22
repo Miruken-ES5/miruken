@@ -118,12 +118,12 @@ new function () { // closure
                     var deps = _dependencies ||
                         (_class && (_class.prototype.$inject || _class.$inject));
                     if (deps) {
-			if (!(deps instanceof Array)) {
-			    deps = [deps];
-			}
-			if (deps.length > 0) {
+                        if (!(deps instanceof Array)) {
+                            deps = [deps];
+                        }
+                        if (deps.length > 0) {
                             dependencies.push.apply(dependencies, deps);
-			}
+                        }
                     }
                 }
             });
@@ -315,7 +315,7 @@ new function () { // closure
                         dependencies = [];
                         componentModel.collectDependencies(dependencies);
                     return _registerHandler(this, key, factory, lifestyle, dependencies); 
-                    },
+                },
                 dispose: function () {
                 }
             })
@@ -378,6 +378,7 @@ new function () { // closure
                     var dependency = dependencies[index],
                         use        = $use.test(dependency),
                         lazy       = $lazy.test(dependency),
+                        optional   = $optional.test(dependency),
                         promise    = $promise.test(dependency);
                         dependency = Modifier.unwrap(dependency);
                     if (use) {
@@ -400,7 +401,7 @@ new function () { // closure
                                 resolution.claim(container);
                             }
                             var paramDep = new DependencyResolution(dependency, resolution);
-                            dependency   = _resolveDependency(paramDep, true, composer);
+                            dependency   = _resolveDependency(paramDep, !optional, composer);
                             if (promise) {
                                 dependency = Q(dependency);
                             } else if (Q.isPromiseAlike(dependency)) {
