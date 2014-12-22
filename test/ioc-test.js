@@ -479,6 +479,46 @@ describe("IoContainer", function () {
             });
         });
 
+        it("should implicitly satisfy container dependency", function (done) {
+            var context   = new Context(),
+                container = new IoContainer,
+                Registry  = Base.extend({
+                    $inject: Container,
+                    constructor: function (container) {
+                        this.extend({
+                            getContainer: function () { return container; },
+                        });
+                    }
+                });
+            context.addHandlers(container, new ValidationCallbackHandler);
+            Q(Container(context).register(Registry)).then(function () {
+                Q(Container(context).resolve(Registry)).then(function (registry) {
+		    expect(registry.getContainer()).to.equal(container);
+                    done();
+                });
+            });
+        });
+
+        it("should implicitly satisfy composer dependency", function (done) {
+            var context   = new Context(),
+                container = new IoContainer,
+                Registry  = Base.extend({
+                    $inject: $$composer,
+                    constructor: function (composer) {
+                        this.extend({
+                            getComposer: function () { return composer; },
+                        });
+                    }
+                });
+            context.addHandlers(container, new ValidationCallbackHandler);
+            Q(Container(context).register(Registry)).then(function () {
+                Q(Container(context).resolve(Registry)).then(function (registry) {
+		    expect(registry.getComposer()).to.equal(context);
+                    done();
+                });
+            });
+        });
+
         it("should return nothing if component not found", function (done) {
             var context   = new Context(),
                 container = new IoContainer;

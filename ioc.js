@@ -13,10 +13,15 @@ new function () { // closure
         version: miruken.version,
         parent:  miruken,
         imports: "miruken,miruken.callback,miruken.context,miruken.validate",
-        exports: "Container,Registration,ComponentPolicy,ComponentKeyPolicy,Lifestyle,TransientLifestyle,SingletonLifestyle,ContextualLifestyle,ComponentModel,IoContainer,DependencyResolution,DependencyResolutionError"
+        exports: "Container,Registration,ComponentPolicy,ComponentKeyPolicy,Lifestyle,TransientLifestyle,SingletonLifestyle,ContextualLifestyle,ComponentModel,IoContainer,DependencyResolution,DependencyResolutionError,$$composer"
     });
 
     eval(this.imports);
+
+    /**
+     * Composer dependency.
+     */
+    var $$composer = {};
 
     /**
      * @protocol {Container}
@@ -372,8 +377,7 @@ new function () { // closure
                                 resolution.formattedDependencyChain())))
             }
             return lifestyle.resolve(function (replace) {
-                var promises   = [],
-                    parameters = [];
+                var promises = [], parameters = [];
                 for (var index = 0; index < dependencies.length; ++index) {
                     var dependency = dependencies[index],
                         use        = $use.test(dependency),
@@ -381,7 +385,11 @@ new function () { // closure
                         optional   = $optional.test(dependency),
                         promise    = $promise.test(dependency);
                         dependency = Modifier.unwrap(dependency);
-                    if (use) {
+
+		    if (dependency === $$composer) {
+			dependency = composer;
+		    }
+                    else if (use) {
                         if (promise) {
                             dependency = Q(dependency);
                         }
