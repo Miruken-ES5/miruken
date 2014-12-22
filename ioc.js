@@ -27,8 +27,7 @@ new function () { // closure
         },
         /**
          * Registers on or more components in the container.
-         * @param   {Any*}    registration  - usually a Registration,
-         *                                    ComponentModel or list of policies
+         * @param   {Any*}    registration  - Registration , ComponentModel or policies
          * @returns {Promise} a promise representing the registration.
          */
         register: function (registration) {},
@@ -107,12 +106,9 @@ new function () { // closure
                     }
                     _factory = value;
                 },
-                getDependecies: function () { return _dependencies.slice(0); },
-                setDependencies: function (value) {
-                    if (!(value instanceof Array)) {
-                        throw new TypeError(lang.format("%1 is not an array.", value));
-                    }
-                    _dependencies = value;
+                getDependencies: function () { return _dependencies.slice(0); },
+                setDependencies: function (/* dependencies */) {
+                    _dependencies = Array2.flatten(arguments);
                 },
                 effectiveKey: function (key) { return _key || _service ||  _class; },
                 effectiveFactory: function (factory) {
@@ -121,8 +117,13 @@ new function () { // closure
                 collectDependencies: function (dependencies) {
                     var deps = _dependencies ||
                         (_class && (_class.prototype.$inject || _class.$inject));
-                    if (deps && deps.length > 0) {
-                        dependencies.push.apply(dependencies, deps);
+                    if (deps) {
+			if (!(deps instanceof Array)) {
+			    deps = [deps];
+			}
+			if (deps.length > 0) {
+                            dependencies.push.apply(dependencies, deps);
+			}
                     }
                 }
             });
@@ -380,30 +381,32 @@ new function () { // closure
                         promise    = $promise.test(dependency);
                         dependency = Modifier.unwrap(dependency);
                     if (use) {
-                        if (lazy || promise) {
+                        if (promise) {
                             dependency = Q(dependency);
-                            if (lazy) {
-                                dependency = $lift(dependency);
-                            }
+                        }
+                        if (lazy) {
+                            dependency = $lift(dependency);
                         }
                     } else {
-                        if (!(resolution instanceof DependencyResolution)) {
-                            resolution = new DependencyResolution(resolution.getKey());
-                            resolution.claim(container);
-                        }
-                        var paramDependency = new DependencyResolution(dependency, resolution);
                         if (lazy) {
-                            dependency = function () {
-                                return Q(_resolveDependency(paramDependency, true, composer));
+                            var paramDep = dependency;
+                            dependency   = function () {
+                                var param = _resolveDependency(paramDep, false, composer);
+                                return promise ? Q(param) : param;
                             };
                         } else {
-                            dependency = _resolveDependency(paramDependency, true, composer);
+                            if (!(resolution instanceof DependencyResolution)) {
+                                resolution = new DependencyResolution(resolution.getKey());
+                                resolution.claim(container);
+                            }
+                            var paramDep = new DependencyResolution(dependency, resolution);
+                            dependency   = _resolveDependency(paramDep, true, composer);
                             if (promise) {
                                 dependency = Q(dependency);
                             } else if (Q.isPromiseAlike(dependency)) {
                                 promises.push(dependency);
-                                (function (paramDep, paramIndex) {
-                                    paramDep.then(function (param) {
+                                (function (paramPromise, paramIndex) {
+                                    paramPromise.then(function (param) {
                                         parameters[paramIndex] = param;
                                     });
                                 })(dependency, index);

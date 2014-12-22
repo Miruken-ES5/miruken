@@ -46,7 +46,7 @@ new function () { // closure
     });
           
     var Ferarri = Base.extend(Car, {
-        $inject: [ Engine ],
+        $inject: Engine,
         constructor: function (engine) {
             this.extend({
                 getEngine: function () { return engine; }
@@ -55,7 +55,7 @@ new function () { // closure
     });
 
     var OBDII = Base.extend(Diagnostics, {
-        $inject: [ Engine ],
+        $inject: Engine,
         constructor: function (engine) {
             this.extend({
                 getMPG: function () { return 22.0; }
@@ -97,11 +97,16 @@ describe("ComponentKeyPolicy", function () {
     });
 
     describe("#setDependencies", function () {
-        it("should reject dependencies if not an array", function () {
+        it("should accept comma separated dependencies", function () {
             var keyPolicy = new ComponentKeyPolicy;
-            expect(function () {
-                keyPolicy.setDependencies(Car);
-            }).to.throw(Error, /is not an array/);
+            keyPolicy.setDependencies(Car, 22);
+            expect(keyPolicy.getDependencies()).to.eql([Car, 22]);
+        });
+
+        it("should accept array dependencies", function () {
+            var keyPolicy = new ComponentKeyPolicy;
+            keyPolicy.setDependencies([Car, 22]);
+            expect(keyPolicy.getDependencies()).to.eql([Car, 22]);
         });
     });
 
@@ -339,6 +344,104 @@ describe("IoContainer", function () {
                     expect(engine.getHorsepower()).to.equal(917);
                     expect(engine.getDisplacement()).to.equal(6.3);
                     done();
+                });
+            });
+        });
+
+        it("should resolve instance with dependency promises", function (done) {
+            var context   = new Context(),
+                container = new IoContainer,
+                Order     = Base.extend({
+                    $inject: [$promise(Engine), $promise($use(19))],
+                    constructor: function (engine, count) {
+                        this.extend({
+                            getEngine: function () { return engine; },
+                            getCount: function () { return count; }
+                        });
+                    }
+                });
+            context.addHandlers(container, new ValidationCallbackHandler);
+            Q.all([Container(context).register(Order),
+                   Container(context).register(V12)]).then(function () {
+                Q(Container(context).resolve(Order)).then(function (order) {
+                    expect(Q.isPromiseAlike(order.getEngine())).to.be.true;
+                    expect(Q.isPromiseAlike(order.getCount())).to.be.true;
+                    Q.all([order.getEngine(), order.getCount()]).spread(function (engine, count) {
+                        expect(engine).to.be.instanceof(V12);
+                        expect(count).to.equal(19);
+                        done();
+                    });
+                });
+            });
+        });
+
+        it("should resolve instance with lazy dependencies", function (done) {
+            var context   = new Context(),
+                container = new IoContainer,
+                Order     = Base.extend({
+                    $inject: [$lazy(Engine), $lazy($use(9))],
+                    constructor: function (engine, count) {
+                        this.extend({
+                            getEngine: function () { return engine(); },
+                            getCount: function () { return count(); }
+                        });
+                    }
+                });
+            context.addHandlers(container, new ValidationCallbackHandler);
+            Q.all([Container(context).register(Order),
+                   Container(context).register(V12)]).then(function () {
+                Q(Container(context).resolve(Order)).then(function (order) {
+                    Q.all([order.getEngine(), order.getCount()]).spread(function (engine, count) {
+                        expect(engine).to.be.instanceof(V12);
+                        expect(count).to.equal(9);
+                        done();
+                    });
+                });
+            });
+        });
+
+        it("should not fail resolve when missing lazy dependencies", function (done) {
+            var context   = new Context(),
+                container = new IoContainer,
+                Order     = Base.extend({
+                    $inject: $lazy(Engine),
+                    constructor: function (engine) {
+                        this.extend({
+                            getEngine: function () { return engine(); }
+                        });
+                    }
+                });
+            context.addHandlers(container, new ValidationCallbackHandler);
+            Q(Container(context).register(Order)).then(function () {
+                Q(Container(context).resolve(Order)).then(function (order) {
+                    expect(order).to.be.instanceOf(Order);
+                    expect(order.getEngine()).to.be.undefined;
+                    done();
+                });
+            });
+        });
+
+        it("should delay rejecting lazy dependency failures", function (done) {
+            var context   = new Context(),
+                container = new IoContainer,
+                Order     = Base.extend({
+                    $inject: $lazy(Car),
+                    constructor: function (car) {
+                        this.extend({
+                            getCar: function () { return car(); }
+                        });
+                    }
+                });
+            context.addHandlers(container, new ValidationCallbackHandler);
+            Q.all([Container(context).register(Order),
+                   Container(context).register(Ferarri)]).then(function () {
+                Q(Container(context).resolve(Order)).then(function (order) {
+                    expect(order).to.be.instanceOf(Order);
+                    Q(order.getCar()).fail(function (error) {
+                    expect(error).to.be.instanceof(DependencyResolutionError);
+                    expect(error.message).to.match(/Dependency.*Engine.*<=.*Car.*could not be resolved./);
+                        done();
+                    });
                 });
             });
         });

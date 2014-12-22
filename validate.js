@@ -25,8 +25,8 @@ new function () { // closure
     var Validator = Protocol.extend({
         /**
          * Validates the object in the scope.
-         * @param   {Object}                    object  - object to validate
-         * @param   {String}                    scope   - scope of validation
+         * @param   {Object} object  - object to validate
+         * @param   {String} scope   - scope of validation
          * @returns {Promise(ValidationResult)} a promise for the validation result
          */
         validate: function (object, scope) {}
