@@ -216,10 +216,11 @@ new function () { // closure
     /**
      * @class {Lifestyle}
      */
-    var Lifestyle = Base.extend(ComponentPolicy, {
+    var Lifestyle = Base.extend(ComponentPolicy, Disposing, {
         resolve: function (factory) {
             return factory();
-        }
+        },
+        dispose: function() {}
     });
 
    /**
@@ -388,6 +389,8 @@ new function () { // closure
 
 		    if (dependency === $$composer) {
 			dependency = composer;
+		    } else if (dependency === Container) {
+			dependency = container;
 		    }
                     else if (use) {
                         if (promise) {

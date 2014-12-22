@@ -680,7 +680,7 @@ new function () { // closure
                 throw new Error("Variance must be Covariant, Contravariant or Invariant");
         }
 
-        function definition(owner, constraint, handler) {
+        function definition(owner, constraint, handler, removed) {
             if (handler === null || handler === undefined) {
                 if ((variance === Variance.Covariant) && (typeOf(constraint) === 'object')) {
                     handler    = constraint;
@@ -690,6 +690,9 @@ new function () { // closure
                         "No handler specified for constraint %1.", constraint));
                 }
             }
+	    if (removed && (typeOf(removed) !== 'function')) {
+                throw new TypeError("The removed argument is not a function.");
+	    }
             if (typeOf(handler) !== 'function') {
                 if (handler && (variance === Variance.Covariant)) {
                     // Allow copy semantics for convariant handlers
@@ -710,11 +713,10 @@ new function () { // closure
                 }
             }
             var definitions = owner.$miruken || (owner.$miruken = {}),
-                node        = _createNode(constraint, handler),
+                node        = _createNode(constraint, handler, removed),
                 index       = _createIndex(constraint);
-
             if (!definitions.hasOwnProperty(tag)) {
-                var nodes  = { $head:node, $tail:node, index: {} };
+                var nodes = { $head:node, $tail:node, index: {} };
                 if (index) {
                     nodes.index[index] = node;
                 }
@@ -774,6 +776,9 @@ new function () { // closure
                         delete nodes.index[index];
                     }
                 }
+		if (node.removed) {
+		    node.removed();
+		}
             };
         };
         definition.dispatch = function (handler, callback, constraint, composer) {
@@ -850,13 +855,16 @@ new function () { // closure
         return (variance !== Variance.Invariant);
     }
 
-    function _createNode(constraint, handler) {
+    function _createNode(constraint, handler, removed) {
         var varianceOverride;
         if ($eq.test(constraint)) {
             varianceOverride = Variance.Invariant;
         }
         constraint = Modifier.unwrap(constraint);
         var node = { constraint: constraint, handler: handler };
+	if (removed) {
+	    node.removed = removed;
+	}
         if (constraint === null || constraint === undefined) {
             node.match = _everything;
         } else if (Protocol.isProtocol(constraint)) {

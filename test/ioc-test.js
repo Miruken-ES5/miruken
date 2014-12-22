@@ -379,14 +379,14 @@ describe("IoContainer", function () {
             var context   = new Context(),
                 carPolicy = new ComponentKeyPolicy,
                 container = new IoContainer;
-	    carPolicy.setClass(Ferarri);
+            carPolicy.setClass(Ferarri);
             carPolicy.setDependencies($optional(Engine));
             context.addHandlers(container, new ValidationCallbackHandler);
             Q.all([Container(context).register(carPolicy),
                    Container(context).register(V12)]).then(function () {
                 Q(Container(context).resolve(Car)).then(function (car) {
-		    expect(car).to.be.instanceOf(Ferarri);
-		    expect(car.getEngine()).to.be.instanceOf(V12);
+                    expect(car).to.be.instanceOf(Ferarri);
+                    expect(car.getEngine()).to.be.instanceOf(V12);
                     done();
                 });
             });
@@ -396,13 +396,13 @@ describe("IoContainer", function () {
             var context   = new Context(),
                 carPolicy = new ComponentKeyPolicy,
                 container = new IoContainer;
-	    carPolicy.setClass(Ferarri);
+            carPolicy.setClass(Ferarri);
             carPolicy.setDependencies($optional(Engine));
             context.addHandlers(container, new ValidationCallbackHandler);
             Q(Container(context).register(carPolicy)).then(function () {
                 Q(Container(context).resolve(Car)).then(function (car) {
-		    expect(car).to.be.instanceOf(Ferarri);
-		    expect(car.getEngine()).to.be.undefined;
+                    expect(car).to.be.instanceOf(Ferarri);
+                    expect(car.getEngine()).to.be.undefined;
                     done();
                 });
             });
@@ -493,7 +493,7 @@ describe("IoContainer", function () {
             context.addHandlers(container, new ValidationCallbackHandler);
             Q(Container(context).register(Registry)).then(function () {
                 Q(Container(context).resolve(Registry)).then(function (registry) {
-		    expect(registry.getContainer()).to.equal(container);
+                    expect(registry.getContainer()).to.equal(container);
                     done();
                 });
             });
@@ -513,7 +513,10 @@ describe("IoContainer", function () {
             context.addHandlers(container, new ValidationCallbackHandler);
             Q(Container(context).register(Registry)).then(function () {
                 Q(Container(context).resolve(Registry)).then(function (registry) {
-		    expect(registry.getComposer()).to.equal(context);
+                    expect(registry.getComposer()).to.equal(context);
+                    Q(Validator(registry.getComposer()).validate(registry)).then(function (validation) {
+                        expect(validation.isValid()).to.be.true;
+                    });
                     done();
                 });
             });
@@ -525,6 +528,20 @@ describe("IoContainer", function () {
             context.addHandlers(container, new ValidationCallbackHandler);
             Q.when(Container(context).resolve(Car), function (car) {
                 expect(car).to.be.undefined;
+                done();
+            });
+        });
+
+        it("should have opportunity to resolve missing components", function (done) {
+            var context   = new Context(),
+                container = new IoContainer;
+            context.addHandlers(container, new ValidationCallbackHandler);
+            $provide(container, True, function (resolution, composer) {
+                return new Ferarri(new V12(917, 6.3));
+            });
+            Q.when(Container(context).resolve(Car), function (car) {
+                expect(car).to.be.instanceOf(Ferarri);
+                expect(car.getEngine()).to.be.instanceOf(V12);
                 done();
             });
         });
