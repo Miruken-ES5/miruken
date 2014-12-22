@@ -17,7 +17,7 @@ new function () { // closure
 
     eval(this.imports);
 
-    var $validate = $registerExtension('$validators');
+    var $validate = $define('$validators');
 
     /**
      * @protocol {Validator}

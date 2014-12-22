@@ -220,36 +220,36 @@ describe("HandleMethod", function () {
     });
 });
 
-describe("Extensions", function () {
-    describe("$registerExtension", function () {
+describe("Definitions", function () {
+    describe("$define", function () {
         it("should require non-empty tag", function () {
-            $registerExtension('$foo');
+            $define('$foo');
             expect(function () {
-                $registerExtension();
+                $define();
             }).to.throw(Error, "The tag must be a non-empty string with no whitespace.");
             expect(function () {
-                $registerExtension("");
+                $define("");
             }).to.throw(Error, "The tag must be a non-empty string with no whitespace.");
             expect(function () {
-                $registerExtension("  ");
+                $define("  ");
             }).to.throw(Error, "The tag must be a non-empty string with no whitespace.");
         });
 
         it("should prevent same tag from being registered", function () {
-            $registerExtension('$bar');
+            $define('$bar');
             expect(function () {
-                $registerExtension('$bar');
-            }).to.throw(Error, "The '$bar' extension is already registered.");
+                $define('$bar');
+            }).to.throw(Error, "'$bar' is already defined.");
         });
 
         it("Should accept variance option", function () {
-            var baz = $registerExtension('$baz', Variance.Contravariant);
+            var baz = $define('$baz', Variance.Contravariant);
         expect(baz).to.be.ok;
         });
 
         it("Should reject invalid variance option", function () {
             expect(function () {
-        $registerExtension('$buz', { variance: 1000 });
+        $define('$buz', { variance: 1000 });
             }).to.throw(Error, "Variance must be Covariant, Contravariant or Invariant");
         });
     });

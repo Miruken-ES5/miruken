@@ -11,16 +11,16 @@ new function () { // closure
         version: miruken.version,
         parent:  miruken,
         imports: "miruken",
-        exports: "CallbackHandler,CallbackHandlerDecorator,CallbackHandlerFilter,CallbackHandlerAspect,CascadeCallbackHandler,CompositeCallbackHandler,ConditionalCallbackHandler,ObjectCallbackHandler,AcceptingCallbackHandler,ProvidingCallbackHandler,MethodCallbackHandler,InvocationOptions,CallbackResolution,HandleMethod,Expandable,$handle,$provide,$registerExtension,$expandExtensions,getEffectivePromise,$NOT_HANDLED"
+        exports: "CallbackHandler,CallbackHandlerDecorator,CallbackHandlerFilter,CallbackHandlerAspect,CascadeCallbackHandler,CompositeCallbackHandler,ConditionalCallbackHandler,ObjectCallbackHandler,AcceptingCallbackHandler,ProvidingCallbackHandler,MethodCallbackHandler,InvocationOptions,CallbackResolution,HandleMethod,Expandable,$handle,$provide,$define,$expand,getEffectivePromise,$NOT_HANDLED"
     });
    
     eval(this.imports);
 
-    var _extensions  = {},
+    var _definitions = {},
         $NOT_HANDLED = {};
 
-    var $handle  = $registerExtension('$handlers'),
-        $provide = $registerExtension('$providers', Variance.Covariant);
+    var $handle  = $define('$handlers'),
+        $provide = $define('$providers', Variance.Covariant);
 
     // =========================================================================
     // Expandable
@@ -33,7 +33,7 @@ new function () { // closure
         init: function () {
             var base    = this.extend;
             this.extend = function () {
-                return $expandExtensions(base.apply(this, arguments));
+                return $expand(base.apply(this, arguments));
             };
         }
     });
@@ -619,15 +619,15 @@ new function () { // closure
     });
 
     /**
-     * @function $expandExtensions
-     * Expands the registered extensions in owner
-     * @param    {Object} owner  - owner of extensions
+     * @function $expand
+     * Expands the registered definitions in owner
+     * @param    {Object} owner  - source of definitions
      */
-    function $expandExtensions(owner) {
+    function $expand(owner) {
         if ((typeOf(owner) !== 'function') && (typeOf(owner) !== 'object')) {
-            throw new TypeError("Extensions can only be applied to classes or instances.");
+            throw new TypeError("Definitions can only be applied to classes or instances.");
         }
-        for (tag in _extensions) {
+        for (tag in _definitions) {
             var constraints = null;
             if (owner.prototype && owner.prototype.hasOwnProperty(tag)) {
                 constraints = owner.prototype[tag];
@@ -637,7 +637,7 @@ new function () { // closure
                 delete owner[tag];
             }
             if (constraints && constraints.length > 0) {
-                var extension = _extensions[tag];
+                var define = _definitions[tag];
                 for (var idx = 0; idx < constraints.length; ++idx) {
                     var constraint = constraints[idx];
                     if (++idx >= constraints.length) {
@@ -645,7 +645,7 @@ new function () { // closure
                             "Incomplete '%1' definition: missing handler for constraint %2.",
                             tag, constraint));
                     }
-                    extension(owner, constraint, constraints[idx]);
+                    define(owner, constraint, constraints[idx]);
                 }
             }
         }
@@ -653,17 +653,17 @@ new function () { // closure
     }
     
     /**
-     * @function $registerExtension
-     * Register a new extension named tag
-     * @param    {String}   tag       - name of the extension
-     * @param    {Variance} variance  - variance of the extension
-	 * @returns  {Function} function to add extension instances.
+     * @function $define
+     * Defines a new handler relationship.
+     * @param    {String}   tag       - name of definition
+     * @param    {Variance} variance  - variance of definition
+     * @returns  {Function} function to add to definition.
      */
-    function $registerExtension(tag, variance) {
+    function $define(tag, variance) {
         if (typeOf(tag) !== 'string' || tag.length === 0 || /\s/.test(tag)) {
             throw new TypeError("The tag must be a non-empty string with no whitespace.");
-        } else if (_extensions[tag]) {
-            throw new TypeError(lang.format("The '%1' extension is already registered.", tag));
+        } else if (_definitions[tag]) {
+            throw new TypeError(lang.format("'%1' is already defined.", tag));
         }
 
         var handled;
@@ -680,7 +680,7 @@ new function () { // closure
                 throw new Error("Variance must be Covariant, Contravariant or Invariant");
         }
 
-        function extension(owner, constraint, handler) {
+        function definition(owner, constraint, handler) {
             if (handler === null || handler === undefined) {
                 if ((variance === Variance.Covariant) && (typeOf(constraint) === 'object')) {
                     handler    = constraint;
@@ -709,21 +709,21 @@ new function () { // closure
                         constraint, handler));
                 }
             }
-            var extensions = owner.$miruken || (owner.$miruken = {}),
-                node       = _createNode(constraint, handler),
-                index      = _createIndex(constraint);
+            var definitions = owner.$miruken || (owner.$miruken = {}),
+                node        = _createNode(constraint, handler),
+                index       = _createIndex(constraint);
 
-            if (!extensions.hasOwnProperty(tag)) {
+            if (!definitions.hasOwnProperty(tag)) {
                 var nodes  = { $head:node, $tail:node, index: {} };
                 if (index) {
                     nodes.index[index] = node;
                 }
-                extensions[tag] = nodes;
+                definitions[tag] = nodes;
             } else {
                 // Maintain partial ordering using variance
                 // e.g. More derived handlers come first  (Contravariance)
                 //      Less derived providers come first (Covariance)
-                var nodes = extensions[tag], insert;
+                var nodes = definitions[tag], insert;
                 if (node.constraint) {
                     var indexedNode = index && nodes.index[index]; 
                     insert = indexedNode || nodes.$head;
@@ -765,7 +765,7 @@ new function () { // closure
                     nodes.$head = next;
                     delete next.prev;
                 } else {
-                    delete extensions[tag];
+                    delete definitions[tag];
                 }
                 if (index && (nodes.index[index] === node)) {
                     if (next && next.match(node.constraint, Variance.Invariant)) {
@@ -776,7 +776,7 @@ new function () { // closure
                 }
             };
         };
-        extension.dispatch = function (handler, callback, constraint, composer) {
+        definition.dispatch = function (handler, callback, constraint, composer) {
             var varianceMatch = variance,
                 delegate      = handler.getDelegate();
             if (constraint) {
@@ -799,10 +799,10 @@ new function () { // closure
         };
         function _dispatch(target, owner, callback, constraint, varianceMatch, composer) {
             while (owner && (owner !== Base) && (owner !== Object)) {
-                var extensions = owner.$miruken,
-                    index      = _createIndex(constraint),
-                    nodes      = extensions && extensions[tag],
-                    invariant  = (varianceMatch === Variance.Invariant);
+                var definitions = owner.$miruken,
+                    index       = _createIndex(constraint),
+                    nodes       = definitions && definitions[tag],
+                    invariant   = (varianceMatch === Variance.Invariant);
                 owner = (owner === target) ? owner.constructor : owner.ancestor;
                 if (nodes && (!invariant || index)) {
                     var indexedNode = index && nodes.index[index], 
@@ -834,8 +834,8 @@ new function () { // closure
             }
             return $NOT_HANDLED;
         }
-        _extensions[tag] = extension
-        return extension;
+        _definitions[tag] = definition;
+        return definition;
     }
 
     function _impliesResult(result) {
