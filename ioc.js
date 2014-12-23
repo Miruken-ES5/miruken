@@ -156,6 +156,11 @@ new function () { // closure
             dependencies = dependencies || [];
             this.extend({
                 getDependencies: function () { return dependencies; },
+		getIndex: function (index) {
+		    if (dependencies.length > index) {
+			return dependencies[index];
+		    }
+		},
                 setIndex: function (index, dependency) {
                     if ((dependencies.length <= index) ||
                         (dependencies[index] === undefined)) {

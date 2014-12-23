@@ -50,10 +50,15 @@ new function () { // closure
         getNumberOfCylinders: function () { return 12; },
     });
  
-    var RebuiltV12 = V12.extend(Engine, {
+    var RebuiltV12 = V12.extend(Engine, Disposing, {
         $inject: [,,,Junkyard],
         constructor: function (horsepower, displacement, diagnostics, junkyard) {
             this.base(horsepower, displacement, diagnostics, junkyard);
+	    this.extend({
+		dispose: function () {
+		    junkyard.decomission(this);
+		}
+	    });
         }
     });
 
@@ -628,6 +633,19 @@ describe("IoContainer", function () {
                         expect(error).to.be.instanceof(DependencyResolutionError);
                         expect(error.message).to.match(/Dependency cycle.*Engine.*<=.*Engine.*<=.*Car.*detected./);
                         expect(error.dependency.getKey()).to.equal(Engine);
+                    done();
+                });
+            });
+        });
+
+        it("should dispose unregistered components", function (done) {
+            var context   = new Context(),
+                container = new IoContainer;
+	    context.addHandlers(container, new ValidationCallbackHandler);
+            Q.all([Container(context).register(RebuiltV12),
+                   Container(context).register(CraigsJunk)]).spread(function (registration) {
+                Q(Container(context).resolve(Engine)).then(function (engine) {
+		    registration.unregister();
                     done();
                 });
             });
