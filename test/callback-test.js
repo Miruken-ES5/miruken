@@ -326,6 +326,30 @@ describe("Definitions", function () {
             expect(handler.$miruken.$handlers.$tail.handler).to.equal(nothing);
         });
 
+        it("should call function when handler removed", function () {
+            var handler        = new CallbackHandler,
+                func           = function (callback) {},
+                handlerRemoved = false,
+                unregister     = $handle(handler, True, func, function () {
+                    handlerRemoved = true;
+                });
+            unregister();
+            expect(handlerRemoved).to.be.true;
+            expect(handler.$miruken.$handlers).to.be.undefined;
+        });
+
+        it("should suppress handler removed if requested", function () {
+            var handler        = new CallbackHandler,
+                func           = function (callback) {},
+                handlerRemoved = false,
+                unregister     = $handle(handler, True, func, function () {
+                    handlerRemoved = true;
+                });
+            unregister(false);
+            expect(handlerRemoved).to.be.false;
+            expect(handler.$miruken.$handlers).to.be.undefined;
+        });
+
         it("should remove $handlers when no handlers remain", function () {
             var handler     = new CallbackHandler,
                 func        = function (callback) {},
@@ -379,6 +403,32 @@ describe("Definitions", function () {
             var unregister  = $handle(handler, Activity, nothing);
             unregister();
             expect(handler.$miruken.$handlers.index).to.not.have.property(index);
+        });
+    });
+
+    describe("#removeAll", function () {
+        it("should remove all $handler definitions", function () {
+            var handler     = new CallbackHandler,
+                nothing     = function (callback) {},
+	        removeCount = 0,
+	        removed     = function () { ++removeCount; };
+            $handle(handler, Accountable, nothing, removed);
+            $handle(handler, Activity, nothing, removed);
+	    $handle.removeAll(handler);
+	    expect(removeCount).to.equal(2);
+            expect(handler.$miruken.$handlers).to.be.undefined;
+        });
+
+        it("should remove all $provider definitions", function () {
+            var handler     = new CallbackHandler,
+                nothing     = function (callback) {},
+	        removeCount = 0,
+	        removed     = function () { ++removeCount; };
+            $provide(handler, Activity, nothing, removed);
+            $provide(handler, Accountable, nothing, removed);
+	    $provide.removeAll(handler);
+	    expect(removeCount).to.equal(2);
+            expect(handler.$miruken.$providers).to.be.undefined;
         });
     });
 });

@@ -13,7 +13,7 @@ new function () { // closure
         version: miruken.version,
         parent:  miruken,
         imports: "miruken,miruken.callback,miruken.context,miruken.validate",
-        exports: "Container,Registration,ComponentPolicy,ComponentKeyPolicy,Lifestyle,TransientLifestyle,SingletonLifestyle,ContextualLifestyle,ComponentModel,IoContainer,DependencyResolution,DependencyResolutionError,$$composer"
+        exports: "Container,Registration,ComponentPolicy,ComponentKeyPolicy,Lifestyle,TransientLifestyle,SingletonLifestyle,ContextualLifestyle,ComponentModel,IoContainer,DependencyManager,DependencyResolution,DependencyResolutionError,$$composer"
     });
 
     eval(this.imports);
@@ -65,13 +65,18 @@ new function () { // closure
          */
         effectiveKey: function (key) {},
         /**
+         * @param   {Any} key  - the current service
+         * @returns {Any} effective component service.
+         */
+        effectiveService: function (service) {},
+        /**
          * @param   {Function} factory  - the current factory
          * @returns {Function} effective component factory.
          */
         effectiveFactory: function (factory) {},
         /**
          * Collects all dependencies for this component.
-         * @param   {Array} dependencies  - array receiving dependencies
+         * @param   {DependencyManager} dependencies  - manages dependencies
          */
         collectDependencies: function (dependencies) {},
         /**
@@ -111,24 +116,32 @@ new function () { // closure
                     }
                     _factory = value;
                 },
-                getDependencies: function () { return _dependencies.slice(0); },
+                getDependencies: function () { return _dependencies; },
                 setDependencies: function (/* dependencies */) {
                     _dependencies = Array2.flatten(arguments);
                 },
-                effectiveKey: function (key) { return _key || _service ||  _class; },
+                effectiveKey: function (key) {
+                    return key || _key || _service || _class; 
+                },
+                effectiveService: function (service) {
+                    service = service || _service;
+                    if (!service & Protocol.isProtocol(_key)) {
+                        service = _key;
+                    }
+                    return service;
+                },
                 effectiveFactory: function (factory) {
-                    return _factory || (_class && _class.new.bind(_class));
+                    factory = factory || _factory;
+                    if (!factory && _class) {
+                        factory = _class.new.bind(_class);
+                    }
+                    return factory;
                 },
                 collectDependencies: function (dependencies) {
-                    var deps = _dependencies ||
-                        (_class && (_class.prototype.$inject || _class.$inject));
-                    if (deps) {
-                        if (!(deps instanceof Array)) {
-                            deps = [deps];
-                        }
-                        if (deps.length > 0) {
-                            dependencies.push.apply(dependencies, deps);
-                        }
+                    dependencies.merge(_dependencies);
+                    if (_class) {
+                        dependencies.merge(_class.prototype.$inject)
+                                    .merge(_class.$inject);
                     }
                 }
             });
@@ -136,17 +149,51 @@ new function () { // closure
     });
 
     /**
-     * @class {DependencyResolutionError}
-     * @param {DependencyResolution} dependency  - failing dependency
-     * @param {String}               message     - error message
+     * @class {DependencyManager}
      */
-    function DependencyResolutionError(dependency, message) {
-        this.message    = message;
-        this.dependency = dependency;
-        this.stack      = new Error().stack;
-    }
-    DependencyResolutionError.prototype             = new Error();
-    DependencyResolutionError.prototype.constructor = DependencyResolutionError;
+    var DependencyManager = Base.extend({
+        constructor: function (dependencies) {
+            dependencies = dependencies || [];
+            this.extend({
+                getDependencies: function () { return dependencies; },
+                setIndex: function (index, dependency) {
+                    if ((dependencies.length <= index) ||
+                        (dependencies[index] === undefined)) {
+                        dependencies[index] = dependency;
+                    }
+                    return this;
+                },
+                replaceIndex: function (index, dependency) {
+                    dependencies[index] = dependency;
+                    return this;
+                },
+                removeIndex: function (index) {
+                    if (dependencies.length > index) {
+                        dependencies.splice(index, 1);
+                    }
+                    return this;
+                },
+                merge: function (other, replace) {
+                    if (other !== undefined) {
+                        if (!(other instanceof Array)) {
+                            other = [other];
+                        }
+                        for (var index = 0; index < other.length; ++index) {
+                            var dependency = other[index];
+                            if (dependency !== undefined) {
+                                if (replace) {
+                                    this.replaceIndex(index, dependency);
+                                } else {
+                                    this.setIndex(index, dependency);
+                                }
+                            }
+                        }
+                    }
+                    return this;
+                }
+            });
+        }
+    });
 
     /**
      * @class {ComponentModel}
@@ -162,6 +209,11 @@ new function () { // closure
                     return _policies.reduce(function (k, policy) {
                         return policy.effectiveKey ? policy.effectiveKey(k) : k;
                     }, key);
+                },
+                effectiveService: function (service) {
+                    return _policies.reduce(function (s, policy) {
+                        return policy.effectiveService ? policy.effectiveService(s) : s;
+                    }, service);
                 },
                 effectiveFactory: function (factory) {
                     return _policies.reduce(function (f, policy) {
@@ -220,8 +272,27 @@ new function () { // closure
         resolve: function (factory) {
             return factory();
         },
-        dispose: function() {}
+        trackInstance: function (instance) {
+            if (instance && typeOf(instance.dispose === 'function')) {
+                var lifestyle = this;
+                instance.extend({
+                    dispose: function (disposing) {
+                        if (!disposing) {
+                            lifestyle.disposeInstance(instance, true);
+                        }
+                        this.base();
+                        this.dispose = this.base;
+                    }
+                });
+            }
+        },
+        disposeInstance: function (instance, disposing) {
+            if (!disposing && instance && typeOf(instance.dispose) === 'function') {
+                instance.dispose(true);
+            }
+        }
     });
+    Lifestyle.implement(DisposingMixin);
 
    /**
      * @class {TransientLifestyle}
@@ -235,7 +306,20 @@ new function () { // closure
         constructor: function (instance) {
             this.extend({
                 resolve: function (factory) {
-                    return instance || (instance = factory(true));
+                    if (!instance) {
+                        instance = factory();
+                        this.trackInstance();
+                    }
+                    return instance;
+                },
+                disposeInstance: function (obj, disposing) {
+                    if (obj === instance) {
+                        this.base(obj, disposing);
+                        instance = undefined;
+                    }
+                },
+                _dispose: function() {
+                    this.disposeInstance(instance);
                 }
             });
         }
@@ -245,7 +329,7 @@ new function () { // closure
      * @class {ContextualLifestyle}
      */
     var ContextualLifestyle = Lifestyle.extend({
-        constructor: function (instance) {
+        constructor: function () {
             var _cache = {};
             this.extend({
                 resolve: function (factory, composer) {
@@ -255,15 +339,35 @@ new function () { // closure
                             instance = _cache[id];
                         if (!instance) {
                             _cache[id] = instance = factory();
-                            var cancel = context.observe({
+                            this.trackInstance(instance);
+                            var lifestyle = this,
+                                cancel    = context.observe({
                                 contextEnded: function(ctx) {
+                                    lifestyle.disposeInstance(instance);
                                     delete _cache[id];
                                     cancel();
-                                },
+                                }
                             });
                         }
                         return instance;
                     }
+                },
+                disposeInstance: function (instance, disposing) {
+                    if (disposing) {
+                        for (contextId in _cache) {
+                            if (_cache[contextId] === instance) {
+                                this.base(instance, disposing);
+                                delete _cache[contextId];
+                                return;
+                            } 
+                        }
+                    }
+                },
+                _dispose: function() {
+                    for (contextId in _cache) {
+                        this.disposeInstance(_cache[contextId]);
+                    }
+                    _cache = {};
                 }
             });
         }
@@ -298,6 +402,19 @@ new function () { // closure
     });
 
     /**
+     * @class {DependencyResolutionError}
+     * @param {DependencyResolution} dependency  - failing dependency
+     * @param {String}               message     - error message
+     */
+    function DependencyResolutionError(dependency, message) {
+        this.message    = message;
+        this.dependency = dependency;
+        this.stack      = new Error().stack;
+    }
+    DependencyResolutionError.prototype             = new Error();
+    DependencyResolutionError.prototype.constructor = DependencyResolutionError;
+
+    /**
      * @class {IoContainer}
      */
     var IoContainer = CallbackHandler.extend(Container, {
@@ -318,12 +435,11 @@ new function () { // closure
                     var key          = componentModel.effectiveKey(),
                         factory      = componentModel.effectiveFactory(),
                         lifestyle    = componentModel.getLifestyle() || new SingletonLifestyle,
-                        dependencies = [];
+                        dependencies = new DependencyManager;
                         componentModel.collectDependencies(dependencies);
-                    return _registerHandler(this, key, factory, lifestyle, dependencies); 
+                    return _registerHandler(this, key, factory, lifestyle, dependencies.getDependencies()); 
                 },
-                dispose: function () {
-                }
+                dispose: function () { $provide.removeAll(this); }
             })
         },
         $validators:[
@@ -377,22 +493,22 @@ new function () { // closure
                     lang.format("Dependency cycle %1 detected.",
                                 resolution.formattedDependencyChain())))
             }
-            return lifestyle.resolve(function (replace) {
+            return lifestyle.resolve(function () {
                 var promises = [], parameters = [];
                 for (var index = 0; index < dependencies.length; ++index) {
                     var dependency = dependencies[index],
                         use        = $use.test(dependency),
                         lazy       = $lazy.test(dependency),
                         optional   = $optional.test(dependency),
-                        promise    = $promise.test(dependency);
-                        dependency = Modifier.unwrap(dependency);
-
-		    if (dependency === $$composer) {
-			dependency = composer;
-		    } else if (dependency === Container) {
-			dependency = container;
-		    }
-                    else if (use) {
+                        promise    = $promise.test(dependency),
+                        containerDep;
+                    dependency = Modifier.unwrap(dependency);
+                    if (dependency === $$composer) {
+                        dependency = composer;
+                    } else if (dependency === Container) {
+                        dependency = containerDep || (containerDep = Container(composer));
+                    }
+                    else if (use || (dependency === undefined) || (dependency === null)) {
                         if (promise) {
                             dependency = Q(dependency);
                         }
@@ -428,12 +544,7 @@ new function () { // closure
                     parameters.push(dependency);
                 }
                 function createInstance () {
-                    var instance = factory.apply(container, parameters);
-                    if (replace) {
-                        unbind();
-                        unbind = $provide(container, key, $lift(instance));
-                    }
-                    return instance;
+                    return factory.apply(container, parameters);
                 }
                 if (promises.length === 1) {
                     return promises[0].then(createInstance);
@@ -443,7 +554,7 @@ new function () { // closure
                     return createInstance();
                 }
             }, composer);
-        });
+        }, lifestyle.dispose.bind(lifestyle));
         return function () { unbind(); }
     }
 

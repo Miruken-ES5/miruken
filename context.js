@@ -87,10 +87,10 @@ new function () { // closure
                         }
                     });
                     _children.push(childContext);
-					if (typeOf(block) === 'function') {
-						block(childContext);
-						childContext.dispose();
-					}
+                                        if (typeOf(block) === 'function') {
+                                                block(childContext);
+                                                childContext.dispose();
+                                        }
                     return childContext;
                 },
                 store: function (object) {
@@ -168,7 +168,7 @@ new function () { // closure
                     }
                 },
                 dispose: function () {
-				    this.end();
+                                    this.end();
                 }
             });
 
@@ -190,7 +190,9 @@ new function () { // closure
             return object.__context;
         },
         setContext: function (object, context) {
-            if (object.__context === context) return;
+            if (object.__context === context) {
+                return;
+            }
             if (object.__context)
                 object.__context.removeHandlers(object);
             if (context) {

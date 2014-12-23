@@ -752,7 +752,7 @@ new function () { // closure
                     insert.prev = prev.next = node;
                 }
             }
-            return function () {
+            return function (notifyRemoved) {
                 var prev = node.prev,
                     next = node.next;
                 if (prev) {
@@ -776,10 +776,24 @@ new function () { // closure
                         delete nodes.index[index];
                     }
                 }
-		if (node.removed) {
-		    node.removed();
+		if (node.removed && (notifyRemoved !== false)) {
+		    node.removed(owner);
 		}
             };
+        };
+        definition.removeAll = function (owner) {
+            var definitions = owner.$miruken;
+            if (definitions) {
+                var nodes = definitions[tag],
+                    head  = nodes.$head;
+                while (head) {
+                    if (head.removed) {
+                        head.removed(owner);
+                    }
+                    head = head.next;
+                }
+		delete definitions[tag];
+            }
         };
         definition.dispatch = function (handler, callback, constraint, composer) {
             var varianceMatch = variance,

@@ -15,7 +15,7 @@ new function () { // closure
 
     var ioc_test = new base2.Package(this, {
         name:    "ioc_test",
-        exports: "Car,Engine,Diagnostics,V12,Ferarri,OBDII"
+        exports: "Car,Engine,Diagnostics,Junkyard,V12,RebuiltV12,Ferarri,OBDII,CraigsJunk"
     });
 
     eval(this.imports);
@@ -34,7 +34,12 @@ new function () { // closure
         getMPG: function () {}
     });
 
+    var Junkyard = Protocol.extend({
+        decomission: function (part) {}
+    });
+
     var V12 = Base.extend(Engine, {
+	$inject: [,,$optional(Diagnostics)],
         constructor: function (horsepower, displacement, diagnostics) {
             this.extend({
                 getHorsepower: function () { return horsepower; },
@@ -44,7 +49,14 @@ new function () { // closure
         },
         getNumberOfCylinders: function () { return 12; },
     });
-          
+ 
+    var RebuiltV12 = V12.extend(Engine, {
+        $inject: [,,,Junkyard],
+        constructor: function (horsepower, displacement, diagnostics, junkyard) {
+            this.base(horsepower, displacement, diagnostics, junkyard);
+        }
+    });
+
     var Ferarri = Base.extend(Car, {
         $inject: Engine,
         constructor: function (engine) {
@@ -55,10 +67,21 @@ new function () { // closure
     });
 
     var OBDII = Base.extend(Diagnostics, {
-        $inject: Engine,
-        constructor: function (engine) {
+        constructor: function () {
             this.extend({
                 getMPG: function () { return 22.0; }
+            });
+        }
+    });
+
+    var CraigsJunk = Base.extend(Junkyard, {
+        constructor: function () {
+            var _parts = [];
+            this.extend({
+                getParts: function () { return _parts.slice(0); },
+                decomission: function (part) {
+                    _parts.push(part);
+                }
             });
         }
     });
@@ -111,10 +134,24 @@ describe("ComponentKeyPolicy", function () {
     });
 
     describe("#effectiveKey", function () {
+        it("should return service if no key or class", function () {
+            var keyPolicy = new ComponentKeyPolicy;
+            keyPolicy.setService(Engine);
+            expect(keyPolicy.effectiveKey()).to.equal(Engine);
+        });
+
         it("should return class if no key", function () {
             var keyPolicy = new ComponentKeyPolicy;
             keyPolicy.setClass(Ferarri);
             expect(keyPolicy.effectiveKey()).to.equal(Ferarri);
+        });
+    });
+
+    describe("#effectiveService", function () {
+        it("should return key if no service and key is protocol", function () {
+            var keyPolicy = new ComponentKeyPolicy;
+            keyPolicy.setKey(Car);
+            expect(keyPolicy.effectiveService()).to.equal(Car);
         });
     });
 
@@ -129,10 +166,10 @@ describe("ComponentKeyPolicy", function () {
     describe("#collectDependencies", function () {
         it("should obtain dependencies from class if none specified", function () {
             var keyPolicy    = new ComponentKeyPolicy,
-            dependencies = [];
+                dependencies = new DependencyManager;;
             keyPolicy.setClass(Ferarri);
             keyPolicy.collectDependencies(dependencies);
-            expect(dependencies).to.eql([Engine]);
+            expect(dependencies.getDependencies()).to.eql([Engine]);
         });
     });
 });
@@ -211,7 +248,7 @@ describe("IoContainer", function () {
                     expect(Container(context).resolve(Engine)).to.be.undefined;
                     done();
                 });
-                });
+            });
         });
 
         it("should reject registration if no key", function (done) {
@@ -375,7 +412,7 @@ describe("IoContainer", function () {
             });
         });
 
-        it("should resolve instance with optional dependencies", function (done) {
+        it("should override dependencies", function (done) {
             var context   = new Context(),
                 carPolicy = new ComponentKeyPolicy,
                 container = new IoContainer;
@@ -387,6 +424,22 @@ describe("IoContainer", function () {
                 Q(Container(context).resolve(Car)).then(function (car) {
                     expect(car).to.be.instanceOf(Ferarri);
                     expect(car.getEngine()).to.be.instanceOf(V12);
+                    done();
+                });
+            });
+        });
+
+        it("should resolve instance with optional dependencies", function (done) {
+            var context   = new Context(),
+                container = new IoContainer;
+            context.addHandlers(container, new ValidationCallbackHandler);
+            Q.all([Container(context).register(Ferarri),
+                   Container(context).register(V12),
+                   Container(context).register(OBDII)]).then(function () {
+                Q(Container(context).resolve(Car)).then(function (car) {
+		    var diagnostics = car.getEngine().getDiagnostics();
+		    expect(diagnostics).to.be.instanceOf(OBDII);
+		    expect(diagnostics.getMPG()).to.equal(22.0);
                     done();
                 });
             });
@@ -493,7 +546,7 @@ describe("IoContainer", function () {
             context.addHandlers(container, new ValidationCallbackHandler);
             Q(Container(context).register(Registry)).then(function () {
                 Q(Container(context).resolve(Registry)).then(function (registry) {
-                    expect(registry.getContainer()).to.equal(container);
+                    expect(registry.getContainer()).to.be.instanceOf(Container);
                     done();
                 });
             });
@@ -576,6 +629,21 @@ describe("IoContainer", function () {
                         expect(error.message).to.match(/Dependency cycle.*Engine.*<=.*Engine.*<=.*Car.*detected./);
                         expect(error.dependency.getKey()).to.equal(Engine);
                     done();
+                });
+            });
+        });
+    });
+
+    describe("#dispose", function () {
+        it("should dispose all components", function (done) {
+            var context   = new Context(),
+                container = new IoContainer;
+            context.addHandlers(container, new ValidationCallbackHandler);
+            Q.all([Container(context).register(Ferarri),
+                   Container(context).register(V12)]).then(function () {
+                Q.when(Container(context).resolve(Car), function (car) {
+                    done();
+                    container.dispose();
                 });
             });
         });

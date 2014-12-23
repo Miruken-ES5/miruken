@@ -356,7 +356,7 @@ describe("Context", function() {
                 contextEnded:  function(ctx) {
                     expect(ctx).to.equal(context);
                     ended  = true; 
-                },
+                }
             });
             context.end();
             expect(ending).to.be.true;
@@ -377,7 +377,7 @@ describe("Context", function() {
                 childContextEnded:  function(ctx) {
                     expect(ctx).to.equal(child);
                     ended  = true; 
-                },
+                }
             });
             child.end();
             expect(ending).to.be.true;
@@ -397,7 +397,7 @@ describe("Context", function() {
                 contextEnded:  function(ctx) {
                     expect(ctx).to.equal(context);
                     ended  = true; 
-                },
+                }
             });
             unobserve();
             context.end();
