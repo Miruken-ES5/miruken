@@ -1,4 +1,5 @@
-require('./base2.js');
+var Q  = require('q');
+         require('./base2.js');
 
 new function () { // closure
 
@@ -8,7 +9,7 @@ new function () { // closure
     var miruken = new base2.Package(this, {
         name:    "miruken",
         version: "1.0",
-        exports: "Protocol,Proxy,Disposing,DisposingMixin,TraversingAxis,Traversing,Traversal,Variance,Modifier,$isClass,$isFunction,$lift,$using,$eq,$use,$copy,$lazy,$optional,$promise,$createModifier"
+        exports: "Protocol,Proxy,Disposing,DisposingMixin,TraversingAxis,Traversing,Traversal,Variance,Modifier,$isClass,$isFunction,$isPromise,$lift,$using,$eq,$use,$copy,$lazy,$optional,$promise,$createModifier"
     });
 
     eval(this.imports);
@@ -116,10 +117,10 @@ new function () { // closure
                     subclass.getProtocols = getProtocols;
                     subclass.conformsTo   = Base.conformsTo;
                     return subclass;
-					})(this, Array.prototype.slice.call(arguments));
+                    })(this, Array.prototype.slice.call(arguments));
             };
 
-			// Conformance
+            // Conformance
             Base.conformsTo = function (protocol) {
                 if (!protocol) {
                     return false;
@@ -128,7 +129,7 @@ new function () { // closure
                     return true;
                 }
                 var protocols = this.getProtocols();
-				for (var index = 0; index < protocols.length; ++index) {
+                for (var index = 0; index < protocols.length; ++index) {
                     var proto = protocols[index];
                     if (protocol === proto || proto.conformsTo(protocol)) {
                         return true;
@@ -143,7 +144,7 @@ new function () { // closure
                 return this.constructor.conformsTo(protocol);
             };
 
-			// Proxying methods
+            // Proxying methods
             this.extend = function () {
                 var derived = Base.extend.apply(this, arguments);
                 for (var key in derived.prototype) {
@@ -192,24 +193,36 @@ new function () { // closure
             if ($isFunction(object._dispose)) {
                 object._dispose();
                 object.dispose = Undefined;
-	        }
+            }
         }
     });
 
     /**
      * @function $using
-     * @param    {Disposing} disposing  - disposing object
-     * @param    {Function}  block      - block to execute
-     * @param    {Object}    context    - block context (this)
-     * @returns  {Any} result of executing block in context.
+     * @param    {Disposing}           disposing  - disposing object
+     * @param    {Function | Promise}  action     - block or Promise
+     * @param    {Object}              context    - block context
+     * @returns  {Any} result of executing action in context.
      */
-    function $using(disposing, block, context) {
-        if (disposing && $isFunction(block) && $isFunction(disposing.dispose)) {
-            try {
-                return block.call(context, disposing);
-            } finally {
-                disposing.dispose();
+    function $using(disposing, action, context) {
+        if (disposing && $isFunction(disposing.dispose)) {
+            if ($isFunction(action)) {
+                var result;
+                try {
+                    result = action.call(context, disposing);
+                    return result;
+                } finally {
+                    if ($isPromise(result)) {
+                        action = result;
+                    } else {
+                        disposing.dispose();
+                    }
+                }
+            } else if (!$isPromise(action)) {
+                return;
             }
+            action.fin(function () { disposing.dispose(); });
+            return action;
         }
     }
 
@@ -301,6 +314,15 @@ new function () { // closure
      */
     function $isFunction(fn) {
         return typeOf(fn) === 'function';
+    }
+
+    /**
+     * @function $isPromise
+     * @param    {Any}     promise  - promise to test
+     * @returns  {Boolean} true if a promise. 
+     */
+    function $isPromise(promise) {
+        return Q.isPromiseAlike(promise);
     }
 
     /**

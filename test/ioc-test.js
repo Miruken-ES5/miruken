@@ -39,7 +39,7 @@ new function () { // closure
     });
 
     var V12 = Base.extend(Engine, {
-	$inject: [,,$optional(Diagnostics)],
+    $inject: [,,$optional(Diagnostics)],
         constructor: function (horsepower, displacement, diagnostics) {
             this.extend({
                 getHorsepower: function () { return horsepower; },
@@ -54,11 +54,11 @@ new function () { // closure
         $inject: [,,,Junkyard],
         constructor: function (horsepower, displacement, diagnostics, junkyard) {
             this.base(horsepower, displacement, diagnostics, junkyard);
-	    this.extend({
-		dispose: function () {
-		    junkyard.decomission(this);
-		}
-	    });
+            this.extend({
+                dispose: function () {
+                    junkyard.decomission(this);
+                }
+            });
         }
     });
 
@@ -255,12 +255,12 @@ describe("SingletonLifestyle", function () {
         it("should dispose unregistered components", function (done) {
             var context   = new Context(),
                 container = new IoContainer;
-	        context.addHandlers(container, new ValidationCallbackHandler);
+            context.addHandlers(container, new ValidationCallbackHandler);
             Q.all([Container(context).register(RebuiltV12),
                    Container(context).register(CraigsJunk)]).spread(function (registration) {
                        Q.all([Container(context).resolve(Engine),
                               Container(context).resolve(Junkyard)]).spread(function (engine, junk) {
-		            registration.unregister();
+                    registration.unregister();
                     expect(junk.getParts()).to.eql([engine]);
                     done();
                 });
@@ -295,7 +295,7 @@ describe("ContextualLifestyle", function () {
             var context      = new Context(),
                 enginePolicy = new ComponentKeyPolicy,
                 policies     = [enginePolicy, new ContextualLifestyle],
-                container = new IoContainer;
+                container    = new IoContainer;
             enginePolicy.setClass(V12);
             context.addHandlers(container, new ValidationCallbackHandler);
             Q(Container(context).register(policies)).then(function () {
@@ -303,11 +303,12 @@ describe("ContextualLifestyle", function () {
                        Container(context).resolve(Engine)]).spread(function (engine1, engine2) {
                     expect(engine1).to.equal(engine2);
                     var childContext = context.newChildContext();
-                    Q(Container(childContext).resolve(Engine)).then(function (engine3) {
-                        expect(engine3).to.not.equal(engine1);
-                        childContext.dispose();
-                        done();
-                    });
+                    $using(childContext, 
+                        Q(Container(childContext).resolve(Engine)).then(function (engine3) {
+                            expect(engine3).to.not.equal(engine1);
+                            done();
+                        })
+                    );
                 });
             });
         });
@@ -333,26 +334,33 @@ describe("ContextualLifestyle", function () {
                 policies     = [enginePolicy, new ContextualLifestyle],
                 container    = new IoContainer;
             enginePolicy.setClass(RebuiltV12);
-	        context.addHandlers(container, new ValidationCallbackHandler);
+            context.addHandlers(container, new ValidationCallbackHandler);
             Q.all([Container(context).register(policies),
                    Container(context).register(CraigsJunk)]).spread(function (registration) {
-                var childContext = context.newChildContext();
-                Q.all([Container(childContext).resolve(Engine),
-                       Container(childContext).resolve(Junkyard)]).spread(function (engine, junk) {
-                   childContext.dispose();
-                   expect(junk.getParts()).to.eql([engine]);
-                   done();
+                var engine, junk,
+                    childContext = context.newChildContext();
+                $using(childContext, 
+                       Q.all([Container(childContext).resolve(Engine),
+                              Container(childContext).resolve(Junkyard)]).spread(function (e, j) {
+                           engine = e, junk = j;
+                       })
+                ).fin(function() {
+                    expect(junk.getParts()).to.eql([engine]);
+                    done();
                 });
             });
         });
-    });
+    })
 });
 
 describe("IoContainer", function () {
     describe("#register", function () {
-        var context   = new Context(),
+        var context, container;
+        beforeEach(function() {
+            context   = new Context();
             container = new IoContainer;
-        context.addHandlers(container, new ValidationCallbackHandler);
+            context.addHandlers(container, new ValidationCallbackHandler);
+        });
 
         it("should register component", function (done) {
             Q.when(Container(context).register(Ferarri), function (registration) {
@@ -410,10 +418,14 @@ describe("IoContainer", function () {
     });
 
     describe("#resolve", function () {
-        it("should resolve class", function (done) {
-            var context   = new Context(),
-                container = new IoContainer;
+        var context, container;
+        beforeEach(function() {
+            context   = new Context();
+            container = new IoContainer;
             context.addHandlers(container, new ValidationCallbackHandler);
+        });
+
+        it("should resolve class", function (done) {
             Q.all([Container(context).register(Ferarri),
                    Container(context).register(V12)]).then(function () {
                 Q.when(Container(context).resolve(Car), function (car) {
@@ -425,12 +437,9 @@ describe("IoContainer", function () {
         });
 
         it("should resolve instance with supplied dependencies", function (done) {
-            var context      = new Context(),
-                enginePolicy = new ComponentKeyPolicy,
-                container    = new IoContainer;
+            var enginePolicy = new ComponentKeyPolicy;
             enginePolicy.setClass(V12);
             enginePolicy.setDependencies([$use(917), $use(6.3)]);
-            context.addHandlers(container, new ValidationCallbackHandler);
             Q(Container(context).register(enginePolicy)).then(function () {
                 Q(Container(context).resolve(Engine)).then(function (engine) {
                     expect(engine.getHorsepower()).to.equal(917);
@@ -441,9 +450,7 @@ describe("IoContainer", function () {
         });
 
         it("should resolve instance with dependency promises", function (done) {
-            var context   = new Context(),
-                container = new IoContainer,
-                Order     = Base.extend({
+            var Order = Base.extend({
                     $inject: [$promise(Engine), $promise($use(19))],
                     constructor: function (engine, count) {
                         this.extend({
@@ -452,7 +459,6 @@ describe("IoContainer", function () {
                         });
                     }
                 });
-            context.addHandlers(container, new ValidationCallbackHandler);
             Q.all([Container(context).register(Order),
                    Container(context).register(V12)]).then(function () {
                 Q(Container(context).resolve(Order)).then(function (order) {
@@ -468,12 +474,9 @@ describe("IoContainer", function () {
         });
 
         it("should override dependencies", function (done) {
-            var context   = new Context(),
-                carPolicy = new ComponentKeyPolicy,
-                container = new IoContainer;
+            var carPolicy = new ComponentKeyPolicy;
             carPolicy.setClass(Ferarri);
             carPolicy.setDependencies($optional(Engine));
-            context.addHandlers(container, new ValidationCallbackHandler);
             Q.all([Container(context).register(carPolicy),
                    Container(context).register(V12)]).then(function () {
                 Q(Container(context).resolve(Car)).then(function (car) {
@@ -485,28 +488,22 @@ describe("IoContainer", function () {
         });
 
         it("should resolve instance with optional dependencies", function (done) {
-            var context   = new Context(),
-                container = new IoContainer;
-            context.addHandlers(container, new ValidationCallbackHandler);
             Q.all([Container(context).register(Ferarri),
                    Container(context).register(V12),
                    Container(context).register(OBDII)]).then(function () {
                 Q(Container(context).resolve(Car)).then(function (car) {
-		    var diagnostics = car.getEngine().getDiagnostics();
-		    expect(diagnostics).to.be.instanceOf(OBDII);
-		    expect(diagnostics.getMPG()).to.equal(22.0);
+            var diagnostics = car.getEngine().getDiagnostics();
+            expect(diagnostics).to.be.instanceOf(OBDII);
+            expect(diagnostics.getMPG()).to.equal(22.0);
                     done();
                 });
             });
         });
 
         it("should resolve instance with optional missing dependencies", function (done) {
-            var context   = new Context(),
-                carPolicy = new ComponentKeyPolicy,
-                container = new IoContainer;
+            var carPolicy = new ComponentKeyPolicy;
             carPolicy.setClass(Ferarri);
             carPolicy.setDependencies($optional(Engine));
-            context.addHandlers(container, new ValidationCallbackHandler);
             Q(Container(context).register(carPolicy)).then(function () {
                 Q(Container(context).resolve(Car)).then(function (car) {
                     expect(car).to.be.instanceOf(Ferarri);
@@ -517,9 +514,7 @@ describe("IoContainer", function () {
         });
 
         it("should resolve instance with lazy dependencies", function (done) {
-            var context   = new Context(),
-                container = new IoContainer,
-                Order     = Base.extend({
+            var Order = Base.extend({
                     $inject: [$lazy(Engine), $lazy($use(9))],
                     constructor: function (engine, count) {
                         this.extend({
@@ -528,7 +523,6 @@ describe("IoContainer", function () {
                         });
                     }
                 });
-            context.addHandlers(container, new ValidationCallbackHandler);
             Q.all([Container(context).register(Order),
                    Container(context).register(V12)]).then(function () {
                 Q(Container(context).resolve(Order)).then(function (order) {
@@ -542,9 +536,7 @@ describe("IoContainer", function () {
         });
 
         it("should not fail resolve when missing lazy dependencies", function (done) {
-            var context   = new Context(),
-                container = new IoContainer,
-                Order     = Base.extend({
+            var Order = Base.extend({
                     $inject: $lazy(Engine),
                     constructor: function (engine) {
                         this.extend({
@@ -552,7 +544,6 @@ describe("IoContainer", function () {
                         });
                     }
                 });
-            context.addHandlers(container, new ValidationCallbackHandler);
             Q(Container(context).register(Order)).then(function () {
                 Q(Container(context).resolve(Order)).then(function (order) {
                     expect(order).to.be.instanceOf(Order);
@@ -563,9 +554,7 @@ describe("IoContainer", function () {
         });
 
         it("should delay rejecting lazy dependency failures", function (done) {
-            var context   = new Context(),
-                container = new IoContainer,
-                Order     = Base.extend({
+            var Order = Base.extend({
                     $inject: $lazy(Car),
                     constructor: function (car) {
                         this.extend({
@@ -573,7 +562,6 @@ describe("IoContainer", function () {
                         });
                     }
                 });
-            context.addHandlers(container, new ValidationCallbackHandler);
             Q.all([Container(context).register(Order),
                    Container(context).register(Ferarri)]).then(function () {
                 Q(Container(context).resolve(Order)).then(function (order) {
@@ -588,9 +576,7 @@ describe("IoContainer", function () {
         });
 
         it("should implicitly satisfy container dependency", function (done) {
-            var context   = new Context(),
-                container = new IoContainer,
-                Registry  = Base.extend({
+            var Registry = Base.extend({
                     $inject: Container,
                     constructor: function (container) {
                         this.extend({
@@ -598,7 +584,6 @@ describe("IoContainer", function () {
                         });
                     }
                 });
-            context.addHandlers(container, new ValidationCallbackHandler);
             Q(Container(context).register(Registry)).then(function () {
                 Q(Container(context).resolve(Registry)).then(function (registry) {
                     expect(registry.getContainer()).to.be.instanceOf(Container);
@@ -608,9 +593,7 @@ describe("IoContainer", function () {
         });
 
         it("should implicitly satisfy composer dependency", function (done) {
-            var context   = new Context(),
-                container = new IoContainer,
-                Registry  = Base.extend({
+            var Registry = Base.extend({
                     $inject: $$composer,
                     constructor: function (composer) {
                         this.extend({
@@ -618,7 +601,6 @@ describe("IoContainer", function () {
                         });
                     }
                 });
-            context.addHandlers(container, new ValidationCallbackHandler);
             Q(Container(context).register(Registry)).then(function () {
                 Q(Container(context).resolve(Registry)).then(function (registry) {
                     expect(registry.getComposer()).to.equal(context);
@@ -631,9 +613,6 @@ describe("IoContainer", function () {
         });
 
         it("should return nothing if component not found", function (done) {
-            var context   = new Context(),
-                container = new IoContainer;
-            context.addHandlers(container, new ValidationCallbackHandler);
             Q.when(Container(context).resolve(Car), function (car) {
                 expect(car).to.be.undefined;
                 done();
@@ -641,9 +620,6 @@ describe("IoContainer", function () {
         });
 
         it("should have opportunity to resolve missing components", function (done) {
-            var context   = new Context(),
-                container = new IoContainer;
-            context.addHandlers(container, new ValidationCallbackHandler);
             $provide(container, True, function (resolution, composer) {
                 return new Ferarri(new V12(917, 6.3));
             });
@@ -655,12 +631,8 @@ describe("IoContainer", function () {
         });
 
         it("should fail resolve if missing dependencies", function (done) {
-            var context   = new Context(),
-                container = new IoContainer;
-            context.addHandlers(container, new ValidationCallbackHandler);
             Q.when(Container(context).register(Ferarri), function (model) {
-                Q.when(Container(context).resolve(Car), function (ferarri) {
-                }, function (error) {
+                Q(Container(context).resolve(Car)).fail(function (error) {
                     expect(error).to.be.instanceof(DependencyResolutionError);
                     expect(error.message).to.match(/Dependency.*Engine.*<=.*Car.*could not be resolved./);
                     expect(error.dependency.getKey()).to.equal(Engine);
@@ -670,17 +642,14 @@ describe("IoContainer", function () {
         });
 
         it("should detect circular dependencies", function (done) {
-            var context      = new Context(),
-                enginePolicy = new ComponentKeyPolicy,
-                container    = new IoContainer;
+            var enginePolicy = new ComponentKeyPolicy;
             enginePolicy.setClass(V12);
             enginePolicy.setDependencies([$use(917), $use(6.3), Engine]);
-            context.addHandlers(container, new ValidationCallbackHandler);
             Q.all([Container(context).register(Ferarri),
                    Container(context).register(enginePolicy)]).then(function () {
                 Q.when(Container(context).resolve(Car), function (ferarri) {
                 }, function (error) {
-						expect(error).to.be.instanceof(DependencyResolutionError);
+                        expect(error).to.be.instanceof(DependencyResolutionError);
                         expect(error.message).to.match(/Dependency cycle.*Engine.*<=.*Engine.*<=.*Car.*detected./);
                         expect(error.dependency.getKey()).to.equal(Engine);
                     done();
@@ -691,9 +660,6 @@ describe("IoContainer", function () {
 
     describe("#dispose", function () {
         it("should dispose all components", function (done) {
-            var context   = new Context(),
-                container = new IoContainer;
-            context.addHandlers(container, new ValidationCallbackHandler);
             Q.all([Container(context).register(Ferarri),
                    Container(context).register(V12)]).then(function () {
                 Q.when(Container(context).resolve(Car), function (car) {

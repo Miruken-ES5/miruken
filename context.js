@@ -14,7 +14,7 @@ new function () { // closure
         version: miruken.version,
         parent:  miruken,
         imports: "miruken,miruken.callback",
-        exports: "ContextState,ContextObserver,Context,Contextual,ContextualHelper"
+        exports: "ContextState,ContextObserver,Context,ContextualMixin,ContextualHelper"
     });
 
     eval(this.imports);
@@ -181,7 +181,7 @@ new function () { // closure
      * Contextual mixin
      * @class {Contextual}
      */
-    var Contextual = Module.extend({
+    var ContextualMixin = Module.extend({
         getContext: function (object) {
             return object.__context;
         },

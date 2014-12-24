@@ -87,6 +87,66 @@ new function () { // closure
     });
 
     /**
+     * @class {DependencyManager}
+     */
+    var DependencyManager = Base.extend({
+        constructor: function (dependencies) {
+            dependencies = dependencies || [];
+            this.extend({
+                getDependencies: function () { return dependencies; },
+                getIndex: function (index) {
+                    if (dependencies.length > index) {
+                        return dependencies[index];
+                    }
+                },
+                setIndex: function (index, dependency) {
+                    if ((dependencies.length <= index) ||
+                        (dependencies[index] === undefined)) {
+                        dependencies[index] = dependency;
+                    }
+                    return this;
+                },
+                insertIndex: function (index, dependency) {
+                    dependencies.splice(index, 0, dependency);
+                    return this;
+                },
+                replaceIndex: function (index, dependency) {
+                    dependencies[index] = dependency;
+                    return this;
+                },
+                removeIndex: function (index) {
+                    if (dependencies.length > index) {
+                        dependencies.splice(index, 1);
+                    }
+                    return this;
+                },
+                append: function (dependency) {
+                    _dependencies.push(dependency);
+                    return this;
+                },
+                merge: function (other, replace) {
+                    if (other !== undefined) {
+                        if (!(other instanceof Array)) {
+                            other = [other];
+                        }
+                        for (var index = 0; index < other.length; ++index) {
+                            var dependency = other[index];
+                            if (dependency !== undefined) {
+                                if (replace) {
+                                    this.replaceIndex(index, dependency);
+                                } else {
+                                    this.setIndex(index, dependency);
+                                }
+                            }
+                        }
+                    }
+                    return this;
+                }
+            });
+        }
+    });
+
+    /**
      * @class {ComponentKeyPolicy}
      */
     var ComponentKeyPolicy = Base.extend(ComponentPolicy, {
@@ -149,64 +209,11 @@ new function () { // closure
     });
 
     /**
-     * @class {DependencyManager}
-     */
-    var DependencyManager = Base.extend({
-        constructor: function (dependencies) {
-            dependencies = dependencies || [];
-            this.extend({
-                getDependencies: function () { return dependencies; },
-                getIndex: function (index) {
-                    if (dependencies.length > index) {
-                        return dependencies[index];
-                    }
-                },
-                setIndex: function (index, dependency) {
-                    if ((dependencies.length <= index) ||
-                        (dependencies[index] === undefined)) {
-                        dependencies[index] = dependency;
-                    }
-                    return this;
-                },
-                replaceIndex: function (index, dependency) {
-                    dependencies[index] = dependency;
-                    return this;
-                },
-                removeIndex: function (index) {
-                    if (dependencies.length > index) {
-                        dependencies.splice(index, 1);
-                    }
-                    return this;
-                },
-                merge: function (other, replace) {
-                    if (other !== undefined) {
-                        if (!(other instanceof Array)) {
-                            other = [other];
-                        }
-                        for (var index = 0; index < other.length; ++index) {
-                            var dependency = other[index];
-                            if (dependency !== undefined) {
-                                if (replace) {
-                                    this.replaceIndex(index, dependency);
-                                } else {
-                                    this.setIndex(index, dependency);
-                                }
-                            }
-                        }
-                    }
-                    return this;
-                }
-            });
-        }
-    });
-
-    /**
      * @class {ComponentModel}
      */
     var ComponentModel = Base.extend(ComponentPolicy, {
         constructor: function (/* policies */) {
-            var _policies = new Array2,
-                _lifeStyle;
+            var _policies = new Array2, _lifeStyle;
             this.extend({
                 getPolicies: function () { return _policies.copy(); },
                 getLifestyle: function () { return _lifeStyle; },
@@ -534,7 +541,7 @@ new function () { // closure
                             dependency   = _resolveDependency(paramDep, !optional, composer);
                             if (promise) {
                                 dependency = Q(dependency);
-                            } else if (Q.isPromiseAlike(dependency)) {
+                            } else if ($isPromise(dependency)) {
                                 promises.push(dependency);
                                 (function (paramPromise, paramIndex) {
                                     paramPromise.then(function (param) {

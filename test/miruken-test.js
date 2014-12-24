@@ -1,4 +1,5 @@
-var miruken = require('../miruken.js')
+var miruken = require('../miruken.js'),
+    Q       = require('q'),
     chai    = require("chai"),
     expect  = chai.expect;
 
@@ -9,7 +10,7 @@ new function () { // closure
 
     var miruken_test = new base2.Package(this, {
         name:    "miruken_test",
-        exports: "Animal,Tricks,CircusAnimal,Dog,Elephant,AsianElephant,Tracked,TreeNode"
+        exports: "Animal,Tricks,CircusAnimal,Dog,Elephant,AsianElephant,Tracked,ShoppingCart,TreeNode"
     });
 
     eval(this.imports);
@@ -39,6 +40,18 @@ new function () { // closure
 	var Tracked = Protocol.extend({
 		getTag: function () {}
 	});
+
+    var ShoppingCart = Base.extend(Disposing, {
+        constructor: function () {
+            var _items = [];
+            this.extend({
+                getItems: function () { return _items; },
+                addItem: function (item) { _items.push(item); }, 
+                _dispose: function () { _items = []; }
+            });
+        }
+    });
+    ShoppingCart.implement(DisposingMixin);
     
     var TreeNode = Base.extend({
         constructor: function (data) { 
@@ -66,12 +79,102 @@ eval(base2.miruken_test.namespace);
 
 describe("$isClass", function () {
     it("should identify miruken classes", function () {
-    expect($isClass(Dog)).to.be.true;
+        expect($isClass(Dog)).to.be.true;
     });
 
     it("should reject non-miruken classes", function () {
-    var SomeClass = function () {};
-    expect($isClass(SomeClass)).to.be.false;
+        var SomeClass = function () {};
+        expect($isClass(SomeClass)).to.be.false;
+    });
+});
+
+describe("$isFunction", function () {
+    it("should identify functions", function () {
+        var fn = function () {};
+        expect($isFunction(fn)).to.be.true;
+    });
+
+    it("should reject no functions", function () {
+        expect($isFunction(1)).to.be.false;
+        expect($isFunction("hello")).to.be.false;
+    });
+});
+
+describe("DisposingMixin", function () {
+    describe("dispose", function () {
+        it("should provide dispose", function () {
+            var shoppingCart = new ShoppingCart;
+            shoppingCart.addItem("Sneakers");
+            shoppingCart.addItem("Milk");
+            expect(shoppingCart.getItems()).to.eql(["Sneakers", "Milk"]);
+            shoppingCart.dispose();
+            expect(shoppingCart.getItems()).to.eql([]);
+        });
+
+        it("should only dispose once", function () {
+            var counter = 0,
+                DisposeCounter = Base.extend(Disposing, {
+                _dispose: function () { ++counter; }
+            });
+            DisposeCounter.implement(DisposingMixin);
+            var disposeCounter = new DisposeCounter;
+            expect(counter).to.equal(0);
+            disposeCounter.dispose();
+            expect(counter).to.equal(1);
+            disposeCounter.dispose();
+            expect(counter).to.equal(1);
+        });
+    });
+});
+
+describe("$using", function () {
+    it("should call block then dispose", function () {
+        var shoppingCart = new ShoppingCart;
+        shoppingCart.addItem("Halo II");
+        shoppingCart.addItem("Porsche");
+        $using(shoppingCart, function (cart) {
+            expect(shoppingCart.getItems()).to.eql(["Halo II", "Porsche"]);
+        });
+        expect(shoppingCart.getItems()).to.eql([]);
+    });
+
+    it("should call block then dispose if exeception", function () {
+        var shoppingCart = new ShoppingCart;
+        shoppingCart.addItem("Halo II");
+        shoppingCart.addItem("Porsche");
+        expect(function () { 
+            $using(shoppingCart, function (cart) {
+                throw new Error("Something bad");
+            });
+        }).to.throw(Error, "Something bad");
+        expect(shoppingCart.getItems()).to.eql([]);
+    });
+
+    it("should wait for promise to fulfill then dispose", function (done) {
+        var shoppingCart = new ShoppingCart;
+        shoppingCart.addItem("Halo II");
+        shoppingCart.addItem("Porsche");
+        $using(shoppingCart, Q.delay(100).then(function () {
+               shoppingCart.addItem("Book");
+               expect(shoppingCart.getItems()).to.eql(["Halo II", "Porsche", "Book"]);
+               }) 
+        ).finally(function () {
+            expect(shoppingCart.getItems()).to.eql([]);
+            done();
+        });
+    });
+
+    it("should wait for promise to fail then dispose", function (done) {
+        var shoppingCart = new ShoppingCart;
+        shoppingCart.addItem("Halo II");
+        shoppingCart.addItem("Porsche");
+        $using(shoppingCart, Q.delay(100).then(function () {
+               throw new Error("Something bad");
+               }) 
+        ).finally(function () {
+            expect(shoppingCart.getItems()).to.eql([]);
+            done();
+        });
     });
 });
 
@@ -92,7 +195,7 @@ describe("Modifier", function () {
         it("should not apply a modifier the using new operator", function () {
             var wrap    = $createModifier('wrap');
             expect(function () { 
-        new wrap(22);
+                new wrap(22);
             }).to.throw(Error, /Modifiers should not be called with the new operator./);
         });
         
@@ -509,7 +612,6 @@ describe("Package", function () {
             miruken_test.getProtocols(function (protocol) {
                 protocols.push(protocol);
             });
-            expect(protocols).to.have.length(4);
             expect(protocols).to.have.members([Animal, Tricks, CircusAnimal, Tracked]);
         });
     });
@@ -520,8 +622,7 @@ describe("Package", function () {
             miruken_test.getClasses(function (cls) {
                 classes.push(cls);
             });
-            expect(classes).to.have.length(4);
-            expect(classes).to.have.members([Dog, Elephant, AsianElephant, TreeNode]);
+            expect(classes).to.have.members([Dog, Elephant, AsianElephant, ShoppingCart, TreeNode]);
         });
     });
 });

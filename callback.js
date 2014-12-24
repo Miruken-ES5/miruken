@@ -103,7 +103,7 @@ new function () { // closure
                 getCallback: function () { return callback; },
                 getPending: function () { return _pending; },
                 track: function (result) {
-                    if (Q.isPromiseAlike(result)) {
+                    if ($isPromise(result)) {
                         _pending.push(result);
                     }
                 }
@@ -942,7 +942,7 @@ new function () { // closure
         if (object instanceof HandleMethod) {
             object = object.getReturnValue();
         }
-        return Q.isPromiseAlike(object) ? object : null;
+        return $isPromise(object) ? object : null;
     }
 
     if (typeof module !== 'undefined' && module.exports)
