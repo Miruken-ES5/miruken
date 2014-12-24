@@ -232,6 +232,122 @@ describe("ComponentModel", function () {
     });
 });
 
+describe("SingletonLifestyle", function () {
+    describe("#resolve", function () {
+        it("should resolve same instance for SingletonLifestyle", function (done) {
+            var context      = new Context(),
+                enginePolicy = new ComponentKeyPolicy,
+                policies     = [enginePolicy, new SingletonLifestyle],
+                container    = new IoContainer;
+            enginePolicy.setClass(V12);
+            context.addHandlers(container, new ValidationCallbackHandler);
+            Q(Container(context).register(policies)).then(function () {
+                Q.all([Container(context).resolve(Engine),
+                       Container(context).resolve(Engine)]).spread(function (engine1, engine2) {
+                    expect(engine1).to.equal(engine2);
+                    done();
+                });
+            });
+        });
+    });
+
+    describe("#dispose", function () {
+        it("should dispose unregistered components", function (done) {
+            var context   = new Context(),
+                container = new IoContainer;
+	        context.addHandlers(container, new ValidationCallbackHandler);
+            Q.all([Container(context).register(RebuiltV12),
+                   Container(context).register(CraigsJunk)]).spread(function (registration) {
+                       Q.all([Container(context).resolve(Engine),
+                              Container(context).resolve(Junkyard)]).spread(function (engine, junk) {
+		            registration.unregister();
+                    expect(junk.getParts()).to.eql([engine]);
+                    done();
+                });
+            });
+        });
+    });
+});
+
+describe("TransientLifestyle", function () {
+    describe("#resolve", function () {
+        it("should resolve diferent instance for TransientLifestyle", function (done) {
+            var context      = new Context(),
+                enginePolicy = new ComponentKeyPolicy,
+                policies     = [enginePolicy, new TransientLifestyle],
+                container    = new IoContainer;
+            enginePolicy.setClass(V12);
+            context.addHandlers(container, new ValidationCallbackHandler);
+            Q(Container(context).register(policies)).then(function () {
+                Q.all([Container(context).resolve(Engine),
+                       Container(context).resolve(Engine)]).spread(function (engine1, engine2) {
+                    expect(engine1).to.not.equal(engine2);
+                    done();
+                });
+            });
+        });
+    });
+});
+
+describe("ContextualLifestyle", function () {
+    describe("#resolve", function () {
+        it("should resolve diferent instance per context for ContextualLifestyle", function (done) {
+            var context      = new Context(),
+                enginePolicy = new ComponentKeyPolicy,
+                policies     = [enginePolicy, new ContextualLifestyle],
+                container = new IoContainer;
+            enginePolicy.setClass(V12);
+            context.addHandlers(container, new ValidationCallbackHandler);
+            Q(Container(context).register(policies)).then(function () {
+                Q.all([Container(context).resolve(Engine),
+                       Container(context).resolve(Engine)]).spread(function (engine1, engine2) {
+                    expect(engine1).to.equal(engine2);
+                    var childContext = context.newChildContext();
+                    Q(Container(childContext).resolve(Engine)).then(function (engine3) {
+                        expect(engine3).to.not.equal(engine1);
+                        childContext.dispose();
+                        done();
+                    });
+                });
+            });
+        });
+
+        it("should resolve nothing if context not available", function (done) {
+            var enginePolicy = new ComponentKeyPolicy,
+                policies     = [enginePolicy, new ContextualLifestyle],
+                container    = (new ValidationCallbackHandler).next(new IoContainer);
+            enginePolicy.setClass(V12);
+            Q(Container(container).register(policies)).then(function () {
+                Q(Container(container).resolve(Engine)).then(function (engine) {
+                    expect(engine).to.be.undefined;
+                    done();
+                });
+            });
+        });
+    });
+
+    describe("#dispose", function () {
+        it("should dispose components when context ended", function (done) {
+            var context      = new Context(),
+                enginePolicy = new ComponentKeyPolicy,
+                policies     = [enginePolicy, new ContextualLifestyle],
+                container    = new IoContainer;
+            enginePolicy.setClass(RebuiltV12);
+	        context.addHandlers(container, new ValidationCallbackHandler);
+            Q.all([Container(context).register(policies),
+                   Container(context).register(CraigsJunk)]).spread(function (registration) {
+                var childContext = context.newChildContext();
+                Q.all([Container(childContext).resolve(Engine),
+                       Container(childContext).resolve(Junkyard)]).spread(function (engine, junk) {
+                   childContext.dispose();
+                   expect(junk.getParts()).to.eql([engine]);
+                   done();
+                });
+            });
+        });
+    });
+});
+
 describe("IoContainer", function () {
     describe("#register", function () {
         var context   = new Context(),
@@ -303,72 +419,6 @@ describe("IoContainer", function () {
                 Q.when(Container(context).resolve(Car), function (car) {
                     expect(car).to.be.instanceOf(Ferarri);
                     expect(car.getEngine()).to.be.instanceOf(V12);
-                    done();
-                });
-            });
-        });
-
-        it("should resolve same instance for SingletonLifestyle", function (done) {
-            var context      = new Context(),
-                enginePolicy = new ComponentKeyPolicy,
-                policies     = [enginePolicy, new SingletonLifestyle],
-                container    = new IoContainer;
-            enginePolicy.setClass(V12);
-            context.addHandlers(container, new ValidationCallbackHandler);
-            Q(Container(context).register(policies)).then(function () {
-                Q.all([Container(context).resolve(Engine),
-                       Container(context).resolve(Engine)]).spread(function (engine1, engine2) {
-                    expect(engine1).to.equal(engine2);
-                    done();
-                });
-            });
-        });
-
-        it("should resolve diferent instance for TransientLifestyle", function (done) {
-            var context      = new Context(),
-                enginePolicy = new ComponentKeyPolicy,
-                policies     = [enginePolicy, new TransientLifestyle],
-                container    = new IoContainer;
-            enginePolicy.setClass(V12);
-            context.addHandlers(container, new ValidationCallbackHandler);
-            Q(Container(context).register(policies)).then(function () {
-                Q.all([Container(context).resolve(Engine),
-                       Container(context).resolve(Engine)]).spread(function (engine1, engine2) {
-                    expect(engine1).to.not.equal(engine2);
-                    done();
-                });
-            });
-        });
-
-        it("should resolve diferent instance per context for ContextualLifestyle", function (done) {
-            var context      = new Context(),
-                enginePolicy = new ComponentKeyPolicy,
-                policies     = [enginePolicy, new ContextualLifestyle],
-                container = new IoContainer;
-            enginePolicy.setClass(V12);
-            context.addHandlers(container, new ValidationCallbackHandler);
-            Q(Container(context).register(policies)).then(function () {
-                Q.all([Container(context).resolve(Engine),
-                       Container(context).resolve(Engine)]).spread(function (engine1, engine2) {
-                    expect(engine1).to.equal(engine2);
-                    context.newChildContext(function (ctx) {
-                        Q(Container(ctx).resolve(Engine)).then(function (engine3) {
-                            expect(engine3).to.not.equal(engine1);
-                            done();
-                        });
-                    })
-                });
-            });
-        });
-
-        it("should resolve nothing if context not available", function (done) {
-            var enginePolicy = new ComponentKeyPolicy,
-                policies     = [enginePolicy, new ContextualLifestyle],
-                container    = (new ValidationCallbackHandler).next(new IoContainer);
-            enginePolicy.setClass(V12);
-            Q(Container(container).register(policies)).then(function () {
-                Q(Container(container).resolve(Engine)).then(function (engine) {
-                    expect(engine).to.be.undefined;
                     done();
                 });
             });
@@ -630,22 +680,9 @@ describe("IoContainer", function () {
                    Container(context).register(enginePolicy)]).then(function () {
                 Q.when(Container(context).resolve(Car), function (ferarri) {
                 }, function (error) {
-                        expect(error).to.be.instanceof(DependencyResolutionError);
+						expect(error).to.be.instanceof(DependencyResolutionError);
                         expect(error.message).to.match(/Dependency cycle.*Engine.*<=.*Engine.*<=.*Car.*detected./);
                         expect(error.dependency.getKey()).to.equal(Engine);
-                    done();
-                });
-            });
-        });
-
-        it("should dispose unregistered components", function (done) {
-            var context   = new Context(),
-                container = new IoContainer;
-	    context.addHandlers(container, new ValidationCallbackHandler);
-            Q.all([Container(context).register(RebuiltV12),
-                   Container(context).register(CraigsJunk)]).spread(function (registration) {
-                Q(Container(context).resolve(Engine)).then(function (engine) {
-		    registration.unregister();
                     done();
                 });
             });

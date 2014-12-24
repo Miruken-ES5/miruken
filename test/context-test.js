@@ -75,11 +75,13 @@ describe("Context", function() {
         });
 
         it("should execute block with new child context and then end it", function() {
-            var context = new Context(),
-                childContext = context.newChildContext(function (ctx) {
+            var context      = new Context(),
+                childContext = context.newChildContext();
+            $using(
+                childContext, function (ctx) {
                     expect(ctx.getState()).to.equal(ContextState.Active);
-                    expect(ctx.getParent()).to.equal(context);
-                });
+                    expect(ctx.getParent()).to.equal(context); }
+            );
             expect(childContext.getState()).to.equal(ContextState.Ended);
         });
     });

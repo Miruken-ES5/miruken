@@ -72,7 +72,7 @@ new function () { // closure
                     }
                     return root;
                 },
-                newChildContext: function (block) {
+                newChildContext: function () {
                     _ensureActive();
                     var childContext = new this.constructor(this).extend({
                         end: function () {
@@ -87,10 +87,6 @@ new function () { // closure
                         }
                     });
                     _children.push(childContext);
-                                        if (typeOf(block) === 'function') {
-                                                block(childContext);
-                                                childContext.dispose();
-                                        }
                     return childContext;
                 },
                 store: function (object) {
@@ -218,7 +214,7 @@ new function () { // closure
         resolveContext: function (contextual) {
             if (!contextual) return null;
             if (contextual instanceof Context) return contextual;
-            return typeOf(contextual.getContext) === 'function'
+            return $isFunction(contextual.getContext)
                  ? contextual.getContext() : null;
         },
         requireContext: function (contextual) {
@@ -229,8 +225,8 @@ new function () { // closure
         },
         clearContext: function (contextual) {
             if (!contextual ||
-                typeOf(contextual.getContext) !== 'function' || 
-                typeOf(contextual.setContext) !== 'function') {
+                !$isFunction(contextual.getContext) || 
+                !$isFunction(contextual.setContext)) {
                 return;
             }
             var context = contextual.getContext();
@@ -249,7 +245,7 @@ new function () { // closure
             }
             if (contextual.setContext === undefined) {
                 contextual = Contextual(contextual);
-            } else if (typeOf(contextual.setContext) !== 'function') {
+            } else if (!$isFunction(contextual.setContext)) {
                 throw new Error("Unable to set the context on " + contextual + ".");
             }
             contextual.setContext(ContextualHelper.resolveContext(context));
@@ -259,7 +255,7 @@ new function () { // closure
             if (!child) {
                 return null;
             }
-            var childContext = typeOf(child.getContext) === 'function'
+            var childContext = $isFunction(child.getContext)
                              ? child.getContext() : null;
             if (!childContext) {
                 var context  = ContextualHelper.requireContext(contextual);
@@ -316,7 +312,7 @@ new function () { // closure
                     continue;
                 }
                 var member = context[key];
-                if (typeOf(member) === 'function')
+                if ($isFunction(member))
                     this[key] = (function (k, m) {
                         return function () {
                             var owner       = (k in CallbackHandler.prototype) ? this : context, 
@@ -325,8 +321,8 @@ new function () { // closure
                                 returnValue = this;
                             }
                             else if (returnValue &&
-                                     typeOf(returnValue.getDecoratee) === 'function' &&
-                                     typeOf(returnValue.setDecoratee) === 'function' &&
+                                     $isFunction(returnValue.getDecoratee) &&
+                                     $isFunction(returnValue.setDecoratee) &&
                                      returnValue.getDecoratee() == context) {
                                 returnValue.setDecoratee(this);
                             }

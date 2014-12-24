@@ -111,7 +111,7 @@ new function () { // closure
                 },
                 getFactory: function () { return _factory; },
                 setFactory: function (value) {
-                    if (typeOf(value) !== 'function') {
+                    if (!$isFunction(value)) {
                         throw new TypeError(lang.format("%1 is not a function.", value));
                     }
                     _factory = value;
@@ -156,11 +156,11 @@ new function () { // closure
             dependencies = dependencies || [];
             this.extend({
                 getDependencies: function () { return dependencies; },
-		getIndex: function (index) {
-		    if (dependencies.length > index) {
-			return dependencies[index];
-		    }
-		},
+                getIndex: function (index) {
+                    if (dependencies.length > index) {
+                        return dependencies[index];
+                    }
+                },
                 setIndex: function (index, dependency) {
                     if ((dependencies.length <= index) ||
                         (dependencies[index] === undefined)) {
@@ -278,7 +278,7 @@ new function () { // closure
             return factory();
         },
         trackInstance: function (instance) {
-            if (instance && typeOf(instance.dispose === 'function')) {
+            if (instance && $isFunction(instance.dispose)) {
                 var lifestyle = this;
                 instance.extend({
                     dispose: function (disposing) {
@@ -292,7 +292,7 @@ new function () { // closure
             }
         },
         disposeInstance: function (instance, disposing) {
-            if (!disposing && instance && typeOf(instance.dispose) === 'function') {
+            if (!disposing && instance && $isFunction(instance.dispose)) {
                 instance.dispose(true);
             }
         }
@@ -358,14 +358,12 @@ new function () { // closure
                     }
                 },
                 disposeInstance: function (instance, disposing) {
-                    if (disposing) {
-                        for (contextId in _cache) {
-                            if (_cache[contextId] === instance) {
-                                this.base(instance, disposing);
-                                delete _cache[contextId];
-                                return;
-                            } 
-                        }
+                    for (contextId in _cache) {
+                        if (_cache[contextId] === instance) {
+                            this.base(instance, disposing);
+                            delete _cache[contextId];
+                            return;
+                        } 
                     }
                 },
                 _dispose: function() {

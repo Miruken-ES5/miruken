@@ -8,7 +8,7 @@ new function () { // closure
     var miruken = new base2.Package(this, {
         name:    "miruken",
         version: "1.0",
-        exports: "Protocol,Proxy,Disposing,DisposingMixin,TraversingAxis,Traversing,Traversal,Variance,Modifier,$lift,$isClass,$eq,$use,$copy,$lazy,$optional,$promise,$createModifier"
+        exports: "Protocol,Proxy,Disposing,DisposingMixin,TraversingAxis,Traversing,Traversal,Variance,Modifier,$isClass,$isFunction,$lift,$using,$eq,$use,$copy,$lazy,$optional,$promise,$createModifier"
     });
 
     eval(this.imports);
@@ -71,7 +71,7 @@ new function () { // closure
             if (proxy === null || proxy === undefined) {
                 proxy = new Proxy;
             } else if ((proxy instanceof Proxy) === false) {
-                if (typeOf(proxy.toProxy) === 'function') {
+                if ($isFunction(proxy.toProxy)) {
                     proxy = proxy.toProxy();
                     if ((proxy instanceof Proxy) === false) {
                         throw new TypeError("Invalid proxy: " + proxy +
@@ -149,7 +149,7 @@ new function () { // closure
                 for (var key in derived.prototype) {
                     if (!(key in Base.prototype)) {
                         var member = derived.prototype[key];
-                        if (typeOf(member) === 'function') {
+                        if ($isFunction(member)) {
                             (function (methodName) {
                                 var proxiedMethod = {};
                                 proxiedMethod[methodName] = function () {
@@ -169,7 +169,7 @@ new function () { // closure
         },
         conformsTo: function (protocol) { return false; },
         adoptedBy:  function (target) {
-            return target && typeOf(target.conformsTo) === 'function'
+            return target && $isFunction(target.conformsTo)
                  ? target.conformsTo(this)
                  : false;
         },
@@ -189,12 +189,29 @@ new function () { // closure
      */
     var DisposingMixin = Module.extend({
         dispose: function (object) {
-	    if (typeOf(object._dispose) === 'function') {
-		object._dispose();
-		object.dispose = Undefined;
-	    }
+            if ($isFunction(object._dispose)) {
+                object._dispose();
+                object.dispose = Undefined;
+	        }
         }
     });
+
+    /**
+     * @function $using
+     * @param    {Disposing} disposing  - disposing object
+     * @param    {Function}  block      - block to execute
+     * @param    {Object}    context    - block context (this)
+     * @returns  {Any} result of executing block in context.
+     */
+    function $using(disposing, block, context) {
+        if (disposing && $isFunction(block) && $isFunction(disposing.dispose)) {
+            try {
+                return block.call(context, disposing);
+            } finally {
+                disposing.dispose();
+            }
+        }
+    }
 
     /**
      * @class {Modifier}
@@ -257,7 +274,7 @@ new function () { // closure
     });
 
     function _listContents(package, cb, filter) {
-        if (typeOf(cb) === 'function') {
+        if ($isFunction(cb)) {
             for (memberName in package) {
                 var member = package[memberName];
                 if (!filter || filter(member, memberName)) {
@@ -269,12 +286,21 @@ new function () { // closure
 
     /**
      * @function $isClass
-     * @param    {Object} source  - object to test
-     * @returns  {Boolean} true if source is a class (not a protocol)
+     * @param    {Any}     source  - object to test
+     * @returns  {Boolean} true if a class (and not a protocol).
      */
     function $isClass(source) {
         return source && (source.ancestorOf === Base.ancestorOf)
             && !Protocol.isProtocol(source);
+    }
+
+    /**
+     * @function $isFunction
+     * @param    {Any}     fn  - function to test
+     * @returns  {Boolean} true if a function.
+     */
+    function $isFunction(fn) {
+        return typeOf(fn) === 'function';
     }
 
     /**
@@ -319,16 +345,16 @@ new function () { // closure
          * Traverse a graph of objects.
          * @param {Object}         object     - graph to traverse
          * @param {TraversingAxis} axis       - axis of traversal
-         * @param {Funcion}        visitor    - receives visited nodes
+         * @param {Function}       visitor    - receives visited nodes
          * @param {Object}         [context]  - visitor callback context
          */
         traverse: function (object, axis, visitor, context) {
-            if (typeOf(axis) === 'function') {
+            if ($isFunction(axis)) {
                 context = visitor;
                 visitor = axis;
                 axis    = TraversingAxis.Child;
             }
-            if (typeOf(visitor) != 'function') return;
+            if (!$isFunction(visitor)) return;
             switch (axis) {
             case TraversingAxis.Self:
                 _traverseSelf.call(object, visitor, context);
@@ -402,8 +428,7 @@ new function () { // closure
 
     function _traverseRoot(visitor, context) {
         var parent, root = this, visited = [this];
-        while (typeOf(root.getParent) === 'function' &&
-               (parent = root.getParent())) {
+        while ($isFunction(root.getParent) && (parent = root.getParent())) {
             checkCircularity(visited, parent);
             root = parent;   
         }
@@ -411,8 +436,7 @@ new function () { // closure
     }
 
     function _traverseChildren(visitor, withSelf, context) {
-        if ((withSelf && visitor.call(context, this)) ||
-            (typeOf(this.getChildren) !== 'function')) {
+        if ((withSelf && visitor.call(context, this)) || !$isFunction(this.getChildren)) {
             return;
         }
         var children = this.getChildren();
@@ -428,8 +452,7 @@ new function () { // closure
         if (withSelf && visitor.call(context, this)) {
             return;
         }
-        while (typeOf(parent.getParent) === 'function' &&
-               (parent = parent.getParent()) &&
+        while ($isFunction(parent.getParent) && (parent = parent.getParent()) &&
                !visitor.call(context, parent)) {
             checkCircularity(visited, parent);
         }
@@ -462,13 +485,12 @@ new function () { // closure
     }
 
     function _traverseParentSiblingOrSelf(visitor, withSelf, withParent, context) {
-        if (withSelf && visitor.call(context, this) ||
-            typeOf(this.getParent) !== 'function') {
+        if (withSelf && visitor.call(context, this) || !$isFunction(this.getParent)) {
             return;
         }
         var self = this, parent = this.getParent();
         if (parent) {
-            if (typeOf(parent.getChildren) === 'function') {
+            if ($isFunction(parent.getChildren)) {
                 var children = parent.getChildren();
                 for (var i = 0; i < children.length; ++i) {
                     var sibling = children[i];
@@ -500,11 +522,10 @@ new function () { // closure
 
     function _preOrder(node, visitor, context, visited) {
         checkCircularity(visited, node);
-        if (!node || typeOf(visitor) !== 'function' ||
-            visitor.call(context, node)) {
+        if (!node || !$isFunction(visitor) || visitor.call(context, node)) {
             return true;
         }
-        if (typeOf(node.traverse) === 'function')
+        if ($isFunction(node.traverse))
             node.traverse(function (child) {
                 return Traversal.preOrder(child, visitor, context);
             });
@@ -513,8 +534,8 @@ new function () { // closure
 
     function _postOrder(node, visitor, context, visited) {
         checkCircularity(visited, node);
-        if (!node || typeOf(visitor) !== 'function') return true;
-        if (typeOf(node.traverse) === 'function')
+        if (!node || !$isFunction(visitor)) return true;
+        if ($isFunction(node.traverse))
             node.traverse(function (child) {
                 return Traversal.postOrder(child, visitor, context);
             });
@@ -522,7 +543,7 @@ new function () { // closure
     }
 
     function _levelOrder(node, visitor, context, visited) {
-        if (!node || typeOf(visitor) !== 'function') {
+        if (!node || !$isFunction(visitor)) {
             return;
         }
         var queue = [node];
@@ -532,7 +553,7 @@ new function () { // closure
             if (visitor.call(context, next)) {
                 return;
             }
-            if (typeOf(next.traverse) === 'function')
+            if ($isFunction(next.traverse))
                 next.traverse(function (child) {
                     if (child) queue.push(child);
                 });
@@ -540,7 +561,7 @@ new function () { // closure
     }
 
     function _reverseLevelOrder(node, visitor, context, visited) {
-        if (!node || typeOf(visitor) !== 'function') {
+        if (!node || !$isFunction(visitor)) {
             return;
         }
         var queue = [node],
@@ -550,7 +571,7 @@ new function () { // closure
             checkCircularity(visited, next);
             stack.push(next);
             var level = [];
-            if (typeOf(next.traverse) === 'function')
+            if ($isFunction(next.traverse))
                 next.traverse(function (child) {
                     if (child) level.unshift(child);
                 });
@@ -572,7 +593,7 @@ new function () { // closure
         for (var key in source) {
             if (!(key in this)) {
                 var member = source[key];
-                if (typeOf(member) === 'function') {
+                if ($isFunction(member)) {
                     this[key] = member;
                 }
             }

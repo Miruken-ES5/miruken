@@ -59,7 +59,7 @@ new function () { // closure
                         return false;
                     }
                     var method = target[methodName];
-                    if (typeOf(method) !== 'function') {
+                    if (!$isFunction(method)) {
                         return false;
                     }
                     try {
@@ -230,7 +230,7 @@ new function () { // closure
             this.base(decoratee);
             if (filter === null || filter === undefined) {
                 throw new TypeError("No filter specified.");
-            } else if (typeOf(filter) !== 'function') {
+            } else if (!$isFunction(filter)) {
                 throw new TypeError(lang.format("Invalid filter: %1 is not a function.", filter));
             }
             this.extend({
@@ -253,7 +253,7 @@ new function () { // closure
         constructor: function (decoratee, before, after) {
             this.base(decoratee, function (callback, composer, proceed) {
                 var promise;
-                if (typeOf(before) === 'function' && before(callback, composer) === false) {
+                if ($isFunction(before) && before(callback, composer) === false) {
                     return true;
                 }
                 try {
@@ -262,7 +262,7 @@ new function () { // closure
                         // Use 'fulfilled' or 'rejected' handlers instead of 'finally' to ensure 
                         // aspect boundary is consistent with synchronous invocations and avoid
                         // reentrancy issues.
-                        if (typeOf(after) === 'function')
+                        if ($isFunction(after))
                             promise.then(function (result) {
                                 after(callback, composer);
                             }, function (error) {
@@ -271,7 +271,7 @@ new function () { // closure
                         return handled;
                     }
                 } finally {
-                    if (!promise && typeOf(after) === 'function') {
+                    if (!promise && $isFunction(after)) {
                         after(callback, composer);
                     }
                 }
@@ -369,7 +369,7 @@ new function () { // closure
             this.base(decoratee);
             if (condition === null || condition === undefined) {
                 throw new TypeError("No condition specified.");
-            } else if (typeOf(condition) !== 'function') {
+            } else if (!$isFunction(condition)) {
                 throw new TypeError(lang.format("Invalid condition: %1 is not a function.", condition));
             }
             this.extend({
@@ -437,7 +437,7 @@ new function () { // closure
         constructor: function (methodName, method) {
             if (typeOf(methodName) !== 'string' || methodName.length === 0 || !methodName.trim()) {
                 throw new TypeError("No methodName specified.");
-            } else if (typeOf(method) !== 'function') {
+            } else if (!$isFunction(method)) {
                 throw new TypeError(lang.format("Invalid method: %1 is not a function.", method));
             }
             this.extend({
@@ -624,7 +624,7 @@ new function () { // closure
      * @param    {Object} owner  - source of definitions
      */
     function $expand(owner) {
-        if ((typeOf(owner) !== 'function') && (typeOf(owner) !== 'object')) {
+        if (!$isFunction(owner) && (typeOf(owner) !== 'object')) {
             throw new TypeError("Definitions can only be applied to classes or instances.");
         }
         for (tag in _definitions) {
@@ -690,15 +690,15 @@ new function () { // closure
                         "No handler specified for constraint %1.", constraint));
                 }
             }
-	    if (removed && (typeOf(removed) !== 'function')) {
+        if (removed && !$isFunction(removed)) {
                 throw new TypeError("The removed argument is not a function.");
-	    }
-            if (typeOf(handler) !== 'function') {
+        }
+            if (!$isFunction(handler)) {
                 if (handler && (variance === Variance.Covariant)) {
                     // Allow copy semantics for convariant handlers
                     if ($copy.test(handler)) {
                         var source = Modifier.unwrap(handler);
-                        if (typeOf(source.copy) !== 'function') {
+                        if (!$isFunction(source.copy)) {
                             throw new Error("$copy requires the target to have a copy method.");
                         }
                         handler = function () { return source.copy(); };
@@ -776,9 +776,9 @@ new function () { // closure
                         delete nodes.index[index];
                     }
                 }
-		if (node.removed && (notifyRemoved !== false)) {
-		    node.removed(owner);
-		}
+                if (node.removed && (notifyRemoved !== false)) {
+                    node.removed(owner);
+                }
             };
         };
         definition.removeAll = function (owner) {
@@ -792,7 +792,7 @@ new function () { // closure
                     }
                     head = head.next;
                 }
-		delete definitions[tag];
+                delete definitions[tag];
             }
         };
         definition.dispatch = function (handler, callback, constraint, composer) {
@@ -876,14 +876,14 @@ new function () { // closure
         }
         constraint = Modifier.unwrap(constraint);
         var node = { constraint: constraint, handler: handler };
-	if (removed) {
-	    node.removed = removed;
-	}
+    if (removed) {
+        node.removed = removed;
+    }
         if (constraint === null || constraint === undefined) {
             node.match = _everything;
         } else if (Protocol.isProtocol(constraint)) {
             node.match = function (match, variance) {
-                if (typeOf(match.conformsTo) !== 'function') {
+                if (!$isFunction(match.conformsTo)) {
                     return false;
                 }
                 switch (varianceOverride || variance || Variance.Invariant) {
@@ -919,7 +919,7 @@ new function () { // closure
             node.match = function (match, variance) {
                 return constraint.test(match);
             };
-        } else if (typeOf(constraint) === 'function') {
+        } else if ($isFunction(constraint)) {
             node.match = constraint;
         } else {
             throw new TypeError(lang.format("Unsupported constraint %1.", constraint));
