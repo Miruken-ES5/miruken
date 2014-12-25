@@ -1,0 +1,19 @@
+{
+  "name": "miruken",
+  "version": "0.1.0",
+  "description": "",
+  "dependencies": {
+    "chai": "^1.10.0",
+    "grunt-cli": "latest",
+    "grunt-env": "latest",
+    "q": "^1.1.2"
+  },
+  "devDependencies": {
+    "grunt-contrib-jshint": "latest",
+    "grunt-contrib-uglify": "latest",
+    "grunt-contrib-watch": "latest",
+    "grunt-mocha-test": "latest",
+    "mocha": "^2.1.0",
+    "prettyjson": "^1.0.0"
+  }
+}
