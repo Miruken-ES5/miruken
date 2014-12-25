@@ -119,8 +119,8 @@ new function () { // closure
                     if ($isFunction(actions)) {
                         var manager = new DependencyManager(_dependencies);
                         actions(manager);
-                        return _dependencies;
                     }
+                    return _dependencies;
                 },
                 configure: function (/* policies */) {
                     var policies = Array2.flatten(arguments);
@@ -386,11 +386,10 @@ new function () { // closure
                     if (Registration.adoptedBy(registration)) {
                         return registration.register(this);
                     }
-                    var container      = this,
-                        componentModel = new ComponentModel(arguments); 
+                    var componentModel = new ComponentModel(arguments); 
                     return Validator($composer).validate(componentModel).thenResolve({
                         componentModel: componentModel,
-                            unregister: container.registerHandler(componentModel)
+                            unregister: this.registerHandler(componentModel)
                     });
                 },
                 registerHandler: function(componentModel) {
@@ -430,15 +429,13 @@ new function () { // closure
             clazz        = componentModel.getClass(),
             lifestyle    = componentModel.getLifestyle() || new SingletonLifestyle,
             factory      = componentModel.getFactory(),
-            dependencies = componentModel.getDependencies();
-        if (clazz && (clazz.prototype.$inject || clazz.$inject)) {
-            var manager = new DependencyManager;
-            manager.merge(dependencies, true)        // dependency overrides
-                   .merge(clazz.prototype.$inject)   // class definition
-                   .merge(clazz.$inject);            // class level
-            dependencies = manager.getDependencies();
+            dependencies = new DependencyManager;
+        dependencies.merge(componentModel.getDependencies());
+        if (clazz) {
+            dependencies.merge(clazz.prototype.$inject).merge(clazz.$inject);
         }
-        var unbind = $provide(container, key, function (resolution, composer) {
+        dependencies = dependencies.getDependencies();
+        var unbind   = $provide(container, key, function (resolution, composer) {
             if ((resolution instanceof DependencyResolution) &&
                 (resolution.claim(container) === false) /* cycle */) {
                 return Q.reject(new DependencyResolutionError(resolution,
