@@ -95,7 +95,7 @@ new function () { // closure
      */
     var Deferred = Base.extend({
         constructor: function (callback) {
-            if (callback === null || callback === undefined) {
+            if ($isNothing(callback)) {
                 throw new TypeError("The callback is required.");
             }
             var _pending = [];
@@ -116,7 +116,7 @@ new function () { // closure
      */
     var CallbackResolution = Base.extend({
         constructor: function (key, many) {
-            if (key === null || key === undefined) {
+            if ($isNothing(key)) {
                 throw new TypeError("The key is required.");
             }
             many = !!many;
@@ -148,7 +148,7 @@ new function () { // closure
          * @returns {Boolean} true if the callback was handled, false otherwise.
          */
         handle: function (callback, greedy, composer) {
-            if (callback === null || callback === undefined) {
+            if ($isNothing(callback)) {
                 return false;
             }
             if (typeOf(callback) !== 'object') {
@@ -205,7 +205,7 @@ new function () { // closure
      */
     var CallbackHandlerDecorator = CallbackHandler.extend({
         constructor: function (decoratee) {
-            if (decoratee === null || decoratee === undefined) {
+            if ($isNothing(decoratee)) {
                 throw new TypeError("No decoratee specified.");
             }
             this.extend({
@@ -228,7 +228,7 @@ new function () { // closure
     var CallbackHandlerFilter = CallbackHandlerDecorator.extend({
         constructor: function (decoratee, filter) {
             this.base(decoratee);
-            if (filter === null || filter === undefined) {
+            if ($isNothing(filter)) {
                 throw new TypeError("No filter specified.");
             } else if (!$isFunction(filter)) {
                 throw new TypeError(lang.format("Invalid filter: %1 is not a function.", filter));
@@ -284,9 +284,9 @@ new function () { // closure
      */
     var CascadeCallbackHandler = CallbackHandler.extend({
         constructor: function (handler, cascadeToHandler) {
-            if (handler === null || handler === undefined) {
+            if ($isNothing(handler)) {
                 throw new TypeError("No handler specified.");
-            } else if (cascadeToHandler === null || cascadeToHandler === undefined) {
+            } else if ($isNothing(cascadeToHandler)) {
                 throw new TypeError("No cascadeToHandler specified.");
             }
             handler          = handler.toCallbackHandler();
@@ -367,7 +367,7 @@ new function () { // closure
     var ConditionalCallbackHandler = CallbackHandlerDecorator.extend({
         constructor: function (decoratee, condition) {
             this.base(decoratee);
-            if (condition === null || condition === undefined) {
+            if ($isNothing(condition)) {
                 throw new TypeError("No condition specified.");
             } else if (!$isFunction(condition)) {
                 throw new TypeError(lang.format("Invalid condition: %1 is not a function.", condition));
@@ -387,7 +387,7 @@ new function () { // closure
      */
     var ObjectCallbackHandler = CallbackHandler.extend({
         constructor: function (object, exactMatch) {
-            if (object === null || object === undefined) {
+            if ($isNothing(object)) {
                 throw new TypeError("No object provided.");
             }
             $provide(this, object);
@@ -681,7 +681,7 @@ new function () { // closure
         }
 
         function definition(owner, constraint, handler, removed) {
-            if (handler === null || handler === undefined) {
+            if ($isNothing(handler)) {
                 if ((variance === Variance.Covariant) && (typeOf(constraint) === 'object')) {
                     handler    = constraint;
                     constraint = Modifier.unwrap(constraint).constructor;
@@ -876,10 +876,10 @@ new function () { // closure
         }
         constraint = Modifier.unwrap(constraint);
         var node = { constraint: constraint, handler: handler };
-    if (removed) {
-        node.removed = removed;
+        if (removed) {
+            node.removed = removed;
     }
-        if (constraint === null || constraint === undefined) {
+        if ($isNothing(constraint)) {
             node.match = _everything;
         } else if ($isProtocol(constraint)) {
             node.match = function (match, variance) {

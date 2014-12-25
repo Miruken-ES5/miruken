@@ -9,7 +9,7 @@ new function () { // closure
     var miruken = new base2.Package(this, {
         name:    "miruken",
         version: "1.0",
-        exports: "Protocol,Proxy,Disposing,DisposingMixin,Parenting,TraversingAxis,Traversing,Traversal,Variance,Modifier,$isProtocol,$isClass,$isFunction,$isPromise,$lift,$using,$eq,$use,$copy,$lazy,$optional,$promise,$createModifier"
+        exports: "Protocol,Proxy,Disposing,DisposingMixin,Parenting,TraversingAxis,Traversing,Traversal,Variance,Modifier,$isProtocol,$isClass,$isFunction,$isPromise,$isSomething,$isNothing,$lift,$using,$eq,$use,$copy,$lazy,$optional,$promise,$createModifier"
     });
 
     eval(this.imports);
@@ -69,7 +69,7 @@ new function () { // closure
      */
     var Protocol = Base.extend({
         constructor: function (proxy, strict) {
-            if (proxy === null || proxy === undefined) {
+            if ($isNothing(proxy)) {
                 proxy = new Proxy;
             } else if ((proxy instanceof Proxy) === false) {
                 if ($isFunction(proxy.toProxy)) {
@@ -343,6 +343,24 @@ new function () { // closure
      */
     function $isPromise(promise) {
         return Q.isPromiseAlike(promise);
+    }
+
+    /**
+     * @function $isSomething
+     * @param    {Any}     value  - value to test
+     * @returns  {Boolean} true if value not null or undefined
+     */
+    function $isSomething(value) {
+        return (value !== undefined && value !== null);
+    }
+
+    /**
+     * @function $isNothing
+     * @param    {Any}     value  - value to test
+     * @returns  {Boolean} true if value null or undefined
+     */
+    function $isNothing(value) {
+        return (value === undefined || value === null);
     }
 
     /**

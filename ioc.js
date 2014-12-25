@@ -13,7 +13,7 @@ new function () { // closure
         version: miruken.version,
         parent:  miruken,
         imports: "miruken,miruken.callback,miruken.context,miruken.validate",
-        exports: "Container,Registration,ComponentPolicy,ComponentKeyPolicy,Lifestyle,TransientLifestyle,SingletonLifestyle,ContextualLifestyle,ComponentModel,IoContainer,DependencyManager,DependencyResolution,DependencyResolutionError,$$composer"
+        exports: "Container,Registration,ComponentPolicy,Lifestyle,TransientLifestyle,SingletonLifestyle,ContextualLifestyle,ComponentModel,IoContainer,DependencyManager,DependencyResolution,DependencyResolutionError,$$composer"
     });
 
     eval(this.imports);
@@ -60,30 +60,104 @@ new function () { // closure
      */
     var ComponentPolicy = Protocol.extend({
         /**
-         * @param   {Any} key  - the current key
-         * @returns {Any} effective component key.
+         * Applies the policy to the ComponentModel.
+         * @param {ComponentModel} componentModel  - component model
          */
-        effectiveKey: function (key) {},
-        /**
-         * @param   {Any} key  - the current service
-         * @returns {Any} effective component service.
-         */
-        effectiveService: function (service) {},
-        /**
-         * @param   {Function} factory  - the current factory
-         * @returns {Function} effective component factory.
-         */
-        effectiveFactory: function (factory) {},
-        /**
-         * Collects all dependencies for this component.
-         * @param   {DependencyManager} dependencies  - manages dependencies
-         */
-        collectDependencies: function (dependencies) {},
-        /**
-         * Collects all interceptors for this component.
-         * @param   {Array} interceptors  - array receiving interceptors
-         */
-        collectInterceptors: function (interceptors) {}
+         apply: function (componentModel) {}
+    });
+
+    /**
+     * @class {ComponentModel}
+     */
+    var ComponentModel = Base.extend(ComponentPolicy, {
+        constructor: function () {
+            var _key, _service, _class, _lifestyle, _factory,
+                _dependencies = [];
+            this.extend({
+                getKey: function () {
+                    return _key || _service || _class
+                },
+                setKey: function (value) { _key = value; },
+                getService: function () {
+                    var service = _service;
+                    if (!service & $isProtocol(_key)) {
+                        service = _key;
+                    }
+                    return service;
+                },
+                setService: function (value) {
+                    if ($isSomething(value) &&  !$isProtocol(value)) {
+                        throw new TypeError(lang.format("%1 is not a protocol.", value));
+                    }
+                    _service = value;
+                },
+                getClass: function () { return _class; },
+                setClass: function (value) {
+                    if ($isSomething(value) && !$isClass(value)) {
+                        throw new TypeError(lang.format("%1 is not a class.", value));
+                    }
+                    _class = value;
+                },
+                getLifestyle: function () { return _lifestyle; },
+                setLifestyle: function (value) { _lifestyle = value; },
+                getFactory: function () {
+                    var factory =  _factory;
+                    if (!factory && _class) {
+                        factory = _class.new.bind(_class);
+                    }
+                    return factory;
+                },
+                setFactory: function (value) {
+                    if ($isSomething(value) && !$isFunction(value)) {
+                        throw new TypeError(lang.format("%1 is not a function.", value));
+                    }
+                    _factory = value;
+                },
+                getDependencies: function () { return _dependencies; },
+                setDependencies: function (value) { _dependencies = value; },
+                manageDependencies: function (actions) {
+                    if ($isFunction(actions)) {
+                        var manager = new DependencyManager(_dependencies);
+                        actions(manager);
+                        return _dependencies;
+                    }
+                },
+                configure: function (/* policies */) {
+                    var policies = Array2.flatten(arguments);
+                    switch (policies.length) {
+                        case 0: return;
+                        case 1:
+                        case 2:
+                        {
+                            var clazz = (policies.length === 1) ? policies[0] : policies[1];
+                            if ($isClass(clazz)) {
+                                this.setKey(policies[0]);
+                                this.setClass(clazz);
+                                return;
+                            }
+                            break;
+                        }
+                    }
+                    var _this = this;
+                    policies.forEach(function (policy) {
+                        if (ComponentPolicy.adoptedBy(policy)) {
+                            policy.apply(_this);
+                        } else {
+                            throw new TypeError(lang.format("%1 is not a ComponentPolicy.", policy));
+                        }
+                    });
+                },
+                apply: function (componentModel) {
+                    componentModel.setKey(_key);
+                    componentModel.setService(_service);
+                    componentModel.setClass(_class);
+                    componentModel.setLifestyle(_lifestyle);
+                    componentModel.setFactory(_factory);
+                    componentModel.setDependencies(_dependencies);
+                }
+            });
+            this.configure(arguments);
+        }
     });
 
     /**
@@ -120,12 +194,16 @@ new function () { // closure
                     }
                     return this;
                 },
-                append: function (dependency) {
-                    _dependencies.push(dependency);
+                append: function (/* dependencies */) {
+                    var deps = Array2.flatten(arguments);
+                    dependencies.push.apply(dependencies, deps);
                     return this;
                 },
                 merge: function (other, replace) {
                     if (other !== undefined) {
+                        if (other instanceof DependencyManager) {
+                            other = other.getDependencies();
+                        }
                         if (!(other instanceof Array)) {
                             other = [other];
                         }
@@ -143,137 +221,6 @@ new function () { // closure
                     return this;
                 }
             });
-        }
-    });
-
-    /**
-     * @class {ComponentKeyPolicy}
-     */
-    var ComponentKeyPolicy = Base.extend(ComponentPolicy, {
-        constructor: function () {
-            var _key, _service, _class, _factory, _dependencies;
-            this.extend({
-                getKey: function () { return _key; },
-                setKey: function (value) { _key = value; },
-                getService: function () { return _service; },
-                setService: function (value) {
-                    if (!$isProtocol(value)) {
-                        throw new TypeError(lang.format("%1 is not a protocol.", value));
-                    }
-                    _service = value;
-                },
-                getClass: function () { return _class; },
-                setClass: function (value) {
-                    if (!$isClass(value)) {
-                        throw new TypeError(lang.format("%1 is not a class.", value));
-                    }
-                    _class = value;
-                },
-                getFactory: function () { return _factory; },
-                setFactory: function (value) {
-                    if (!$isFunction(value)) {
-                        throw new TypeError(lang.format("%1 is not a function.", value));
-                    }
-                    _factory = value;
-                },
-                getDependencies: function () { return _dependencies; },
-                setDependencies: function (/* dependencies */) {
-                    _dependencies = Array2.flatten(arguments);
-                },
-                effectiveKey: function (key) {
-                    return key || _key || _service || _class; 
-                },
-                effectiveService: function (service) {
-                    service = service || _service;
-                    if (!service & $isProtocol(_key)) {
-                        service = _key;
-                    }
-                    return service;
-                },
-                effectiveFactory: function (factory) {
-                    factory = factory || _factory;
-                    if (!factory && _class) {
-                        factory = _class.new.bind(_class);
-                    }
-                    return factory;
-                },
-                collectDependencies: function (dependencies) {
-                    dependencies.merge(_dependencies);
-                    if (_class) {
-                        dependencies.merge(_class.prototype.$inject)
-                                    .merge(_class.$inject);
-                    }
-                }
-            });
-        }
-    });
-
-    /**
-     * @class {ComponentModel}
-     */
-    var ComponentModel = Base.extend(ComponentPolicy, {
-        constructor: function (/* policies */) {
-            var _policies = new Array2, _lifeStyle;
-            this.extend({
-                getPolicies: function () { return _policies.copy(); },
-                getLifestyle: function () { return _lifeStyle; },
-                effectiveKey: function (key) {
-                    return _policies.reduce(function (k, policy) {
-                        return policy.effectiveKey ? policy.effectiveKey(k) : k;
-                    }, key);
-                },
-                effectiveService: function (service) {
-                    return _policies.reduce(function (s, policy) {
-                        return policy.effectiveService ? policy.effectiveService(s) : s;
-                    }, service);
-                },
-                effectiveFactory: function (factory) {
-                    return _policies.reduce(function (f, policy) {
-                        return policy.effectiveFactory ? policy.effectiveFactory(f) : f;
-                    }, factory);
-                },
-                collectDependencies: function (dependencies) {
-                    _policies.forEach(function (policy) {
-                        if (policy.collectDependencies) {
-                            policy.collectDependencies(dependencies);
-                        }
-                    });
-                },
-                configure: function (/* policies */) {
-                    var policies = Array2.flatten(arguments);
-                    switch (policies.length) {
-                        case 0: return;
-                        case 1:
-                        case 2:
-                        {
-                            var clazz = (policies.length === 1) ? policies[0] : policies[1];
-                            if ($isClass(clazz)) {
-                                var policy = new ComponentKeyPolicy;
-                                policy.setKey(policies[0]);
-                                policy.setClass(clazz);
-                                policies = [policy];
-                            }
-                            break;
-                        }
-                    }
-                    policies.forEach(function (policy) {
-                        if (policy instanceof ComponentModel) {
-                            _policies.push.apply(_policies, policy.getPolicies());
-                        } else if (ComponentPolicy.adoptedBy(policy)) {
-                            if (policy instanceof Lifestyle) {
-                                if (_lifeStyle) {
-                                    throw new Error("Only one LifeStyle policy is allowed.");
-                                }
-                                _lifeStyle = policy;
-                            }
-                            _policies.push(policy);
-                        } else {
-                            throw new TypeError(lang.format("%1 is not a ComponentPolicy.", policy));
-                        }
-                    });
-                }
-            });
-            this.configure(arguments);
         }
     });
 
@@ -300,6 +247,9 @@ new function () { // closure
                 instance.dispose(true);
             }
             return !disposing;
+        },
+        apply: function (componentModel) {
+            componentModel.setLifestyle(this);
         }
     });
     Lifestyle.implement(DisposingMixin);
@@ -438,49 +388,30 @@ new function () { // closure
                     }
                     var container      = this,
                         componentModel = new ComponentModel(arguments); 
-                    return Validator($composer).validate(componentModel).then(function () {
-                        var unregister = container.registerHandler(componentModel);
-                        return { componentModel: componentModel, unregister: unregister };
+                    return Validator($composer).validate(componentModel).thenResolve({
+                        componentModel: componentModel,
+                            unregister: container.registerHandler(componentModel)
                     });
                 },
                 registerHandler: function(componentModel) {
-                    var key          = componentModel.effectiveKey(),
-                        factory      = componentModel.effectiveFactory(),
-                        lifestyle    = componentModel.getLifestyle() || new SingletonLifestyle,
-                        dependencies = new DependencyManager;
-                        componentModel.collectDependencies(dependencies);
-                    return _registerHandler(this, key, factory, lifestyle, dependencies.getDependencies()); 
+                    return _registerHandler(this, componentModel); 
                 },
                 dispose: function () { $provide.removeAll(this); }
             })
         },
         $validators:[
             ComponentModel, function (validation, composer) {
-                var componentModel = validation.getObject();
-                return Q.allSettled(
-                    Array2.map(componentModel.getPolicies(), function (policy) {
-                        return Validator(composer).validate(policy).fail(function (child) {
-                            validation.addChildResult(child);
-                        });
-                    })
-                ).then(function () {
-                    if (validation.isValid()) {
-                        var key     = componentModel.effectiveKey(),
-                            factory = componentModel.effectiveFactory();
-                        if (!key) {
-                            validation.required('Key', 'Key could not be determined for component.');
-                        }
-                        if (!factory) {
-                            validation.required('Factory', 'Factory could not be determined for component.');
-                        }
-                    }
-                    return validation.isValid() ? Q(validation) : Q.reject(validation);
-                });
-            },
-            ComponentKeyPolicy, function (validation) {
-                var keyPolicy = validation.getObject(),
-                    service   = keyPolicy.getService(),
-                    clazz     = keyPolicy.getClass();
+                var componentModel = validation.getObject(),
+                    key            = componentModel.getKey(),
+                    service        = componentModel.getService(),
+                    clazz          = componentModel.getClass(),
+                    factory        = componentModel.getFactory();
+                if (!key) {
+                    validation.required('Key', 'Key could not be determined for component.');
+                }
+                if (!factory) {
+                    validation.required('Factory', 'Factory could not be determined for component.');
+                }
                 if (service && clazz && !clazz.conformsTo(service)) {
                     validation.typeMismatch('Class', clazz,
                         lang.format('Class %1 does not conform to service %2.', clazz, service));
@@ -490,14 +421,23 @@ new function () { // closure
 
     /**
      * Performs the actual component registration in the container.
-     * @param   {IoContainer} container     - container
-     * @param   {Any}         key           - key to register
-     * @param   {Function}    factory       - creates new instance
-     * @param   {Lifestyle}   lifesyle      - manages component creation
-     * @param   {Array}       dependencies  - component dependencies
+     * @param   {IoContainer}    container       - container
+     * @param   {ComponentModel} componentModel  - component model
      * @returns {Function} function to unregister the component.
      */
-    function _registerHandler(container, key, factory, lifestyle, dependencies) {
+    function _registerHandler(container, componentModel) {
+        var key          = componentModel.getKey(),
+            clazz        = componentModel.getClass(),
+            lifestyle    = componentModel.getLifestyle() || new SingletonLifestyle,
+            factory      = componentModel.getFactory(),
+            dependencies = componentModel.getDependencies();
+        if (clazz && (clazz.prototype.$inject || clazz.$inject)) {
+            var manager = new DependencyManager;
+            manager.merge(dependencies, true)        // dependency overrides
+                   .merge(clazz.prototype.$inject)   // class definition
+                   .merge(clazz.$inject);            // class level
+            dependencies = manager.getDependencies();
+        }
         var unbind = $provide(container, key, function (resolution, composer) {
             if ((resolution instanceof DependencyResolution) &&
                 (resolution.claim(container) === false) /* cycle */) {
@@ -521,7 +461,7 @@ new function () { // closure
                     } else if (dependency === Container) {
                         dependency = containerDep || (containerDep = Container(composer));
                     }
-                    else if (use || (dependency === undefined) || (dependency === null)) {
+                    else if (use || $isNothing(dependency)) {
                         if (promise) {
                             dependency = Q(dependency);
                         }
