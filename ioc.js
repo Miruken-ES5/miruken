@@ -273,6 +273,7 @@ new function () { // closure
                     return instance;
                 },
                 disposeInstance: function (obj, disposing) {
+                    // Singletons cannot be disposed directly
                     if (!disposing && (obj === instance)) {
                         if (this.base(obj, disposing)) {
                            instance = undefined;
@@ -340,14 +341,15 @@ new function () { // closure
      */
     var DependencyResolution = CallbackResolution.extend({
         constructor: function (key, parent) {
-            var _owner;
+            var _owner, _class;
             this.base(key);
             this.extend({
-                claim: function (owner) { 
+                claim: function (owner, clazz) { 
                     if (this.isResolvingDependency(key, owner)) {
                         return false;
                     }
                     _owner = owner;
+                    _class = clazz;
                     return true;
                 },
                 isResolvingDependency: function (dependency, requestor) {
@@ -437,7 +439,7 @@ new function () { // closure
         dependencies = dependencies.getDependencies();
         var unbind   = $provide(container, key, function (resolution, composer) {
             if ((resolution instanceof DependencyResolution) &&
-                (resolution.claim(container) === false) /* cycle */) {
+                (resolution.claim(container, clazz) === false) /* cycle */) {
                 return Q.reject(new DependencyResolutionError(resolution,
                     lang.format("Dependency cycle %1 detected.",
                                 resolution.formattedDependencyChain())))
@@ -475,7 +477,7 @@ new function () { // closure
                         } else {
                             if (!(resolution instanceof DependencyResolution)) {
                                 resolution = new DependencyResolution(resolution.getKey());
-                                resolution.claim(container);
+                                resolution.claim(container, clazz);
                             }
                             var paramDep = new DependencyResolution(dependency, resolution);
                             dependency   = _resolveDependency(paramDep, !optional, composer);
