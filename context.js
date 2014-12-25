@@ -42,7 +42,7 @@ new function () { // closure
     /**
      * @class {Context}
      */
-    var Context = CompositeCallbackHandler.extend(Disposing, {
+    var Context = CompositeCallbackHandler.extend(Parenting, Disposing, {
         constructor: function (parent) {
             this.base();
 
@@ -65,14 +65,14 @@ new function () { // closure
                 hasChildren: function () {
                     return _children.length > 0; 
                 },
-                getRootContext: function () {
+                getRoot: function () {
                     var root = this;    
                     while (root && root.getParent()) {
                         root = root.getParent();
                     }
                     return root;
                 },
-                newChildContext: function () {
+                newChild: function () {
                     _ensureActive();
                     var childContext = new this.constructor(this).extend({
                         end: function () {
@@ -90,7 +90,9 @@ new function () { // closure
                     return childContext;
                 },
                 store: function (object) {
-                    this.addHandlers(new ObjectCallbackHandler(object));
+                    if (typeOf(object) === 'object') {
+                        $provide(this, object);
+                    }
                 },
                 handleCallback: function (callback, greedy, composer) {
                     var handled = this.base(callback, greedy, composer);
@@ -259,7 +261,7 @@ new function () { // closure
                              ? child.getContext() : null;
             if (!childContext) {
                 var context  = ContextualHelper.requireContext(contextual);
-                childContext = context.newChildContext();
+                childContext = context.newChild();
                 ContextualHelper.bindContext(child, childContext);
             }
             return childContext;

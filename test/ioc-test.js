@@ -252,14 +252,29 @@ describe("SingletonLifestyle", function () {
     });
 
     describe("#dispose", function () {
-        it("should dispose unregistered components", function (done) {
+        it("should not dispose instance when called directly", function (done) {
+            var context   = new Context(),
+                container = new IoContainer;
+            context.addHandlers(container, new ValidationCallbackHandler);
+            Q.all([Container(context).register(RebuiltV12),
+                   Container(context).register(CraigsJunk)]).spread(function () {
+                Q.all([Container(context).resolve(Engine),
+                       Container(context).resolve(Junkyard)]).spread(function (engine, junk) {
+                    engine.dispose();
+                    expect(junk.getParts()).to.eql([]);
+                    done();
+                });
+            });
+        });
+
+        it("should dispose instance when unregistered", function (done) {
             var context   = new Context(),
                 container = new IoContainer;
             context.addHandlers(container, new ValidationCallbackHandler);
             Q.all([Container(context).register(RebuiltV12),
                    Container(context).register(CraigsJunk)]).spread(function (registration) {
-                       Q.all([Container(context).resolve(Engine),
-                              Container(context).resolve(Junkyard)]).spread(function (engine, junk) {
+                Q.all([Container(context).resolve(Engine),
+                       Container(context).resolve(Junkyard)]).spread(function (engine, junk) {
                     registration.unregister();
                     expect(junk.getParts()).to.eql([engine]);
                     done();
@@ -302,7 +317,7 @@ describe("ContextualLifestyle", function () {
                 Q.all([Container(context).resolve(Engine),
                        Container(context).resolve(Engine)]).spread(function (engine1, engine2) {
                     expect(engine1).to.equal(engine2);
-                    var childContext = context.newChildContext();
+                    var childContext = context.newChild();
                     $using(childContext, 
                         Q(Container(childContext).resolve(Engine)).then(function (engine3) {
                             expect(engine3).to.not.equal(engine1);
@@ -328,6 +343,23 @@ describe("ContextualLifestyle", function () {
     });
 
     describe("#dispose", function () {
+        it("should dispose unregistered components", function (done) {
+            var context      = new Context(),
+                enginePolicy = new ComponentKeyPolicy,
+                policies     = [enginePolicy, new ContextualLifestyle],
+                container    = new IoContainer;
+            context.addHandlers(container, new ValidationCallbackHandler);
+            Q.all([Container(context).register(RebuiltV12),
+                   Container(context).register(CraigsJunk)]).spread(function (registration) {
+                       Q.all([Container(context).resolve(Engine),
+                              Container(context).resolve(Junkyard)]).spread(function (engine, junk) {
+                    registration.unregister();
+                    expect(junk.getParts()).to.eql([engine]);
+                    done();
+                });
+            });
+        });
+
         it("should dispose components when context ended", function (done) {
             var context      = new Context(),
                 enginePolicy = new ComponentKeyPolicy,
@@ -338,7 +370,7 @@ describe("ContextualLifestyle", function () {
             Q.all([Container(context).register(policies),
                    Container(context).register(CraigsJunk)]).spread(function (registration) {
                 var engine, junk,
-                    childContext = context.newChildContext();
+                    childContext = context.newChild();
                 $using(childContext, 
                        Q.all([Container(childContext).resolve(Engine),
                               Container(childContext).resolve(Junkyard)]).spread(function (e, j) {

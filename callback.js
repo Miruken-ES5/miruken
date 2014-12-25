@@ -43,7 +43,7 @@ new function () { // closure
      */
     var HandleMethod = Base.extend({
         constructor: function (protocol, methodName, args, strict) {
-            if (protocol && !Protocol.isProtocol(protocol)) {
+            if (protocol && !$isProtocol(protocol)) {
                 throw new TypeError("Invalid protocol supplied.");
             }
             var _returnValue, _exception;
@@ -881,7 +881,7 @@ new function () { // closure
     }
         if (constraint === null || constraint === undefined) {
             node.match = _everything;
-        } else if (Protocol.isProtocol(constraint)) {
+        } else if ($isProtocol(constraint)) {
             node.match = function (match, variance) {
                 if (!$isFunction(match.conformsTo)) {
                     return false;

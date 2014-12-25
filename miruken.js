@@ -9,7 +9,7 @@ new function () { // closure
     var miruken = new base2.Package(this, {
         name:    "miruken",
         version: "1.0",
-        exports: "Protocol,Proxy,Disposing,DisposingMixin,TraversingAxis,Traversing,Traversal,Variance,Modifier,$isClass,$isFunction,$isPromise,$lift,$using,$eq,$use,$copy,$lazy,$optional,$promise,$createModifier"
+        exports: "Protocol,Proxy,Disposing,DisposingMixin,Parenting,TraversingAxis,Traversing,Traversal,Variance,Modifier,$isProtocol,$isClass,$isFunction,$isPromise,$lift,$using,$eq,$use,$copy,$lazy,$optional,$promise,$createModifier"
     });
 
     eval(this.imports);
@@ -166,7 +166,7 @@ new function () { // closure
             };
         },
         isProtocol: function (target) {
-            return target && this.ancestorOf(target);
+            return target && Protocol.ancestorOf(target);
         },
         conformsTo: function (protocol) { return false; },
         adoptedBy:  function (target) {
@@ -181,6 +181,9 @@ new function () { // closure
      * @protocol {Disposing}
      */
     var Disposing = Protocol.extend({
+        /**
+         * Releases the object.
+         */
         dispose: function () {}
     });
 
@@ -198,7 +201,19 @@ new function () { // closure
     });
 
     /**
+     * @protocol {Parenting}
+     */
+    var Parenting = Protocol.extend({
+        /**
+         * Creates a new child of the parent.
+         * @returns {Any} the new child.
+         */
+        newChild: function () {}
+    });
+
+    /**
      * @function $using
+     * Convenience function for managing Disposing resources.
      * @param    {Disposing}           disposing  - disposing object
      * @param    {Function | Promise}  action     - block or Promise
      * @param    {Object}              context    - block context
@@ -275,13 +290,11 @@ new function () { // closure
      */
     Package.implement({
         getProtocols: function (cb) {
-            _listContents(this, cb, Protocol.isProtocol.bind(Protocol));
+            _listContents(this, cb, $isProtocol);
         },
         getClasses: function (cb) {
             _listContents(this, cb, function (member, memberName) {
-                return (member.ancestorOf === Base.ancestorOf) 
-                    && !Protocol.isProtocol(member)
-                    && (memberName != "constructor");
+                return $isClass(member) && (memberName != "constructor");
             });
         }
     });
@@ -298,13 +311,20 @@ new function () { // closure
     }
 
     /**
+     * @function $isProtocol
+     * @param    {Any}     protocol  - protocol to test
+     * @returns  {Boolean} true if a protocol.
+     */
+    var $isProtocol = Protocol.isProtocol;
+
+    /**
      * @function $isClass
-     * @param    {Any}     source  - object to test
+     * @param    {Any}     clazz  - class to test
      * @returns  {Boolean} true if a class (and not a protocol).
      */
-    function $isClass(source) {
-        return source && (source.ancestorOf === Base.ancestorOf)
-            && !Protocol.isProtocol(source);
+    function $isClass(clazz) {
+        return clazz && (clazz.ancestorOf === Base.ancestorOf)
+            && !$isProtocol(clazz);
     }
 
     /**

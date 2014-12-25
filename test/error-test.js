@@ -27,7 +27,7 @@ describe("ErrorCallbackHandler", function () {
                 errorHandler = new ErrorCallbackHandler(),
                 error        = new Error('Something bad happended');
             context.addHandlers(errorHandler);
-            var customize    = context.newChildContext().extend({
+            var customize    = context.newChild().extend({
                 reportError: function (error, context) {
                     return Q('custom');
                 }
@@ -92,7 +92,7 @@ describe("CallbackHandler", function () {
             var context      = new Context(),
                 errorHandler = new ErrorCallbackHandler();
             context.addHandlers(new Paymentech(), errorHandler);
-            var customize    = context.newChildContext().extend({
+            var customize    = context.newChild().extend({
                 reportError: function (error, context) {
                     return Q('custom');
                 }
@@ -120,7 +120,7 @@ describe("CallbackHandler", function () {
             var context      = new Context(),
                 errorHandler = new ErrorCallbackHandler();
             context.addHandlers(new Paymentech(), errorHandler);
-            var customize    = context.newChildContext().extend({
+            var customize    = context.newChild().extend({
                 reportError: function (error, context) {
                     return Q('custom');
                 }

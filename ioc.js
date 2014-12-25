@@ -49,7 +49,7 @@ new function () { // closure
      */
     var Registration = Protocol.extend({
         /**
-         * Encaluslates the regisration of one or more components.
+         * Encapsulates the regisration of one or more components.
          * @param {Container} container  - container to register components in
          */
         register: function (container) {}
@@ -157,7 +157,7 @@ new function () { // closure
                 setKey: function (value) { _key = value; },
                 getService: function () { return _service; },
                 setService: function (value) {
-                    if (!Protocol.isProtocol(value)) {
+                    if (!$isProtocol(value)) {
                         throw new TypeError(lang.format("%1 is not a protocol.", value));
                     }
                     _service = value;
@@ -185,7 +185,7 @@ new function () { // closure
                 },
                 effectiveService: function (service) {
                     service = service || _service;
-                    if (!service & Protocol.isProtocol(_key)) {
+                    if (!service & $isProtocol(_key)) {
                         service = _key;
                     }
                     return service;
@@ -281,19 +281,16 @@ new function () { // closure
      * @class {Lifestyle}
      */
     var Lifestyle = Base.extend(ComponentPolicy, Disposing, {
-        resolve: function (factory) {
-            return factory();
-        },
+        resolve: function (factory) { return factory(); },
         trackInstance: function (instance) {
             if (instance && $isFunction(instance.dispose)) {
                 var lifestyle = this;
                 instance.extend({
                     dispose: function (disposing) {
-                        if (!disposing) {
-                            lifestyle.disposeInstance(instance, true);
+                        if (disposing || lifestyle.disposeInstance(instance, true)) {
+                            this.base();
+                            this.dispose = this.base;
                         }
-                        this.base();
-                        this.dispose = this.base;
                     }
                 });
             }
@@ -302,6 +299,7 @@ new function () { // closure
             if (!disposing && instance && $isFunction(instance.dispose)) {
                 instance.dispose(true);
             }
+            return !disposing;
         }
     });
     Lifestyle.implement(DisposingMixin);
@@ -320,15 +318,18 @@ new function () { // closure
                 resolve: function (factory) {
                     if (!instance) {
                         instance = factory();
-                        this.trackInstance();
+                        this.trackInstance(instance);
                     }
                     return instance;
                 },
                 disposeInstance: function (obj, disposing) {
-                    if (obj === instance) {
-                        this.base(obj, disposing);
-                        instance = undefined;
+                    if (!disposing && (obj === instance)) {
+                        if (this.base(obj, disposing)) {
+                           instance = undefined;
+                           return true;
+                        }
                     }
+                    return false;
                 },
                 _dispose: function() {
                     this.disposeInstance(instance);
@@ -354,7 +355,7 @@ new function () { // closure
                             this.trackInstance(instance);
                             var lifestyle = this,
                                 cancel    = context.observe({
-                                contextEnded: function(ctx) {
+                                contextEnded: function(_) {
                                     lifestyle.disposeInstance(instance);
                                     delete _cache[id];
                                     cancel();
@@ -369,9 +370,10 @@ new function () { // closure
                         if (_cache[contextId] === instance) {
                             this.base(instance, disposing);
                             delete _cache[contextId];
-                            return;
+                            return true;
                         } 
                     }
+                    return false;
                 },
                 _dispose: function() {
                     for (contextId in _cache) {
@@ -507,10 +509,11 @@ new function () { // closure
                 var promises = [], parameters = [];
                 for (var index = 0; index < dependencies.length; ++index) {
                     var dependency = dependencies[index],
-                        use        = $use.test(dependency),
-                        lazy       = $lazy.test(dependency),
-                        optional   = $optional.test(dependency),
-                        promise    = $promise.test(dependency),
+                        modified   = dependency instanceof Modifier,
+                        use        = modified && $use.test(dependency),
+                        lazy       = modified && $lazy.test(dependency),
+                        optional   = modified && $optional.test(dependency),
+                        promise    = modified && $promise.test(dependency),
                         containerDep;
                     dependency = Modifier.unwrap(dependency);
                     if (dependency === $$composer) {
