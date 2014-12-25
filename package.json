@@ -4,6 +4,7 @@
   "description": "",
   "dependencies": {
     "chai": "^1.10.0",
+    "grunt-cli": "latest",
     "grunt-env": "latest",
     "q": "^1.1.2"
   },
