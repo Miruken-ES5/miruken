@@ -14,7 +14,7 @@ new function () { // closure
         version: miruken.version,
         parent:  miruken,
         imports: "miruken,miruken.callback",
-        exports: "ContextState,ContextObserver,Context,ContextualMixin,ContextualHelper"
+        exports: "ContextState,ContextObserver,Context,Contextual,ContextualMixin,ContextualHelper"
     });
 
     eval(this.imports);
@@ -42,7 +42,8 @@ new function () { // closure
     /**
      * @class {Context}
      */
-    var Context = CompositeCallbackHandler.extend(Parenting, Disposing, {
+    var Context = CompositeCallbackHandler.extend(
+	Parenting, Traversing, Disposing, TraversingMixin, {
         constructor: function (parent) {
             this.base();
 
@@ -165,9 +166,7 @@ new function () { // closure
                         _observers = null;
                     }
                 },
-                dispose: function () {
-                                    this.end();
-                }
+                dispose: function () { this.end(); }
             });
 
             function _ensureActive() {
@@ -177,7 +176,22 @@ new function () { // closure
             }
         }
     });
-    Context.implement(Traversing);
+
+    /**
+     * @protocol {Contextual}
+     */
+    var Contextual = Protocol.extend({
+        /**
+         * Gets the Context associated with this object.
+         * @returns {Context} this associated Context.
+         */
+        getContext: function () {},
+        /**
+         * Sets the Context associated with this object.
+         * @param   {Context} context  - associated context
+         */
+        setContext: function (context) {}
+    });
 
     /**
      * Contextual mixin

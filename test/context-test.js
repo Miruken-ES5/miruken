@@ -423,10 +423,9 @@ describe("Contextual", function() {
         }
     });
     
-    var Controller = Base.extend({
+    var Controller = Base.extend(Contextual, ContextualMixin, {
         shutdown: function(shutdown) {}
     });
-    Controller.implement(ContextualMixin);
 
     describe("#setContext", function() {
         it("should be able to set context", function() {

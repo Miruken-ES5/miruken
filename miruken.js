@@ -9,7 +9,7 @@ new function () { // closure
     var miruken = new base2.Package(this, {
         name:    "miruken",
         version: "1.0",
-        exports: "Protocol,Proxy,Disposing,DisposingMixin,Parenting,TraversingAxis,Traversing,Traversal,Variance,Modifier,$isProtocol,$isClass,$isFunction,$isPromise,$isSomething,$isNothing,$lift,$using,$eq,$use,$copy,$lazy,$optional,$promise,$createModifier"
+        exports: "Protocol,Proxy,Disposing,DisposingMixin,Parenting,TraversingAxis,Traversing,TraversingMixin,Traversal,Variance,Modifier,$isProtocol,$using,$isClass,$isFunction,$isPromise,$isSomething,$isNothing,$lift,$eq,$use,$copy,$lazy,$optional,$promise,$createModifier"
     });
 
     eval(this.imports);
@@ -104,20 +104,28 @@ new function () { // closure
                         }
                     };
                 return (function (base, args) {
-                    var protocols = [];
+                    var protocols = [], modules = [];
                     if (Protocol.ancestorOf(base)) {
                         protocols.push(base);
                     }
-                    while (args.length > 0 && Protocol.ancestorOf(args[0])) {
-                        protocols.push(args.shift());
+                    while (args.length > 0) {
+			var arg = args[0];
+			if (Protocol.ancestorOf(arg)) {
+                            protocols.push(args.shift());
+			} else if (Module.ancestorOf(arg)) {
+			    modules.push(args.shift());
+			} else {
+			    break;
+			}
                     }
                     var subclass = extend.apply(base, args);
                     Array2.forEach(protocols, addProtocol, subclass);
+		    Array2.forEach(modules, subclass.implement, subclass);
                     subclass.addProtocol  = addProtocol;
                     subclass.getProtocols = getProtocols;
                     subclass.conformsTo   = Base.conformsTo;
                     return subclass;
-                    })(this, Array.prototype.slice.call(arguments));
+                })(this, Array.prototype.slice.call(arguments));
             };
 
             // Conformance
@@ -397,17 +405,23 @@ new function () { // closure
     }
 
     /**
-     * Traversing module
-     * @class {Traversing}
+     * @protocol {Traversing}
      */
-    var Traversing = Module.extend({
+    var Traversing = Protocol.extend({
         /**
          * Traverse a graph of objects.
-         * @param {Object}         object     - graph to traverse
          * @param {TraversingAxis} axis       - axis of traversal
          * @param {Function}       visitor    - receives visited nodes
          * @param {Object}         [context]  - visitor callback context
          */
+        traverse: function (axis, visitor, context) {}
+    });
+
+    /**
+     * Traversing mixin
+     * @class {Traversing}
+     */
+    var TraversingMixin = Module.extend({
         traverse: function (object, axis, visitor, context) {
             if ($isFunction(axis)) {
                 context = visitor;

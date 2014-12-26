@@ -41,7 +41,7 @@ new function () { // closure
 		getTag: function () {}
 	});
 
-    var ShoppingCart = Base.extend(Disposing, {
+    var ShoppingCart = Base.extend(Disposing, DisposingMixin, {
         constructor: function () {
             var _items = [];
             this.extend({
@@ -51,9 +51,8 @@ new function () { // closure
             });
         }
     });
-    ShoppingCart.implement(DisposingMixin);
     
-    var TreeNode = Base.extend({
+    var TreeNode = Base.extend(Traversing, TraversingMixin, {
         constructor: function (data) { 
             var _children = [];
             this.extend({
@@ -70,7 +69,6 @@ new function () { // closure
                 }
             });
         }});
-    TreeNode.implement(Traversing);
 
     eval(this.exports);
 };
@@ -113,10 +111,9 @@ describe("DisposingMixin", function () {
 
         it("should only dispose once", function () {
             var counter = 0,
-                DisposeCounter = Base.extend(Disposing, {
+                DisposeCounter = Base.extend(Disposing, DisposingMixin, {
                 _dispose: function () { ++counter; }
             });
-            DisposeCounter.implement(DisposingMixin);
             var disposeCounter = new DisposeCounter;
             expect(counter).to.equal(0);
             disposeCounter.dispose();
@@ -246,7 +243,7 @@ describe("Protocol", function () {
     describe("#getProtocols", function () {
         it("should determine if type is a protocol", function () {
             expect(Dog.getProtocols()).to.eql([Animal, Tricks]);
-            expect(TreeNode.getProtocols()).to.eql([]);
+            expect(TreeNode.getProtocols()).to.eql([Traversing]);
         });
     });
 
@@ -574,23 +571,21 @@ describe("Traversing", function () {
         });
 
         it("should detect circular references", function () {
-            var CircularParent = Base.extend({
+            var CircularParent = Base.extend(TraversingMixin, {
                 constructor: function (data) { 
                     this.extend({
                         getParent:   function () { return this; },
                         getChildren: function () { return []; },
                     });
                 }});
-            CircularParent.implement(Traversing);
 
-            var CircularChildren = Base.extend({
+            var CircularChildren = Base.extend(TraversingMixin, {
                 constructor: function (data) { 
                     this.extend({
                         getParent:   function () { return null; },
                         getChildren: function () { return [this]; },
                     });
                 }});
-            CircularChildren.implement(Traversing);
 
             var circularParent = new CircularParent();
             expect(function () { 

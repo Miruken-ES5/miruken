@@ -227,7 +227,8 @@ new function () { // closure
     /**
      * @class {Lifestyle}
      */
-    var Lifestyle = Base.extend(ComponentPolicy, Disposing, {
+    var Lifestyle = Base.extend(
+        ComponentPolicy, Disposing, DisposingMixin, {
         resolve: function (factory) { return factory(); },
         trackInstance: function (instance) {
             if (instance && $isFunction(instance.dispose)) {
@@ -252,7 +253,6 @@ new function () { // closure
             componentModel.setLifestyle(this);
         }
     });
-    Lifestyle.implement(DisposingMixin);
 
    /**
      * @class {TransientLifestyle}
@@ -317,7 +317,7 @@ new function () { // closure
                     }
                 },
                 disposeInstance: function (instance, disposing) {
-		    if (!disposing) {  // Cannot be disposed directly
+                    if (!disposing) {  // Cannot be disposed directly
                         for (contextId in _cache) {
                             if (_cache[contextId] === instance) {
                                 this.base(instance, disposing);
@@ -325,7 +325,7 @@ new function () { // closure
                                 return true;
                             } 
                         }
-		    }
+                    }
                     return false;
                 },
                 _dispose: function() {
