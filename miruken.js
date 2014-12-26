@@ -121,10 +121,10 @@ new function () { // closure
                     }
                     var subclass = extend.apply(base, args);
                     Array2.forEach(protocols, addProtocol, subclass);
-		    Array2.forEach(modules, subclass.implement, subclass);
                     subclass.addProtocol  = addProtocol;
                     subclass.getProtocols = getProtocols;
                     subclass.conformsTo   = Base.conformsTo;
+		    Array2.forEach(modules, subclass.implement, subclass);
                     return subclass;
                 })(this, Array.prototype.slice.call(arguments));
             };

@@ -321,7 +321,7 @@ describe("ContextualLifestyle", function () {
                 componentModel = new ComponentModel,
                 container      = new IoContainer;
             componentModel.setClass(Controller);
-	    componentModel.setDependencies($child(Context));
+            componentModel.setDependencies([$child(Context)]);
             context.addHandlers(container, new ValidationCallbackHandler);
             Q(Container(context).register(componentModel)).then(function () {
                 Q(Container(context).resolve(Controller)).then(function (controller) {
@@ -350,7 +350,7 @@ describe("ContextualLifestyle", function () {
             Q(Container(container).register(Controller)).then(function () {
                 Q(Container(container).resolve(Controller)).fail(function (error) {
                     expect(error).to.be.instanceof(DependencyResolutionError);
-		    expect(error.dependency.getKey()).to.equal(Context);
+                    expect(error.dependency.getKey()).to.equal(Context);
                     done();
                 });
             });
@@ -358,9 +358,9 @@ describe("ContextualLifestyle", function () {
 
         it("should not fail if optional child Context and no context available", function (done) {
             var componentModel = new ComponentModel,
-	        container      = (new ValidationCallbackHandler).next(new IoContainer);
+                container      = (new ValidationCallbackHandler).next(new IoContainer);
             componentModel.setClass(Controller);
-	    componentModel.setDependencies($optional($child(Context)));
+            componentModel.setDependencies([$optional($child(Context))]);
             Q(Container(container).register(componentModel)).then(function () {
                 Q(Container(container).resolve(Controller)).then(function (controller) {
                     done();
@@ -554,12 +554,25 @@ describe("IoContainer", function () {
         it("should override dependencies", function (done) {
             var carModel= new ComponentModel;
             carModel.setClass(Ferarri);
-            carModel.setDependencies($optional(Engine));
+            carModel.setDependencies([$optional(Engine)]);
             Q.all([Container(context).register(carModel),
                    Container(context).register(V12)]).then(function () {
                 Q(Container(context).resolve(Car)).then(function (car) {
                     expect(car).to.be.instanceOf(Ferarri);
                     expect(car.getEngine()).to.be.instanceOf(V12);
+                    done();
+                });
+            });
+        });
+
+        it("should accept null dependnecies", function (done) {
+            var carModel= new ComponentModel;
+            carModel.setClass(Ferarri);
+            carModel.setDependencies([null]);
+            Q(Container(context).register(carModel)).then(function () {
+                Q(Container(context).resolve(Car)).then(function (car) {
+                    expect(car).to.be.instanceOf(Ferarri);
+                    expect(car.getEngine()).to.be.null;
                     done();
                 });
             });
@@ -581,7 +594,7 @@ describe("IoContainer", function () {
         it("should resolve instance with optional missing dependencies", function (done) {
             var carModel = new ComponentModel;
             carModel.setClass(Ferarri);
-            carModel.setDependencies($optional(Engine));
+            carModel.setDependencies([$optional(Engine)]);
             Q(Container(context).register(carModel)).then(function () {
                 Q(Container(context).resolve(Car)).then(function (car) {
                     expect(car).to.be.instanceOf(Ferarri);
@@ -645,8 +658,8 @@ describe("IoContainer", function () {
                 Q(Container(context).resolve(Order)).then(function (order) {
                     expect(order).to.be.instanceOf(Order);
                     Q(order.getCar()).fail(function (error) {
-                    expect(error).to.be.instanceof(DependencyResolutionError);
-                    expect(error.message).to.match(/Dependency.*Engine.*<=.*Car.*could not be resolved./);
+                        expect(error).to.be.instanceof(DependencyResolutionError);
+                        expect(error.message).to.match(/Dependency.*Engine.*<=.*Car.*could not be resolved./);
                         done();
                     });
                 });
@@ -708,6 +721,35 @@ describe("IoContainer", function () {
             });
         });
 
+        it("should use child contexts to manage child containers", function (done) {
+            var Order = Base.extend({
+                    $inject: Car,
+                    constructor: function (car) {
+                        this.extend({
+                            getCar: function () { return car; }
+                        });
+                    }
+                }),
+                childContext = context.newChild();
+            $using(childContext, 
+                Q.all([Container(childContext).register(Order),
+                       Container(childContext).register(RebuiltV12),
+                       Container(context).register(Ferarri),
+                       Container(context).register(OBDII),
+		       Container(context).register(CraigsJunk)]).then(function () {
+                    Q(Container(context).resolve(Order)).then(function (order) {
+                        var car         = order.getCar(),
+                            engine      = car.getEngine(),
+                            diagnostics = engine.getDiagnostics();
+                        expect(car).to.be.instanceOf(Ferarri);
+                        expect(engine).to.be.instanceOf(RebuiltV12);
+                        expect(diagnostics).to.be.instanceOf(OBDII);
+                        done();
+                    });
+                })
+            );
+        });
+
         it("should fail resolve if missing dependencies", function (done) {
             Q.when(Container(context).register(Ferarri), function (model) {
                 Q(Container(context).resolve(Car)).fail(function (error) {
@@ -748,4 +790,3 @@ describe("IoContainer", function () {
         });
     });
 });
-

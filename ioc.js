@@ -71,8 +71,7 @@ new function () { // closure
      */
     var ComponentModel = Base.extend(ComponentPolicy, {
         constructor: function () {
-            var _key, _service, _class, _lifestyle, _factory,
-                _dependencies = [];
+            var _key, _service, _class, _lifestyle, _factory, _dependencies;
             this.extend({
                 getKey: function () {
                     return _key || _service || _class
@@ -114,11 +113,22 @@ new function () { // closure
                     _factory = value;
                 },
                 getDependencies: function () { return _dependencies; },
-                setDependencies: function (value) { _dependencies = value; },
+                setDependencies: function (value) {
+                    if ($isSomething(value) && !(value instanceof Array)) {
+                        throw new TypeError(lang.format("%1 is not an array.", value));
+                    }
+		    _dependencies = value;
+		},
                 manageDependencies: function (actions) {
                     if ($isFunction(actions)) {
                         var manager = new DependencyManager(_dependencies);
                         actions(manager);
+			if (_dependencies === undefined) {
+			    var dependencies = manager.getDependencies();
+			    if (dependencies.length > 0) {
+				_dependencies = manager.getDependencies();
+			    }
+			}
                     }
                     return _dependencies;
                 },
@@ -199,23 +209,11 @@ new function () { // closure
                     dependencies.push.apply(dependencies, deps);
                     return this;
                 },
-                merge: function (other, replace) {
-                    if (other !== undefined) {
-                        if (other instanceof DependencyManager) {
-                            other = other.getDependencies();
-                        }
-                        if (!(other instanceof Array)) {
-                            other = [other];
-                        }
-                        for (var index = 0; index < other.length; ++index) {
-                            var dependency = other[index];
-                            if (dependency !== undefined) {
-                                if (replace) {
-                                    this.replaceIndex(index, dependency);
-                                } else {
-                                    this.setIndex(index, dependency);
-                                }
-                            }
+                merge: function (dependencies) {
+                    for (var index = 0; index < dependencies.length; ++index) {
+                        var dependency = dependencies[index];
+                        if (dependency !== undefined) {
+                            this.setIndex(index, dependency);
                         }
                     }
                     return this;
@@ -426,6 +424,40 @@ new function () { // closure
     });
 
     /**
+     * Determines the effective component dependencies.
+     * @param   {componentModel} componentModel  - component model
+     * @returns {Array} component dependencies.
+     */
+    function _effectiveDependencies(componentModel) {
+	// Dependencies will be merged from $inject definitions
+	// ordered bt most derived unitl no more remain or last
+	// definition is fully defined (no undefined).
+	var dependencies = componentModel.getDependencies();
+	if (dependencies && !Array2.contains(dependencies, undefined)) {
+	    return dependencies;
+	}
+        var clazz = componentModel.getClass();
+	dependencies = new DependencyManager(dependencies);
+        while (clazz && (clazz !== Base)) {
+	    var injects = [clazz.prototype.$inject, clazz.$inject];
+	    for (var i = 0; i < injects.length; ++i) {
+		var inject = injects[i];
+		if (inject !== undefined) {
+		    if (!(inject instanceof Array)) {
+			inject = [inject];
+		    }
+		    dependencies.merge(inject);
+		    if (!Array2.contains(inject, undefined)) {
+			return dependencies.getDependencies();
+		    }
+		}
+	    }
+	    clazz = clazz.ancestor;
+        }
+        return dependencies.getDependencies();
+    }
+
+    /**
      * Performs the actual component registration in the container.
      * @param   {IoContainer}    container       - container
      * @param   {ComponentModel} componentModel  - component model
@@ -436,13 +468,8 @@ new function () { // closure
             clazz        = componentModel.getClass(),
             lifestyle    = componentModel.getLifestyle() || new SingletonLifestyle,
             factory      = componentModel.getFactory(),
-            dependencies = new DependencyManager;
-        dependencies.merge(componentModel.getDependencies());
-        if (clazz) {
-            dependencies.merge(clazz.prototype.$inject).merge(clazz.$inject);
-        }
-        dependencies = dependencies.getDependencies();
-        var unbind   = $provide(container, key, function (resolution, composer) {
+            dependencies = _effectiveDependencies(componentModel),
+            unbind       = $provide(container, key, function (resolution, composer) {
             if ((resolution instanceof DependencyResolution) &&
                 (resolution.claim(container, clazz) === false) /* cycle */) {
                 return Q.reject(new DependencyResolutionError(resolution,
