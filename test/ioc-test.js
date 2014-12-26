@@ -273,6 +273,14 @@ describe("TransientLifestyle", function () {
 });
 
 describe("ContextualLifestyle", function () {
+    var Controller = Base.extend({
+            $inject: Context,
+            constructor: function (context) {
+                this.extend({
+                    getContext: function () { return context; }
+                });
+            }
+        });
     describe("#resolve", function () {
         it("should resolve diferent instance per context for ContextualLifestyle", function (done) {
             var context        = new Context(),
@@ -296,6 +304,33 @@ describe("ContextualLifestyle", function () {
             });
         });
 
+        it("should implicitly satisfy Context dependency", function (done) {
+            var context        = new Context(),
+                container      = new IoContainer;
+            context.addHandlers(container, new ValidationCallbackHandler);
+            Q(Container(context).register(Controller)).then(function () {
+                Q(Container(context).resolve(Controller)).then(function (controller) {
+                    expect(controller.getContext()).to.equal(context);
+                    done();
+                });
+            });
+        });
+
+        it("should fulfill child Context dependency", function (done) {
+            var context        = new Context(),
+                componentModel = new ComponentModel,
+                container      = new IoContainer;
+            componentModel.setClass(Controller);
+	    componentModel.setDependencies($child(Context));
+            context.addHandlers(container, new ValidationCallbackHandler);
+            Q(Container(context).register(componentModel)).then(function () {
+                Q(Container(context).resolve(Controller)).then(function (controller) {
+                    expect(controller.getContext().getParent()).to.equal(context);
+                    done();
+                });
+            });
+        });
+
         it("should resolve nothing if context not available", function (done) {
             var componentModel = new ComponentModel,
                 container      = (new ValidationCallbackHandler).next(new IoContainer);
@@ -304,6 +339,30 @@ describe("ContextualLifestyle", function () {
             Q(Container(container).register(componentModel)).then(function () {
                 Q(Container(container).resolve(Engine)).then(function (engine) {
                     expect(engine).to.be.undefined;
+                    done();
+                });
+            });
+        });
+
+        it("should reject Context dependency if context not available", function (done) {
+            var componentModel = new ComponentModel,
+                container      = (new ValidationCallbackHandler).next(new IoContainer);
+            Q(Container(container).register(Controller)).then(function () {
+                Q(Container(container).resolve(Controller)).fail(function (error) {
+                    expect(error).to.be.instanceof(DependencyResolutionError);
+		    expect(error.dependency.getKey()).to.equal(Context);
+                    done();
+                });
+            });
+        });
+
+        it("should not fail if optional child Context and no context available", function (done) {
+            var componentModel = new ComponentModel,
+	        container      = (new ValidationCallbackHandler).next(new IoContainer);
+            componentModel.setClass(Controller);
+	    componentModel.setDependencies($optional($child(Context)));
+            Q(Container(container).register(componentModel)).then(function () {
+                Q(Container(container).resolve(Controller)).then(function (controller) {
                     done();
                 });
             });

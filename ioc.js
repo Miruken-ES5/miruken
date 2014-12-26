@@ -456,6 +456,7 @@ new function () { // closure
                         modified   = dependency instanceof Modifier,
                         use        = modified && $use.test(dependency),
                         lazy       = modified && $lazy.test(dependency),
+                        child      = modified && $child.test(dependency),
                         optional   = modified && $optional.test(dependency),
                         promise    = modified && $promise.test(dependency),
                         containerDep;
@@ -466,6 +467,9 @@ new function () { // closure
                         dependency = containerDep || (containerDep = Container(composer));
                     }
                     else if (use || $isNothing(dependency)) {
+                        if (child) {
+                            dependency = _createChild(dependency);
+                        }
                         if (promise) {
                             dependency = Q(dependency);
                         }
@@ -476,7 +480,7 @@ new function () { // closure
                         if (lazy) {
                             var paramDep = dependency;
                             dependency   = function () {
-                                var param = _resolveDependency(paramDep, false, composer);
+                                var param = _resolveDependency(paramDep, false, child, composer);
                                 return promise ? Q(param) : param;
                             };
                         } else {
@@ -485,7 +489,7 @@ new function () { // closure
                                 resolution.claim(container, clazz);
                             }
                             var paramDep = new DependencyResolution(dependency, resolution);
-                            dependency   = _resolveDependency(paramDep, !optional, composer);
+                            dependency   = _resolveDependency(paramDep, !optional, child, composer);
                             if (promise) {
                                 dependency = Q(dependency);
                             } else if ($isPromise(dependency)) {
@@ -515,13 +519,28 @@ new function () { // closure
         return function () { unbind(); }
     }
 
-    function _resolveDependency(dependency, required, composer) {
+    function _resolveDependency(dependency, required, child, composer) {
         var result = composer.resolve(dependency);
-        return ((result === undefined) && required)
-             ? Q.reject(new DependencyResolutionError(dependency,
-                   lang.format("Dependency %1 could not be resolved.",
-                               dependency.formattedDependencyChain())))
-             : result;
+        if (result === undefined) {
+            return required
+                 ? Q.reject(new DependencyResolutionError(dependency,
+                       lang.format("Dependency %1 could not be resolved.",
+                                   dependency.formattedDependencyChain())))
+                 : result;
+        } else if (child) {
+            return $isPromise(result) 
+                 ? result.then(function (parent) { return _createChild(parent); })
+                 : _createChild(result)
+        }
+        return result;
+    }
+
+    function _createChild(parent) {
+        if (!(parent && $isFunction(parent.newChild))) {
+            throw new Error(lang.format(
+                "Child dependency requested via $child, but %1 is not a parent.", parent));
+        }
+        return parent.newChild();
     }
 
     if (typeof module !== 'undefined' && module.exports)

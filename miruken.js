@@ -9,7 +9,7 @@ new function () { // closure
     var miruken = new base2.Package(this, {
         name:    "miruken",
         version: "1.0",
-        exports: "Protocol,Proxy,Disposing,DisposingMixin,Parenting,TraversingAxis,Traversing,TraversingMixin,Traversal,Variance,Modifier,$isProtocol,$using,$isClass,$isFunction,$isPromise,$isSomething,$isNothing,$lift,$eq,$use,$copy,$lazy,$optional,$promise,$createModifier"
+        exports: "Protocol,Proxy,Disposing,DisposingMixin,Parenting,TraversingAxis,Traversing,TraversingMixin,Traversal,Variance,Modifier,$isProtocol,$using,$isClass,$isFunction,$isPromise,$isSomething,$isNothing,$lift,$eq,$use,$copy,$lazy,$child,$optional,$promise,$createModifier"
     });
 
     eval(this.imports);
@@ -18,6 +18,7 @@ new function () { // closure
         $use      = $createModifier(),
         $copy     = $createModifier(),
         $lazy     = $createModifier(),
+        $child    = $createModifier(),
         $optional = $createModifier(),
         $promise  = $createModifier();
 
