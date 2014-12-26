@@ -317,13 +317,15 @@ new function () { // closure
                     }
                 },
                 disposeInstance: function (instance, disposing) {
-                    for (contextId in _cache) {
-                        if (_cache[contextId] === instance) {
-                            this.base(instance, disposing);
-                            delete _cache[contextId];
-                            return true;
-                        } 
-                    }
+		    if (!disposing) {  // Cannot be disposed directly
+                        for (contextId in _cache) {
+                            if (_cache[contextId] === instance) {
+                                this.base(instance, disposing);
+                                delete _cache[contextId];
+                                return true;
+                            } 
+                        }
+		    }
                     return false;
                 },
                 _dispose: function() {
@@ -359,7 +361,10 @@ new function () { // closure
                     return parent && parent.isResolvingDependency(dependency, requestor);
                 },
                 formattedDependencyChain: function () {
-                    return parent ? (key + " <= " + parent.formattedDependencyChain()) : key;
+                    var display = _class ? ("(" + key + " <- " + _class + ")") : key;
+                    return parent 
+                         ? (display + " <= " + parent.formattedDependencyChain())
+                         : display;
                 }
             });
         }

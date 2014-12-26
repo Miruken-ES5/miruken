@@ -220,21 +220,6 @@ describe("SingletonLifestyle", function () {
     });
 
     describe("#dispose", function () {
-        it("should not dispose instance when called directly", function (done) {
-            var context   = new Context(),
-                container = new IoContainer;
-            context.addHandlers(container, new ValidationCallbackHandler);
-            Q.all([Container(context).register(RebuiltV12),
-                   Container(context).register(CraigsJunk)]).spread(function () {
-                Q.all([Container(context).resolve(Engine),
-                       Container(context).resolve(Junkyard)]).spread(function (engine, junk) {
-                    engine.dispose();
-                    expect(junk.getParts()).to.eql([]);
-                    done();
-                });
-            });
-        });
-
         it("should dispose instance when unregistered", function (done) {
             var context   = new Context(),
                 container = new IoContainer;
@@ -245,6 +230,21 @@ describe("SingletonLifestyle", function () {
                        Container(context).resolve(Junkyard)]).spread(function (engine, junk) {
                     registration.unregister();
                     expect(junk.getParts()).to.eql([engine]);
+                    done();
+                });
+            });
+        });
+
+        it("should not dispose instance when called directly", function (done) {
+            var context   = new Context(),
+                container = new IoContainer;
+            context.addHandlers(container, new ValidationCallbackHandler);
+            Q.all([Container(context).register(RebuiltV12),
+                   Container(context).register(CraigsJunk)]).spread(function () {
+                Q.all([Container(context).resolve(Engine),
+                       Container(context).resolve(Junkyard)]).spread(function (engine, junk) {
+                    engine.dispose();
+                    expect(junk.getParts()).to.eql([]);
                     done();
                 });
             });
@@ -347,6 +347,24 @@ describe("ContextualLifestyle", function () {
                        })
                 ).fin(function() {
                     expect(junk.getParts()).to.eql([engine]);
+                    done();
+                });
+            });
+        });
+
+        it("should not dispose instance when called directly", function (done) {
+            var context        = new Context(),
+                componentModel = new ComponentModel,
+                container      = new IoContainer;
+            componentModel.setClass(RebuiltV12);
+            componentModel.setLifestyle(new ContextualLifestyle);
+            context.addHandlers(container, new ValidationCallbackHandler);
+            Q.all([Container(context).register(componentModel),
+                   Container(context).register(CraigsJunk)]).spread(function (registration) {
+                       Q.all([Container(context).resolve(Engine),
+                              Container(context).resolve(Junkyard)]).spread(function (engine, junk) {
+                    engine.dispose();
+                    expect(junk.getParts()).to.eql([]);
                     done();
                 });
             });
@@ -635,7 +653,7 @@ describe("IoContainer", function () {
             Q.when(Container(context).register(Ferarri), function (model) {
                 Q(Container(context).resolve(Car)).fail(function (error) {
                     expect(error).to.be.instanceof(DependencyResolutionError);
-                    expect(error.message).to.match(/Dependency.*Engine.*<=.*Car.*could not be resolved./);
+                    expect(error.message).to.match(/Dependency.*Engine.*<= (.*Car.*<-.*Ferarri.*)could not be resolved./);
                     expect(error.dependency.getKey()).to.equal(Engine);
                     done();
                 });
@@ -651,7 +669,7 @@ describe("IoContainer", function () {
                 Q.when(Container(context).resolve(Car), function (ferarri) {
                 }, function (error) {
                         expect(error).to.be.instanceof(DependencyResolutionError);
-                        expect(error.message).to.match(/Dependency cycle.*Engine.*<=.*Engine.*<=.*Car.*detected./);
+                        expect(error.message).to.match(/Dependency cycle.*Engine.*<= (.*Engine.*<-.*V12.*) <= (.*Car.*<-.*Ferarri.*) detected./);
                         expect(error.dependency.getKey()).to.equal(Engine);
                     done();
                 });
