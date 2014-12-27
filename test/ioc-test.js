@@ -672,6 +672,27 @@ describe("IoContainer", function () {
             });
         });
 
+        it("should behave like $use if no function passed to $eval", function (done) {
+            var  Order = Base.extend({
+                    $inject: [Engine, $eval(5)],
+                    constructor: function (engine, count) {
+                        this.extend({
+                            getEngine: function () { return engine; },
+                            getCount: function () { return count; }
+                        });
+                    }
+                });
+            Q.all([Container(context).register(Order, new TransientLifestyle),
+                   Container(context).register(V12)]).then(function (reg) {
+                Q.all([Container(context).resolve(Order),
+                       Container(context).resolve(Order)]).spread(function (order1, order2) {
+                    expect(order1.getCount()).to.equal(5);
+                    expect(order2.getCount()).to.equal(5);
+                    done();
+                });
+            });
+        });
+
         it("should implicitly satisfy container dependency", function (done) {
             var Registry = Base.extend({
                     $inject: Container,
