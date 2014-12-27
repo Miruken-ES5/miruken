@@ -1,6 +1,6 @@
-var miruken = require('../miruken.js'),
-    context = require('../context.js')
-    error   = require('../error.js'),
+var miruken = require('../lib/miruken.js'),
+    context = require('../lib/context.js')
+    error   = require('../lib/error.js'),
     Q       = require('q'),
     chai    = require("chai"),
     expect  = chai.expect;

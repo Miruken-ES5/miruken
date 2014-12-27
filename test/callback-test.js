@@ -1,5 +1,5 @@
-var miruken  = require('../miruken.js'),
-    callback = require('../callback.js'),
+var miruken  = require('../lib/miruken.js'),
+    callback = require('../lib/callback.js'),
     Q        = require('q'),
     chai     = require("chai"),
     expect   = chai.expect;

@@ -1,6 +1,6 @@
-var miruken  = require('../miruken.js'),
-    context  = require('../context.js')
-    validate = require('../validate.js'),
+var miruken  = require('../lib/miruken.js'),
+    context  = require('../lib/context.js')
+    validate = require('../lib/validate.js'),
     Q        = require('q'),
     chai     = require("chai"),
     expect   = chai.expect;

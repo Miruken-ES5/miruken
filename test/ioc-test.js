@@ -1,5 +1,5 @@
-var miruken  = require('../miruken.js'),
-    ioc      = require('../ioc.js'),
+var miruken  = require('../lib/miruken.js'),
+    ioc      = require('../lib/ioc.js'),
     Q        = require('q'),
     chai     = require("chai"),
     expect   = chai.expect;
@@ -653,10 +653,10 @@ describe("IoContainer", function () {
             var count   = 0,
                 counter = function () { return ++count; },
                 Order = Base.extend({
-                    $inject: [$lazy(Engine), $eval(counter)],
+                    $inject: [Engine, $eval(counter)],
                     constructor: function (engine, count) {
                         this.extend({
-                            getEngine: function () { return engine(); },
+                            getEngine: function () { return engine; },
                             getCount: function () { return count; }
                         });
                     }

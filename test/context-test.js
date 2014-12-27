@@ -1,5 +1,5 @@
-var miruken = require('../miruken.js'),
-    context = require('../context.js')
+var miruken = require('../lib/miruken.js'),
+    context = require('../lib/context.js')
     chai    = require("chai"),
     expect  = chai.expect;
 

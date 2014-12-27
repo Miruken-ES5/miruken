@@ -1,4 +1,4 @@
-var miruken = require('../miruken.js'),
+var miruken = require('../lib/miruken.js'),
     Q       = require('q'),
     chai    = require("chai"),
     expect  = chai.expect;
