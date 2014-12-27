@@ -592,18 +592,17 @@ describe("IoContainer", function () {
                     constructor: function (engine, count) {
                         this.extend({
                             getEngine: function () { return engine(); },
-                            getCount: function () { return count(); }
+                            getCount: function () { return count; }
                         });
                     }
                 });
             Q.all([Container(context).register(Order),
                    Container(context).register(V12)]).then(function () {
                 Q(Container(context).resolve(Order)).then(function (order) {
-                        Q.all([order.getEngine(), order.getEngine(), order.getCount()])
-                            .spread(function (engine1, engine2, count) {
+                    Q.all([order.getEngine(), order.getEngine()]).spread(function (engine1, engine2) {
                         expect(engine1).to.be.instanceOf(V12);
                         expect(engine1).to.equal(engine2);
-                        expect(count).to.equal(9);
+                        expect(order.getCount()).to.equal(9);
                         done();
                     });
                 });
@@ -646,6 +645,29 @@ describe("IoContainer", function () {
                         expect(error.message).to.match(/Dependency.*Engine.*<=.*Car.*could not be resolved./);
                         done();
                     });
+                });
+            });
+        });
+
+        it("should resolve instance with dynamic dependencies", function (done) {
+            var count   = 0,
+                counter = function () { return ++count; },
+                Order = Base.extend({
+                    $inject: [$lazy(Engine), $eval(counter)],
+                    constructor: function (engine, count) {
+                        this.extend({
+                            getEngine: function () { return engine(); },
+                            getCount: function () { return count; }
+                        });
+                    }
+                });
+            Q.all([Container(context).register(Order, new TransientLifestyle),
+                   Container(context).register(V12)]).then(function (reg) {
+                Q.all([Container(context).resolve(Order),
+                       Container(context).resolve(Order)]).spread(function (order1, order2) {
+                    expect(order1.getCount()).to.equal(1);
+                    expect(order2.getCount()).to.equal(2);
+                    done();
                 });
             });
         });

@@ -92,7 +92,7 @@ new function () { // closure
                 },
                 getClass: function () {
                     var clazz = _class;
-                    if (!_class && $isClass(_key)) {
+                    if (!clazz && $isClass(_key)) {
                         clazz = _key;
                     }
                     return clazz;
@@ -140,8 +140,9 @@ new function () { // closure
                     return _dependencies;
                 },
                 configure: function (/* policies */) {
-                    for (var i = 0; i < arguments.length; ++i) {
-                        var policy = arguments[0];
+                    var policies = Array2.flatten(arguments);
+                    for (var i = 0; i < policies.length; ++i) {
+                        var policy = policies[i];
                         if (ComponentPolicy.adoptedBy(policy)) {
                             policy.apply(this);
                         }
@@ -382,9 +383,10 @@ new function () { // closure
                                 componentModel.setKey(registration);
                                 if (args.length > 0 && $isClass(args[0])) {
                                     componentModel.setClass(args.shift());
+                                } else if (args.length > 0) {
+                                    componentModel.configure(args);
+                                    args = [];
                                 }
-                                componentModel.configure(args);
-                                args = [];
                             }
                             registrations.push(
                                 Validator($composer).validate(componentModel).thenResolve({
@@ -480,29 +482,30 @@ new function () { // closure
             return lifestyle.resolve(function () {
                 var promises = [], parameters = [];
                 for (var index = 0; index < dependencies.length; ++index) {
-                    var dependency = dependencies[index],
-                        modified   = dependency instanceof Modifier,
-                        use        = modified && $use.test(dependency),
-                        lazy       = modified && $lazy.test(dependency),
-                        child      = modified && $child.test(dependency),
-                        optional   = modified && $optional.test(dependency),
-                        promise    = modified && $promise.test(dependency),
-                        containerDep;
+                    var dependency   = dependencies[index],
+                        modified     = dependency instanceof Modifier,
+                        use          = modified && $use.test(dependency),
+                        lazy         = modified && $lazy.test(dependency),
+                        dynamic      = modified && $eval.test(dependency),
+                        child        = modified && $child.test(dependency),
+                        optional     = modified && $optional.test(dependency),
+                        promise      = modified && $promise.test(dependency),
+                        containerDep = Container(composer);
                     dependency = Modifier.unwrap(dependency);
                     if (dependency === $$composer) {
                         dependency = composer;
                     } else if (dependency === Container) {
-                        dependency = containerDep || (containerDep = Container(composer));
+                        dependency = containerDep;
                     }
-                    else if (use || $isNothing(dependency)) {
+                    else if (use || dynamic || $isNothing(dependency)) {
+                        if (dynamic) {
+                            dependency = dependency(containerDep);
+                        }
                         if (child) {
                             dependency = _createChild(dependency);
                         }
                         if (promise) {
                             dependency = Q(dependency);
-                        }
-                        if (lazy) {
-                            dependency = $lift(dependency);
                         }
                     } else {
                         if (lazy) {
