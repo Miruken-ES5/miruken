@@ -163,41 +163,6 @@ describe("ComponentModel", function () {
             expect(dependencies).to.eql([Car, 22]);
         });
     });
-
-    describe("#configure", function () {
-        it("should configure model from class only", function () {
-            var componentModel = new ComponentModel;
-            componentModel.configure(Ferarri);
-            expect(componentModel.getKey()).to.equal(Ferarri);
-        });
-
-        it("should configure model from protocol and class", function () {
-            var componentModel = new ComponentModel;
-            componentModel.configure(Car, Ferarri);
-            expect(componentModel.getKey()).to.equal(Car);
-        });
-
-        it("should configure model from name and class", function () {
-            var componentModel = new ComponentModel;
-            componentModel.configure('car', Ferarri);
-            expect(componentModel.getKey()).to.equal('car');
-        });
-
-        it("should configure model from other component model", function () {
-            var prototypeModel = new ComponentModel,
-                componentModel = new ComponentModel;
-            prototypeModel.configure(Car, Ferarri);
-            componentModel.configure(prototypeModel);
-            expect(componentModel.getKey()).to.equal(Car);
-        });
-
-        it("should reject argument if not ComponentPolicy", function () {
-            var componentModel = new ComponentModel;
-            expect(function () {
-                componentModel.configure(new Ferarri);
-            }).to.throw(Error, /is not a ComponentPolicy/);
-        });
-    });
 });
 
 describe("SingletonLifestyle", function () {
@@ -225,10 +190,10 @@ describe("SingletonLifestyle", function () {
                 container = new IoContainer;
             context.addHandlers(container, new ValidationCallbackHandler);
             Q.all([Container(context).register(RebuiltV12),
-                   Container(context).register(CraigsJunk)]).spread(function (registration) {
+                   Container(context).register(CraigsJunk)]).spread(function (engineModel) {
                 Q.all([Container(context).resolve(Engine),
                        Container(context).resolve(Junkyard)]).spread(function (engine, junk) {
-                    registration.unregister();
+                    engineModel.unregister();
                     expect(junk.getParts()).to.eql([engine]);
                     done();
                 });
@@ -440,9 +405,26 @@ describe("IoContainer", function () {
             context.addHandlers(container, new ValidationCallbackHandler);
         });
 
-        it("should register component", function (done) {
+        it("should register component from class", function (done) {
             Q.when(Container(context).register(Ferarri), function (registration) {
                 expect(registration.componentModel.getKey()).to.equal(Ferarri);
+                expect(registration.componentModel.getClass()).to.equal(Ferarri);
+                done();
+            });
+        });
+
+        it("should register component from protocol and class", function (done) {
+            Q.when(Container(context).register(Car, Ferarri), function (registration) {
+                expect(registration.componentModel.getKey()).to.equal(Car);
+                expect(registration.componentModel.getClass()).to.equal(Ferarri);
+                done();
+            });
+        });
+
+        it("should register component from name and class", function (done) {
+            Q.when(Container(context).register('car', Ferarri), function (registration) {
+                expect(registration.componentModel.getKey()).to.equal('car');
+                expect(registration.componentModel.getClass()).to.equal(Ferarri);
                 done();
             });
         });
@@ -459,7 +441,7 @@ describe("IoContainer", function () {
         });
 
         it("should reject registration if no key", function (done) {
-            Q.when(Container(context).register(), undefined, function (error) {
+            Q(Container(context).register(new ComponentModel)).fail(function (error) {
                 expect(error.getKeyErrors("Key")).to.eql([
                     new ValidationError("Key could not be determined for component.", {
                         key:  "Key",
@@ -471,7 +453,7 @@ describe("IoContainer", function () {
         });
 
         it("should reject registration if no factory", function (done) {
-            Q.when(Container(context).register(), undefined, function (error) {
+            Q(Container(context).register(new ComponentModel)).fail(function (error) {
                 expect(error.getKeyErrors("Factory")).to.eql([
                     new ValidationError("Factory could not be determined for component.", {
                         key:  "Factory",
@@ -617,8 +599,10 @@ describe("IoContainer", function () {
             Q.all([Container(context).register(Order),
                    Container(context).register(V12)]).then(function () {
                 Q(Container(context).resolve(Order)).then(function (order) {
-                    Q.all([order.getEngine(), order.getCount()]).spread(function (engine, count) {
-                        expect(engine).to.be.instanceOf(V12);
+                        Q.all([order.getEngine(), order.getEngine(), order.getCount()])
+                            .spread(function (engine1, engine2, count) {
+                        expect(engine1).to.be.instanceOf(V12);
+                        expect(engine1).to.equal(engine2);
                         expect(count).to.equal(9);
                         done();
                     });

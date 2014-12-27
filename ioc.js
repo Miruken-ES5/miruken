@@ -32,10 +32,10 @@ new function () { // closure
         },
         /**
          * Registers on or more components in the container.
-         * @param   {Any*}    registration  - Registration , ComponentModel or policies
+         * @param   {Any*}    registrations  - Registrations
          * @returns {Promise} a promise representing the registration.
          */
-        register: function (registration) {},
+        register: function (/*registration*/) {},
         /**
          * Resolves the component for the key.
          * @param   {Any} key  - key used to identify the component
@@ -69,7 +69,7 @@ new function () { // closure
     /**
      * @class {ComponentModel}
      */
-    var ComponentModel = Base.extend(ComponentPolicy, {
+    var ComponentModel = Base.extend({
         constructor: function () {
             var _key, _service, _class, _lifestyle, _factory, _dependencies;
             this.extend({
@@ -90,7 +90,13 @@ new function () { // closure
                     }
                     _service = value;
                 },
-                getClass: function () { return _class; },
+                getClass: function () {
+                    var clazz = _class;
+                    if (!_class && $isClass(_key)) {
+                        clazz = _key;
+                    }
+                    return clazz;
+                },
                 setClass: function (value) {
                     if ($isSomething(value) && !$isClass(value)) {
                         throw new TypeError(lang.format("%1 is not a class.", value));
@@ -100,9 +106,10 @@ new function () { // closure
                 getLifestyle: function () { return _lifestyle; },
                 setLifestyle: function (value) { _lifestyle = value; },
                 getFactory: function () {
-                    var factory =  _factory;
-                    if (!factory && _class) {
-                        factory = _class.new.bind(_class);
+                    var factory =  _factory,
+                        clazz   = this.getClass();
+                    if (!factory && clazz) {
+                        factory = clazz.new.bind(clazz);
                     }
                     return factory;
                 },
@@ -117,56 +124,30 @@ new function () { // closure
                     if ($isSomething(value) && !(value instanceof Array)) {
                         throw new TypeError(lang.format("%1 is not an array.", value));
                     }
-		    _dependencies = value;
-		},
+                    _dependencies = value;
+                },
                 manageDependencies: function (actions) {
                     if ($isFunction(actions)) {
                         var manager = new DependencyManager(_dependencies);
                         actions(manager);
-			if (_dependencies === undefined) {
-			    var dependencies = manager.getDependencies();
-			    if (dependencies.length > 0) {
-				_dependencies = manager.getDependencies();
-			    }
-			}
+                        if (_dependencies === undefined) {
+                            var dependencies = manager.getDependencies();
+                            if (dependencies.length > 0) {
+                                _dependencies = manager.getDependencies();
+                            }
+                        }
                     }
                     return _dependencies;
                 },
                 configure: function (/* policies */) {
-                    var policies = Array2.flatten(arguments);
-                    switch (policies.length) {
-                        case 0: return;
-                        case 1:
-                        case 2:
-                        {
-                            var clazz = (policies.length === 1) ? policies[0] : policies[1];
-                            if ($isClass(clazz)) {
-                                this.setKey(policies[0]);
-                                this.setClass(clazz);
-                                return;
-                            }
-                            break;
+                    for (var i = 0; i < arguments.length; ++i) {
+                        var policy = arguments[0];
+                        if (ComponentPolicy.adoptedBy(policy)) {
+                            policy.apply(this);
                         }
                     }
-                    var _this = this;
-                    policies.forEach(function (policy) {
-                        if (ComponentPolicy.adoptedBy(policy)) {
-                            policy.apply(_this);
-                        } else {
-                            throw new TypeError(lang.format("%1 is not a ComponentPolicy.", policy));
-                        }
-                    });
-                },
-                apply: function (componentModel) {
-                    componentModel.setKey(_key);
-                    componentModel.setService(_service);
-                    componentModel.setClass(_class);
-                    componentModel.setLifestyle(_lifestyle);
-                    componentModel.setFactory(_factory);
-                    componentModel.setDependencies(_dependencies);
                 }
             });
-            this.configure(arguments);
         }
     });
 
@@ -387,20 +368,40 @@ new function () { // closure
     var IoContainer = CallbackHandler.extend(Container, {
         constructor: function () {
             this.extend({
-                register: function (registration) {
-                    if (Registration.adoptedBy(registration)) {
-                        return registration.register(this);
+                register: function (/*registrations*/) {
+                    var registrations = []
+                        args = Array.prototype.slice.call(arguments);
+                    while (args.length > 0) {
+                        var registration = args.shift();
+                        if (Registration.adoptedBy(registration)) {
+                            registrations.push(registration.register(this));
+                        } else {
+                            var componentModel = registration;
+                            if (!(registration instanceof ComponentModel)) {
+                                componentModel = new ComponentModel;
+                                componentModel.setKey(registration);
+                                if (args.length > 0 && $isClass(args[0])) {
+                                    componentModel.setClass(args.shift());
+                                }
+                                componentModel.configure(args);
+                                args = [];
+                            }
+                            registrations.push(
+                                Validator($composer).validate(componentModel).thenResolve({
+                                    componentModel: componentModel,
+                                        unregister: this.registerHandler(componentModel)
+                                    }
+                                ));
+                        }
                     }
-                    var componentModel = new ComponentModel(arguments); 
-                    return Validator($composer).validate(componentModel).thenResolve({
-                        componentModel: componentModel,
-                            unregister: this.registerHandler(componentModel)
-                    });
+                    return registrations.length === 1 ? Q(registrations[0]) : Q.all(registrations);
                 },
                 registerHandler: function(componentModel) {
                     return _registerHandler(this, componentModel); 
                 },
-                dispose: function () { $provide.removeAll(this); }
+                dispose: function () {
+                    $provide.removeAll(this);
+                }
             })
         },
         $validators:[
@@ -429,30 +430,30 @@ new function () { // closure
      * @returns {Array} component dependencies.
      */
     function _effectiveDependencies(componentModel) {
-	// Dependencies will be merged from $inject definitions
-	// ordered bt most derived unitl no more remain or last
-	// definition is fully defined (no undefined).
-	var dependencies = componentModel.getDependencies();
-	if (dependencies && !Array2.contains(dependencies, undefined)) {
-	    return dependencies;
-	}
+        // Dependencies will be merged from $inject definitions
+        // starting from  most derived unitl no more remain or the
+        // last definition is fully specified (no undefined).
+        var dependencies = componentModel.getDependencies();
+        if (dependencies && !Array2.contains(dependencies, undefined)) {
+            return dependencies;
+        }
         var clazz = componentModel.getClass();
-	dependencies = new DependencyManager(dependencies);
+        dependencies = new DependencyManager(dependencies);
         while (clazz && (clazz !== Base)) {
-	    var injects = [clazz.prototype.$inject, clazz.$inject];
-	    for (var i = 0; i < injects.length; ++i) {
-		var inject = injects[i];
-		if (inject !== undefined) {
-		    if (!(inject instanceof Array)) {
-			inject = [inject];
-		    }
-		    dependencies.merge(inject);
-		    if (!Array2.contains(inject, undefined)) {
-			return dependencies.getDependencies();
-		    }
-		}
-	    }
-	    clazz = clazz.ancestor;
+            var injects = [clazz.prototype.$inject, clazz.$inject];
+            for (var i = 0; i < injects.length; ++i) {
+                var inject = injects[i];
+                if (inject !== undefined) {
+                    if (!(inject instanceof Array)) {
+                        inject = [inject];
+                    }
+                    dependencies.merge(inject);
+                    if (!Array2.contains(inject, undefined)) {
+                        return dependencies.getDependencies();
+                    }
+                }
+            }
+            clazz = clazz.ancestor;
         }
         return dependencies.getDependencies();
     }
@@ -505,21 +506,23 @@ new function () { // closure
                         }
                     } else {
                         if (lazy) {
-                            var paramDep = dependency;
-                            dependency   = function () {
-                                var param = _resolveDependency(paramDep, false, child, composer);
-                                return promise ? Q(param) : param;
-                            };
+                            dependency = (function (paramDep, created, param) {
+                                return function () {
+                                    if (!created) {
+                                        created = true;
+                                        param   = _resolveDependency(paramDep, false, promise, child, composer);
+                                    }
+                                    return param;
+                                };
+                            })(dependency);
                         } else {
                             if (!(resolution instanceof DependencyResolution)) {
                                 resolution = new DependencyResolution(resolution.getKey());
                                 resolution.claim(container, clazz);
                             }
                             var paramDep = new DependencyResolution(dependency, resolution);
-                            dependency   = _resolveDependency(paramDep, !optional, child, composer);
-                            if (promise) {
-                                dependency = Q(dependency);
-                            } else if ($isPromise(dependency)) {
+                            dependency   = _resolveDependency(paramDep, !optional, promise, child, composer);
+                            if (!promise && $isPromise(dependency)) {
                                 promises.push(dependency);
                                 (function (paramPromise, paramIndex) {
                                     paramPromise.then(function (param) {
@@ -546,7 +549,7 @@ new function () { // closure
         return function () { unbind(); }
     }
 
-    function _resolveDependency(dependency, required, child, composer) {
+    function _resolveDependency(dependency, required, promise, child, composer) {
         var result = composer.resolve(dependency);
         if (result === undefined) {
             return required
@@ -555,11 +558,11 @@ new function () { // closure
                                    dependency.formattedDependencyChain())))
                  : result;
         } else if (child) {
-            return $isPromise(result) 
+            result = $isPromise(result) 
                  ? result.then(function (parent) { return _createChild(parent); })
                  : _createChild(result)
         }
-        return result;
+        return promise ? Q(result) : result;
     }
 
     function _createChild(parent) {

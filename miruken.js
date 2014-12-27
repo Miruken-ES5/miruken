@@ -110,21 +110,21 @@ new function () { // closure
                         protocols.push(base);
                     }
                     while (args.length > 0) {
-			var arg = args[0];
-			if (Protocol.ancestorOf(arg)) {
+                        var arg = args[0];
+                        if (Protocol.ancestorOf(arg)) {
                             protocols.push(args.shift());
-			} else if (Module.ancestorOf(arg)) {
-			    modules.push(args.shift());
-			} else {
-			    break;
-			}
+                        } else if (Module.ancestorOf(arg)) {
+                            modules.push(args.shift());
+                        } else {
+                            break;
+                        }
                     }
                     var subclass = extend.apply(base, args);
                     Array2.forEach(protocols, addProtocol, subclass);
                     subclass.addProtocol  = addProtocol;
                     subclass.getProtocols = getProtocols;
                     subclass.conformsTo   = Base.conformsTo;
-		    Array2.forEach(modules, subclass.implement, subclass);
+                    Array2.forEach(modules, subclass.implement, subclass);
                     return subclass;
                 })(this, Array.prototype.slice.call(arguments));
             };
@@ -163,7 +163,8 @@ new function () { // closure
                             (function (methodName) {
                                 var proxiedMethod = {};
                                 proxiedMethod[methodName] = function () {
-                                    return this.proxyMethod(methodName, [].slice.call(arguments, 0));
+                                    var args = Array.prototype.slice.call(arguments);
+                                    return this.proxyMethod(methodName, args);
                                 }
                                 derived.implement(proxiedMethod);
                             })(key);
