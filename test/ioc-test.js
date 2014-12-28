@@ -492,7 +492,21 @@ describe("IoContainer", function () {
                     expect(car).to.be.instanceOf(Ferarri);
                     expect(car.getEngine()).to.be.instanceOf(V12);
                     done();
+                });
+            });
+        });
+
+        it("should resolve class invariantly", function (done) {
+            Q.all([Container(context).register(Ferarri),
+                   Container(context).register(V12)]).then(function () {
+                Q(Container(context).resolve($eq(Car))).then(function (car) {
+                    expect(car).to.be.undefined;
+                    Q(Container(context).resolve($eq(Ferarri))).then(function (car) {
+                        expect(car).to.be.instanceOf(Ferarri);
+                        expect(car.getEngine()).to.be.instanceOf(V12);
+                        done();
                     });
+                });
             });
         });
 
@@ -644,6 +658,27 @@ describe("IoContainer", function () {
                         expect(error).to.be.instanceof(DependencyResolutionError);
                         expect(error.message).to.match(/Dependency.*Engine.*<=.*Car.*could not be resolved./);
                         done();
+                    });
+                });
+            });
+        });
+
+        it("should resolve instance with invariant dependencies", function (done) {
+            var carModel    = new ComponentModel,
+                engineModel = new ComponentModel;
+            carModel.setClass(Ferarri);
+            carModel.setDependencies([$eq(V12)]);
+            engineModel.setKey(Engine);
+            engineModel.setClass(V12);
+            Q.all([Container(context).register(carModel),
+                   Container(context).register(engineModel)]).then(function () {
+                Q(Container(context).resolve(Car)).fail(function (error) {
+                    expect(error).to.be.instanceof(DependencyResolutionError);
+                    expect(error.message).to.match(/Dependency.*`.*V12.*`.*<=.*Car.*could not be resolved./);
+                    Container(context).register(V12).then(function () {
+                        Q(Container(context).resolve(Car)).then(function (car) {
+                            done();
+                        });
                     });
                 });
             });

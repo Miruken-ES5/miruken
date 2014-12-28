@@ -499,6 +499,11 @@ describe("CallbackHandler", function () {
             expect(inventory.handle(cashier)).to.be.false;
             expect(inventory.handle(accountable)).to.be.true;
             expect(inventory.accountable).to.equal(accountable);
+            $handle(inventory, Accountable, function (accountable) {
+                this.accountable = accountable;
+            });
+            expect(inventory.handle(cashier)).to.be.true;
+            expect(inventory.accountable).to.equal(cashier);
         });
 
         it("should stop early if handle callback invariantly", function () {
@@ -508,8 +513,8 @@ describe("CallbackHandler", function () {
                     $handlers:[
                         Accountable, function (accountable) {
                         },
-            null, function (anything) {
-            }]
+                        null, function (anything) {
+                        }]
                 }));
             expect(inventory.handle($eq(accountable))).to.be.true;
             expect(inventory.handle($eq(cashier))).to.be.false;
@@ -792,6 +797,10 @@ describe("CallbackHandler", function () {
                 }));
             expect(inventory.resolve(Accountable)).to.be.undefined;
             expect(inventory.resolve(Cashier)).to.equal(cashier);
+            $provide(inventory, Cashier, function (resolution) {
+                return cashier;
+            });
+            expect(inventory.resolve(Accountable)).to.equal(cashier);
         });
 
         it("should resolve objects by protocol invariantly", function () {
