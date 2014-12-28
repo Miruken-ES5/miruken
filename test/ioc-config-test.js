@@ -1,6 +1,6 @@
 var miruken  = require('../lib/miruken.js'),
     ioc      = require('../lib/ioc.js'),
-    fluent   = require('../lib/ioc-fluent.js'),
+    config   = require('../lib/ioc-config.js'),
     Q        = require('q'),
     chai     = require("chai"),
     expect   = chai.expect;
@@ -8,12 +8,12 @@ var miruken  = require('../lib/miruken.js'),
 eval(base2.namespace);
 eval(miruken.namespace);
 eval(ioc.namespace);
-eval(ioc.fluent.namespace);
+eval(ioc.config.namespace);
 
 new function () { // closure
 
-    var ioc_fluent_test = new base2.Package(this, {
-        name:    "ioc_fluent_test",
+    var ioc_config_test = new base2.Package(this, {
+        name:    "ioc_config_test",
         exports: ""
     });
 
@@ -22,4 +22,4 @@ new function () { // closure
     eval(this.exports);
 };
 
-eval(base2.ioc_fluent_test.namespace);
+eval(base2.ioc_config_test.namespace);

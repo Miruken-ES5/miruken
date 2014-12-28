@@ -806,6 +806,28 @@ describe("CallbackHandler", function () {
             expect(cardGames.resolve(Game)).to.equal(blackjack);
         });
 
+        it("should resolve by string literal", function () {
+            var blackjack  = new CardTable("BlackJack", 1, 5),
+                cardGames  = new (CallbackHandler.extend({
+                    $providers:[
+                        'BlackJack', function (resolution) {
+                            return blackjack;
+                        }]
+                }));
+            expect(cardGames.resolve('BlackJack')).to.equal(blackjack);
+        });
+
+        it("should resolve by string instance", function () {
+            var blackjack  = new CardTable("BlackJack", 1, 5),
+                cardGames  = new (CallbackHandler.extend({
+                    $providers:[
+                        'BlackJack', function (resolution) {
+                            return blackjack;
+                        }]
+                }));
+            expect(cardGames.resolve(new String("BlackJack"))).to.equal(blackjack);
+        });
+
         it("should resolve string by regular expression", function () {
             var blackjack  = new CardTable("BlackJack", 1, 5),
                 cardGames  = new (CallbackHandler.extend({
@@ -847,7 +869,7 @@ describe("CallbackHandler", function () {
         });
 
         it("should resolve objects by class eventually", function (done) {
-            var casino      = new Casino('Venetian');
+            var casino = new Casino('Venetian');
             Q.when(casino.resolve(DrinkServer), function (server) {
                 expect(server).to.be.an.instanceOf(DrinkServer);
                 done();
