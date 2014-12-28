@@ -259,7 +259,7 @@ describe("Protocol", function () {
             expect(CircusAnimal.conformsTo(Animal)).to.be.true;
             expect(CircusAnimal.conformsTo(Tricks)).to.be.true;
             expect(Animal.conformsTo(Tricks)).to.be.false;
-            expect(CircusAnimal.conformsTo(CircusAnimal)).to.be.false;
+            expect(CircusAnimal.conformsTo(CircusAnimal)).to.be.true;
         });
 
         it("should conform to protocols by object", function () {

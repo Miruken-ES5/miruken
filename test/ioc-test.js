@@ -496,6 +496,13 @@ describe("IoContainer", function () {
             });
         });
 
+        it("should resolve nothing if component not found", function (done) {
+            Q.when(Container(context).resolve(Car), function (car) {
+                expect(car).to.be.undefined;
+                done();
+            });
+        });
+
         it("should resolve class invariantly", function (done) {
             Q.all([Container(context).register(Ferarri),
                    Container(context).register(V12)]).then(function () {
@@ -677,6 +684,8 @@ describe("IoContainer", function () {
                     expect(error.message).to.match(/Dependency.*`.*V12.*`.*<=.*Car.*could not be resolved./);
                     Container(context).register(V12).then(function () {
                         Q(Container(context).resolve(Car)).then(function (car) {
+                            expect(car).to.be.instanceOf(Ferarri);
+                            expect(car.getEngine()).to.be.instanceOf(V12);
                             done();
                         });
                     });
@@ -765,21 +774,42 @@ describe("IoContainer", function () {
             });
         });
 
-        it("should return nothing if component not found", function (done) {
-            Q.when(Container(context).resolve(Car), function (car) {
-                expect(car).to.be.undefined;
+        it("should have opportunity to resolve missing components", function (done) {
+            $provide(container, Car, function (resolution, composer) {
+                return new Ferarri(new V12(917, 6.3));
+            });
+            Q(Container(context).resolve(Car)).then(function (car) {
+                expect(car).to.be.instanceOf(Ferarri);
+                expect(car.getEngine()).to.be.instanceOf(V12);
                 done();
             });
         });
 
-        it("should have opportunity to resolve missing components", function (done) {
-            $provide(container, True, function (resolution, composer) {
-                return new Ferarri(new V12(917, 6.3));
+        it("should resolve external dependencies", function (done) {
+            var engine = new V12;
+            context.store(engine);
+            Q(Container(context).register(Ferarri)).then(function () {
+                Q(Container(context).resolve(Car)).then(function (car) {
+                    expect(car).to.be.instanceOf(Ferarri);
+                    expect(car.getEngine()).to.equal(engine);
+                    done();
+                });
             });
-            Q.when(Container(context).resolve(Car), function (car) {
-                expect(car).to.be.instanceOf(Ferarri);
-                expect(car.getEngine()).to.be.instanceOf(V12);
-                done();
+        });
+
+        it("should ignore external dependencies for $ioc", function (done) {
+            var engine   = new V12,
+                carModel = new ComponentModel;
+            context.store(engine);
+            carModel.setClass(Ferarri);
+            carModel.setDependencies([$ioc(Engine)]);
+            Q(Container(context).register(carModel)).then(function () {
+                Q(Container(context).resolve(Car)).fail(function (error) {
+                    expect(error).to.be.instanceof(DependencyResolutionError);
+                    expect(error.message).to.match(/Dependency.*Engine.*<= (.*Car.*<-.*Ferarri.*)could not be resolved./);
+                    expect(error.dependency.getKey()).to.equal(Engine);
+                    done();
+                });
             });
         });
 
@@ -798,7 +828,7 @@ describe("IoContainer", function () {
                        Container(childContext).register(RebuiltV12),
                        Container(context).register(Ferarri),
                        Container(context).register(OBDII),
-		       Container(context).register(CraigsJunk)]).then(function () {
+               Container(context).register(CraigsJunk)]).then(function () {
                     Q(Container(context).resolve(Order)).then(function (order) {
                         var car         = order.getCar(),
                             engine      = car.getEngine(),
