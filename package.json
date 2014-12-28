@@ -13,6 +13,7 @@
     "grunt-contrib-uglify": "latest",
     "grunt-contrib-watch": "latest",
     "grunt-mocha-test": "latest",
+    "grunt-concurrent": "latest",
     "mocha": "^2.1.0",
     "prettyjson": "^1.0.0"
   }

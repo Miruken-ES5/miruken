@@ -4,7 +4,7 @@ module.exports = function(grunt) {
     pkg: grunt.file.readJSON('package.json'),
     watch: {
       js: {
-        files: ['**'],
+        files: ['lib/**.js'],
         tasks: ['jshint'],
         options: {
           livereload: true,
@@ -16,7 +16,13 @@ module.exports = function(grunt) {
       }
     },
     jshint: {
-      all: ['gruntfile.js', '*.js', 'test/**/*.js']
+      all: ['gruntfile.js', 'lib/*.js', 'test/**/*.js']
+    },
+    concurrent: {
+      options: {
+        logConcurrentOutput: true
+      },
+      test: ['mochaTest', 'watch']
     },
     mochaTest: {
       options: {
@@ -29,6 +35,7 @@ module.exports = function(grunt) {
   grunt.loadNpmTasks('grunt-contrib-watch');
   grunt.loadNpmTasks('grunt-contrib-uglify');
   grunt.loadNpmTasks('grunt-contrib-jshint');
+  grunt.loadNpmTasks('grunt-concurrent');
   grunt.loadNpmTasks('grunt-mocha-test');
   grunt.loadNpmTasks('grunt-env');
 
@@ -36,5 +43,5 @@ module.exports = function(grunt) {
   grunt.option('force', true);
 
   //Test task.
-  grunt.registerTask('test', ['mochaTest']);
+  grunt.registerTask('test', ['concurrent:test']);
 };

@@ -24,19 +24,19 @@ new function () { // closure
             });
         }
     });
-    
+
     var Dealer = Base.extend({
         constructor: function () {
             this.extend({
                 shuffle: function (cards) {
                     return cards.sort(function () {
-                        return .5 - Math.random();
+                        return 0.5 - Math.random();
                     });
                 }
             });
         }
     });
-    
+
     var PitBoss = Base.extend({
         constructor: function (name) {
             this.extend({
@@ -44,31 +44,31 @@ new function () { // closure
             });
         }
     });
-    
+
     var DrinkServer = Base.extend({
     });
-    
+
     var Game = Protocol.extend({
         open: function (numPlayers) {}
     });
-    
+
     var Security = Protocol.extend({
         admit: function (guest) {},
-        trackActivity: function (activity) {} 
+        trackActivity: function (activity) {}
     });
-    
+
     var Level1Security = Base.extend(Security, {
         admit: function (guest) {
             return guest.getAge() >= 21;
         }
     });
-    
+
     var Level2Security = Base.extend(Security, {
         trackActivity: function (activity) {
             console.log(lang.format("Tracking '%1'", activity.getName()));
         }
     });
-    
+
     var WireMoney = Base.extend({
         constructor: function (requested) {
             var _received = 0.0;
@@ -79,7 +79,7 @@ new function () { // closure
             });
         }
     });
-    
+
     var CountMoney = Base.extend({
         constructor: function () {
             var _total = 0.0;
@@ -89,7 +89,7 @@ new function () { // closure
             });
         }
     });
-    
+
     var Accountable = Expandable.extend({
         constructor: function (assets, liabilities) {
             assets      = Number(assets || 0);
@@ -110,13 +110,13 @@ new function () { // closure
                     return Q.delay(100);
                 }
             });
-        },        
+        },
         $handlers:[
             CountMoney, function (countMoney, composer) {
                 countMoney.record(this.getBalance());
             }]
     });
-    
+
     var Cashier = Accountable.extend({
         toString: function () { return 'Cashier $' + this.getBalance(); },
         $handlers:[
@@ -125,7 +125,7 @@ new function () { // closure
                 return Q(wireMoney);
             }]
     });
-    
+
     var Activity = Accountable.extend({
         constructor: function (name) {
             this.base();
@@ -135,7 +135,7 @@ new function () { // closure
         },
         toString: function () { return 'Activity ' + this.getName(); }
     });
-    
+
     var CardTable = Activity.extend(Game, {
         constructor: function (name, minPlayers, maxPlayers) {
             this.base(name);
@@ -147,7 +147,7 @@ new function () { // closure
             });
         }
     });
-    
+
     var Casino = CompositeCallbackHandler.extend({
         constructor: function (name) {
             this.base();
@@ -156,12 +156,12 @@ new function () { // closure
             });
         },
         toString: function () { return 'Casino ' + this.getName(); },
-        
+
         $providers:[
             PitBoss, function (composer) {
                 return new PitBoss('Freddy');
             },
-            
+
             DrinkServer, function (composer) {
                 return Q.delay(new DrinkServer(), 100);
             }]
@@ -278,7 +278,7 @@ describe("Definitions", function () {
             expect(handler.$miruken.$handlers.$tail.prev.constraint).to.equal(Accountable);
             expect(handler.$miruken.$handlers.$tail.constraint).to.equal(Game);
         });
- 
+
         it("should order $handlers contravariantly", function () {
             var handler     = new CallbackHandler,
                 nothing     = function (callback) {};
@@ -922,13 +922,13 @@ describe("CallbackHandler", function () {
                 bus2       = new (CallbackHandler.extend({
                     $providers:[ PitBoss, function (resolution) {
                         expect(resolution.getMany()).to.be.true;
-                        return Q.delay(stop2, 100); 
+                        return Q.delay(stop2, 100);
                     }]
                 })),
                 bus3       = new (CallbackHandler.extend({
                     $providers:[ PitBoss, function (resolution) {
                         expect(resolution.getMany()).to.be.true;
-                        return Q.delay(stop3, 50); 
+                        return Q.delay(stop3, 50);
                     }]
                 })),
                 company    = bus1.next(bus2, bus3);
@@ -1055,7 +1055,7 @@ describe("MethodCallbackHandler", function () {
                     throw new Error("Division by zero");
                 return dividend / divisor;
             });
-            expect(function () { 
+            expect(function () {
                 Calculator(divide).divide(10,0);
             }).to.throw(Error, /Division by zero/);
         });
@@ -1069,11 +1069,11 @@ describe("MethodCallbackHandler", function () {
         });
 
         it("should require non-empty method name", function () {
-            expect(function () { 
+            expect(function () {
                 new MethodCallbackHandler(null, function () {});
             }).to.throw(Error, /No methodName specified/);
 
-            expect(function () { 
+            expect(function () {
                 new MethodCallbackHandler(void 0, function () {});
             }).to.throw(Error, /No methodName specified/);
 
@@ -1120,10 +1120,10 @@ describe("InvocationCallbackHandler", function () {
             var texasHoldEm = new CardTable("Texas Hold'em", 2, 7),
             casino    = new Casino('Caesars Palace')
                 .addHandlers(texasHoldEm);
-            expect(function () { 
-                Game(casino).open(5); 
+            expect(function () {
+                Game(casino).open(5);
             }).to.not.throw(Error);
-            expect(function () { 
+            expect(function () {
                 Game(casino).open(9);
             }).to.throw(Error, /has no method 'open'/);
         });
