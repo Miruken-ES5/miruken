@@ -160,7 +160,9 @@ describe("ComponentModel", function () {
                 dependencies   = componentModel.manageDependencies(function (deps) {
                     deps.append(Car, 22);
                 });
-            expect(dependencies).to.eql([Car, 22]);
+	    expect(dependencies).to.have.length(2);
+            expect(dependencies[0].getDependency()).to.equal(Car);
+            expect(dependencies[1].getDependency()).to.equal(22);
         });
     });
 });
@@ -170,7 +172,7 @@ describe("SingletonLifestyle", function () {
         it("should resolve same instance for SingletonLifestyle", function (done) {
             var context        = new Context(),
                 componentModel = new ComponentModel,
-                container    = new IoContainer;
+                container      = new IoContainer;
             componentModel.setClass(V12);
             componentModel.setLifestyle(new SingletonLifestyle);
             context.addHandlers(container, new ValidationCallbackHandler);
@@ -186,10 +188,13 @@ describe("SingletonLifestyle", function () {
 
     describe("#dispose", function () {
         it("should dispose instance when unregistered", function (done) {
-            var context   = new Context(),
-                container = new IoContainer;
+            var context        = new Context(),
+                componentModel = new ComponentModel,
+                container      = new IoContainer;
+            componentModel.setClass(RebuiltV12);
+            componentModel.setLifestyle(new SingletonLifestyle);
             context.addHandlers(container, new ValidationCallbackHandler);
-            Q.all([Container(context).register(RebuiltV12),
+            Q.all([Container(context).register(componentModel),
                    Container(context).register(CraigsJunk)]).spread(function (engineModel) {
                 Q.all([Container(context).resolve(Engine),
                        Container(context).resolve(Junkyard)]).spread(function (engine, junk) {

@@ -323,7 +323,7 @@ describe("Protocol", function () {
         });
 
         it("should determine if protocol adopted by protocol", function () {
-            expect(Protocol.adoptedBy(Animal)).to.be.true;
+            expect(Protocol.adoptedBy(Animal)).to.be.false;
             expect(Tricks.adoptedBy(Animal)).to.be.false;
             expect(Animal.adoptedBy(CircusAnimal)).to.be.true;
         });
