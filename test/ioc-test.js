@@ -204,9 +204,9 @@ describe("SingletonLifestyle", function () {
             context.addHandlers(new IoContainer, new ValidationCallbackHandler);
             Q((container).register(componentModel)).then(function () {
                 Q.all([container.resolve(Engine), container.resolve(Engine)])
-		    .spread(function (engine1, engine2) {
-			expect(engine1).to.equal(engine2);
-			done();
+                    .spread(function (engine1, engine2) {
+                        expect(engine1).to.equal(engine2);
+                        done();
                     });
             });
         });
@@ -221,14 +221,14 @@ describe("SingletonLifestyle", function () {
             componentModel.setLifestyle(new SingletonLifestyle);
             context.addHandlers(new IoContainer, new ValidationCallbackHandler);
             Q.all([container.register(componentModel), container.register(CraigsJunk)])
-		.spread(function (unregister) {
+                .spread(function (unregister) {
                     Q.all([container.resolve(Engine), container.resolve(Junkyard)])
-			.spread(function (engine, junk) {
-			    unregister();
-			    expect(junk.getParts()).to.eql([engine]);
-			    done();
-			});
-		});
+                        .spread(function (engine, junk) {
+                            unregister();
+                            expect(junk.getParts()).to.eql([engine]);
+                            done();
+                        });
+                });
         });
 
         it("should not dispose instance when called directly", function (done) {
@@ -237,11 +237,11 @@ describe("SingletonLifestyle", function () {
             context.addHandlers(new IoContainer, new ValidationCallbackHandler);
             Q.all([container.register(RebuiltV12), container.register(CraigsJunk)]).then(function () {
                 Q.all([container.resolve(Engine), container.resolve(Junkyard)])
-		    .spread(function (engine, junk) {
-                    engine.dispose();
-                    expect(junk.getParts()).to.eql([]);
-                    done();
-                });
+                    .spread(function (engine, junk) {
+                        engine.dispose();
+                        expect(junk.getParts()).to.eql([]);
+                        done();
+                    });
             });
         });
     });
@@ -258,10 +258,10 @@ describe("TransientLifestyle", function () {
             context.addHandlers(new IoContainer, new ValidationCallbackHandler);
             Q(container.register(componentModel)).then(function () {
                 Q.all([container.resolve(Engine), container.resolve(Engine)])
-		    .spread(function (engine1, engine2) {
-                    expect(engine1).to.not.equal(engine2);
-                    done();
-                });
+                    .spread(function (engine1, engine2) {
+                        expect(engine1).to.not.equal(engine2);
+                        done();
+                    });
             });
         });
     });
@@ -286,16 +286,16 @@ describe("ContextualLifestyle", function () {
             context.addHandlers(new IoContainer, new ValidationCallbackHandler);
             Q(container.register(componentModel)).then(function () {
                 Q.all([container.resolve(Engine), container.resolve(Engine)])
-		    .spread(function (engine1, engine2) {
-                    expect(engine1).to.equal(engine2);
-                    var childContext = context.newChild();
-                    $using(childContext, 
-                        Q(Container(childContext).resolve(Engine)).then(function (engine3) {
-                            expect(engine3).to.not.equal(engine1);
-                            done();
-                        })
-                    );
-                });
+                    .spread(function (engine1, engine2) {
+                        expect(engine1).to.equal(engine2);
+                        var childContext = context.newChild();
+                        $using(childContext, 
+                               Q(Container(childContext).resolve(Engine)).then(function (engine3) {
+                                   expect(engine3).to.not.equal(engine1);
+                                   done();
+                               })
+                        );
+                    });
             });
         });
 
@@ -373,14 +373,14 @@ describe("ContextualLifestyle", function () {
             componentModel.setLifestyle(new ContextualLifestyle);
             context.addHandlers(new IoContainer, new ValidationCallbackHandler);
             Q.all([container.register(componentModel), container.register(CraigsJunk)])
-		.spread(function (unregister) {
+                .spread(function (unregister) {
                     Q.all([container.resolve(Engine), container.resolve(Junkyard)])
-		        .spread(function (engine, junk) {
-			    unregister();
-			    expect(junk.getParts()).to.eql([engine]);
-			    done();
-			});
-            });
+                        .spread(function (engine, junk) {
+                            unregister();
+                            expect(junk.getParts()).to.eql([engine]);
+                            done();
+                        });
+                });
         });
 
         it("should dispose components when context ended", function (done) {
@@ -394,15 +394,15 @@ describe("ContextualLifestyle", function () {
                 var engine, junk,
                     childContext = context.newChild();
                 $using(childContext, 
-		       Q.all([Container(childContext).resolve(Engine),
-			      Container(childContext).resolve(Junkyard)]).spread(function (e, j) {
-				  engine = e, junk = j;
-			      })
-		      ).fin(function() {
-			  expect(junk.getParts()).to.eql([engine]);
-			  done();
-		      });
-	    });
+                       Q.all([Container(childContext).resolve(Engine),
+                              Container(childContext).resolve(Junkyard)]).spread(function (e, j) {
+                           engine = e, junk = j;
+                      })
+                ).fin(function() {
+                      expect(junk.getParts()).to.eql([engine]);
+                      done();
+                  });
+            });
         });
 
         it("should not dispose instance when called directly", function (done) {
@@ -414,11 +414,11 @@ describe("ContextualLifestyle", function () {
             context.addHandlers(new IoContainer, new ValidationCallbackHandler);
             Q.all([container.register(componentModel), container.register(CraigsJunk)]).then(function () {
                 Q.all([container.resolve(Engine), container.resolve(Junkyard)])
-		    .spread(function (engine, junk) {
-			engine.dispose();
-			expect(junk.getParts()).to.eql([]);
-			done();
-                    });
+                    .spread(function (engine, junk) {
+                        engine.dispose();
+                        expect(junk.getParts()).to.eql([]);
+                        done();
+                });
             });
         });
     })
@@ -602,7 +602,7 @@ describe("IoContainer", function () {
 
         it("should resolve instance with optional dependencies", function (done) {
             Q.all([container.register(Ferarri), container.register(V12),
-		   container.register(OBDII)]).then(function () {
+           container.register(OBDII)]).then(function () {
                 Q(container.resolve(Car)).then(function (car) {
             var diagnostics = car.getEngine().getDiagnostics();
             expect(diagnostics).to.be.instanceOf(OBDII);
@@ -723,10 +723,10 @@ describe("IoContainer", function () {
             Q.all([container.register(Order, new TransientLifestyle),
                    container.register(V12)]).then(function (reg) {
                 Q.all([container.resolve(Order), container.resolve(Order)])
-	            .spread(function (order1, order2) {
-			expect(order1.getCount()).to.equal(1);
-			expect(order2.getCount()).to.equal(2);
-			done();
+                    .spread(function (order1, order2) {
+                        expect(order1.getCount()).to.equal(1);
+                        expect(order2.getCount()).to.equal(2);
+                        done();
                     });
             });
         });
@@ -745,9 +745,9 @@ describe("IoContainer", function () {
                    container.register(V12)]).then(function (reg) {
                 Q.all([container.resolve(Order), container.resolve(Order)])
                     .spread(function (order1, order2) {
-			expect(order1.getCount()).to.equal(5);
-			expect(order2.getCount()).to.equal(5);
-			done();
+                        expect(order1.getCount()).to.equal(5);
+                        expect(order2.getCount()).to.equal(5);
+                        done();
                     });
             });
         });
@@ -845,7 +845,7 @@ describe("IoContainer", function () {
                 Q.all([Container(childContext).register(Order),
                        Container(childContext).register(RebuiltV12),
                        container.register(Ferarri), container.register(OBDII),
-		       container.register(CraigsJunk)]).then(function () {
+               container.register(CraigsJunk)]).then(function () {
                     Q(container.resolve(Order)).then(function (order) {
                         var car         = order.getCar(),
                             engine      = car.getEngine(),

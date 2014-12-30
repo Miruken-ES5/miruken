@@ -24,9 +24,9 @@ describe("ComponentBuilder", function () {
 
     describe("#constructor", function () {
         it("should configure component fluently", function (done) {
-	    Q(container.register($component(V12))).then(function () {
+            Q(container.register($component(V12))).then(function () {
                 Q(container.resolve(V12)).then(function (engine) {
-		    expect(engine).to.be.instanceOf(V12);
+                    expect(engine).to.be.instanceOf(V12);
                     done();
                 });
             });
@@ -35,22 +35,22 @@ describe("ComponentBuilder", function () {
 
     describe("#boundTo", function () {
         it("should configure component implementation", function (done) {
-	    Q(container.register(
-		$component(Engine).boundTo(V12)
-	    )).then(function () {
+            Q(container.register(
+                $component(Engine).boundTo(V12)
+            )).then(function () {
                 Q(container.resolve(Engine)).then(function (engine) {
-		    expect(engine).to.be.instanceOf(V12);
+                    expect(engine).to.be.instanceOf(V12);
                     done();
                 });
             });
         });
 
         it("should configure component name", function (done) {
-	    Q(container.register(
-		$component('engine').boundTo(V12)
-	    )).then(function () {
+            Q(container.register(
+                $component('engine').boundTo(V12)
+            )).then(function () {
                 Q(container.resolve('engine')).then(function (engine) {
-		    expect(engine).to.be.instanceOf(V12);
+                    expect(engine).to.be.instanceOf(V12);
                     done();
                 });
             });
@@ -59,10 +59,10 @@ describe("ComponentBuilder", function () {
 
     describe("#dependsOn", function () {
         it("should configure component dependencies", function (done) {
-	    Q(container.register(
-		$component(Engine).boundTo(V12)
+            Q(container.register(
+                $component(Engine).boundTo(V12)
                                   .dependsOn($use(255), $use(5.0))
-	    )).then(function () {
+            )).then(function () {
                 Q(container.resolve(Engine)).then(function (engine) {
                     expect(engine.getHorsepower()).to.equal(255);
                     expect(engine.getDisplacement()).to.equal(5.0);
