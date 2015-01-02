@@ -273,10 +273,10 @@ describe("Definitions", function () {
             $handle(handler, Activity, nothing);
             $handle(handler, Accountable, nothing);
             $handle(handler, Game, nothing);
-            expect(handler.$miruken.$handlers.$head.constraint).to.equal(Activity);
-            expect(handler.$miruken.$handlers.$head.next.constraint).to.equal(Accountable);
-            expect(handler.$miruken.$handlers.$tail.prev.constraint).to.equal(Accountable);
-            expect(handler.$miruken.$handlers.$tail.constraint).to.equal(Game);
+            expect(handler.$miruken.$handlers.head.constraint).to.equal(Activity);
+            expect(handler.$miruken.$handlers.head.next.constraint).to.equal(Accountable);
+            expect(handler.$miruken.$handlers.tail.prev.constraint).to.equal(Accountable);
+            expect(handler.$miruken.$handlers.tail.constraint).to.equal(Game);
         });
 
         it("should order $handlers contravariantly", function () {
@@ -284,8 +284,8 @@ describe("Definitions", function () {
                 nothing     = function (callback) {};
             $handle(handler, Accountable, nothing);
             $handle(handler, Activity, nothing);
-            expect(handler.$miruken.$handlers.$head.constraint).to.equal(Activity);
-            expect(handler.$miruken.$handlers.$tail.constraint).to.equal(Accountable);
+            expect(handler.$miruken.$handlers.head.constraint).to.equal(Activity);
+            expect(handler.$miruken.$handlers.tail.constraint).to.equal(Accountable);
         });
 
         it("should order $handlers invariantly", function () {
@@ -294,8 +294,8 @@ describe("Definitions", function () {
                 something   = function (callback) {};
             $handle(handler, Activity, nothing);
             $handle(handler, Activity, something);
-            expect(handler.$miruken.$handlers.$head.handler).to.equal(nothing);
-            expect(handler.$miruken.$handlers.$tail.handler).to.equal(something);
+            expect(handler.$miruken.$handlers.head.handler).to.equal(nothing);
+            expect(handler.$miruken.$handlers.tail.handler).to.equal(something);
         });
 
         it("should order $providers covariantly", function () {
@@ -303,8 +303,8 @@ describe("Definitions", function () {
                 nothing     = function (callback) {};
             $provide(handler, Activity, nothing);
             $provide(handler, Accountable, nothing);
-            expect(handler.$miruken.$providers.$head.constraint).to.equal(Accountable);
-            expect(handler.$miruken.$providers.$tail.constraint).to.equal(Activity);
+            expect(handler.$miruken.$providers.head.constraint).to.equal(Accountable);
+            expect(handler.$miruken.$providers.tail.constraint).to.equal(Activity);
         });
 
         it("should order $providers invariantly", function () {
@@ -313,17 +313,17 @@ describe("Definitions", function () {
                 something   = function (callback) {};
             $provide(handler, Activity, nothing);
             $provide(handler, Activity, something);
-            expect(handler.$miruken.$providers.$head.handler).to.equal(nothing);
-            expect(handler.$miruken.$providers.$tail.handler).to.equal(something);
+            expect(handler.$miruken.$providers.head.handler).to.equal(nothing);
+            expect(handler.$miruken.$providers.tail.handler).to.equal(something);
         });
 
-        it("should index first registered handler with $head and $tail", function () {
+        it("should index first registered handler with head and tail", function () {
             var handler     = new CallbackHandler,
                 nothing     = function (callback) {},
                 unregister  = $handle(handler, True, nothing);
             expect(unregister).to.be.a('function');
-            expect(handler.$miruken.$handlers.$head.handler).to.equal(nothing);
-            expect(handler.$miruken.$handlers.$tail.handler).to.equal(nothing);
+            expect(handler.$miruken.$handlers.head.handler).to.equal(nothing);
+            expect(handler.$miruken.$handlers.tail.handler).to.equal(nothing);
         });
 
         it("should call function when handler removed", function () {
