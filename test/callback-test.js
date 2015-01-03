@@ -410,24 +410,24 @@ describe("Definitions", function () {
         it("should remove all $handler definitions", function () {
             var handler     = new CallbackHandler,
                 nothing     = function (callback) {},
-	        removeCount = 0,
-	        removed     = function () { ++removeCount; };
+            removeCount = 0,
+            removed     = function () { ++removeCount; };
             $handle(handler, Accountable, nothing, removed);
             $handle(handler, Activity, nothing, removed);
-	    $handle.removeAll(handler);
-	    expect(removeCount).to.equal(2);
+        $handle.removeAll(handler);
+        expect(removeCount).to.equal(2);
             expect(handler.$miruken.$handlers).to.be.undefined;
         });
 
         it("should remove all $provider definitions", function () {
             var handler     = new CallbackHandler,
                 nothing     = function (callback) {},
-	        removeCount = 0,
-	        removed     = function () { ++removeCount; };
+            removeCount = 0,
+            removed     = function () { ++removeCount; };
             $provide(handler, Activity, nothing, removed);
             $provide(handler, Accountable, nothing, removed);
-	    $provide.removeAll(handler);
-	    expect(removeCount).to.equal(2);
+        $provide.removeAll(handler);
+        expect(removeCount).to.equal(2);
             expect(handler.$miruken.$providers).to.be.undefined;
         });
     });
@@ -729,7 +729,7 @@ describe("CallbackHandler", function () {
         it("should infer constraint from explicit objects", function () {
             var cashier    = new Cashier(1000000.00),
                 inventory  = new CallbackHandler;
-        $provide(inventory, cashier);
+            $provide(inventory, cashier);
             expect(inventory.resolve(Cashier)).to.equal(cashier);
         });
 
@@ -743,20 +743,20 @@ describe("CallbackHandler", function () {
 
         it("should resolve copy of object with $copy", function () {
             var Circle     = Base.extend({
-            constructor: function (radius) {
-                this.radius = radius;
-            },
-            copy: function () {
-            return new Circle(this.radius);
-            }
-            }),
-            circle     = new Circle(2),
+                    constructor: function (radius) {
+                        this.radius = radius;
+                    },
+                    copy: function () {
+                        return new Circle(this.radius);
+                    }
+                }),
+                circle     = new Circle(2),
                 shapes     = new (CallbackHandler.extend({
                     $providers:[Circle, $copy(circle)]
                 }));
-        var shape      = shapes.resolve(Circle);
-        expect(shape).to.not.equal(circle);
-        expect(shape.radius).to.equal(2);
+           var shape = shapes.resolve(Circle);
+           expect(shape).to.not.equal(circle);
+           expect(shape.radius).to.equal(2);
         });
 
         it("should resolve objects by class implicitly", function () {
@@ -846,6 +846,29 @@ describe("CallbackHandler", function () {
                         }]
                 }));
             expect(cardGames.resolve('BlackJack')).to.equal(blackjack);
+        });
+
+        it("should resolve instances using instance class", function () {
+            var Config  = Base.extend({
+                    constructor: function (key) {
+                        this.extend({
+                                getKey: function () { return key; }
+                            });
+                    }
+                });
+                settings  = new (CallbackHandler.extend({
+                    $providers:[
+                        Config, function (resolution) {
+                            var config = resolution.getKey(),
+                                key    = config.getKey();
+                            if (key == "url") {
+                                return "my.server.com";
+                            } else if (key == "user") {
+                                return "dba";
+                            }
+                        }]
+                }));
+                expect(settings.resolve(new Config("user"))).to.equal("dba");
         });
 
         it("should not resolve objects if not found", function () {
@@ -1046,16 +1069,6 @@ describe("CallbackHandler", function () {
             expect(cardGames.resolve(Activity)).to.equal(blackjack);
             expect(cardGames.resolve(CardTable)).to.be.undefined;
             expect(cardGames.resolve(Cashier)).to.be.undefined;
-        });
-    });
-});
-
-describe("ObjectCallbackHandler", function () {
-    describe("#handle", function () {
-        it("should provide objectcs", function () {
-            var guest     = new Guest(17),
-                directory = new ObjectCallbackHandler(guest);
-            expect(directory.resolve(Guest)).to.equal(guest);
         });
     });
 });
