@@ -365,7 +365,7 @@ describe("Definitions", function () {
                 nothing     = function (callback) {},
                 index       = assignID(Activity);
             $handle(handler, Activity, nothing);
-            expect(handler.$miruken.$handle.index[index].constraint).to.equal(Activity);
+            expect(handler.$miruken.$handle.getIndex(index).constraint).to.equal(Activity);
         });
 
         it("should index protocol constraints using assignID", function () {
@@ -373,14 +373,14 @@ describe("Definitions", function () {
                 nothing     = function (callback) {},
                 index       = assignID(Game);
             $handle(handler, Game, nothing);
-            expect(handler.$miruken.$handle.index[index].constraint).to.equal(Game);
+            expect(handler.$miruken.$handle.getIndex(index).constraint).to.equal(Game);
         });
 
         it("should index string constraints using string", function () {
             var handler     = new CallbackHandler,
                 nothing     = function (callback) {};
             $handle(handler, "something", nothing);
-            expect(handler.$miruken.$handle.index["something"].handler).to.equal(nothing);
+            expect(handler.$miruken.$handle.getIndex("something").handler).to.equal(nothing);
         });
 
         it("should move index to next match", function () {
@@ -390,9 +390,9 @@ describe("Definitions", function () {
                 index       = assignID(Activity),
                 unregister  = $handle(handler, Activity, nothing);
             $handle(handler, Activity, something);
-            expect(handler.$miruken.$handle.index[index].handler).to.equal(nothing);
+            expect(handler.$miruken.$handle.getIndex(index).handler).to.equal(nothing);
             unregister();
-            expect(handler.$miruken.$handle.index[index].handler).to.equal(something);
+            expect(handler.$miruken.$handle.getIndex(index).handler).to.equal(something);
         });
 
         it("should remove index when no more matches", function () {
@@ -402,7 +402,7 @@ describe("Definitions", function () {
             $handle(handler, Accountable, nothing);
             var unregister  = $handle(handler, Activity, nothing);
             unregister();
-            expect(handler.$miruken.$handle.index).to.not.have.property(index);
+            expect(handler.$miruken.$handle.getIndex(index)).to.be.undefined;
         });
     });
 
