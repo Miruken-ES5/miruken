@@ -111,7 +111,7 @@ new function () { // closure
                 }
             });
         },
-        $handlers:[
+        $handle:[
             CountMoney, function (countMoney, composer) {
                 countMoney.record(this.getBalance());
             }]
@@ -119,7 +119,7 @@ new function () { // closure
 
     var Cashier = Accountable.extend({
         toString: function () { return 'Cashier $' + this.getBalance(); },
-        $handlers:[
+        $handle:[
             WireMoney, function (wireMoney, composer) {
                 wireMoney.setReceived(wireMoney.getRequested());
                 return Q(wireMoney);
@@ -157,7 +157,7 @@ new function () { // closure
         },
         toString: function () { return 'Casino ' + this.getName(); },
 
-        $providers:[
+        $provide:[
             PitBoss, function (composer) {
                 return new PitBoss('Freddy');
             },
@@ -260,11 +260,11 @@ describe("Definitions", function () {
             expect(handler.hasOwnProperty('$miruken')).to.be.false;
         });
 
-        it("should create $miruken.$handlers key when first handler registered", function () {
+        it("should create $miruken.$handle key when first handler registered", function () {
             var handler    = new CallbackHandler;
             $handle(handler, True, True);
             expect(handler.hasOwnProperty('$miruken')).to.be.true;
-            expect(handler.$miruken.$handlers).to.be.ok;
+            expect(handler.$miruken.$handle).to.be.ok;
         });
 
         it("should maintain linked-list of handlers", function () {
@@ -273,48 +273,48 @@ describe("Definitions", function () {
             $handle(handler, Activity, nothing);
             $handle(handler, Accountable, nothing);
             $handle(handler, Game, nothing);
-            expect(handler.$miruken.$handlers.head.constraint).to.equal(Activity);
-            expect(handler.$miruken.$handlers.head.next.constraint).to.equal(Accountable);
-            expect(handler.$miruken.$handlers.tail.prev.constraint).to.equal(Accountable);
-            expect(handler.$miruken.$handlers.tail.constraint).to.equal(Game);
+            expect(handler.$miruken.$handle.head.constraint).to.equal(Activity);
+            expect(handler.$miruken.$handle.head.next.constraint).to.equal(Accountable);
+            expect(handler.$miruken.$handle.tail.prev.constraint).to.equal(Accountable);
+            expect(handler.$miruken.$handle.tail.constraint).to.equal(Game);
         });
 
-        it("should order $handlers contravariantly", function () {
+        it("should order $handle contravariantly", function () {
             var handler     = new CallbackHandler,
                 nothing     = function (callback) {};
             $handle(handler, Accountable, nothing);
             $handle(handler, Activity, nothing);
-            expect(handler.$miruken.$handlers.head.constraint).to.equal(Activity);
-            expect(handler.$miruken.$handlers.tail.constraint).to.equal(Accountable);
+            expect(handler.$miruken.$handle.head.constraint).to.equal(Activity);
+            expect(handler.$miruken.$handle.tail.constraint).to.equal(Accountable);
         });
 
-        it("should order $handlers invariantly", function () {
+        it("should order $handle invariantly", function () {
             var handler     = new CallbackHandler,
                 nothing     = function (callback) {},
                 something   = function (callback) {};
             $handle(handler, Activity, nothing);
             $handle(handler, Activity, something);
-            expect(handler.$miruken.$handlers.head.handler).to.equal(nothing);
-            expect(handler.$miruken.$handlers.tail.handler).to.equal(something);
+            expect(handler.$miruken.$handle.head.handler).to.equal(nothing);
+            expect(handler.$miruken.$handle.tail.handler).to.equal(something);
         });
 
-        it("should order $providers covariantly", function () {
+        it("should order $provide covariantly", function () {
             var handler     = new CallbackHandler,
                 nothing     = function (callback) {};
             $provide(handler, Activity, nothing);
             $provide(handler, Accountable, nothing);
-            expect(handler.$miruken.$providers.head.constraint).to.equal(Accountable);
-            expect(handler.$miruken.$providers.tail.constraint).to.equal(Activity);
+            expect(handler.$miruken.$provide.head.constraint).to.equal(Accountable);
+            expect(handler.$miruken.$provide.tail.constraint).to.equal(Activity);
         });
 
-        it("should order $providers invariantly", function () {
+        it("should order $provide invariantly", function () {
             var handler     = new CallbackHandler,
                 nothing     = function (callback) {},
                 something   = function (callback) {};
             $provide(handler, Activity, nothing);
             $provide(handler, Activity, something);
-            expect(handler.$miruken.$providers.head.handler).to.equal(nothing);
-            expect(handler.$miruken.$providers.tail.handler).to.equal(something);
+            expect(handler.$miruken.$provide.head.handler).to.equal(nothing);
+            expect(handler.$miruken.$provide.tail.handler).to.equal(something);
         });
 
         it("should index first registered handler with head and tail", function () {
@@ -322,8 +322,8 @@ describe("Definitions", function () {
                 nothing     = function (callback) {},
                 unregister  = $handle(handler, True, nothing);
             expect(unregister).to.be.a('function');
-            expect(handler.$miruken.$handlers.head.handler).to.equal(nothing);
-            expect(handler.$miruken.$handlers.tail.handler).to.equal(nothing);
+            expect(handler.$miruken.$handle.head.handler).to.equal(nothing);
+            expect(handler.$miruken.$handle.tail.handler).to.equal(nothing);
         });
 
         it("should call function when handler removed", function () {
@@ -335,7 +335,7 @@ describe("Definitions", function () {
                 });
             unregister();
             expect(handlerRemoved).to.be.true;
-            expect(handler.$miruken.$handlers).to.be.undefined;
+            expect(handler.$miruken.$handle).to.be.undefined;
         });
 
         it("should suppress handler removed if requested", function () {
@@ -347,15 +347,15 @@ describe("Definitions", function () {
                 });
             unregister(false);
             expect(handlerRemoved).to.be.false;
-            expect(handler.$miruken.$handlers).to.be.undefined;
+            expect(handler.$miruken.$handle).to.be.undefined;
         });
 
-        it("should remove $handlers when no handlers remain", function () {
+        it("should remove $handle when no handlers remain", function () {
             var handler     = new CallbackHandler,
                 func        = function (callback) {},
                 unregister  = $handle(handler, True, func);
             unregister();
-            expect(handler.$miruken.$handlers).to.be.undefined;
+            expect(handler.$miruken.$handle).to.be.undefined;
         });
     });
 
@@ -365,7 +365,7 @@ describe("Definitions", function () {
                 nothing     = function (callback) {},
                 index       = assignID(Activity);
             $handle(handler, Activity, nothing);
-            expect(handler.$miruken.$handlers.index[index].constraint).to.equal(Activity);
+            expect(handler.$miruken.$handle.index[index].constraint).to.equal(Activity);
         });
 
         it("should index protocol constraints using assignID", function () {
@@ -373,14 +373,14 @@ describe("Definitions", function () {
                 nothing     = function (callback) {},
                 index       = assignID(Game);
             $handle(handler, Game, nothing);
-            expect(handler.$miruken.$handlers.index[index].constraint).to.equal(Game);
+            expect(handler.$miruken.$handle.index[index].constraint).to.equal(Game);
         });
 
         it("should index string constraints using string", function () {
             var handler     = new CallbackHandler,
                 nothing     = function (callback) {};
             $handle(handler, "something", nothing);
-            expect(handler.$miruken.$handlers.index["something"].handler).to.equal(nothing);
+            expect(handler.$miruken.$handle.index["something"].handler).to.equal(nothing);
         });
 
         it("should move index to next match", function () {
@@ -390,9 +390,9 @@ describe("Definitions", function () {
                 index       = assignID(Activity),
                 unregister  = $handle(handler, Activity, nothing);
             $handle(handler, Activity, something);
-            expect(handler.$miruken.$handlers.index[index].handler).to.equal(nothing);
+            expect(handler.$miruken.$handle.index[index].handler).to.equal(nothing);
             unregister();
-            expect(handler.$miruken.$handlers.index[index].handler).to.equal(something);
+            expect(handler.$miruken.$handle.index[index].handler).to.equal(something);
         });
 
         it("should remove index when no more matches", function () {
@@ -402,7 +402,7 @@ describe("Definitions", function () {
             $handle(handler, Accountable, nothing);
             var unregister  = $handle(handler, Activity, nothing);
             unregister();
-            expect(handler.$miruken.$handlers.index).to.not.have.property(index);
+            expect(handler.$miruken.$handle.index).to.not.have.property(index);
         });
     });
 
@@ -416,7 +416,7 @@ describe("Definitions", function () {
             $handle(handler, Activity, nothing, removed);
         $handle.removeAll(handler);
         expect(removeCount).to.equal(2);
-            expect(handler.$miruken.$handlers).to.be.undefined;
+            expect(handler.$miruken.$handle).to.be.undefined;
         });
 
         it("should remove all $provider definitions", function () {
@@ -428,7 +428,7 @@ describe("Definitions", function () {
             $provide(handler, Accountable, nothing, removed);
         $provide.removeAll(handler);
         expect(removeCount).to.equal(2);
-            expect(handler.$miruken.$providers).to.be.undefined;
+            expect(handler.$miruken.$provide).to.be.undefined;
         });
     });
 });
@@ -467,7 +467,7 @@ describe("CallbackHandler", function () {
         it("should handle callback hierarchy", function () {
             var cashier    = new Cashier(1000000.00),
                 inventory  = new (CallbackHandler.extend({
-                    $handlers:[
+                    $handle:[
                         Accountable, function (accountable) {
                             this.accountable = accountable;
                         }]
@@ -479,7 +479,7 @@ describe("CallbackHandler", function () {
         it("should ignore callback if $NOT_HANDLED", function () {
             var cashier    = new Cashier(1000000.00),
                 inventory  = new (CallbackHandler.extend({
-                    $handlers:[
+                    $handle:[
                         Cashier, function (cashier) {
                             return $NOT_HANDLED;
                         }]
@@ -491,7 +491,7 @@ describe("CallbackHandler", function () {
             var cashier     = new Cashier(1000000.00),
                 accountable = new Accountable(1.00),
                 inventory   = new (CallbackHandler.extend({
-                    $handlers:[
+                    $handle:[
                         $eq(Accountable), function (accountable) {
                             this.accountable = accountable;
                         }]
@@ -510,7 +510,7 @@ describe("CallbackHandler", function () {
             var cashier     = new Cashier(1000000.00),
                 accountable = new Accountable(1.00),
                 inventory   = new (CallbackHandler.extend({
-                    $handlers:[
+                    $handle:[
                         Accountable, function (accountable) {
                         },
                         null, function (anything) {
@@ -523,7 +523,7 @@ describe("CallbackHandler", function () {
         it("should handle callback protocol conformance", function () {
             var blackjack  = new CardTable('Blackjack'),
                 inventory  = new (CallbackHandler.extend({
-                    $handlers:[
+                    $handle:[
                         Game, function (game) {
                             this.game = game;
                         }]
@@ -535,7 +535,7 @@ describe("CallbackHandler", function () {
         it("should prefer callback hierarchy over protocol conformance", function () {
             var blackjack  = new CardTable('Blackjack'),
                 inventory  = new (CallbackHandler.extend({
-                    $handlers:[
+                    $handle:[
                         Activity, function (activity) {
                             this.activity = activity;
                         },
@@ -551,7 +551,7 @@ describe("CallbackHandler", function () {
         it("should prefer callback hierarchy and continue with protocol conformance", function () {
             var blackjack  = new CardTable('Blackjack'),
                 inventory  = new (CallbackHandler.extend({
-                    $handlers:[
+                    $handle:[
                         Activity, function (activity) {
                             this.activity = activity;
                             return false;
@@ -568,7 +568,7 @@ describe("CallbackHandler", function () {
         it("should handle unknown callback", function () {
             var blackjack = new CardTable('Blackjack'),
                 inventory = new (CallbackHandler.extend({
-                    $handlers:[null, function (callback) {
+                    $handle:[null, function (callback) {
                         callback.check = true;
                     }]
                 }));
@@ -579,7 +579,7 @@ describe("CallbackHandler", function () {
         it("should handle unknown callback via delegate", function () {
             var blackjack = new CardTable('Blackjack'),
                 inventory = new (Expandable.extend({
-                    $handlers:[null, function (callback) {
+                    $handle:[null, function (callback) {
                         callback.check = true;
                     }]
                 }));
@@ -591,13 +591,13 @@ describe("CallbackHandler", function () {
         it("should allow handlers to chain to base", function () {
             var blackjack  = new CardTable('Blackjack'),
                 Tagger     = CallbackHandler.extend({
-                    $handlers:[
+                    $handle:[
                         Activity, function (activity) {
                             activity.tagged = true;
                         }]
                 });
                 inventory  = new (Tagger.extend({
-                    $handlers:[
+                    $handle:[
                         Activity, function (activity) {
                             this.base();
                         }]
@@ -610,7 +610,7 @@ describe("CallbackHandler", function () {
             var matched   = -1,
                 Checkers  = Base.extend(Game),
                 inventory = new (CallbackHandler.extend({
-                    $handlers:[
+                    $handle:[
                         function (constraint) {
                             return constraint === PitBoss;
                         }, function (callback) {
@@ -689,7 +689,7 @@ describe("CallbackHandler", function () {
 
         it("should handle objects eventually with promise", function (done) {
             var bank       = (new (CallbackHandler.extend({
-                    $handlers:[
+                    $handle:[
                         WireMoney, function (wireMoney) {
                             wireMoney.setReceived(50000);
                             return Q.delay(wireMoney, 100);
@@ -721,7 +721,7 @@ describe("CallbackHandler", function () {
         it("should resolve explicit objects", function () {
             var cashier    = new Cashier(1000000.00),
                 inventory  = new (CallbackHandler.extend({
-                    $providers:[Cashier, cashier]
+                    $provide:[Cashier, cashier]
                 }));
             expect(inventory.resolve(Cashier)).to.equal(cashier);
         });
@@ -736,7 +736,7 @@ describe("CallbackHandler", function () {
         it("should resolve explicit objects with $use", function () {
             var cashier    = new Cashier(1000000.00),
                 inventory  = new (CallbackHandler.extend({
-                    $providers:[Cashier, $use(cashier)]
+                    $provide:[Cashier, $use(cashier)]
                 }));
             expect(inventory.resolve(Cashier)).to.equal(cashier);
         });
@@ -752,7 +752,7 @@ describe("CallbackHandler", function () {
                 }),
                 circle     = new Circle(2),
                 shapes     = new (CallbackHandler.extend({
-                    $providers:[Circle, $copy(circle)]
+                    $provide:[Circle, $copy(circle)]
                 }));
            var shape = shapes.resolve(Circle);
            expect(shape).to.not.equal(circle);
@@ -790,7 +790,7 @@ describe("CallbackHandler", function () {
         it("should resolve objects by class invariantly", function () {
             var cashier    = new Cashier(1000000.00),
                 inventory  = new (CallbackHandler.extend({
-                    $providers:[
+                    $provide:[
                         $eq(Cashier), function (resolution) {
                             return cashier;
                         }]
@@ -806,7 +806,7 @@ describe("CallbackHandler", function () {
         it("should resolve objects by protocol invariantly", function () {
             var blackjack  = new CardTable("BlackJack", 1, 5),
                 cardGames  = new (CallbackHandler.extend({
-                    $providers:[
+                    $provide:[
                         $eq(Game), function (resolution) {
                             return blackjack;
                         }]
@@ -818,7 +818,7 @@ describe("CallbackHandler", function () {
         it("should resolve by string literal", function () {
             var blackjack  = new CardTable("BlackJack", 1, 5),
                 cardGames  = new (CallbackHandler.extend({
-                    $providers:[
+                    $provide:[
                         'BlackJack', function (resolution) {
                             return blackjack;
                         }]
@@ -829,7 +829,7 @@ describe("CallbackHandler", function () {
         it("should resolve by string instance", function () {
             var blackjack  = new CardTable("BlackJack", 1, 5),
                 cardGames  = new (CallbackHandler.extend({
-                    $providers:[
+                    $provide:[
                         'BlackJack', function (resolution) {
                             return blackjack;
                         }]
@@ -840,7 +840,7 @@ describe("CallbackHandler", function () {
         it("should resolve string by regular expression", function () {
             var blackjack  = new CardTable("BlackJack", 1, 5),
                 cardGames  = new (CallbackHandler.extend({
-                    $providers:[
+                    $provide:[
                         /black/i, function (resolution) {
                             return blackjack;
                         }]
@@ -857,7 +857,7 @@ describe("CallbackHandler", function () {
                     }
                 });
                 settings  = new (CallbackHandler.extend({
-                    $providers:[
+                    $provide:[
                         Config, function (resolution) {
                             var config = resolution.getKey(),
                                 key    = config.getKey();
@@ -869,6 +869,7 @@ describe("CallbackHandler", function () {
                         }]
                 }));
                 expect(settings.resolve(new Config("user"))).to.equal("dba");
+                expect(settings.resolve(new Config("name"))).to.be.undefined;
         });
 
         it("should not resolve objects if not found", function () {
@@ -878,7 +879,7 @@ describe("CallbackHandler", function () {
 
         it("should not resolve objects if $NOT_HANDLED", function () {
             var inventory  = new (CallbackHandler.extend({
-                    $providers:[
+                    $provide:[
                         Cashier, function (resolution) {
                             return $NOT_HANDLED;
                         }]
@@ -889,7 +890,7 @@ describe("CallbackHandler", function () {
         it("should resolve unknown objects", function () {
             var blackjack  = new CardTable("BlackJack", 1, 5),
                 cardGames  = new (CallbackHandler.extend({
-                    $providers:[
+                    $provide:[
                         True, function (resolution) {
                             if (resolution.getKey() === CardTable) {
                                 return blackjack;
@@ -916,7 +917,7 @@ describe("CallbackHandler", function () {
         it("should resolve with precedence rules", function () {
             var Checkers  = Base.extend(Game),
                 inventory = new (CallbackHandler.extend({
-                    $providers:[
+                    $provide:[
                         function (constraint) {
                             return constraint === PitBoss;
                         }, function (callback) {
@@ -968,19 +969,19 @@ describe("CallbackHandler", function () {
                 stop2      = [ new PitBoss("Brenda"), new PitBoss("Lauren"), new PitBoss("Kaitlyn") ],
                 stop3      = [ new PitBoss("Phil") ],
                 bus1       = new (CallbackHandler.extend({
-                    $providers:[ PitBoss, function (resolution) {
+                    $provide:[ PitBoss, function (resolution) {
                         expect(resolution.getMany()).to.be.true;
                         return Q.delay(stop1, 75);
                     }]
                 })),
                 bus2       = new (CallbackHandler.extend({
-                    $providers:[ PitBoss, function (resolution) {
+                    $provide:[ PitBoss, function (resolution) {
                         expect(resolution.getMany()).to.be.true;
                         return Q.delay(stop2, 100);
                     }]
                 })),
                 bus3       = new (CallbackHandler.extend({
-                    $providers:[ PitBoss, function (resolution) {
+                    $provide:[ PitBoss, function (resolution) {
                         expect(resolution.getMany()).to.be.true;
                         return Q.delay(stop3, 50);
                     }]
@@ -1018,7 +1019,7 @@ describe("CallbackHandler", function () {
         it("should restrict handlers using short syntax", function () {
             var blackjack  = new CardTable("BlackJack", 1, 5),
                 cardGames  = (new (CallbackHandler.extend({
-                    $handlers:[
+                    $handle:[
                         True, function (cardTable) {
                             cardTable.closed = true;
                         }]
@@ -1036,7 +1037,7 @@ describe("CallbackHandler", function () {
                 }),
                 blackjack  = new Blackjack,
                 cardGames  = (new (CallbackHandler.extend({
-                    $handlers:[
+                    $handle:[
                         True, function (cardTable) {
                             cardTable.closed = true;
                         }]
@@ -1049,7 +1050,7 @@ describe("CallbackHandler", function () {
         it("should restrict providers using short syntax", function () {
             var blackjack  = new CardTable("BlackJack", 1, 5),
                 cardGames  = (new (CallbackHandler.extend({
-                    $providers:[
+                    $provide:[
                         True, function (resolution) {
                             return blackjack;
                         }]
@@ -1061,7 +1062,7 @@ describe("CallbackHandler", function () {
         it("should restrict providers invariantly using short syntax", function () {
             var blackjack  = new CardTable("BlackJack", 1, 5),
                 cardGames  = (new (CallbackHandler.extend({
-                    $providers:[
+                    $provide:[
                         True, function (resolution) {
                             return blackjack;
                         }]
