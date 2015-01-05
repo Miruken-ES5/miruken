@@ -1,5 +1,5 @@
-var miruken  = require('../lib/miruken.js'),
-    ioc      = require('../lib/ioc.js'),
+var miruken  = require('../../lib/miruken.js'),
+    ioc      = require('../../lib/ioc/ioc.js'),
     Q        = require('q'),
     chai     = require("chai"),
     expect   = chai.expect;
