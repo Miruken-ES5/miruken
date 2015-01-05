@@ -317,6 +317,16 @@ describe("Definitions", function () {
             expect(handler.$miruken.$provide.tail.handler).to.equal(something);
         });
 
+        it("should order $lookup invariantly", function () {
+            var handler     = new CallbackHandler,
+                nothing     = function (callback) {},
+                something   = function (callback) {};
+            $lookup(handler, Activity, nothing);
+            $lookup(handler, Activity, something);
+            expect(handler.$miruken.$lookup.head.handler).to.equal(nothing);
+            expect(handler.$miruken.$lookup.tail.handler).to.equal(something);
+        });
+
         it("should index first registered handler with head and tail", function () {
             var handler     = new CallbackHandler,
                 nothing     = function (callback) {},
@@ -991,6 +1001,53 @@ describe("CallbackHandler", function () {
                 expect(pitBosses).to.eql(js.Array2.flatten([stop1, stop2, stop3]));
                 done();
             }, function (error) { done(error); });
+        });
+    });
+
+    describe("#lookup", function () {
+        it("should lookup by class", function () {
+            var blackjack  = new CardTable("BlackJack", 1, 5),
+                cardGames  = new (CallbackHandler.extend({
+                    $lookup:[
+                        CardTable, function (lookup) {
+                            return blackjack;
+                        },
+                        null, function (lookup) {
+                            return blackjack;
+                        }]
+                }));
+            expect(cardGames.lookup(CardTable)).to.equal(blackjack);
+            expect(cardGames.lookup(Game)).to.be.undefined;
+        });
+
+        it("should lookup by protocol", function () {
+            var blackjack  = new CardTable("BlackJack", 1, 5),
+                cardGames  = new (CallbackHandler.extend({
+                    $lookup:[
+                        Game, function (lookup) {
+                            return blackjack;
+                        },
+                        null, function (lookup) {
+                            return blackjack;
+                        }]
+                }));
+            expect(cardGames.lookup(Game)).to.equal(blackjack);
+            expect(cardGames.lookup(CardTable)).to.be.undefined;
+        });
+
+        it("should lookup by string", function () {
+            var blackjack  = new CardTable("BlackJack", 1, 5),
+                cardGames  = new (CallbackHandler.extend({
+                    $lookup:[
+                        'blackjack', function (lookup) {
+                            return blackjack;
+                        },
+                        /game/, function (lookup) {
+                            return blackjack;
+                        }]
+                }));
+            expect(cardGames.lookup('blackjack')).to.equal(blackjack);
+            expect(cardGames.lookup('game')).to.be.undefined;
         });
     });
 

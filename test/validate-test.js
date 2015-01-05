@@ -41,7 +41,7 @@ new function () { // closure
                 setDivision: function (value) { division = value; }
             });
         },
-        $validators:[
+        $validate:[
             Player, function (validation, composer) {
                 var player = validation.getObject();
                 if (!player.getFirstName() || player.getFirstName().length == 0) {
