@@ -743,14 +743,6 @@ describe("CallbackHandler", function () {
             expect(inventory.resolve(Cashier)).to.equal(cashier);
         });
 
-        it("should resolve explicit objects with $use", function () {
-            var cashier    = new Cashier(1000000.00),
-                inventory  = new (CallbackHandler.extend({
-                    $provide:[Cashier, $use(cashier)]
-                }));
-            expect(inventory.resolve(Cashier)).to.equal(cashier);
-        });
-
         it("should resolve copy of object with $copy", function () {
             var Circle     = Base.extend({
                     constructor: function (radius) {
