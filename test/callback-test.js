@@ -683,6 +683,41 @@ describe("CallbackHandler", function () {
             expect(handler.handle(countMoney)).to.be.true;
             expect(countMoney.getTotal()).to.equal(50);
         });
+
+        it("should handle compound keys", function () {
+            var cashier    = new Cashier(1000000.00),
+                blackjack  = new Activity('Blackjack'),
+                bank       = new (Accountable.extend()),
+                inventory  = new (CallbackHandler.extend({
+                    $handle:[
+                        [Cashier, Activity], function (accountable) {
+                            this.accountable = accountable;
+                        }]
+                }));
+            expect(inventory.handle(cashier)).to.be.true;
+            expect(inventory.accountable).to.equal(cashier);
+            expect(inventory.handle(blackjack)).to.be.true;
+            expect(inventory.accountable).to.equal(blackjack);
+            expect(inventory.handle(bank)).to.be.false;
+        });
+
+        it("should unregister compound keys", function () {
+            var cashier    = new Cashier(1000000.00),
+                blackjack  = new Activity('Blackjack'),
+                bank       = new (Accountable.extend()),
+                inventory  = new CallbackHandler,
+                unregister = $handle(inventory, [Cashier, Activity], function (accountable) {
+                    this.accountable = accountable;
+                });
+            expect(inventory.handle(cashier)).to.be.true;
+            expect(inventory.accountable).to.equal(cashier);
+            expect(inventory.handle(blackjack)).to.be.true;
+            expect(inventory.accountable).to.equal(blackjack);
+            expect(inventory.handle(bank)).to.be.false;
+            unregister();
+            expect(inventory.handle(cashier)).to.be.false;
+            expect(inventory.handle(blackjack)).to.be.false;
+        });
     })
 
     describe("#defer", function () {
@@ -872,6 +907,42 @@ describe("CallbackHandler", function () {
                 }));
                 expect(settings.resolve(new Config("user"))).to.equal("dba");
                 expect(settings.resolve(new Config("name"))).to.be.undefined;
+        });
+
+        it("should resolve objects with compound keys", function () {
+            var blackjack  = new CardTable("BlackJack", 1, 5),
+                cashier    = new Cashier(1000000.00),
+                cardGames  = new (CallbackHandler.extend({
+                    $provide:[
+                        [CardTable, Cashier], function (resolution) {
+                            var key = resolution.getKey();
+                            if (key.conformsTo(Game)) {
+                                return blackjack;
+                            } else if (key === Cashier) {
+                                return cashier;
+                            }
+                        }]
+                }));
+            expect(cardGames.resolve(Game)).to.equal(blackjack);
+            expect(cardGames.resolve(Cashier)).to.equal(cashier);
+        });
+
+        it("should unregister objects with compound keys", function () {
+            var blackjack  = new CardTable("BlackJack", 1, 5),
+                cashier    = new Cashier(1000000.00),
+                cardGames  = new CallbackHandler,
+                unregister = $provide(cardGames, [CardTable, Cashier], function (resolution) {
+                    var key = resolution.getKey();
+                    if (key.conformsTo(Game)) {
+                        return blackjack;
+                    } else if (key === Cashier) {
+                        return cashier;
+               }});
+            expect(cardGames.resolve(Game)).to.equal(blackjack);
+            expect(cardGames.resolve(Cashier)).to.equal(cashier);
+            unregister();
+            expect(cardGames.resolve(Game)).to.be.undefined;
+            expect(cardGames.resolve(Cashier)).to.be.undefined;
         });
 
         it("should not resolve objects if not found", function () {
