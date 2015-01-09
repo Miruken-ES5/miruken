@@ -583,6 +583,18 @@ describe("IoContainer", function () {
             });
         });
 
+        it("should reject registration if no key", function (done) {
+            Q(container.register($component())).fail(function (error) {
+                expect(error.getKeyErrors("Key")).to.eql([
+                    new ValidationError("Key could not be determined for component.", {
+                        key:  "Key",
+                        code: ValidationErrorCode.Required
+                    })
+                ]);
+                done();
+            });
+        });
+
         it("should reject registration if no factory", function (done) {
             Q(container.register($component('car'))).fail(function (error) {
                 expect(error.getKeyErrors("Factory")).to.eql([

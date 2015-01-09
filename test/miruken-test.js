@@ -35,11 +35,11 @@ new function () { // closure
     var Elephant = Base.extend(CircusAnimal, {
     });
     
-    var AsianElephant = Elephant.extend({});
-
 	var Tracked = Protocol.extend({
 		getTag: function () {}
 	});
+
+    var AsianElephant = Elephant.extend(Tracked);
 
     var ShoppingCart = Base.extend(Disposing, DisposingMixin, {
         constructor: function () {
@@ -241,9 +241,19 @@ describe("Protocol", function () {
     });
 
     describe("#getProtocols", function () {
-        it("should determine if type is a protocol", function () {
+        it("should retrieve declaring protocols", function () {
             expect(Dog.getProtocols()).to.eql([Animal, Tricks]);
             expect(TreeNode.getProtocols()).to.eql([Traversing]);
+        });
+    });
+
+    describe("#getAllProtocols", function () {
+        it("should retrieve all protocol protocols", function () {
+            expect(CircusAnimal.getAllProtocols()).to.eql([Animal, Tricks]);
+        });
+
+        it("should retrieve all class protocols", function () {
+            expect(AsianElephant.getAllProtocols()).to.eql([Tracked, CircusAnimal, Animal, Tricks]);
         });
     });
 
