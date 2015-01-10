@@ -124,12 +124,6 @@ describe("DependencyModel", function () {
 
 describe("ComponentModel", function () {
     describe("#getKey", function () {
-        it("should return service if no key or class", function () {
-            var componentModel = new ComponentModel;
-            componentModel.setService(Engine);
-            expect(componentModel.getKey()).to.equal(Engine);
-        });
-
         it("should return class if no key", function () {
             var componentModel = new ComponentModel;
             componentModel.setClass(Ferarri);
@@ -143,23 +137,6 @@ describe("ComponentModel", function () {
             expect(function () {
                 componentModel.setClass(1);
             }).to.throw(Error, "1 is not a class.");
-        });
-    });
-
-    describe("#getService", function () {
-        it("should return key if no service and key is protocol", function () {
-            var componentModel = new ComponentModel;
-            componentModel.setKey(Car);
-            expect(componentModel.getService()).to.equal(Car);
-        });
-    });
-
-    describe("#setService", function () {
-        it("should reject service if not a protocol", function () {
-            var componentModel = new ComponentModel;
-            expect(function () {
-                componentModel.setService('logger');
-            }).to.throw(Error, "logger is not a protocol.");
         });
     });
 
@@ -668,15 +645,6 @@ describe("IoContainer", function () {
                         code: ValidationErrorCode.Required
                     })
                 ]);
-                done();
-            });
-        });
-
-        it("should reject registration if class does not conform to service", function (done) {
-            Q(container.register($component(Car).boundTo(CallbackHandler))).fail(function (error) {
-                var carError = error.getKeyErrors("Class")[0];
-                expect(carError.userInfo.key).to.equal("Class");
-                expect(carError.userInfo.code).to.equal(ValidationErrorCode.TypeMismatch);
                 done();
             });
         });

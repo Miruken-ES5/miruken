@@ -51,13 +51,15 @@ describe("$classes", function () {
 
     describe("#fromPackage", function () {
         it("should select classes from package", function (done) {
-            container.register($classes.fromPackage(ioc_config_test)).then(function () {
+            container.register($classes.fromPackage(ioc_config_test)
+                                       .basedOn(Controller)).then(function () {
                 done();
             });
         });
 
         it("should select classes from package using hint", function (done) {
-            container.register($classes(ioc_config_test)).then(function () {
+                container.register($classes(ioc_config_test)
+                                   .basedOn(Controller)).then(function () {
                 done();
             });
         });
