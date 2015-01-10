@@ -460,12 +460,10 @@ describe("TransientLifestyle", function () {
 });
 
 describe("ContextualLifestyle", function () {
-    var Controller = Base.extend({
-            $inject: Context,
+    var Controller = Base.extend(Contextual, ContextualMixin, {
+            $inject: $optional(Context),
             constructor: function (context) {
-                this.extend({
-                    getContext: function () { return context; }
-                });
+                this.setContext(context);
             }
         });
     describe("#resolve", function () {
@@ -500,6 +498,19 @@ describe("ContextualLifestyle", function () {
             });
         });
 
+        it("should setContext if contextual object", function (done) {
+            var context   = new Context,
+                container = Container(context);
+            context.addHandlers(new IoContainer, new ValidationCallbackHandler);
+            Q(container.register(
+                $component(Controller).contextual().dependsOn([]))).then(function () {
+                Q(container.resolve(Controller)).then(function (controller) {
+                    expect(controller.getContext()).to.equal(context);
+                    done();
+                });
+            });
+        });
+
         it("should fulfill child Context dependency", function (done) {
             var context   = new Context,
                 container = Container(context);
@@ -525,7 +536,8 @@ describe("ContextualLifestyle", function () {
 
         it("should reject Context dependency if context not available", function (done) {
             var container = (new ValidationCallbackHandler).next(new IoContainer);
-            Q(Container(container).register($component(Controller))).then(function () {
+            Q(Container(container).register(
+                $component(Controller).dependsOn(Context))).then(function () {
                 Q(Container(container).resolve(Controller)).fail(function (error) {
                     expect(error).to.be.instanceof(DependencyResolutionError);
                     expect(error.dependency.getKey()).to.equal(Context);
@@ -967,6 +979,39 @@ describe("IoContainer", function () {
                 Q(container.resolve(Car)).then(function (car) {
                     expect(car).to.be.instanceOf(Ferarri);
                     expect(car.getEngine()).to.equal(engine);
+                    done();
+                });
+            });
+        });
+
+        it("should resolve in new child context", function (done) {
+            var Workflow = Base.extend(ContextualMixin);
+            Q.all(container.register(
+                    $component(Workflow).newInContext())).then(function () {
+                Q(container.resolve(Workflow)).done(function (workflow) {
+                    expect(workflow).to.be.instanceOf(Workflow);
+                    expect(workflow.getContext()).to.equal(context);
+                    done();
+                });
+            });
+        });
+
+        it("should resolve in new child context", function (done) {
+            var AssemblyLine = Base.extend({
+                $inject: Engine,
+                constructor: function (engine) {
+                    this.extend({
+                        getEngine: function () { return engine; }
+                    });
+                }    
+            });
+            Q.all(container.register(
+                    $component(V12),
+                    $component(AssemblyLine).newInChildContext())).then(function () {
+                Q(container.resolve(AssemblyLine)).done(function (assembleEngine) {
+                    expect(assembleEngine).to.be.instanceOf(AssemblyLine);
+                    expect(assembleEngine.getEngine()).to.be.instanceOf(V12);
+                    expect(assembleEngine.getContext().getParent()).to.equal(context);
                     done();
                 });
             });
