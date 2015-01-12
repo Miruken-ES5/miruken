@@ -15,7 +15,7 @@ new function () { // closure
 
     var ioc_config_test = new base2.Package(this, {
         name:    "ioc_config_test",
-        exports: "Service,Authentication,Controller,Credentials,LoginController,SomeService,InMemoryAuthenticator"
+        exports: "Service,Authentication,Controller,Credentials,LoginController,SomeService,InMemoryAuthenticator,PackageInstaller"
     });
 
     eval(this.imports);
@@ -56,6 +56,15 @@ new function () { // closure
         }
     });
 
+    var PackageInstaller = Installer.extend({
+        register: function(container, composer) {
+            container.register(
+                $classes.fromPackage(ioc_config_test).basedOn(Service)
+                        .withKeys.mostSpecificService()
+            );
+        }
+    });
+
     eval(this.exports);
 };
 
@@ -90,6 +99,21 @@ describe("$classes", function () {
                     done();
                 });
             });
+        });
+
+        it("should register installers if no based on criteria", function (done) {
+            container.register(
+                $classes.fromPackage(ioc_config_test)).then(function () {
+                    Q.all([container.resolve($eq(Service)),
+                           container.resolve($eq(Authentication)),
+                           container.resolve($eq(InMemoryAuthenticator))])
+                        .spread(function (service, authenticator, nothing) {
+                        expect(service).to.be.instanceOf(SomeService);
+                        expect(authenticator).to.be.instanceOf(InMemoryAuthenticator);
+                        expect(nothing).to.be.undefined;
+                        done();
+                    });
+                });
         });
 
         it("should reject package if not a Package", function () {
