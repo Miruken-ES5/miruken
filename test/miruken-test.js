@@ -10,7 +10,7 @@ new function () { // closure
 
     var miruken_test = new base2.Package(this, {
         name:    "miruken_test",
-        exports: "Animal,Tricks,CircusAnimal,Dog,Elephant,AsianElephant,Tracked,ShoppingCart,TreeNode"
+        exports: "Animal,Tricks,CircusAnimal,Dog,Elephant,AsianElephant,Tracked,ShoppingCart,TreeNode,LogInterceptor"
     });
 
     eval(this.imports);
@@ -28,6 +28,11 @@ new function () { // closure
     });
     
     var Dog = Base.extend(Animal, Tricks, {
+        constructor: function (name) {
+           this.extend({
+               getName: function () { return name; }
+           });
+        },
         talk: function () { return 'Ruff Ruff'; },
         fetch: function (item) { return 'Fetched ' + item; }
     });
@@ -69,6 +74,16 @@ new function () { // closure
                 }
             });
         }});
+
+    var LogInterceptor = Interceptor.extend({
+        intercept: function (source, method, args, proceed) {
+            console.log(lang.format("Called %1 with (%2) from %3",
+                        method, args.join(", "), source));
+            var result = proceed();
+            console.log(lang.format("    And returned %1", result));
+            return result;
+        }
+    });
 
     eval(this.exports);
 };
@@ -300,6 +315,13 @@ describe("Protocol", function () {
             expect(AsianElephant.conformsTo(Tricks)).to.be.true;
         });
 
+        it("should accept array of protocols", function () {
+            var EndangeredAnimal = Base.extend([Animal, Tracked]);
+            expect(EndangeredAnimal.conformsTo(Animal)).to.be.true;
+            expect(EndangeredAnimal.conformsTo(Tracked)).to.be.true;
+            expect(EndangeredAnimal.getProtocols()).to.eql([Animal, Tracked]);
+        });
+
         it("should allow redefining method", function () {
             var SmartTricks = Tricks.extend({
                     fetch: function (item) {}
@@ -399,6 +421,42 @@ describe("Proxy", function () {
     });
 });
 
+describe("ProxyBuilder", function () {
+    describe("#buildProxy", function () {
+        it("should proxy class only", function () {
+            var proxyBuilder = new ProxyBuilder,
+                DogProxy     = proxyBuilder.buildProxy([Dog]),
+                dog          = new DogProxy([new LogInterceptor], 'Patches');
+            expect(dog.getName()).to.equal('Patches');
+            expect(dog.talk()).to.equal('Ruff Ruff');
+            expect(dog.fetch("bone")).to.equal('Fetched bone');
+        });
+
+        it("should modify arguments and return value", function () {
+            var proxyBuilder     = new ProxyBuilder,
+                DogProxy         = proxyBuilder.buildProxy([Dog]),
+                UpperInterceptor = Interceptor.extend({
+                    intercept: function (source, method, args, proceed) {
+                        for (var i = 0; i < args.length; ++i) {
+                            if ($isString(args[i])) {
+                                args[i] = args[i].toUpperCase();
+                            }
+                        }
+                        var result = proceed();
+                        if ($isString(result)) {
+                            result = result.toUpperCase();
+                        }
+                        return result;
+                    }
+                }),
+                dog = new DogProxy([new UpperInterceptor], 'Patches');
+            expect(dog.getName()).to.equal('PATCHES');
+            expect(dog.talk()).to.equal('RUFF RUFF');
+            expect(dog.fetch("bone")).to.equal('FETCHED BONE');
+        });
+    });
+})
+;
 describe("Traversing", function () {
     describe("#traverse", function () {
         it("should traverse self", function () {
@@ -627,7 +685,8 @@ describe("Package", function () {
             miruken_test.getClasses(function (cls) {
                 classes.push(cls);
             });
-            expect(classes).to.have.members([Dog, Elephant, AsianElephant, ShoppingCart, TreeNode]);
+            expect(classes).to.have.members([Dog, Elephant, AsianElephant, ShoppingCart,
+                                             TreeNode, LogInterceptor]);
         });
     });
 });

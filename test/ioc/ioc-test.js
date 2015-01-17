@@ -39,7 +39,7 @@ new function () { // closure
     });
 
     var V12 = Base.extend(Engine, {
-    $inject: [,,$optional(Diagnostics)],
+        $inject: [,,$optional(Diagnostics)],
         constructor: function (horsepower, displacement, diagnostics) {
             this.extend({
                 getHorsepower: function () { return horsepower; },
