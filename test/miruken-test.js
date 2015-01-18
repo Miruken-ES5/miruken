@@ -455,8 +455,27 @@ describe("ProxyBuilder", function () {
             expect(dog.fetch("bone")).to.equal('FETCHED BONE');
         });
     });
-})
-;
+
+    describe("#extend", function () {
+        it("should reject extending  proxied classed", function () {
+            var proxyBuilder = new ProxyBuilder,
+                DogProxy     = proxyBuilder.buildProxy([Dog]);
+            expect(function () {
+                DogProxy.extend();
+            }).to.throw(TypeError, "Proxy classes are sealed and cannot be extended.");
+        });
+
+        it("should reject extending proxies", function () {
+            var proxyBuilder = new ProxyBuilder,
+                DogProxy     = proxyBuilder.buildProxy([Dog]),
+                dog          = new DogProxy([]);
+            expect(function () {
+                dog.extend();
+            }).to.throw(TypeError, "Proxy instances are sealed and cannot be extended.");
+        });
+    });
+});
+
 describe("Traversing", function () {
     describe("#traverse", function () {
         it("should traverse self", function () {
