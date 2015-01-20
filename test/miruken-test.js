@@ -423,13 +423,50 @@ describe("Proxy", function () {
 
 describe("ProxyBuilder", function () {
     describe("#buildProxy", function () {
-        it("should proxy class only", function () {
+        it("should proxy class", function () {
             var proxyBuilder = new ProxyBuilder,
                 DogProxy     = proxyBuilder.buildProxy([Dog]),
                 dog          = new DogProxy([new LogInterceptor], 'Patches');
             expect(dog.getName()).to.equal('Patches');
             expect(dog.talk()).to.equal('Ruff Ruff');
             expect(dog.fetch("bone")).to.equal('Fetched bone');
+        });
+
+        it("should proxy protocol", function () {
+            var proxyBuilder = new ProxyBuilder,
+                AnimalProxy  = proxyBuilder.buildProxy([Animal]),
+                AnimalInterceptor = Interceptor.extend({
+                    intercept: function (source, method, args, proceed) {
+                        if (method === 'talk') {
+                            return "I don't know what to say.";
+                        } else if (method === 'eat') {
+                            return lang.format("I don't like %1.", args[0]);
+                        }
+                        return proceed();
+                    }
+                }),
+                animal = new AnimalProxy([new AnimalInterceptor]);
+            expect(animal.talk()).to.equal("I don't know what to say.");
+            expect(animal.eat('pizza')).to.equal("I don't like pizza.");
+        });
+
+        it("should proxy classes and protocols", function () {
+            var proxyBuilder   = new ProxyBuilder,
+                Flying         = Protocol.extend({ fly: function () {} }),
+                FlyingInterceptor = Interceptor.extend({
+                    intercept: function (source, method, args, proceed) {
+                        if (method !== 'fly') {
+                            return proceed();
+                        }
+                    }
+                }),
+                FlyingDogProxy = proxyBuilder.buildProxy([Dog, Flying]),
+                wonderDog      = new FlyingDogProxy([new FlyingInterceptor,
+                                                     new LogInterceptor], 'Wonder Dog');
+            expect(wonderDog.getName()).to.equal('Wonder Dog');
+            expect(wonderDog.talk()).to.equal('Ruff Ruff');
+            expect(wonderDog.fetch("purse")).to.equal('Fetched purse');
+            wonderDog.fly();
         });
 
         it("should modify arguments and return value", function () {
@@ -454,10 +491,26 @@ describe("ProxyBuilder", function () {
             expect(dog.talk()).to.equal('RUFF RUFF');
             expect(dog.fetch("bone")).to.equal('FETCHED BONE');
         });
+
+        it("should fail if no types array provided", function () {
+            var proxyBuilder = new ProxyBuilder;
+            expect(function () {
+                proxyBuilder.buildProxy();
+            }).to.throw(Error, "ProxyBuilder requires an array of types to proxy.");
+        });
+
+        it("should fail if no method to proceed too", function () {
+            var proxyBuilder = new ProxyBuilder,
+                AnimalProxy  = proxyBuilder.buildProxy([Animal]),
+                animal       = new AnimalProxy([]);
+            expect(function () {
+                animal.talk();
+            }).to.throw(Error, "Interceptor cannot proceed without a class or delegate method 'talk'.");
+        });
     });
 
     describe("#extend", function () {
-        it("should reject extending  proxied classed", function () {
+        it("should reject extending  proxy classes,", function () {
             var proxyBuilder = new ProxyBuilder,
                 DogProxy     = proxyBuilder.buildProxy([Dog]);
             expect(function () {
