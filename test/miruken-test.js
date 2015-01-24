@@ -76,10 +76,12 @@ new function () { // closure
         }});
 
     var LogInterceptor = Interceptor.extend({
-        intercept: function (source, method, args, proceed) {
+        intercept: function (invocation) {
             console.log(lang.format("Called %1 with (%2) from %3",
-                        method, args.join(", "), source));
-            var result = proceed();
+                        invocation.getMethod(),
+                        invocation.getArgs().join(", "), 
+                        invocation.getSource()));
+            var result = invocation.proceed();
             console.log(lang.format("    And returned %1", result));
             return result;
         }
@@ -422,6 +424,22 @@ describe("Proxy", function () {
 });
 
 describe("ProxyBuilder", function () {
+    var UpperInterceptor = Interceptor.extend({
+        intercept: function (invocation) {
+            var args = invocation.getArgs();
+            for (var i = 0; i < args.length; ++i) {
+                if ($isString(args[i])) {
+                    args[i] = args[i].toUpperCase();
+                }
+            }
+            var result = invocation.proceed();
+            if ($isString(result)) {
+                result = result.toUpperCase();
+            }
+            return result;
+        }
+    });
+        
     describe("#buildProxy", function () {
         it("should proxy class", function () {
             var proxyBuilder = new ProxyBuilder,
@@ -436,13 +454,15 @@ describe("ProxyBuilder", function () {
             var proxyBuilder = new ProxyBuilder,
                 AnimalProxy  = proxyBuilder.buildProxy([Animal]),
                 AnimalInterceptor = Interceptor.extend({
-                    intercept: function (source, method, args, proceed) {
+                    intercept: function (invocation) {
+                            var method = invocation.getMethod(),
+                                args = invocation.getArgs();
                         if (method === 'talk') {
                             return "I don't know what to say.";
                         } else if (method === 'eat') {
                             return lang.format("I don't like %1.", args[0]);
                         }
-                        return proceed();
+                        return invocation.proceed();
                     }
                 }),
                 animal = new AnimalProxy([new AnimalInterceptor]);
@@ -454,39 +474,27 @@ describe("ProxyBuilder", function () {
             var proxyBuilder   = new ProxyBuilder,
                 Flying         = Protocol.extend({ fly: function () {} }),
                 FlyingInterceptor = Interceptor.extend({
-                    intercept: function (source, method, args, proceed) {
-                        if (method !== 'fly') {
-                            return proceed();
+                    intercept: function (invocation) {
+                        if (invocation.getMethod() !== 'fly') {
+                            return invocation.proceed();
                         }
                     }
                 }),
-                FlyingDogProxy = proxyBuilder.buildProxy([Dog, Flying]),
-                wonderDog      = new FlyingDogProxy([new FlyingInterceptor,
-                                                     new LogInterceptor], 'Wonder Dog');
-            expect(wonderDog.getName()).to.equal('Wonder Dog');
-            expect(wonderDog.talk()).to.equal('Ruff Ruff');
-            expect(wonderDog.fetch("purse")).to.equal('Fetched purse');
-            wonderDog.fly();
+                FlyingDogProxy = proxyBuilder.buildProxy([Dog, Flying, DisposingMixin]);
+            $using(new FlyingDogProxy([new FlyingInterceptor, new LogInterceptor],
+                                      'Wonder Dog'), function (wonderDog) {
+                expect(wonderDog.getName()).to.equal('Wonder Dog');
+                expect(wonderDog.talk()).to.equal('Ruff Ruff');
+                expect(wonderDog.fetch("purse")).to.equal('Fetched purse');
+                wonderDog.fly();
+                }
+            );
         });
 
         it("should modify arguments and return value", function () {
-            var proxyBuilder     = new ProxyBuilder,
-                DogProxy         = proxyBuilder.buildProxy([Dog]),
-                UpperInterceptor = Interceptor.extend({
-                    intercept: function (source, method, args, proceed) {
-                        for (var i = 0; i < args.length; ++i) {
-                            if ($isString(args[i])) {
-                                args[i] = args[i].toUpperCase();
-                            }
-                        }
-                        var result = proceed();
-                        if ($isString(result)) {
-                            result = result.toUpperCase();
-                        }
-                        return result;
-                    }
-                }),
-                dog = new DogProxy([new UpperInterceptor], 'Patches');
+            var proxyBuilder = new ProxyBuilder,
+                DogProxy     = proxyBuilder.buildProxy([Dog]),
+                dog          = new DogProxy([new UpperInterceptor], 'Patches');
             expect(dog.getName()).to.equal('PATCHES');
             expect(dog.talk()).to.equal('RUFF RUFF');
             expect(dog.fetch("bone")).to.equal('FETCHED BONE');
@@ -510,21 +518,45 @@ describe("ProxyBuilder", function () {
     });
 
     describe("#extend", function () {
-        it("should reject extending  proxy classes,", function () {
+        it("should reject extending  proxy classes.", function () {
             var proxyBuilder = new ProxyBuilder,
                 DogProxy     = proxyBuilder.buildProxy([Dog]);
             expect(function () {
                 DogProxy.extend();
-            }).to.throw(TypeError, "Proxies are sealed and cannot be extended.");
+            }).to.throw(TypeError, "Proxy classes are sealed and cannot be extended.");
         });
 
-        it("should reject extending proxies", function () {
+        it("should proxy new method", function () {
             var proxyBuilder = new ProxyBuilder,
                 DogProxy     = proxyBuilder.buildProxy([Dog]),
-                dog          = new DogProxy([]);
+                dog          = new DogProxy([new UpperInterceptor], 'Patches');
+            dog.extend("getColor", function () { return "white with brown spots"; });
+            dog.extend({
+                getBreed: function () { return "King James Cavalier"; }
+            });
+            expect(dog.getColor()).to.equal("WHITE WITH BROWN SPOTS");
+            expect(dog.getBreed()).to.equal("KING JAMES CAVALIER");
+        });
+
+        it("should proxy existing methods", function () {
+            var proxyBuilder = new ProxyBuilder,
+                DogProxy     = proxyBuilder.buildProxy([Dog]),
+                dog          = new DogProxy([new UpperInterceptor], 'Patches');
+            expect(dog.getName()).to.equal("PATCHES");
+            dog.extend({
+                getName: function () { return "Spike"; }
+            });
+            expect(dog.getName()).to.equal("SPIKE");
+        });
+    });
+
+    describe("#implement", function () {
+        it("should reject extending  proxy classes.", function () {
+            var proxyBuilder = new ProxyBuilder,
+                DogProxy     = proxyBuilder.buildProxy([Dog]);
             expect(function () {
-                dog.extend();
-            }).to.throw(TypeError, "Proxies are sealed and cannot be extended.");
+                DogProxy.implement(DisposingMixin);
+            }).to.throw(TypeError, "Proxy classes are sealed and cannot be extended.");
         });
     });
 });
