@@ -15,7 +15,7 @@ new function () { // closure
 
     var ioc_test = new base2.Package(this, {
         name:    "ioc_test",
-        exports: "Car,Engine,Diagnostics,Junkyard,V12,RebuiltV12,Ferarri,OBDII,CraigsJunk"
+        exports: "Car,Engine,Diagnostics,Junkyard,V12,RebuiltV12,Supercharger,Ferarri,OBDII,CraigsJunk"
     });
 
     eval(this.imports);
@@ -57,6 +57,20 @@ new function () { // closure
             this.extend({
                 dispose: function () {
                     junkyard.decomission(this);
+                }
+            });
+        }
+    });
+
+    var Supercharger = Base.extend(Engine, {
+        $inject: Engine,
+        constructor: function (engine, boost) {
+            this.extend({
+                getHorsepower: function () {
+                    return engine.getHorsepower() * (1.0 + boost); 
+                },
+                getDisplacement: function () {
+                    return engine.getDisplacement(); 
                 }
             });
         }
@@ -699,6 +713,18 @@ describe("IoContainer", function () {
             });
         });
 
+        it("should resolve instance using decorator pattern", function (done) {
+            Q(container.register(
+                $component(Supercharger).dependsOn([,$use(.5)]),
+                $component(V12).dependsOn($use(175), $use(3.2)))).then(function () {
+                Q(container.resolve(Engine)).then(function (engine) {
+                    expect(engine.getHorsepower()).to.equal(262.5);
+                    expect(engine.getDisplacement()).to.equal(3.2);
+                    done();
+                });
+            });
+        });
+
         it("should resolve instance with dependency promises", function (done) {
             var Order = Base.extend({
                     $inject: [$promise(Engine), $promise($use(19))],
@@ -1042,7 +1068,7 @@ describe("IoContainer", function () {
                      $component(V12).dependsOn($use(917), $use(6.3), Engine))).then(function () {
                 Q(container.resolve(Car)).fail(function (error) {
                     expect(error).to.be.instanceof(DependencyResolutionError);
-                    expect(error.message).to.match(/Dependency cycle.*Engine.*<= (.*Engine.*<-.*V12.*) <= (.*Car.*<-.*Ferarri.*) detected./);
+                    expect(error.message).to.match(/Dependency.*Engine.*<= (.*Engine.*<-.*V12.*) <= (.*Car.*<-.*Ferarri.*) could not be resolved./);
                     expect(error.dependency.getKey()).to.equal(Engine);
                     done();
                 });

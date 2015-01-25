@@ -523,7 +523,7 @@ describe("ProxyBuilder", function () {
                 DogProxy     = proxyBuilder.buildProxy([Dog]);
             expect(function () {
                 DogProxy.extend();
-            }).to.throw(TypeError, "Proxy classes are sealed and cannot be extended.");
+            }).to.throw(TypeError, "Proxy classes are sealed and cannot be extended from.");
         });
 
         it("should proxy new method", function () {
@@ -556,7 +556,7 @@ describe("ProxyBuilder", function () {
                 DogProxy     = proxyBuilder.buildProxy([Dog]);
             expect(function () {
                 DogProxy.implement(DisposingMixin);
-            }).to.throw(TypeError, "Proxy classes are sealed and cannot be extended.");
+            }).to.throw(TypeError, "Proxy classes are sealed and cannot be extended from.");
         });
     });
 });
