@@ -15,7 +15,7 @@ new function () { // closure
 
     var ioc_test = new base2.Package(this, {
         name:    "ioc_test",
-        exports: "Car,Engine,Diagnostics,Junkyard,V12,RebuiltV12,Supercharger,Ferarri,OBDII,CraigsJunk"
+        exports: "Car,Engine,Diagnostics,Junkyard,V12,RebuiltV12,Supercharger,Ferarri,OBDII,CraigsJunk,LogInterceptor"
     });
 
     eval(this.imports);
@@ -105,6 +105,17 @@ new function () { // closure
         }
     });
 
+    var LogInterceptor = Interceptor.extend({
+        intercept: function (invocation) {
+            console.log(lang.format("Called %1 with (%2) from %3",
+                        invocation.getMethod(),
+                        invocation.getArgs().join(", "), 
+                        invocation.getSource()));
+            var result = invocation.proceed();
+            console.log(lang.format("    And returned %1", result));
+            return result;
+        }
+    });
     eval(this.exports);
 };
 
@@ -329,6 +340,23 @@ describe("ComponentModel", function () {
             });
         });
     });
+
+    describe("#interceptors", function () {
+        it("should configure component interceptors", function (done) {
+            Q(container.register(
+                $component(LogInterceptor),
+                $component(Engine).boundTo(V12)
+                                  .dependsOn($use(255), $use(5.0))
+                                  .interceptors(LogInterceptor)
+            )).then(function () {
+                Q(container.resolve(Engine)).then(function (engine) {
+                    expect(engine.getHorsepower()).to.equal(255);
+                    expect(engine.getDisplacement()).to.equal(5.0);
+                    done();
+                });
+            });
+        });
+    });
 });
 
 describe("ComponentBuilder", function () {
@@ -374,6 +402,21 @@ describe("ComponentBuilder", function () {
         it("should configure component dependencies", function (done) {
             Q(container.register($component(Engine).boundTo(V12)
                                      .dependsOn($use(255), $use(5.0)))).then(function () {
+                Q(container.resolve(Engine)).then(function (engine) {
+                    expect(engine.getHorsepower()).to.equal(255);
+                    expect(engine.getDisplacement()).to.equal(5.0);
+                    done();
+                });
+            });
+        });
+    });
+
+    describe("#interceptors", function () {
+        it("should configure component interceptors", function (done) {
+            Q(container.register($component(LogInterceptor),
+                                 $component(Engine).boundTo(V12)
+                                     .dependsOn($use(255), $use(5.0))
+                                     .interceptors(LogInterceptor))).then(function () {
                 Q(container.resolve(Engine)).then(function (engine) {
                     expect(engine.getHorsepower()).to.equal(255);
                     expect(engine.getDisplacement()).to.equal(5.0);
