@@ -327,8 +327,8 @@ describe("ComponentModel", function () {
         it("should configure component dependencies with factory", function (done) {
              Q(container.register(
                  $component(Engine).dependsOn($use(1000), $use(7.7))
-                                   .usingFactory(function (dependencies) {
-                     return V12.new.apply(V12, dependencies[$constructor]);
+                                   .usingFactory(function (burden) {
+                     return V12.new.apply(V12, burden[$constructor]);
                  })
              )).then(function () {
                 Q(container.resolve(Engine)).then(function (engine) {
