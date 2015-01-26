@@ -328,7 +328,7 @@ describe("ComponentModel", function () {
              Q(container.register(
                  $component(Engine).dependsOn($use(1000), $use(7.7))
                                    .usingFactory(function (dependencies) {
-                     return V12.new.apply(V12, dependencies.parameters);
+                     return V12.new.apply(V12, dependencies[$constructor]);
                  })
              )).then(function () {
                 Q(container.resolve(Engine)).then(function (engine) {
