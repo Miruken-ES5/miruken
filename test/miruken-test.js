@@ -445,9 +445,10 @@ describe("ProxyBuilder", function () {
         it("should proxy class", function () {
             var proxyBuilder = new ProxyBuilder,
                 DogProxy     = proxyBuilder.buildProxy([Dog]),
-                facets       = Array2.combine([INTERCEPTOR_FACET, CONSTRUCTOR_FACET],
-                                              [[new LogInterceptor], ['Patches']]),
-                dog          = new DogProxy(facets);
+                dog          = new DogProxy({
+                                   parameters:   ['Patches'],
+                                   interceptors: [new LogInterceptor]
+                               });
             expect(dog.getName()).to.equal('Patches');
             expect(dog.talk()).to.equal('Ruff Ruff');
             expect(dog.fetch("bone")).to.equal('Fetched bone');
@@ -468,8 +469,9 @@ describe("ProxyBuilder", function () {
                         return invocation.proceed();
                     }
                 }),
-                facets = Array2.combine([INTERCEPTOR_FACET], [[new AnimalInterceptor]]),
-                animal = new AnimalProxy(facets);
+                animal = new AnimalProxy({
+                             interceptors: [new AnimalInterceptor]
+                         });
             expect(animal.talk()).to.equal("I don't know what to say.");
             expect(animal.eat('pizza')).to.equal("I don't like pizza.");
         });
@@ -484,11 +486,11 @@ describe("ProxyBuilder", function () {
                         }
                     }
                 }),
-                FlyingDogProxy = proxyBuilder.buildProxy([Dog, Flying, DisposingMixin]),
-                facets         = Array2.combine([INTERCEPTOR_FACET, CONSTRUCTOR_FACET],
-                                                [[new FlyingInterceptor, new LogInterceptor],
-                                                 ['Wonder Dog']]);
-            $using(new FlyingDogProxy(facets), function (wonderDog) {
+                FlyingDogProxy = proxyBuilder.buildProxy([Dog, Flying, DisposingMixin]);
+            $using(new FlyingDogProxy({
+                       parameters:   ['Wonder Dog'],
+                       interceptors: [new FlyingInterceptor, new LogInterceptor]
+                   }), function (wonderDog) {
                 expect(wonderDog.getName()).to.equal('Wonder Dog');
                 expect(wonderDog.talk()).to.equal('Ruff Ruff');
                 expect(wonderDog.fetch("purse")).to.equal('Fetched purse');
@@ -500,12 +502,30 @@ describe("ProxyBuilder", function () {
         it("should modify arguments and return value", function () {
             var proxyBuilder = new ProxyBuilder,
                 DogProxy     = proxyBuilder.buildProxy([Dog]),
-                facets       = Array2.combine([INTERCEPTOR_FACET, CONSTRUCTOR_FACET],
-                                              [[new ToUpperInterceptor], ['Patches']]),
-                dog          = new DogProxy(facets);
+                dog          = new DogProxy({
+                                   parameters:   ['Patches'],
+                                   interceptors: [new ToUpperInterceptor]
+                               });
             expect(dog.getName()).to.equal('PATCHES');
             expect(dog.talk()).to.equal('RUFF RUFF');
             expect(dog.fetch("bone")).to.equal('FETCHED BONE');
+        });
+
+        it("should restrict proxied method with interceptor selector options", function () {
+            var proxyBuilder = new ProxyBuilder,
+                selector     =  (new InterceptorSelector).extend({
+                    selectInterceptors: function (type, method, interceptors) {
+                        return method === 'getName' ? interceptors : [];
+                }}),
+                DogProxy     = proxyBuilder.buildProxy([Dog]),
+                dog          = new DogProxy({
+                                   parameters:           ['Patches'],
+                                   interceptors:         [new ToUpperInterceptor],
+                                   interceptorSelectors: [selector]
+                               });
+            expect(dog.getName()).to.equal('PATCHES');
+            expect(dog.talk()).to.equal('Ruff Ruff');
+            expect(dog.fetch("bone")).to.equal('Fetched bone');
         });
 
         it("should fail if no types array provided", function () {
@@ -537,9 +557,10 @@ describe("ProxyBuilder", function () {
         it("should proxy new method", function () {
             var proxyBuilder = new ProxyBuilder,
                 DogProxy     = proxyBuilder.buildProxy([Dog]),
-                facets       = Array2.combine([INTERCEPTOR_FACET, CONSTRUCTOR_FACET],
-                                              [[new ToUpperInterceptor], ['Patches']]),
-                dog          = new DogProxy(facets);
+                dog          = new DogProxy({
+                                  parameters:  ['Patches'],
+                                  interceptors:[new ToUpperInterceptor]
+                               });
             dog.extend("getColor", function () { return "white with brown spots"; });
             dog.extend({
                 getBreed: function () { return "King James Cavalier"; }
@@ -551,9 +572,10 @@ describe("ProxyBuilder", function () {
         it("should proxy existing methods", function () {
             var proxyBuilder = new ProxyBuilder,
                 DogProxy     = proxyBuilder.buildProxy([Dog]),
-                facets       = Array2.combine([INTERCEPTOR_FACET, CONSTRUCTOR_FACET],
-                                              [[new ToUpperInterceptor], ['Patches']]),
-                dog          = new DogProxy(facets);
+                dog          = new DogProxy({
+                                  parameters:  ['Patches'],
+                                  interceptors:[new ToUpperInterceptor]
+                               });
             expect(dog.getName()).to.equal("PATCHES");
             dog.extend({
                 getName: function () { return "Spike"; }

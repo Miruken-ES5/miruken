@@ -361,7 +361,7 @@ describe("ComponentModel", function () {
              Q(container.register(
                  $component(Engine).dependsOn($use(1000), $use(7.7))
                                    .usingFactory(function (burden) {
-                     return V12.new.apply(V12, burden[CONSTRUCTOR_FACET]);
+                     return V12.new.apply(V12, burden[PARAMETERS]);
                  })
              )).then(function () {
                 Q(container.resolve(Engine)).then(function (engine) {
