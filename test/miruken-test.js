@@ -882,3 +882,20 @@ describe("Traversal", function () {
         });
     });
 });
+
+describe("Function", function () {
+    describe("#asFactory", function () {
+        it("should create instanceof class", function () {
+            var dogFactory = Dog.asFactory(),
+                dog        = dogFactory();
+            expect(dog).to.be.instanceOf(Dog);
+        });
+
+        it("should create instanceof class with arguments", function () {
+            var dogFactory = Dog.asFactory(),
+                dog        = dogFactory("Rover");
+            expect(dog).to.be.instanceOf(Dog);
+            expect(dog.getName()).to.equal("Rover");
+        });
+    });
+});
