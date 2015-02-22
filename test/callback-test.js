@@ -1043,19 +1043,19 @@ describe("CallbackHandler", function () {
                 stop3      = [ new PitBoss("Phil") ],
                 bus1       = new (CallbackHandler.extend({
                     $provide:[ PitBoss, function (resolution) {
-                        expect(resolution.getMany()).to.be.true;
+                        expect(resolution.isMany()).to.be.true;
                         return Q.delay(stop1, 75);
                     }]
                 })),
                 bus2       = new (CallbackHandler.extend({
                     $provide:[ PitBoss, function (resolution) {
-                        expect(resolution.getMany()).to.be.true;
+                        expect(resolution.isMany()).to.be.true;
                         return Q.delay(stop2, 100);
                     }]
                 })),
                 bus3       = new (CallbackHandler.extend({
                     $provide:[ PitBoss, function (resolution) {
-                        expect(resolution.getMany()).to.be.true;
+                        expect(resolution.isMany()).to.be.true;
                         return Q.delay(stop3, 50);
                     }]
                 })),

@@ -15,7 +15,7 @@ new function () { // closure
 
     var ioc_test = new base2.Package(this, {
         name:    "ioc_test",
-        exports: "Car,Engine,Diagnostics,Junkyard,V12,RebuiltV12,Supercharger,Ferarri,OBDII,CraigsJunk,LogInterceptor,ToUpperInterceptor,ToLowerInterceptor"
+        exports: "Car,Engine,Diagnostics,Junkyard,V12,RebuiltV12,Supercharger,Ferrari,Bugatti,Auction,OBDII,CraigsJunk,LogInterceptor,ToUpperInterceptor,ToLowerInterceptor"
     });
 
     eval(this.imports);
@@ -27,6 +27,8 @@ new function () { // closure
     });
 
     var Car = Protocol.extend({
+        getMake: function () {},
+        getModel: function() {},
         getEngine: function () {}
     });
 
@@ -76,11 +78,42 @@ new function () { // closure
         }
     });
 
-    var Ferarri = Base.extend(Car, {
-        $inject: Engine,
-        constructor: function (engine) {
+    var Ferrari = Base.extend(Car, {
+        $inject: [,Engine],
+        constructor: function (model, engine) {
             this.extend({
+                getMake: function () { return "Ferrari"; },
+                getModel: function () { return model; },
                 getEngine: function () { return engine; }
+            });
+        }
+    });
+
+    var Bugatti = Base.extend(Car, {
+        $inject: [,Engine],
+        constructor: function (model, engine) {
+            this.extend({
+                getMake: function () { return "Bugatti"; },
+                getModel: function () { return model; },
+                getEngine: function () { return engine; }
+            });
+        }
+    });
+
+    var Auction = Base.extend({
+        $inject: $every(Car),
+        constructor: function (cars) {
+            var inventory = {};
+            cars.forEach(function (car) {
+                var make   = car.getMake(),
+                    models = inventory[make];
+                if (!models) {
+                    inventory[make] = models = [];
+                }
+                models.push(car);
+            });
+            this.extend({
+                getCars: function () { return inventory; }
             });
         }
     });
@@ -184,8 +217,8 @@ describe("ComponentModel", function () {
     describe("#getKey", function () {
         it("should return class if no key", function () {
             var componentModel = new ComponentModel;
-            componentModel.setClass(Ferarri);
-            expect(componentModel.getKey()).to.equal(Ferarri);
+            componentModel.setClass(Ferrari);
+            expect(componentModel.getKey()).to.equal(Ferrari);
         });
     });
 
@@ -201,7 +234,7 @@ describe("ComponentModel", function () {
     describe("#getFactory", function () {
         it("should return default factory", function () {
             var componentModel = new ComponentModel;
-            componentModel.setClass(Ferarri);
+            componentModel.setClass(Ferrari);
             expect(componentModel.getFactory()).to.be.a('function');
         });
     });
@@ -687,19 +720,19 @@ describe("IoContainer", function () {
         });
 
         it("should register component from class", function (done) {
-            Q(container.register($component(Ferarri))).then(function () {
+            Q(container.register($component(Ferrari))).then(function () {
                 done();
             });
         });
 
         it("should register component from protocol and class", function (done) {
-             Q(container.register($component(Car).boundTo(Ferarri))).then(function () {
+             Q(container.register($component(Car).boundTo(Ferrari))).then(function () {
                 done();
             });
         });
 
         it("should register component from name and class", function (done) {
-            Q(container.register($component('car').boundTo(Ferarri))).then(function () {
+            Q(container.register($component('car').boundTo(Ferrari))).then(function () {
                 done();
             });
         });
@@ -748,10 +781,10 @@ describe("IoContainer", function () {
             context.addHandlers(new IoContainer, new ValidationCallbackHandler);
         });
 
-        it("should resolve class", function (done) {
-            Q.all(container.register($component(Ferarri), $component(V12))).then(function () {
+        it("should resolve component", function (done) {
+            Q.all(container.register($component(Ferrari), $component(V12))).then(function () {
                 Q(container.resolve(Car)).then(function (car) {
-                    expect(car).to.be.instanceOf(Ferarri);
+                    expect(car).to.be.instanceOf(Ferrari);
                     expect(car.getEngine()).to.be.instanceOf(V12);
                     done();
                 });
@@ -766,11 +799,11 @@ describe("IoContainer", function () {
         });
 
         it("should resolve class invariantly", function (done) {
-            Q.all(container.register($component(Ferarri), $component(V12))).then(function () {
+            Q.all(container.register($component(Ferrari), $component(V12))).then(function () {
                 Q(container.resolve($eq(Car))).then(function (car) {
                     expect(car).to.be.undefined;
-                    Q(container.resolve($eq(Ferarri))).then(function (car) {
-                        expect(car).to.be.instanceOf(Ferarri);
+                    Q(container.resolve($eq(Ferrari))).then(function (car) {
+                        expect(car).to.be.instanceOf(Ferrari);
                         expect(car.getEngine()).to.be.instanceOf(V12);
                         done();
                     });
@@ -826,10 +859,10 @@ describe("IoContainer", function () {
 
         it("should override dependencies", function (done) {
             Q.all(container.register(
-                      $component(Ferarri).dependsOn($optional(Engine)),
+                      $component(Ferrari).dependsOn($use('Enzo'), $optional(Engine)),
                       $component(V12))).then(function () {
                 Q(container.resolve(Car)).then(function (car) {
-                    expect(car).to.be.instanceOf(Ferarri);
+                    expect(car).to.be.instanceOf(Ferrari);
                     expect(car.getEngine()).to.be.instanceOf(V12);
                     done();
                 });
@@ -837,9 +870,9 @@ describe("IoContainer", function () {
         });
 
         it("should accept null dependnecies", function (done) {
-            Q(container.register($component(Ferarri).dependsOn(null))).then(function () {
+                Q(container.register($component(Ferrari).dependsOn(null, null))).then(function () {
                 Q(container.resolve(Car)).then(function (car) {
-                    expect(car).to.be.instanceOf(Ferarri);
+                    expect(car).to.be.instanceOf(Ferrari);
                     expect(car.getEngine()).to.be.null;
                     done();
                 });
@@ -847,7 +880,7 @@ describe("IoContainer", function () {
         });
 
         it("should resolve instance with optional dependencies", function (done) {
-            Q.all(container.register($component(Ferarri), $component(V12),
+            Q.all(container.register($component(Ferrari), $component(V12),
                                      $component(OBDII))).then(function () {
                 Q(container.resolve(Car)).then(function (car) {
                     var diagnostics = car.getEngine().getDiagnostics();
@@ -860,9 +893,9 @@ describe("IoContainer", function () {
 
         it("should resolve instance with optional missing dependencies", function (done) {
             Q(container.register(
-                  $component(Ferarri).dependsOn($optional(Engine)))).then(function () {
+                  $component(Ferrari).dependsOn($optional(Engine)))).then(function () {
                 Q(container.resolve(Car)).then(function (car) {
-                    expect(car).to.be.instanceOf(Ferarri);
+                    expect(car).to.be.instanceOf(Ferrari);
                     expect(car.getEngine()).to.be.undefined;
                     done();
                 });
@@ -918,7 +951,7 @@ describe("IoContainer", function () {
                         });
                     }
                 });
-            Q.all(container.register($component(Order), $component(Ferarri))).then(function () {
+            Q.all(container.register($component(Order), $component(Ferrari))).then(function () {
                 Q(container.resolve(Order)).then(function (order) {
                     expect(order).to.be.instanceOf(Order);
                     Q(order.getCar()).fail(function (error) {
@@ -931,14 +964,14 @@ describe("IoContainer", function () {
         });
 
         it("should resolve instance with invariant dependencies", function (done) {
-            Q.all(container.register($component(Ferarri).dependsOn($eq(V12)),
-                                     $component(Engine).boundTo(V12))).then(function () {
+                Q.all(container.register($component(Ferrari).dependsOn($use('Spider'), $eq(V12)),
+                                         $component(Engine).boundTo(V12))).then(function () {
                 Q(container.resolve(Car)).fail(function (error) {
                     expect(error).to.be.instanceof(DependencyResolutionError);
                     expect(error.message).to.match(/Dependency.*`.*V12.*`.*<=.*Car.*could not be resolved./);
                     container.register($component(V12)).then(function () {
                         Q(container.resolve(Car)).then(function (car) {
-                            expect(car).to.be.instanceOf(Ferarri);
+                            expect(car).to.be.instanceOf(Ferrari);
                             expect(car.getEngine()).to.be.instanceOf(V12);
                             done();
                         });
@@ -1033,10 +1066,10 @@ describe("IoContainer", function () {
                 container = new IoContainer,
             context.addHandlers(container, new ValidationCallbackHandler);
             $provide(container, Car, function (resolution, composer) {
-                return new Ferarri(new V12(917, 6.3));
+                return new Ferrari('TRS', new V12(917, 6.3));
             });
             Q(Container(context).resolve(Car)).then(function (car) {
-                expect(car).to.be.instanceOf(Ferarri);
+                expect(car).to.be.instanceOf(Ferrari);
                 expect(car.getEngine()).to.be.instanceOf(V12);
                 done();
             });
@@ -1045,9 +1078,9 @@ describe("IoContainer", function () {
         it("should resolve external dependencies", function (done) {
             var engine = new V12;
             context.store(engine);
-            Q(container.register($component(Ferarri))).then(function () {
+            Q(container.register($component(Ferrari))).then(function () {
                 Q(container.resolve(Car)).then(function (car) {
-                    expect(car).to.be.instanceOf(Ferarri);
+                    expect(car).to.be.instanceOf(Ferrari);
                     expect(car.getEngine()).to.equal(engine);
                     done();
                 });
@@ -1090,10 +1123,10 @@ describe("IoContainer", function () {
         it("should ignore external dependencies for $container", function (done) {
             context.store(new V12);
             Q(container.register(
-                $component(Ferarri).dependsOn($container(Engine)))).then(function () {
+                $component(Ferrari).dependsOn($container(Engine)))).then(function () {
                 Q(container.resolve(Car)).fail(function (error) {
                     expect(error).to.be.instanceof(DependencyResolutionError);
-                    expect(error.message).to.match(/Dependency.*Engine.*<= (.*Car.*<-.*Ferarri.*)could not be resolved./);
+                    expect(error.message).to.match(/Dependency.*Engine.*<= (.*Car.*<-.*Ferrari.*)could not be resolved./);
                     expect(error.dependency.getKey()).to.equal(Engine);
                     done();
                 });
@@ -1113,13 +1146,13 @@ describe("IoContainer", function () {
             $using(childContext, 
                    Q.all([Container(childContext).register(
                               $component(Order), $component(RebuiltV12)),
-                          container.register($component(Ferarri), $component(OBDII),
+                          container.register($component(Ferrari), $component(OBDII),
                                              $component(CraigsJunk))]).then(function () {
                     Q(container.resolve(Order)).then(function (order) {
                         var car         = order.getCar(),
                             engine      = car.getEngine(),
                             diagnostics = engine.getDiagnostics();
-                        expect(car).to.be.instanceOf(Ferarri);
+                        expect(car).to.be.instanceOf(Ferrari);
                         expect(engine).to.be.instanceOf(RebuiltV12);
                         expect(diagnostics).to.be.instanceOf(OBDII);
                         done();
@@ -1128,11 +1161,48 @@ describe("IoContainer", function () {
             );
         });
 
+        it("should resolve collection dependencies", function (done) {
+            Q.all(container.register($component(Ferrari).dependsOn($use('LaFerrari')),
+                                     $component(Bugatti).dependsOn($use('Veyron')),
+                                     $component(V12), $component(Auction))).then(function () {
+                Q(container.resolve(Auction)).then(function (auction) {
+                    var cars = auction.getCars();
+                    expect(cars['Ferrari']).to.have.length(1);
+                    expect(cars['Bugatti']).to.have.length(1);
+                    done();
+                });
+            });
+        });
+
+        it("should resolve collection dependencies from child containers", function (done) {
+            Q.all(container.register($component(Ferrari).dependsOn($use('LaFerrari')),
+                                     $component(Bugatti).dependsOn($use('Veyron')),
+                                     $component(V12))).then(function () {
+                var childContext = context.newChild();
+                $using(childContext, 
+                       Q(Container(childContext).register(
+                           $component(Ferrari).dependsOn($use('California')),
+                           $component(Auction))).then(function () {
+                           Q(Container(childContext).resolve(Auction)).then(function (auction) {
+                               var cars     = auction.getCars();
+                               expect(cars['Ferrari']).to.have.length(2);
+                               var ferraris = js.Array2.map(cars['Ferrari'], function (ferrari) {
+                                   return ferrari.getModel();
+                               });
+                               expect(ferraris).to.eql(['LaFerrari', 'California']);
+                               expect(cars['Bugatti']).to.have.length(1);
+                               done();
+                           });
+                       })
+                );
+            });
+        });
+
         it("should fail resolve if missing dependencies", function (done) {
-                Q(container.register($component(Ferarri))).then(function (model) {
+                Q(container.register($component(Ferrari))).then(function (model) {
                 Q(container.resolve(Car)).fail(function (error) {
                     expect(error).to.be.instanceof(DependencyResolutionError);
-                    expect(error.message).to.match(/Dependency.*Engine.*<= (.*Car.*<-.*Ferarri.*)could not be resolved./);
+                    expect(error.message).to.match(/Dependency.*Engine.*<= (.*Car.*<-.*Ferrari.*)could not be resolved./);
                     expect(error.dependency.getKey()).to.equal(Engine);
                     done();
                 });
@@ -1140,17 +1210,41 @@ describe("IoContainer", function () {
         });
 
         it("should detect circular dependencies", function (done) {
-            Q.all(container.register($component(Ferarri),
+            Q.all(container.register($component(Ferrari),
                      $component(V12).dependsOn($use(917), $use(6.3), Engine))).then(function () {
                 Q(container.resolve(Car)).fail(function (error) {
                     expect(error).to.be.instanceof(DependencyResolutionError);
-                    expect(error.message).to.match(/Dependency.*Engine.*<= (.*Engine.*<-.*V12.*) <= (.*Car.*<-.*Ferarri.*) could not be resolved./);
+                    expect(error.message).to.match(/Dependency.*Engine.*<= (.*Engine.*<-.*V12.*) <= (.*Car.*<-.*Ferrari.*) could not be resolved./);
                     expect(error.dependency.getKey()).to.equal(Engine);
                     done();
                 });
             });
         });
     });
+
+    describe("#resolveAll", function () {
+        var context, container;
+        beforeEach(function() {
+            context   = new Context;
+            container = Container(context);
+            context.addHandlers(new IoContainer, new ValidationCallbackHandler);
+        });
+
+        it("should resolve all components", function (done) {
+            Q.all(container.register($component(Ferrari).dependsOn($use('LaFerrari')),
+                                     $component(Bugatti).dependsOn($use('Veyron')),
+                                     $component(V12))).then(function () {
+                Q(container.resolveAll(Car)).then(function (cars) {
+                    var inventory = js.Array2.combine(  
+                        js.Array2.map(cars, function (car) { return car.getMake(); }),
+                        js.Array2.map(cars, function (car) { return car.getModel(); }));
+                    expect(inventory['Ferrari']).to.equal('LaFerrari');
+                    expect(inventory['Bugatti']).to.equal('Veyron');
+                    done();
+                });
+            });
+        });
+    })
 
     describe("#dispose", function () {
         var context, container;
@@ -1161,7 +1255,7 @@ describe("IoContainer", function () {
         });
 
         it("should dispose all components", function (done) {
-            Q.all(container.register($component(Ferarri), $component(V12))).then(function () {
+            Q.all(container.register($component(Ferrari), $component(V12))).then(function () {
                 Q.when(container.resolve(Car), function (car) {
                     done();
                     container.dispose();
