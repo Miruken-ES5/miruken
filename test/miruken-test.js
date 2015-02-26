@@ -93,6 +93,12 @@ new function () { // closure
 
 eval(base2.miruken_test.namespace);
 
+describe("miruken", function () {
+    it("should be in global namespace", function () {
+        expect(global.miruken).to.equal(base2.miruken);
+    });
+});
+
 describe("$isClass", function () {
     it("should identify miruken classes", function () {
         expect($isClass(Dog)).to.be.true;
@@ -879,23 +885,6 @@ describe("Traversal", function () {
 
             expect(visited).to.eql([child1_1, child2_1, child2_2, child3_1, child3_2,
                                     child3_3, child1,   child2,   child3,   root]);
-        });
-    });
-});
-
-describe("Function", function () {
-    describe("#asFactory", function () {
-        it("should create instanceof class", function () {
-            var dogFactory = Dog.asFactory(),
-                dog        = dogFactory();
-            expect(dog).to.be.instanceOf(Dog);
-        });
-
-        it("should create instanceof class with arguments", function () {
-            var dogFactory = Dog.asFactory(),
-                dog        = dogFactory("Rover");
-            expect(dog).to.be.instanceOf(Dog);
-            expect(dog.getName()).to.equal("Rover");
         });
     });
 });

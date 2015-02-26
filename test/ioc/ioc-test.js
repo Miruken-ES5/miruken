@@ -1183,17 +1183,17 @@ describe("IoContainer", function () {
                        Q(Container(childContext).register(
                            $component(Ferrari).dependsOn($use('California')),
                            $component(Auction))).then(function () {
-                           Q(Container(childContext).resolve(Auction)).then(function (auction) {
-                               var cars     = auction.getCars();
-                               expect(cars['Ferrari']).to.have.length(2);
-                               var ferraris = js.Array2.map(cars['Ferrari'], function (ferrari) {
-                                   return ferrari.getModel();
+                               Q(Container(childContext).resolve(Auction)).then(function (auction) {
+                                   var cars     = auction.getCars();
+                                   expect(cars['Ferrari']).to.have.length(2);
+                                   var ferraris = js.Array2.map(cars['Ferrari'], function (ferrari) {
+                                       return ferrari.getModel();
+                                   });
+                                   expect(ferraris).to.eql(['LaFerrari', 'California']);
+                                   expect(cars['Bugatti']).to.have.length(1);
+                                   done();
                                });
-                               expect(ferraris).to.eql(['LaFerrari', 'California']);
-                               expect(cars['Bugatti']).to.have.length(1);
-                               done();
-                           });
-                       })
+                           })
                 );
             });
         });
