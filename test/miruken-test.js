@@ -99,6 +99,25 @@ describe("miruken", function () {
     });
 });
 
+describe("Miruken", function () {
+    it("should be in global namespace", function () {
+        expect(global.Miruken).to.equal(base2.miruken.Miruken);
+    });
+
+    it("should perform coercion by default", function () {
+        var Pet = Miruken.extend({
+                constructor: function (name) {
+                    this.extend({
+                        getName: function () { return name; }
+                    });
+                }
+            }),
+            pet = Pet('Spike');
+        expect(pet).to.be.instanceOf(Pet);
+        expect(pet.getName()).to.equal('Spike');
+    });
+});
+
 describe("$isClass", function () {
     it("should identify miruken classes", function () {
         expect($isClass(Dog)).to.be.true;
