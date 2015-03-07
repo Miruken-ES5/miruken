@@ -852,6 +852,35 @@ describe("CallbackHandler", function () {
             expect(cardGames.resolve(Game)).to.equal(blackjack);
         });
 
+        it("should resolve objects by class instantly", function () {
+            var cashier    = new Cashier(1000000.00),
+                blackjack  = new CardTable("BlackJack", 1, 5),
+                inventory  = new (CallbackHandler.extend({
+                    $provide:[
+                        Cashier, function (resolution) {
+                            return cashier;
+                        },
+                        CardTable, function (resolution) {
+                            return Q(blackjack);
+                        }]
+                }));
+            expect(inventory.resolve($instant(Cashier))).to.equal(cashier);
+            expect($isPromise(inventory.resolve(CardTable))).to.be.true;
+            expect(inventory.resolve($instant(CardTable))).to.be.undefined;
+        });
+
+        it("should resolve objects by protocol instantly", function () {
+            var blackjack  = new CardTable("BlackJack", 1, 5),
+                cardGames  = new (CallbackHandler.extend({
+                    $provide:[
+                        Game, function (resolution) {
+                            return Q(blackjack);
+                        }]
+                }));
+            expect($isPromise(cardGames.resolve(Game))).to.be.true;
+            expect(cardGames.resolve($instant(Game))).to.be.undefined;
+        });
+
         it("should resolve by string literal", function () {
             var blackjack  = new CardTable("BlackJack", 1, 5),
                 cardGames  = new (CallbackHandler.extend({
@@ -1034,7 +1063,7 @@ describe("CallbackHandler", function () {
             Q.when(strip.resolveAll(Casino), function (casinos) {
                 expect(casinos).to.eql([belagio, venetian, paris]);
                 done();
-            }, function (error) { done(error); });
+            });
         });
 
         it("should resolve all objects by class eventually", function (done) {
@@ -1063,7 +1092,46 @@ describe("CallbackHandler", function () {
             Q.when(company.resolveAll(PitBoss), function (pitBosses) {
                 expect(pitBosses).to.eql(js.Array2.flatten([stop1, stop2, stop3]));
                 done();
-            }, function (error) { done(error); });
+            });
+        });
+
+        it("should resolve all objects by class instantly", function () {
+            var belagio    = new Casino('Belagio'),
+                venetian   = new Casino('Venetian'),
+                paris      = new Casino('Paris'),
+                strip      = new (CallbackHandler.extend({
+                    $provide:[
+                        Casino, function (resolution) {
+                            return venetian;
+                        },
+                        Casino, function (resolution) {
+                            return Q(belagio);
+                        },
+                        Casino, function (resolution) {
+                            return paris;
+                        }]
+                }));
+            var casinos = strip.resolveAll($instant(Casino));
+            expect(casinos).to.eql([venetian, paris]);
+        });
+
+        it("should return empty array if none resolved", function (done) {
+            Q.when((new CallbackHandler).resolveAll(Casino), function (casinos) {
+                expect(casinos).to.have.length(0);
+                done();
+            });
+        });
+
+        it("should return empty array instantly if none resolved", function () {
+            var belagio  = new Casino('Belagio'),
+                strip    = new (CallbackHandler.extend({
+                    $provide:[
+                        Casino, function (resolution) {
+                            return Q(belagio);
+                        }]
+                }));
+            var casinos = strip.resolveAll($instant(Casino));
+            expect(casinos).to.have.length(0);
         });
     });
 

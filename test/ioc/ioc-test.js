@@ -811,6 +811,15 @@ describe("IoContainer", function () {
             });
         });
 
+        it("should resolve class instantly", function (done) {
+            Q.all(container.register($component(Ferrari), $component(V12))).then(function () {
+                var car = container.resolve($instant(Car));
+                expect(car).to.be.instanceOf(Ferrari);
+                expect(car.getEngine()).to.be.instanceOf(V12);
+                done();
+            });
+        });
+
         it("should resolve instance with supplied dependencies", function (done) {
             Q(container.register(
                 $component(V12).dependsOn($use(917), $use(6.3)))).then(function () {
@@ -1070,6 +1079,7 @@ describe("IoContainer", function () {
             });
             Q(Container(context).resolve(Car)).then(function (car) {
                 expect(car).to.be.instanceOf(Ferrari);
+                expect(car.getModel()).to.equal('TRS');
                 expect(car.getEngine()).to.be.instanceOf(V12);
                 done();
             });
