@@ -1,9 +1,9 @@
-var miruken = require('../lib/miruken.js'),
-    context = require('../lib/context.js')
-    error   = require('../lib/error.js'),
-    Q       = require('q'),
-    chai    = require("chai"),
-    expect  = chai.expect;
+var miruken  = require('../lib/miruken.js'),
+    context  = require('../lib/context.js')
+    error    = require('../lib/error.js'),
+    Promise  = require('bluebird'),
+    chai     = require("chai"),
+    expect   = chai.expect;
 
 eval(base2.namespace);
 eval(miruken.namespace);
@@ -13,41 +13,41 @@ eval(error.namespace);
 describe("ErrorCallbackHandler", function () {
     describe("#handleError", function () {
         it("should handle errors", function () {
-            var context      = new Context(),
-                errorHandler = new ErrorCallbackHandler(),
+            var context      = new Context,
+                errorHandler = new ErrorCallbackHandler,
                 error        = new Error('passwords do not match');
             context.addHandlers(errorHandler);
-            Q.when(Errors(context).handleError(error), function () {
+            Promise.resolve(Errors(context).handleError(error)).then(function () {
                 done();
-            }, function (error) { done(error); });
+            });
         });
 
         it("should be able to customize error handling", function (done) {
-            var context      = new Context(),
-                errorHandler = new ErrorCallbackHandler(),
+            var context      = new Context,
+                errorHandler = new ErrorCallbackHandler,
                 error        = new Error('Something bad happended');
             context.addHandlers(errorHandler);
             var customize    = context.newChild().extend({
                 reportError: function (error, context) {
-                    return Q('custom');
+                    return Promise.resolve('custom');
                 }
             });
-            Q.when(Errors(customize).handleError(error), function (result) {
+            Promise.resolve(Errors(customize).handleError(error)).then(function (result) {
                 expect(result).to.equal('custom');
                 done();
-            }, function (error) { done(error); });
+            });
         });
     });
 
     describe("#handleException", function () {
         it("should handle exceptions", function (done) {
-            var context      = new Context(),
-                errorHandler = new ErrorCallbackHandler(),
+            var context      = new Context,
+                errorHandler = new ErrorCallbackHandler,
                 exception    = new TypeError('Expected a string argument');
             context.addHandlers(errorHandler);
-            Q.when(Errors(context).handleException(exception), function () {
+            Promise.resolve(Errors(context).handleException(exception)).then(function () {
                 done();
-            }, function (error) { done(error); });
+            });
         });
     })
 });
@@ -65,72 +65,72 @@ describe("CallbackHandler", function () {
         },
         processPayment: function (payment) {
             if (payment.amount > 500)
-                return Q.reject(new Error("Amount exceeded limit"));
+                return Promise.reject(new Error("Amount exceeded limit"));
         }
     });
 
     describe("#recoverable", function () {
         it("should implicitly recover from errors synchronously", function () {
-            var context      = new Context(),
-                errorHandler = new ErrorCallbackHandler();
-            context.addHandlers(new Paymentech(), errorHandler);
+            var context      = new Context,
+                errorHandler = new ErrorCallbackHandler;
+            context.addHandlers(new Paymentech, errorHandler);
             Payments(context.recoverable()).validateCard({number:'1234'});
         });
 
         it("should implicitly recover from errors asynchronously", function (done) {
-            var context      = new Context(),
-                errorHandler = new ErrorCallbackHandler();
-            context.addHandlers(new Paymentech(), errorHandler); 
+            var context      = new Context,
+                errorHandler = new ErrorCallbackHandler;
+            context.addHandlers(new Paymentech, errorHandler); 
             var pay = Payments(context.recoverable()).processPayment({amount:1000});
-            Q.when(pay, function (result) {
+            Promise.resolve(pay).then(function (result) {
                 expect(result).to.be.undefined;
                 done();
-            }, function (error) { done(error); });
+            });
         });
 
         it("should be able to customize recovery from errors asynchronously", function (done) {
-            var context      = new Context(),
-                errorHandler = new ErrorCallbackHandler();
-            context.addHandlers(new Paymentech(), errorHandler);
+            var context      = new Context,
+                errorHandler = new ErrorCallbackHandler;
+            context.addHandlers(new Paymentech, errorHandler);
             var customize    = context.newChild().extend({
                 reportError: function (error, context) {
-                    return Q('custom');
+                    return Promise.resolve('custom');
                 }
             });
             var pay = Payments(customize.recoverable()).processPayment({amount:1000});
-            Q.when(pay, function (result) {
+            Promise.resolve(pay).then(function (result) {
                 expect(result).to.equal('custom');
                 done();
-            }, function (error) { done(error); });
+            });
         });
 
         it("should recover explicitly", function (done) {
-            var context      = new Context(),
-                errorHandler = new ErrorCallbackHandler();
-            context.addHandlers(new Paymentech(), errorHandler);
+            var context      = new Context,
+                errorHandler = new ErrorCallbackHandler;
+            context.addHandlers(new Paymentech, errorHandler);
             var pay = Payments(context).processPayment({amount:1000})
-                .fail(context.recover());
-            Q.when(pay, function (result) {
+                .catch(context.recover());
+            Promise.resolve(pay).then(function (result) {
                 expect(result).to.be.undefined;
                 done();
-            }, function (error) { done(error); });
+            });
         });
 
         it("should be able to customize recovery explicitly", function (done) {
-            var context      = new Context(),
-                errorHandler = new ErrorCallbackHandler();
-            context.addHandlers(new Paymentech(), errorHandler);
+            var context      = new Context,
+                errorHandler = new ErrorCallbackHandler;
+            context.addHandlers(new Paymentech, errorHandler);
             var customize    = context.newChild().extend({
                 reportError: function (error, context) {
-                    return Q('custom');
+                    return Promise.resolve('custom');
                 }
             });
             var pay = Payments(context).processPayment({amount:1000})
-                .fail(customize.recover());
-            Q.when(pay, function (result) {
+                .catch(customize.recover());
+            Promise.resolve(pay).then(function (result) {
                 expect(result).to.equal('custom');
                 done();
-            }, function (error) { done(error); });
+            });
         });
     });
 });

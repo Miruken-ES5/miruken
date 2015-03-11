@@ -1,5 +1,4 @@
 var miruken = require('../lib'),
-    Q       = require('q'),
     chai    = require("chai"),
     expect  = chai.expect;
 

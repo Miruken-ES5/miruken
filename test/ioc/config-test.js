@@ -1,6 +1,6 @@
 var miruken  = require('../../lib/miruken.js'),
     config   = require('../../lib/ioc/config.js'),
-    Q        = require('q'),
+    Promise  = require('bluebird'),
     chai     = require("chai"),
     expect   = chai.expect;
               
@@ -83,7 +83,7 @@ describe("$classes", function () {
             container.register(
                 $component(Authentication).boundTo(InMemoryAuthenticator),
                 $classes.fromPackage(ioc_config_test).basedOn(Controller)).then(function () {
-                Q(container.resolve(LoginController)).then(function (loginController) {
+                Promise.resolve(container.resolve(LoginController)).then(function (loginController) {
                     expect(loginController).to.be.instanceOf(LoginController);
                     done();
                 });
@@ -94,7 +94,7 @@ describe("$classes", function () {
             container.register(
                 $component(Authentication).boundTo(InMemoryAuthenticator),
                 $classes(ioc_config_test).basedOn(Controller)).then(function () {
-                Q(container.resolve(LoginController)).then(function (loginController) {
+                Promise.resolve(container.resolve(LoginController)).then(function (loginController) {
                     expect(loginController).to.be.instanceOf(LoginController);
                     done();
                 });
@@ -104,8 +104,8 @@ describe("$classes", function () {
         it("should register installers if no based on criteria", function (done) {
             container.register(
                 $classes.fromPackage(ioc_config_test)).then(function () {
-                    Q.all([container.resolve($eq(Service)),
-                           container.resolve($eq(Authentication)),
+                    Promise.all([container.resolve($eq(Service)),
+                                container.resolve($eq(Authentication)),
                            container.resolve($eq(InMemoryAuthenticator))])
                         .spread(function (service, authenticator, nothing) {
                         expect(service).to.be.instanceOf(SomeService);
@@ -129,8 +129,8 @@ describe("$classes", function () {
                 container.register(
                     $classes.fromPackage(ioc_config_test).basedOn(Authentication)
                             .withKeys.self()).then(function () {
-                         Q.all([container.resolve($eq(InMemoryAuthenticator)),
-                                container.resolve($eq(Authentication))])
+                         Promise.all([container.resolve($eq(InMemoryAuthenticator)),
+                                      container.resolve($eq(Authentication))])
                              .spread(function (authenticator, nothing) {
                             expect(authenticator).to.be.instanceOf(InMemoryAuthenticator);
                             expect(nothing).to.be.undefined;
@@ -145,8 +145,8 @@ describe("$classes", function () {
                 container.register(
                     $classes.fromPackage(ioc_config_test).basedOn(Authentication)
                             .withKeys.basedOn()).then(function () {
-                        Q.all([container.resolve($eq(Authentication)),
-                               container.resolve($eq(InMemoryAuthenticator))])
+                        Promise.all([container.resolve($eq(Authentication)),
+                                     container.resolve($eq(InMemoryAuthenticator))])
                             .spread(function (authenticator, nothing) {
                             expect(authenticator).to.be.instanceOf(InMemoryAuthenticator);
                             expect(nothing).to.be.undefined;
@@ -161,8 +161,8 @@ describe("$classes", function () {
                 container.register(
                     $classes.fromPackage(ioc_config_test).basedOn(Service)
                             .withKeys.anyService()).then(function () {
-                         Q.all([container.resolve($eq(Service)),
-                                container.resolve($eq(SomeService))])
+                         Promise.all([container.resolve($eq(Service)),
+                                      container.resolve($eq(SomeService))])
                              .spread(function (service, nothing) {
                             expect(service).to.be.instanceOf(SomeService);
                             expect(nothing).to.be.undefined;
@@ -177,9 +177,9 @@ describe("$classes", function () {
                 container.register(
                     $classes.fromPackage(ioc_config_test).basedOn(Authentication)
                             .withKeys.allServices()).then(function () {
-                        Q.all([container.resolve($eq(Service)),
-                               container.resolve($eq(Authentication)),
-                               container.resolve($eq(InMemoryAuthenticator))])
+                        Promise.all([container.resolve($eq(Service)),
+                                     container.resolve($eq(Authentication)),
+                                     container.resolve($eq(InMemoryAuthenticator))])
                             .spread(function (authenticator1, authenticator2, nothing) {
                             expect(authenticator1).to.be.instanceOf(InMemoryAuthenticator);
                             expect(authenticator2).to.equal(authenticator1);
@@ -195,9 +195,9 @@ describe("$classes", function () {
                 container.register(
                     $classes.fromPackage(ioc_config_test).basedOn(Service)
                             .withKeys.mostSpecificService(Service)).then(function () {
-                        Q.all([container.resolve($eq(Service)),
-                               container.resolve($eq(Authentication)),
-                               container.resolve($eq(InMemoryAuthenticator))])
+                        Promise.all([container.resolve($eq(Service)),
+                                     container.resolve($eq(Authentication)),
+                                     container.resolve($eq(InMemoryAuthenticator))])
                             .spread(function (service, authenticator, nothing) {
                             expect(service).to.be.instanceOf(SomeService);
                             expect(authenticator).to.be.instanceOf(InMemoryAuthenticator);
@@ -211,9 +211,9 @@ describe("$classes", function () {
                 container.register(
                     $classes.fromPackage(ioc_config_test).basedOn(Service)
                             .withKeys.mostSpecificService()).then(function () {
-                        Q.all([container.resolve($eq(Service)),
-                               container.resolve($eq(Authentication)),
-                               container.resolve($eq(InMemoryAuthenticator))])
+                        Promise.all([container.resolve($eq(Service)),
+                                     container.resolve($eq(Authentication)),
+                                     container.resolve($eq(InMemoryAuthenticator))])
                             .spread(function (service, authenticator, nothing) {
                             expect(service).to.be.instanceOf(SomeService);
                             expect(authenticator).to.be.instanceOf(InMemoryAuthenticator);
@@ -228,8 +228,8 @@ describe("$classes", function () {
                     $component(Authentication).boundTo(InMemoryAuthenticator),
                     $classes.fromPackage(ioc_config_test).basedOn(Controller)
                             .withKeys.mostSpecificService()).then(function () {
-                        Q.all([container.resolve($eq(Controller)),
-                               container.resolve($eq(LoginController))])
+                        Promise.all([container.resolve($eq(Controller)),
+                                     container.resolve($eq(LoginController))])
                             .spread(function (controller, nothing) {
                             expect(controller).to.be.instanceOf(LoginController);
                             expect(nothing).to.be.undefined;
@@ -248,8 +248,8 @@ describe("$classes", function () {
                         .configure(function (component) {
                             component.transient();
                          })).then(function () {
-                   Q.all([container.resolve($eq(Authentication)),
-                          container.resolve($eq(Authentication))])
+                   Promise.all([container.resolve($eq(Authentication)),
+                                container.resolve($eq(Authentication))])
                        .spread(function (authenticator1, authenticator2) {
                        expect(authenticator1).to.be.instanceOf(InMemoryAuthenticator);
                        expect(authenticator2).to.not.equal(authenticator1);

@@ -3,10 +3,10 @@
   "version": "0.1.0",
   "description": "",
   "dependencies": {
+    "bluebird": "^2.9.13",
     "chai": "^1.10.0",
     "grunt-cli": "latest",
-    "grunt-env": "latest",
-    "q": "^1.1.2"
+    "grunt-env": "latest"
   },
   "devDependencies": {
     "grunt-contrib-jshint": "latest",

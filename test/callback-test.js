@@ -1,6 +1,6 @@
 var miruken  = require('../lib/miruken.js'),
     callback = require('../lib/callback.js'),
-    Q        = require('q'),
+    Promise  = require('bluebird'),
     chai     = require("chai"),
     expect   = chai.expect;
 
@@ -107,7 +107,7 @@ new function () { // closure
                         assets      = 0;
                     }
                     receiver.addAssets(amount);
-                    return Q.delay(100);
+                    return Promise.delay(100);
                 }
             });
         },
@@ -122,7 +122,7 @@ new function () { // closure
         $handle:[
             WireMoney, function (wireMoney, composer) {
                 wireMoney.setReceived(wireMoney.getRequested());
-                return Q(wireMoney);
+                return Promise.resolve(wireMoney);
             }]
     });
 
@@ -163,7 +163,7 @@ new function () { // closure
             },
 
             DrinkServer, function (composer) {
-                return Q.delay(new DrinkServer(), 100);
+                return Promise.delay(new DrinkServer(), 100);
             }]
     });
 
@@ -725,11 +725,11 @@ describe("CallbackHandler", function () {
             var cashier    = new Cashier(750000.00),
                 casino     = new Casino('Venetian').addHandlers(cashier),
                 wireMoney  = new WireMoney(250000);
-            Q.when(casino.defer(wireMoney), function (handled) {
+            Promise.resolve(casino.defer(wireMoney)).then(function (handled) {
                 expect(handled).to.be.true;
                 expect(wireMoney.getReceived()).to.equal(250000);
                 done();
-            }, function (error) { done(error); });
+            });
         });
 
         it("should handle objects eventually with promise", function (done) {
@@ -737,16 +737,16 @@ describe("CallbackHandler", function () {
                     $handle:[
                         WireMoney, function (wireMoney) {
                             wireMoney.setReceived(50000);
-                            return Q.delay(wireMoney, 100);
+                            return Promise.delay(wireMoney, 100);
                         }]
                 }))),
                 casino     = new Casino('Venetian').addHandlers(bank),
                 wireMoney  = new WireMoney(150000);
-            Q.when(casino.defer(wireMoney), function (handled) {
+            Promise.resolve(casino.defer(wireMoney)).then(function (handled) {
                 expect(handled).to.be.true;
                 expect(wireMoney.getReceived()).to.equal(50000);
                 done();
-            }, function (error) { done(error); });
+            });
         });
 
         it("should handle callbacks anonymously with promise", function (done) {
@@ -754,11 +754,11 @@ describe("CallbackHandler", function () {
                     countMoney.record(50);
                 }, CountMoney),
                 countMoney = new CountMoney;
-            Q.when(handler.defer(countMoney), function (handled) {
+            Promise.resolve(handler.defer(countMoney)).then(function (handled) {
                 expect(handled).to.be.true;
                 expect(countMoney.getTotal()).to.equal(50);
                 done();
-            }, function (error) { done(error); });
+            });
         });
     });
 
@@ -861,7 +861,7 @@ describe("CallbackHandler", function () {
                             return cashier;
                         },
                         CardTable, function (resolution) {
-                            return Q(blackjack);
+                            return Promise.resolve(blackjack);
                         }]
                 }));
             expect(inventory.resolve($instant(Cashier))).to.equal(cashier);
@@ -874,7 +874,7 @@ describe("CallbackHandler", function () {
                 cardGames  = new (CallbackHandler.extend({
                     $provide:[
                         Game, function (resolution) {
-                            return Q(blackjack);
+                            return Promise.resolve(blackjack);
                         }]
                 }));
             expect($isPromise(cardGames.resolve(Game))).to.be.true;
@@ -1005,10 +1005,10 @@ describe("CallbackHandler", function () {
 
         it("should resolve objects by class eventually", function (done) {
             var casino = new Casino('Venetian');
-            Q.when(casino.resolve(DrinkServer), function (server) {
+            Promise.resolve(casino.resolve(DrinkServer)).then(function (server) {
                 expect(server).to.be.an.instanceOf(DrinkServer);
                 done();
-            }, function (error) { done(error); });
+            });
         });
 
         it("should not resolve by string", function () {
@@ -1060,7 +1060,7 @@ describe("CallbackHandler", function () {
                 venetian   = new Casino('Venetian'),
                 paris      = new Casino('Paris'),
                 strip      = belagio.next(venetian, paris);
-            Q.when(strip.resolveAll(Casino), function (casinos) {
+            Promise.resolve(strip.resolveAll(Casino)).then(function (casinos) {
                 expect(casinos).to.eql([belagio, venetian, paris]);
                 done();
             });
@@ -1073,23 +1073,23 @@ describe("CallbackHandler", function () {
                 bus1       = new (CallbackHandler.extend({
                     $provide:[ PitBoss, function (resolution) {
                         expect(resolution.isMany()).to.be.true;
-                        return Q.delay(stop1, 75);
+                        return Promise.delay(stop1, 75);
                     }]
                 })),
                 bus2       = new (CallbackHandler.extend({
                     $provide:[ PitBoss, function (resolution) {
                         expect(resolution.isMany()).to.be.true;
-                        return Q.delay(stop2, 100);
+                        return Promise.delay(stop2, 100);
                     }]
                 })),
                 bus3       = new (CallbackHandler.extend({
                     $provide:[ PitBoss, function (resolution) {
                         expect(resolution.isMany()).to.be.true;
-                        return Q.delay(stop3, 50);
+                        return Promise.delay(stop3, 50);
                     }]
                 })),
                 company    = bus1.next(bus2, bus3);
-            Q.when(company.resolveAll(PitBoss), function (pitBosses) {
+            Promise.resolve(company.resolveAll(PitBoss)).then(function (pitBosses) {
                 expect(pitBosses).to.eql(js.Array2.flatten([stop1, stop2, stop3]));
                 done();
             });
@@ -1105,7 +1105,7 @@ describe("CallbackHandler", function () {
                             return venetian;
                         },
                         Casino, function (resolution) {
-                            return Q(belagio);
+                            return Promise.resolve(belagio);
                         },
                         Casino, function (resolution) {
                             return paris;
@@ -1116,7 +1116,7 @@ describe("CallbackHandler", function () {
         });
 
         it("should return empty array if none resolved", function (done) {
-            Q.when((new CallbackHandler).resolveAll(Casino), function (casinos) {
+            Promise.resolve((new CallbackHandler).resolveAll(Casino)).then(function (casinos) {
                 expect(casinos).to.have.length(0);
                 done();
             });
@@ -1127,7 +1127,7 @@ describe("CallbackHandler", function () {
                 strip    = new (CallbackHandler.extend({
                     $provide:[
                         Casino, function (resolution) {
-                            return Q(belagio);
+                            return Promise.resolve(belagio);
                         }]
                 }));
             var casinos = strip.resolveAll($instant(Casino));

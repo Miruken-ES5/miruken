@@ -1,7 +1,7 @@
 var miruken  = require('../lib/miruken.js'),
     context  = require('../lib/context.js')
     validate = require('../lib/validate.js'),
-    Q        = require('q'),
+    Promise  = require('bluebird'),
     chai     = require("chai"),
     expect   = chai.expect;
 
@@ -152,7 +152,7 @@ describe("ValidationCallbackHandler", function () {
                 league = new Context()
                     .addHandlers(team, new ValidationCallbackHandler()),
             player = new Player;
-            Q.when(Validator(league).validate(player), undefined, function (error) {
+            Promise.resolve(Validator(league).validate(player)).caught(function (error) {
                 done();
             });
         });
@@ -161,20 +161,20 @@ describe("ValidationCallbackHandler", function () {
             var league = new Context()
                     .addHandlers(new ValidationCallbackHandler()),
             player = new Player;
-            Q.when(Validator(league).validate(player), function (validated) {
+            Promise.resolve(Validator(league).validate(player)).then(function (validated) {
                 expect(validated.isValid(player)).to.be.true;
                 done();
-            }, function (error) { done(error); });
+            });
         });
 
-        it("should provide invalid keys", function () {
+        it("should provide invalid keys", function (done) {
             var team       = new Team("Liverpool", "U8"),
                 league     = new Context()
                     .addHandlers(team, new ValidationCallbackHandler()),
                 player     = new Player("Matthew");
-            Q.when(Validator(league).validate(player), undefined, function (error) {
-		expect(error.getKeyCulprits()).to.eql(["LastName", "DOB"]);
-		done();
+            Promise.resolve(Validator(league).validate(player)).caught(function (error) {
+		    expect(error.getKeyCulprits()).to.eql(["LastName", "DOB"]);
+            done();
             });
         });
 
@@ -183,7 +183,7 @@ describe("ValidationCallbackHandler", function () {
                 league     = new Context()
                     .addHandlers(team, new ValidationCallbackHandler()),
                 player     = new Player("Matthew");
-            Q.when(Validator(league).validate(player), undefined, function (error) {
+            Promise.resolve(Validator(league).validate(player)).caught(function (error) {
                 expect(error.getKeyErrors("LastName")).to.eql([
                     new ValidationError("Last name required", {
                         key:  "LastName",
@@ -225,7 +225,7 @@ describe("ValidationCallbackHandler", function () {
 			}));
 		}
             });
-            Q.when(Validator(league).validate(player), undefined, function (error) {
+            Promise.resolve(Validator(league).validate(player)).caught(function (error) {
                 expect(error.getKeyErrors("DOB")).to.eql([
                     new ValidationError("Player too old for division U8", {
                         key:    "DOB",
@@ -251,7 +251,7 @@ describe("ValidationCallbackHandler", function () {
                     }));
                 }
             });
-            Q.when(Validator(league).validate(new Team), undefined, function (error) {
+            Promise.resolve(Validator(league).validate(new Team)).caught(function (error) {
                 expect(error.getKeyErrors("Name")).to.eql([
                     new ValidationError("Team name required", {
                         key:    "Name",

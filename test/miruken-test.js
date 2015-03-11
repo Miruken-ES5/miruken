@@ -1,5 +1,5 @@
 var miruken = require('../lib/miruken.js'),
-    Q       = require('q'),
+    Promise = require('bluebird'),
     chai    = require("chai"),
     expect  = chai.expect;
 
@@ -194,7 +194,7 @@ describe("$using", function () {
         var shoppingCart = new ShoppingCart;
         shoppingCart.addItem("Halo II");
         shoppingCart.addItem("Porsche");
-        $using(shoppingCart, Q.delay(100).then(function () {
+        $using(shoppingCart, Promise.delay(100).then(function () {
                shoppingCart.addItem("Book");
                expect(shoppingCart.getItems()).to.eql(["Halo II", "Porsche", "Book"]);
                }) 
@@ -208,7 +208,7 @@ describe("$using", function () {
         var shoppingCart = new ShoppingCart;
         shoppingCart.addItem("Halo II");
         shoppingCart.addItem("Porsche");
-        $using(shoppingCart, Q.delay(100).then(function () {
+        $using(shoppingCart, Promise.delay(100).then(function () {
                throw new Error("Something bad");
                }) 
         ).finally(function () {
