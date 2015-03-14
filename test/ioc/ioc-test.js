@@ -67,7 +67,7 @@ new function () { // closure
     });
 
     var Supercharger = Base.extend(Engine, {
-        $inject: Engine,
+        $inject: [Engine],
         constructor: function (engine, boost) {
             this.extend({
                 getHorsepower: function () {
@@ -103,7 +103,7 @@ new function () { // closure
     });
 
     var Auction = Base.extend({
-        $inject: $every(Car),
+        $inject: [$every(Car)],
         constructor: function (cars) {
             var inventory = {};
             cars.forEach(function (car) {
@@ -563,7 +563,7 @@ describe("TransientLifestyle", function () {
 
 describe("ContextualLifestyle", function () {
     var Controller = Base.extend(Contextual, ContextualMixin, {
-            $inject: $optional(Context),
+            $inject: [$optional(Context)],
             constructor: function (context) {
                 this.setContext(context);
             }
@@ -938,7 +938,7 @@ describe("IoContainer", function () {
 
         it("should not fail resolve when missing lazy dependencies", function (done) {
             var Order = Base.extend({
-                    $inject: $lazy(Engine),
+                    $inject: [$lazy(Engine)],
                     constructor: function (engine) {
                         this.extend({
                             getEngine: function () { return engine(); }
@@ -956,7 +956,7 @@ describe("IoContainer", function () {
 
         it("should delay rejecting lazy dependency failures", function (done) {
             var Order = Base.extend({
-                    $inject: $lazy(Car),
+                    $inject: [$lazy(Car)],
                     constructor: function (car) {
                         this.extend({
                             getCar: function () { return car(); }
@@ -1038,7 +1038,7 @@ describe("IoContainer", function () {
 
         it("should implicitly satisfy container dependency", function (done) {
             var Registry = Base.extend({
-                    $inject: Container,
+                    $inject: [Container],
                     constructor: function (container) {
                         this.extend({
                             getContainer: function () { return container; },
@@ -1055,7 +1055,7 @@ describe("IoContainer", function () {
 
         it("should implicitly satisfy composer dependency", function (done) {
             var Registry = Base.extend({
-                    $inject: $$composer,
+                    $inject: [$$composer],
                     constructor: function (composer) {
                         this.extend({
                             getComposer: function () { return composer; },
@@ -1115,7 +1115,7 @@ describe("IoContainer", function () {
 
         it("should resolve in new child context", function (done) {
             var AssemblyLine = Base.extend({
-                $inject: Engine,
+                $inject: [Engine],
                 constructor: function (engine) {
                     this.extend({
                         getEngine: function () { return engine; }
@@ -1149,7 +1149,7 @@ describe("IoContainer", function () {
 
         it("should use child contexts to manage child containers", function (done) {
             var Order = Base.extend({
-                    $inject: Car,
+                    $inject: [Car],
                     constructor: function (car) {
                         this.extend({
                             getCar: function () { return car; }

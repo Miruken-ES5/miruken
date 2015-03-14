@@ -7,6 +7,8 @@ eval(base2.namespace);
 eval(base2.js.namespace);
 eval(miruken.namespace);
 
+Promise.onPossiblyUnhandledRejection(Undefined);
+
 new function () { // closure
 
     var miruken_test = new base2.Package(this, {
@@ -96,6 +98,22 @@ eval(base2.miruken_test.namespace);
 describe("miruken", function () {
     it("should be in global namespace", function () {
         expect(global.miruken).to.equal(base2.miruken);
+    });
+});
+
+describe("Enum", function () {
+    it("should be immutable", function () {
+        var Color = Enum({red: 1, blue: 2, green: 3});
+        expect(Color.prototype).to.be.instanceOf(Enum);
+        Color.black = 4;
+        expect(Color.black).to.be.undefined;
+    });
+
+    it("should reject enum construction", function () {
+        var Color = Enum({red: 1, blue: 2, green: 3});
+        expect(function () { 
+            new Color(2);
+        }).to.throw(Error, /Enums cannot be instantiated./);
     });
 });
 
