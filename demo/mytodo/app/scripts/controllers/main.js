@@ -1,15 +1,6 @@
-/**
- * @ngdoc function
- * @name mytodoApp.controller:MainCtrl
- * @description
- * # MainCtrl
- * Controller of the mytodoApp
- */
+var MainController = Miruken.extend({
+    todos: ['Item 1', 'Item 2', 'Item 3']
+});
+
 angular.module('mytodoApp')
-  .controller('MainCtrl', function ($scope) {
-    $scope.awesomeThings = [
-      'HTML5 Boilerplate',
-      'AngularJS',
-      'Karma'
-    ];
-  });
+       .controller('MainController', MainController);
