@@ -854,7 +854,7 @@ describe("Package", function () {
         it("should expose protocol definitions", function () {
             var protocols = [];
             miruken_test.getProtocols(function (protocol) {
-                protocols.push(protocol);
+                protocols.push(protocol.member);
             });
             expect(protocols).to.have.members([Animal, Tricks, CircusAnimal, Tracked]);
         });
@@ -864,7 +864,7 @@ describe("Package", function () {
         it("should expose class definitions", function () {
             var classes = [];
             miruken_test.getClasses(function (cls) {
-                classes.push(cls);
+                classes.push(cls.member);
             });
             expect(classes).to.have.members([Dog, Elephant, AsianElephant, ShoppingCart,
                                              TreeNode, LogInterceptor]);

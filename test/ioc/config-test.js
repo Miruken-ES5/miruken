@@ -238,6 +238,43 @@ describe("$classes", function () {
                 });
             });
         });
+
+        describe("#name", function () {
+            it("should specify name as key", function (done) {
+                container.register(
+                    $classes.fromPackage(ioc_config_test).basedOn(Controller)
+                            .withKeys.name("Login")).then(function () {
+                        Promise.resolve(container.resolve("Login")).then(function (controller) {
+                            expect(controller).to.be.instanceOf(LoginController);
+                            done();
+                        });
+                });
+            });
+
+            it("should infer name as key", function (done) {
+                container.register(
+                    $classes.fromPackage(ioc_config_test).basedOn(Controller)
+                            .withKeys.name()).then(function () {
+                        Promise.resolve(container.resolve("LoginController")).then(function (controller) {
+                            expect(controller).to.be.instanceOf(LoginController);
+                            done();
+                        });
+                });
+            });
+
+            it("should evaluate name as key", function (done) {
+                container.register(
+                    $classes.fromPackage(ioc_config_test).basedOn(Controller)
+                        .withKeys.name(function (name) { 
+                            return name.replace("Controller", "");
+                            })).then(function () {
+                        Promise.resolve(container.resolve("Login")).then(function (controller) {
+                            expect(controller).to.be.instanceOf(LoginController);
+                            done();
+                        });
+                });
+            });
+        });
     });
 
     describe("#configure", function () {
