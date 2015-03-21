@@ -1,6 +1,6 @@
 new function () {
 
-    miruken.ng.createModulePackages();
+    miruken.ng.bootstrap();
 
     angular
         .module('mytodoApp', [
@@ -26,7 +26,5 @@ new function () {
                 .otherwise({
                     redirectTo: '/'
                 });
-        })
-        .run(['$rootScope', '$injector', miruken.ng.bootstrapMiruken]);
- 
+        }); 
 }

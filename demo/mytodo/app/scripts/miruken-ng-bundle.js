@@ -1,4 +1,5 @@
 (function e(t,n,r){function s(o,u){if(!n[o]){if(!t[o]){var a=typeof require=="function"&&require;if(!u&&a)return a(o,!0);if(i)return i(o,!0);var f=new Error("Cannot find module '"+o+"'");throw f.code="MODULE_NOT_FOUND",f}var l=n[o]={exports:{}};t[o][0].call(l.exports,function(e){var n=t[o][1][e];return s(n?n:e)},l,l.exports,e,t,n,r)}return n[o].exports}var i=typeof require=="function"&&require;for(var o=0;o<r.length;o++)s(r[o]);return s})({1:[function(require,module,exports){
+(function (global){
 var miruken = require('../miruken.js');
 
 new function () { // closure
@@ -14,55 +15,39 @@ new function () { // closure
         name:    "ng",
         version: miruken.version,
         parent:  miruken,
-        imports: "miruken",
-        exports: "bootstrapMiruken,createModulePackages,Controller"
+        imports: "miruken,miruken.context",
+        exports: "bootstrap,rootContext,Controller"
     });
 
     eval(this.imports);
 
+    var _bootstrapped   = false,
+        _decorateScopes = false;
+
     /**
      * @class {Controller}
      */
-    var Controller = Miruken.extend({
+    var Controller = Miruken.extend(Contextual, ContextualMixin, {
     });
+
+    var rootContext = new Context;
+    rootContext.addHandlers(new miruken.ioc.IoContainer, 
+                            new miruken.validate.ValidationCallbackHandler,
+                            new miruken.error.ErrorCallbackHandler);
 
     /**
      * @function bootstrapMiruken
      * Bootstraps angular with Miruekn.
-     * @param    {Scope}     $rootScope  - angular $rootScope
-     * @param    {Injector}  $injector   - angular $injector
+     * @param  {Object}  options  - bootstrap options
      */
-    function bootstrapMiruken($rootScope, $injector)
-    {
-        var rootContext = new miruken.context.Context;
-        rootContext.addHandlers(new miruken.ioc.IoContainer, 
-                                new miruken.validate.ValidationCallbackHandler,
-                                new miruken.error.ErrorCallbackHandler);
-        $rootScope.rootContext = $rootScope.context = rootContext;
-        
-        var scopeProto   = $rootScope.constructor.prototype,
-            newScope     = scopeProto.$new,
-            destroyScope = scopeProto.$destroy;
-        scopeProto.$new = function () {
-            var childScope  = newScope.apply(this, Array.prototype.slice.call(arguments)),
-            parentScope = childScope.$parent;
-            childScope.context = parentScope && parentScope.context
-                               ? parentScope.context.newChild()
-                               : new miruken.context.Context;
-            return childScope;
-        };
-        scopeProto.$destroy = function () {
-            var context = this.context;
-            if (context !== rootContext) {
-                context.end();
-            }
-            destroyScope.apply(this, Array.prototype.slice.call(arguments));
-        };
-    }
-
-    function createModulePackages() {
-       var module = angular.module;
+    function bootstrap(options) {
+        if (_bootstrapped) {
+            return;
+        }
+        _bootstrapped = true;
+        var ngModule = angular.module;
         angular.module = function (name, requires) {
+            var module = ngModule.apply(this, Array.prototype.slice.call(arguments));
             if (requires) {
                 var parent = base2,
                     names  = name.split(".");
@@ -74,17 +59,62 @@ new function () { // closure
                             parent: parent
                         });
                         parent.addName(packageName, package);
+                        if (parent === base2) {
+                            global[packageName] = package;
+                        }
                         parent = package;
                     }
                 }
+                module.config(registerPackageControllers.bind(package));
+                if (!_decorateScopes) {
+                    _decorateScopes = true;
+                    module.run(['$rootScope', '$injector', synchronizeContexts]);
+                }
             }
-            return module.apply(this, Array.prototype.slice.call(arguments));
+            return module;
        };
+    }
+
+    /**
+     * @function synchronizeContexts
+     * Synchronizes Miruken contexts with angular scopes.
+     * @param  {Scope}   $rootScope  - angular's root scope
+     */
+    function synchronizeContexts($rootScope)
+    {
+        var scopeProto   = $rootScope.constructor.prototype,
+            newScope     = scopeProto.$new,
+            destroyScope = scopeProto.$destroy;
+        scopeProto.$new = function () {
+            var childScope  = newScope.apply(this, Array.prototype.slice.call(arguments)),
+            parentScope = childScope.$parent;
+            childScope.context = parentScope && parentScope.context
+                               ? parentScope.context.newChild()
+                               : new Context;
+            return childScope;
+        };
+        scopeProto.$destroy = function () {
+            var context = this.context;
+            if (context !== rootContext) {
+                context.end();
+            }
+            destroyScope.apply(this, Array.prototype.slice.call(arguments));
+        };
+
+        $rootScope.rootContext = $rootScope.context = rootContext;
+        _bootstrapped          = true;
+    }
+
+    function registerPackageControllers() {
+        this.getClasses(function (member) {
+
+        });
     }
 
     eval(this.exports);
 }
 
+}).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
 },{"../miruken.js":10}],2:[function(require,module,exports){
 /*
   base2 - copyright 2007-2009, Dean Edwards
@@ -5096,7 +5126,9 @@ new function () { // closure
      * Package extensions
      */
     Package.implement({
-        export: Package.prototype.addName,
+        export: function (member, name) {
+            this.addName(name, member);
+        },
         getProtocols: function (cb) {
             _listContents(this, cb, $isProtocol);
         },

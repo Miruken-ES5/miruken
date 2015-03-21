@@ -1,5 +1,5 @@
 new function () {
-    var AboutController = Miruken.extend({
+    var AboutController = miruken.ng.Controller.extend({
         awesomeThings: [
            'HTML5 Boilerplate',
            'AngularJS',
