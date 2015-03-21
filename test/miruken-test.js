@@ -870,6 +870,16 @@ describe("Package", function () {
                                              TreeNode, LogInterceptor]);
         });
     });
+
+    describe("#getPackages", function () {
+        it("should expose package definitions", function () {
+            var packages = [];
+            base2.getPackages(function (package) {
+                packages.push(package.member);
+            });
+            expect(packages).to.contain(miruken_test);
+        });
+    });
 });
 
 describe("Traversal", function () {
