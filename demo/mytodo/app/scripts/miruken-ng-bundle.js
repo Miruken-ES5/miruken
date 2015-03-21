@@ -1,4 +1,91 @@
 (function e(t,n,r){function s(o,u){if(!n[o]){if(!t[o]){var a=typeof require=="function"&&require;if(!u&&a)return a(o,!0);if(i)return i(o,!0);var f=new Error("Cannot find module '"+o+"'");throw f.code="MODULE_NOT_FOUND",f}var l=n[o]={exports:{}};t[o][0].call(l.exports,function(e){var n=t[o][1][e];return s(n?n:e)},l,l.exports,e,t,n,r)}return n[o].exports}var i=typeof require=="function"&&require;for(var o=0;o<r.length;o++)s(r[o]);return s})({1:[function(require,module,exports){
+var miruken = require('../miruken.js');
+
+new function () { // closure
+
+    if (typeof angular === 'undefined') {
+        throw new Error("angular not found.  Did you forget to include angular.js first?");
+    }
+
+    /**
+     * @namespace miruken.ng
+     */
+    var ng = new base2.Package(this, {
+        name:    "ng",
+        version: miruken.version,
+        parent:  miruken,
+        imports: "miruken",
+        exports: "bootstrapMiruken,createModulePackages,Controller"
+    });
+
+    eval(this.imports);
+
+    /**
+     * @class {Controller}
+     */
+    var Controller = Miruken.extend({
+    });
+
+    /**
+     * @function bootstrapMiruken
+     * Bootstraps angular with Miruekn.
+     * @param    {Scope}     $rootScope  - angular $rootScope
+     * @param    {Injector}  $injector   - angular $injector
+     */
+    function bootstrapMiruken($rootScope, $injector)
+    {
+        var rootContext = new miruken.context.Context;
+        rootContext.addHandlers(new miruken.ioc.IoContainer, 
+                                new miruken.validate.ValidationCallbackHandler,
+                                new miruken.error.ErrorCallbackHandler);
+        $rootScope.rootContext = $rootScope.context = rootContext;
+        
+        var scopeProto   = $rootScope.constructor.prototype,
+            newScope     = scopeProto.$new,
+            destroyScope = scopeProto.$destroy;
+        scopeProto.$new = function () {
+            var childScope  = newScope.apply(this, Array.prototype.slice.call(arguments)),
+            parentScope = childScope.$parent;
+            childScope.context = parentScope && parentScope.context
+                               ? parentScope.context.newChild()
+                               : new miruken.context.Context;
+            return childScope;
+        };
+        scopeProto.$destroy = function () {
+            var context = this.context;
+            if (context !== rootContext) {
+                context.end();
+            }
+            destroyScope.apply(this, Array.prototype.slice.call(arguments));
+        };
+    }
+
+    function createModulePackages() {
+       var module = angular.module;
+        angular.module = function (name, requires) {
+            if (requires) {
+                var parent = base2,
+                    names  = name.split(".");
+                for (var i = 0; i < names.length; ++i) {
+                    var packageName = names[i];
+                    if (!base2.hasOwnProperty(packageName)) {
+                        var package = new base2.Package(null, {
+                            name:   packageName,
+                            parent: parent
+                        });
+                        parent.addName(packageName, package);
+                        parent = package;
+                    }
+                }
+            }
+            return module.apply(this, Array.prototype.slice.call(arguments));
+       };
+    }
+
+    eval(this.exports);
+}
+
+},{"../miruken.js":10}],2:[function(require,module,exports){
 /*
   base2 - copyright 2007-2009, Dean Edwards
   http://code.google.com/p/base2/
@@ -15,7 +102,7 @@ base2 = {
   version: "1.1 (alpha1)",
   exports:
     "Base,Package,Abstract,Module,Enumerable,Map,Collection,RegGrp," +
-    "Undefined,Null,This,True,False,assignID,detect,global",
+    "Undefined,Null,This,True,False,assignID,global",
   namespace: ""
 };
 
@@ -32,17 +119,15 @@ var Undefined = K(), Null = K(null), True = K(true), False = K(false), This = fu
 var global = This(), base2 = global.base2;
    
 // private
-var _IGNORE = K(),
-    _FORMAT = /%([1-9])/g,
-    _LTRIM = /^\s\s*/,
-    _RTRIM = /\s\s*$/,
-    _RESCAPE = /([\/()[\]{}|*+-.,^$?\\])/g,             // safe regular expressions
-    _BASE = /try/.test(detect) ? /\bbase\b/ : /.*/,     // some platforms don't allow decompilation
-    _HIDDEN = ["constructor", "toString"],              // only override these when prototyping
-    _MSIE_NATIVE_FUNCTION = detect("(jscript)") ?
-      new RegExp("^" + rescape(isNaN).replace(/isNaN/, "\\w+") + "$") : {test: False},
+var _IGNORE  = K(),
+    _FORMAT  = /%([1-9])/g,
+    _LTRIM   = /^\s\s*/,
+    _RTRIM   = /\s\s*$/,
+    _RESCAPE = /([\/()[\]{}|*+-.,^$?\\])/g,     // safe regular expressions
+    _BASE    = /\bbase\b/,
+    _HIDDEN  = ["constructor", "toString"],     // only override these when prototyping
     _counter = 1,
-    _slice = Array.prototype.slice;
+    _slice   = Array.prototype.slice;
 
 _Function_forEach(); // make sure this is initialised
 
@@ -81,14 +166,14 @@ var _subclass = function(_instance, _static) {
         delete this.__constructing;
       } else {
         // Casting.
-	var target = arguments[0];
-	if (target instanceof _class) return target;
+	    var target = arguments[0];
+	    if (target instanceof _class) return target;
         var cls = _class;
         do {
           if (cls.coerce) {
-	    var cast = cls.coerce.apply(_class, arguments);
-	    if (cast) return cast;
-	  }
+	        var cast = cls.coerce.apply(_class, arguments);
+            if (cast) return cast;
+          }
         } while ((cls = cls.ancestor) && (cls != Base));
         return extend(target, _prototype);
       }
@@ -346,9 +431,7 @@ function _extendModule(module, _interface) {
   var id = module.toString().slice(1, -1);
   for (var name in _interface) {
     var property = _interface[name], namespace = "";
-    if (name.indexOf("@") == 0) { // object detection
-      if (detect(name.slice(1))) _extendModule(module, property);
-    } else if (!proto[name]) {
+    if (!proto[name]) {
       if (name == name.toUpperCase()) {
         namespace = "var " + name + "=" + id + "." + name + ";";
       } else if (typeof property == "function" && property.call) {
@@ -930,10 +1013,7 @@ function extend(object, source) { // or extend(object, key, value)
     for (key in source) {
       if (typeof proto[key] == "undefined") {
         value = source[key];
-        // Object detection.
-        if (key.indexOf("@") == 0) {
-          if (detect(key.slice(1))) extend(object, value);
-        } else if (value != _IGNORE) {
+        if (value != _IGNORE) {
           // Check for method overriding.
           var ancestor = object[key];
           if (ancestor && typeof value == "function") {
@@ -1027,15 +1107,6 @@ forEach.csv = function(string, block, context) {
   forEach (csv(string), block, context);
 };
 
-forEach.detect = function(object, block, context) {
-  var filter = function(value, key) {
-    if (key.indexOf("@") == 0) { // object detection
-      if (detect(key.slice(1))) forEach (value, filter);
-    } else block.call(context, value, key, object);
-  };
-  forEach (object, filter);
-};
-
 // These are the two core enumeration methods. All other forEach methods
 //  eventually call one of these two.
 
@@ -1102,12 +1173,6 @@ function instanceOf(object, klass) {
 
   if (object == null) return false;
    
-  // COM objects don't have a constructor
-  /*@if (@_jscript)
-    if (typeof object.constructor != "function") {
-      return klass == Object;
-    }
-  /*@end @*/
   if (object.constructor == klass) return true;
   if (klass.ancestorOf) return klass.ancestorOf(object.constructor);
   /*@if (@_jscript_version < 5.1)
@@ -1156,13 +1221,10 @@ function typeOf(object) {
     case "object":
       return object == null
         ? "null"
-        : typeof object.constructor != "function" // COM object
-          ? _MSIE_NATIVE_FUNCTION.test(object)
-            ? "function"
-            : type
-          : _toString.call(object) == "[object Date]"
-            ? type
-            : typeof object.constructor.prototype.valueOf(); // underlying type
+        : typeof object.constructor == "function"
+          && _toString.call(object) != "[object Date]"
+             ? typeof object.constructor.prototype.valueOf() // underlying type
+             : type;
     case "function":
       return typeof object.call == "function" ? type : "object";
     default:
@@ -1675,99 +1737,6 @@ function unbind(fn) {
 };
 
 // =========================================================================
-// base2/detect.js
-// =========================================================================
-
-function detect() {
-  // Two types of detection:
-  //  1. Object detection
-  //    e.g. detect("(java)");
-  //    e.g. detect("!(document.addEventListener)");
-  //  2. Platform detection (browser sniffing)
-  //    e.g. detect("MSIE");
-  //    e.g. detect("MSIE|Opera");
-
-  var jscript = NaN/*@cc_on||@_jscript_version@*/, // http://dean.edwards.name/weblog/2007/03/sniff/#comment85164
-      javaEnabled = true;
-  if (global.navigator) { // browser
-    var MSIE    = /MSIE[\d.]+/g,
-        element = document.createElement("span"),
-        input   = document.createElement("input"),
-        style   = element.style,
-        // Close up the space between name and version number.
-        //  e.g. MSIE 6 -> MSIE6
-        userAgent = navigator.userAgent.replace(/([a-z])[\s\/](\d)/gi, "$1$2");
-    javaEnabled &= navigator.javaEnabled();
-    // Fix Opera's (and others) user agent string.
-    if (!jscript) userAgent = userAgent.replace(MSIE, "");
-    if (/MSIE/.test(userAgent)) {
-      userAgent = userAgent.match(MSIE)[0] + ";" + userAgent
-        .replace(MSIE, "")
-        .replace(/user\-agent.*$/i, ""); // crap gets appended here
-    }
-    ;;; userAgent = userAgent.replace(/\.NET CLR[\d\.]*/g, "");
-    // Chrome is different enough that it counts as a different vendor.
-    // Sniff for Webkit unless you specifically want either Chrome or Safari.
-    // Arora is treated as Safari.
-    if (/Chrome/.test(userAgent)) userAgent = userAgent.replace(/Safari[\d.]*/gi, "");
-    else if (/Gecko/.test(userAgent)) userAgent = userAgent.replace(/Gecko/g, "Gecko/").replace(/rv:/, "Gecko");
-    if (!/^CSS/.test(document.compatMode)) userAgent += ";QuirksMode";
-    base2.userAgent = userAgent.replace(/like \w+/gi, "") + ";" + navigator.platform;
-//} else if (java) { // rhino
-//  var System = java.lang.System;
-//  base2.userAgent = "Rhino " + System.getProperty("os.arch") + " " + System.getProperty("os.name") + " " + System.getProperty("os.version");
-//} else if (jscript) { // Windows Scripting Host
-//  base2.userAgent = "WSH";
-  }
-
-  var _cache = {};
-  detect = function(expression) {
-    var not = expression.indexOf("!") == 0;
-    if (not) expression = expression.slice(1);
-    if (_cache[expression] == null) {
-      var returnValue = false,
-          test = expression;
-      if (test.indexOf("(") == 0) { // Feature detection
-        if (base2.dom) {
-          test = test
-            .replace(/(hasFeature)/, "document.implementation.$1")
-            .replace(/\bstyle\.(\w+)/g, function(match, propertyName) {
-              if (!style[propertyName]) {
-                propertyName = base2.dom.CSSStyleDeclaration.getPropertyName(propertyName);
-              }
-              return "style." + propertyName;
-            })
-            .replace(/^\((\w+\.[\w\.]+)\)$/, function(match, feature) {
-              feature = feature.split(".");
-              var propertyName = feature.pop(), object = feature.join(".");
-              return "(" +
-                (jscript < 5.6 ?
-                  object + "." + propertyName + "!==undefined" :
-                  "'" + propertyName + "' in " + object) +
-              ")";
-            });
-        }
-        try {
-          returnValue = new Function("global,element,input,style,jscript,java", "return !!" + test)(global, element, input, style, jscript, javaEnabled ? global.java : null);
-        } catch (x) {
-          // the test failed
-        }
-      } else {
-        // Browser sniffing.
-        returnValue = new RegExp("(" + test + ")", "i").test(base2.userAgent);
-      }
-      _cache[expression] = returnValue;
-    }
-    return !!(not ^ _cache[expression]);
-  };
-  
-  detect.MSIE = !!jscript;
-  detect.MSIE5 = jscript < 5.6;
-  
-  return detect(arguments[0]);
-};
-
-// =========================================================================
 // base2/init.js
 // =========================================================================
 
@@ -1798,7 +1767,7 @@ if (typeof exports !== 'undefined') {
 
 }; ////////////////////  END: CLOSURE  /////////////////////////////////////
 
-},{}],2:[function(require,module,exports){
+},{}],3:[function(require,module,exports){
 (function (global){
 var miruken = require('./miruken.js'),
     Promise = require('bluebird');
@@ -2789,7 +2758,7 @@ new function () { // closure
 }
 
 }).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
-},{"./miruken.js":9,"bluebird":11}],3:[function(require,module,exports){
+},{"./miruken.js":10,"bluebird":12}],4:[function(require,module,exports){
 var miruken = require('./miruken.js');
               require('./callback.js');
 
@@ -3182,7 +3151,7 @@ new function () { // closure
 
 }
 
-},{"./callback.js":2,"./miruken.js":9}],4:[function(require,module,exports){
+},{"./callback.js":3,"./miruken.js":10}],5:[function(require,module,exports){
 var miruken    = require('./miruken.js'),
     prettyjson = require('prettyjson'),
     Promise    = require('bluebird');
@@ -3303,7 +3272,7 @@ new function() { // closure
 
 }
 
-},{"./callback.js":2,"./miruken.js":9,"bluebird":11,"prettyjson":13}],5:[function(require,module,exports){
+},{"./callback.js":3,"./miruken.js":10,"bluebird":12,"prettyjson":14}],6:[function(require,module,exports){
 module.exports = require('./miruken.js');
 require('./callback.js');
 require('./context.js');
@@ -3311,7 +3280,7 @@ require('./validate.js');
 require('./error.js');
 require('./ioc');
 
-},{"./callback.js":2,"./context.js":3,"./error.js":4,"./ioc":7,"./miruken.js":9,"./validate.js":10}],6:[function(require,module,exports){
+},{"./callback.js":3,"./context.js":4,"./error.js":5,"./ioc":8,"./miruken.js":10,"./validate.js":11}],7:[function(require,module,exports){
 var miruken = require('../miruken.js'),
     Promise = require('bluebird');
               require('./ioc.js');
@@ -3546,7 +3515,7 @@ new function () { // closure
                             }
                         } else if ($isFunction(n)) {
                             if (name = n(name)) {
-                                keys.push(name);
+                                keys.push(String(name));
                             }
                         } else {
                             keys.push(String(n));
@@ -3635,12 +3604,12 @@ new function () { // closure
 
     eval(this.exports);
 }
-},{"../miruken.js":9,"./ioc.js":8,"bluebird":11}],7:[function(require,module,exports){
+},{"../miruken.js":10,"./ioc.js":9,"bluebird":12}],8:[function(require,module,exports){
 module.exports = require('./ioc.js');
 require('./config.js');
 
 
-},{"./config.js":6,"./ioc.js":8}],8:[function(require,module,exports){
+},{"./config.js":7,"./ioc.js":9}],9:[function(require,module,exports){
 var miruken = require('../miruken.js'),
     Promise = require('bluebird');
               require('../context.js'),
@@ -4474,7 +4443,7 @@ new function () { // closure
     eval(this.exports);
 
 }
-},{"../context.js":3,"../miruken.js":9,"../validate.js":10,"bluebird":11}],9:[function(require,module,exports){
+},{"../context.js":4,"../miruken.js":10,"../validate.js":11,"bluebird":12}],10:[function(require,module,exports){
 (function (global){
 require('./base2.js');
 
@@ -5127,12 +5096,18 @@ new function () { // closure
      * Package extensions
      */
     Package.implement({
+        export: Package.prototype.addName,
         getProtocols: function (cb) {
             _listContents(this, cb, $isProtocol);
         },
         getClasses: function (cb) {
             _listContents(this, cb, function (member, memberName) {
                 return $isClass(member) && (memberName != "constructor");
+            });
+        },
+        getPackages: function (cb) {
+            _listContents(this, cb, function (member, memberName) {
+                return (member instanceof Package) && (memberName != "parent");
             });
         }
     });
@@ -5576,7 +5551,7 @@ new function () { // closure
 }
 
 }).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
-},{"./base2.js":1}],10:[function(require,module,exports){
+},{"./base2.js":2}],11:[function(require,module,exports){
 var miruken = require('./miruken.js'),
     Promise = require('bluebird');
               require('./callback.js');
@@ -5774,7 +5749,7 @@ new function () { // closure
 
 }
 
-},{"./callback.js":2,"./miruken.js":9,"bluebird":11}],11:[function(require,module,exports){
+},{"./callback.js":3,"./miruken.js":10,"bluebird":12}],12:[function(require,module,exports){
 (function (process,global){
 /* @preserve
  * The MIT License (MIT)
@@ -10442,7 +10417,7 @@ module.exports = ret;
 },{"./es5.js":14}]},{},[4])(4)
 });                    ;if (typeof window !== 'undefined' && window !== null) {                               window.P = window.Promise;                                                     } else if (typeof self !== 'undefined' && self !== null) {                             self.P = self.Promise;                                                         }
 }).call(this,require('_process'),typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
-},{"_process":12}],12:[function(require,module,exports){
+},{"_process":13}],13:[function(require,module,exports){
 // shim for using process in browser
 
 var process = module.exports = {};
@@ -10502,7 +10477,7 @@ process.chdir = function (dir) {
 };
 process.umask = function() { return 0; };
 
-},{}],13:[function(require,module,exports){
+},{}],14:[function(require,module,exports){
 'use strict';
 
 // ### Module dependencies
@@ -10733,7 +10708,7 @@ exports.renderString = function renderString(data, options, indentation) {
   return output;
 };
 
-},{"../package.json":16,"./utils":14,"colors":15}],14:[function(require,module,exports){
+},{"../package.json":17,"./utils":15,"colors":16}],15:[function(require,module,exports){
 'use strict';
 
 /**
@@ -10755,7 +10730,7 @@ exports.getMaxIndexLength = function(input) {
   return maxWidth;
 };
 
-},{}],15:[function(require,module,exports){
+},{}],16:[function(require,module,exports){
 /*
 colors.js
 
@@ -11099,7 +11074,7 @@ addProperty('zalgo', function () {
   return zalgo(this);
 });
 
-},{}],16:[function(require,module,exports){
+},{}],17:[function(require,module,exports){
 module.exports={
   "author": {
     "name": "Rafael de Oleza",
@@ -11175,4 +11150,4 @@ module.exports={
   "_resolved": "https://registry.npmjs.org/prettyjson/-/prettyjson-1.1.0.tgz"
 }
 
-},{}]},{},[5,7]);
+},{}]},{},[6,1]);
