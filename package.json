@@ -9,11 +9,12 @@
     "grunt-env": "latest"
   },
   "devDependencies": {
+    "grunt-browserify": "^3.5.0",
+    "grunt-concurrent": "latest",
     "grunt-contrib-jshint": "latest",
     "grunt-contrib-uglify": "latest",
     "grunt-contrib-watch": "latest",
     "grunt-mocha-test": "latest",
-    "grunt-concurrent": "latest",
     "mocha": "^2.1.0",
     "prettyjson": "^1.0.0"
   }

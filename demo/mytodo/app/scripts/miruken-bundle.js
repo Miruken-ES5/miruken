@@ -3303,7 +3303,7 @@ new function() { // closure
 
 }
 
-},{"./callback.js":2,"./miruken.js":9,"bluebird":11,"prettyjson":12}],5:[function(require,module,exports){
+},{"./callback.js":2,"./miruken.js":9,"bluebird":11,"prettyjson":13}],5:[function(require,module,exports){
 module.exports = require('./miruken.js');
 require('./callback.js');
 require('./context.js');
@@ -3355,18 +3355,20 @@ new function () { // closure
                         classes = this.getClasses();
                     if (_basedOn) {  // try based on
                         registrations = Array2.filter(
-                            Array2.map(classes, function (clazz) {
-                                return _basedOn.builderForClass(clazz);
+                            Array2.map(classes, function (member) {
+                                return _basedOn.builderForClass(member);
                             }), function (component) {
                             return component;
                         });
                     } else { // try installers
                         registrations = Array2.map(
-                            Array2.filter(classes, function (clazz) {
+                            Array2.filter(classes, function (member) {
+                                var clazz = member.member || member;
                                 return clazz.prototype instanceof Installer;
                             }), function (installer) {
-                            return new installer;
-                        });
+                                installer = installer.member || installer;
+                                return new installer;
+                            });
                     }
                     return Promise.all(container.register(registrations))
                         .then(function (registrations) {
@@ -3437,8 +3439,10 @@ new function () { // closure
                     }
                     return this;
                 },
-                builderForClass: function (clazz) {
-                    var basedOn = [];
+                builderForClass: function (member) {
+                    var basedOn = [],
+                        clazz   = member.member || member,
+                        name    = member.name;
                     if ((_if && !_if(clazz)) || (_unless && _unless(clazz))) {
                         return;
                     }
@@ -3458,7 +3462,7 @@ new function () { // closure
                         }
                     }
                     if (basedOn.length > 0 || constraints.length === 0) {
-                        var keys      = this.withKeys.getKeys(clazz, basedOn),
+                        var keys      = this.withKeys.getKeys(clazz, basedOn, name),
                             component = $component(keys).boundTo(clazz);
                         if (_configuration) {
                             _configuration(component);
@@ -3534,10 +3538,25 @@ new function () { // closure
                         }
                     });
                 },
-                getKeys: function (clazz, constraints) {
+                name: function (n) {
+                    return selectKeys(function (keys, clazz, constraints, name) {
+                        if ($isNothing(n)) {
+                            if (name) {
+                                keys.push(name);
+                            }
+                        } else if ($isFunction(n)) {
+                            if (name = n(name)) {
+                                keys.push(name);
+                            }
+                        } else {
+                            keys.push(String(n));
+                        }
+                    });
+                },
+                getKeys: function (clazz, constraints, name) {
                     var keys = [];
                     if (_keySelector) {
-                        _keySelector(keys, clazz, constraints);
+                        _keySelector(keys, clazz, constraints, name);
                     }
                     if (keys.length > 0) {
                         return keys;
@@ -3548,9 +3567,9 @@ new function () { // closure
             function selectKeys(selector) {
                 if (_keySelector) { 
                     var select   = _keySelector;
-                    _keySelector = function (keys, clazz, constraints) {
-                        select(keys, clazz, constraints);
-                        selector(keys, clazz, constraints);
+                    _keySelector = function (keys, clazz, constraints, name) {
+                        select(keys, clazz, constraints, name);
+                        selector(keys, clazz, constraints, name);
                     };
                 } else {
                     _keySelector = selector;
@@ -5123,7 +5142,7 @@ new function () { // closure
             for (memberName in package) {
                 var member = package[memberName];
                 if (!filter || filter(member, memberName)) {
-                    cb(member, memberName);
+                    cb({ member: member, name: memberName});
                 }
             }
         }
@@ -10423,7 +10442,67 @@ module.exports = ret;
 },{"./es5.js":14}]},{},[4])(4)
 });                    ;if (typeof window !== 'undefined' && window !== null) {                               window.P = window.Promise;                                                     } else if (typeof self !== 'undefined' && self !== null) {                             self.P = self.Promise;                                                         }
 }).call(this,require('_process'),typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
-},{"_process":16}],12:[function(require,module,exports){
+},{"_process":12}],12:[function(require,module,exports){
+// shim for using process in browser
+
+var process = module.exports = {};
+var queue = [];
+var draining = false;
+
+function drainQueue() {
+    if (draining) {
+        return;
+    }
+    draining = true;
+    var currentQueue;
+    var len = queue.length;
+    while(len) {
+        currentQueue = queue;
+        queue = [];
+        var i = -1;
+        while (++i < len) {
+            currentQueue[i]();
+        }
+        len = queue.length;
+    }
+    draining = false;
+}
+process.nextTick = function (fun) {
+    queue.push(fun);
+    if (!draining) {
+        setTimeout(drainQueue, 0);
+    }
+};
+
+process.title = 'browser';
+process.browser = true;
+process.env = {};
+process.argv = [];
+process.version = ''; // empty string to avoid regexp issues
+process.versions = {};
+
+function noop() {}
+
+process.on = noop;
+process.addListener = noop;
+process.once = noop;
+process.off = noop;
+process.removeListener = noop;
+process.removeAllListeners = noop;
+process.emit = noop;
+
+process.binding = function (name) {
+    throw new Error('process.binding is not supported');
+};
+
+// TODO(shtylman)
+process.cwd = function () { return '/' };
+process.chdir = function (dir) {
+    throw new Error('process.chdir is not supported');
+};
+process.umask = function() { return 0; };
+
+},{}],13:[function(require,module,exports){
 'use strict';
 
 // ### Module dependencies
@@ -10654,7 +10733,7 @@ exports.renderString = function renderString(data, options, indentation) {
   return output;
 };
 
-},{"../package.json":15,"./utils":13,"colors":14}],13:[function(require,module,exports){
+},{"../package.json":16,"./utils":14,"colors":15}],14:[function(require,module,exports){
 'use strict';
 
 /**
@@ -10676,7 +10755,7 @@ exports.getMaxIndexLength = function(input) {
   return maxWidth;
 };
 
-},{}],14:[function(require,module,exports){
+},{}],15:[function(require,module,exports){
 /*
 colors.js
 
@@ -11020,7 +11099,7 @@ addProperty('zalgo', function () {
   return zalgo(this);
 });
 
-},{}],15:[function(require,module,exports){
+},{}],16:[function(require,module,exports){
 module.exports={
   "author": {
     "name": "Rafael de Oleza",
@@ -11096,63 +11175,4 @@ module.exports={
   "_resolved": "https://registry.npmjs.org/prettyjson/-/prettyjson-1.1.0.tgz"
 }
 
-},{}],16:[function(require,module,exports){
-// shim for using process in browser
-
-var process = module.exports = {};
-var queue = [];
-var draining = false;
-
-function drainQueue() {
-    if (draining) {
-        return;
-    }
-    draining = true;
-    var currentQueue;
-    var len = queue.length;
-    while(len) {
-        currentQueue = queue;
-        queue = [];
-        var i = -1;
-        while (++i < len) {
-            currentQueue[i]();
-        }
-        len = queue.length;
-    }
-    draining = false;
-}
-process.nextTick = function (fun) {
-    queue.push(fun);
-    if (!draining) {
-        setTimeout(drainQueue, 0);
-    }
-};
-
-process.title = 'browser';
-process.browser = true;
-process.env = {};
-process.argv = [];
-process.version = ''; // empty string to avoid regexp issues
-
-function noop() {}
-
-process.on = noop;
-process.addListener = noop;
-process.once = noop;
-process.off = noop;
-process.removeListener = noop;
-process.removeAllListeners = noop;
-process.emit = noop;
-
-process.binding = function (name) {
-    throw new Error('process.binding is not supported');
-};
-
-// TODO(shtylman)
-process.cwd = function () { return '/' };
-process.chdir = function (dir) {
-    throw new Error('process.chdir is not supported');
-};
-process.umask = function() { return 0; };
-
-},{}]},{},[5]);
+},{}]},{},[5,7]);

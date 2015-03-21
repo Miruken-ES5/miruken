@@ -29,6 +29,13 @@ module.exports = function(grunt) {
         reporter: 'spec'
       },
       src: ['test/**/*.js']
+    },
+    browserify: {
+      dist: {
+        files: {
+           'build/miruken-bundle.js': ['lib/**/index.js'],
+        }
+      }
     }
   });
 
@@ -38,6 +45,7 @@ module.exports = function(grunt) {
   grunt.loadNpmTasks('grunt-concurrent');
   grunt.loadNpmTasks('grunt-mocha-test');
   grunt.loadNpmTasks('grunt-env');
+  grunt.loadNpmTasks('grunt-browserify');
 
   //Making grunt default to force in order not to break the project.
   grunt.option('force', true);
