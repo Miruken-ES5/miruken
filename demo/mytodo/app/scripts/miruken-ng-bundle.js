@@ -27,8 +27,7 @@ new function () { // closure
     eval(this.imports);
 
     var rootContext   = new Context,
-        rootContainer = new IoContainer,
-        _bootstrapped = false;
+        rootContainer = new IoContainer;
 
     /**
      * @function bootstrapMiruken
@@ -36,9 +35,6 @@ new function () { // closure
      * @param  {Object}  options  - bootstrap options
      */
     function bootstrap(options) {
-        if (_bootstrapped) {
-            return;
-        }
         var ngModule = angular.module;
         ngModule('ng').config(_configureRootContext)
                       .run(['$rootScope', _instrumentScopes]);
@@ -52,7 +48,6 @@ new function () { // closure
             }
             return module;
         };
-        _bootstrapped = true;
     }
 
     /**
