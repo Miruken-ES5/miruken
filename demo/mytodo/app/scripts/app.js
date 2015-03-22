@@ -14,14 +14,14 @@ new function () {
         .config(function ($routeProvider) {
             $routeProvider
                 .when('/', {
-                    templateUrl:  'views/main.html',
-                    controller:   'MainController',
-                    controllerAs: 'main'
+                    templateUrl:  'views/todo.html',
+                    controller:   'TodoController',
+                    controllerAs: 'ctrl'
                  })
                 .when('/about', {
                     templateUrl:  'views/about.html',
                     controller:   'AboutController',
-                    controllerAs: 'about'
+                    controllerAs: 'ctrl'
                 })
                 .otherwise({
                     redirectTo: '/'

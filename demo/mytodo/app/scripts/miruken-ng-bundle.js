@@ -26,14 +26,9 @@ new function () { // closure
 
     eval(this.imports);
 
-    var _bootstrapped       = false,
-        _instrumentedScopes = false;
-
     var rootContext   = new Context,
-        rootContainer = new IoContainer;
-    rootContext.addHandlers(rootContainer, 
-                            new miruken.validate.ValidationCallbackHandler,
-                            new miruken.error.ErrorCallbackHandler);
+        rootContainer = new IoContainer,
+        _bootstrapped = false;
 
     /**
      * @function bootstrapMiruken
@@ -44,37 +39,46 @@ new function () { // closure
         if (_bootstrapped) {
             return;
         }
-        _bootstrapped = true;
         var ngModule = angular.module;
+        ngModule('ng').config(_configureRootContext)
+                      .run(['$rootScope', _instrumentScopes]);
         angular.module = function (name, requires) {
             var module = ngModule.apply(this, Array.prototype.slice.call(arguments));
             if (requires) {
-                var package = _synthesizePackage(name);
+                var package = _synthesizeModulePackage(name);
                 module.config(['$controllerProvider', function ($controllerProvider) {
                     _registerControllers(package, $controllerProvider);
                 }]);
-                if (!_instrumentedScopes) {
-                    module.run(['$rootScope', _instrumentScopes]);
-                    _instrumentedScopes = true;
-                }
             }
             return module;
-       };
+        };
+        _bootstrapped = true;
     }
 
     /**
-     * @function _synthesizePackage
+     * @function _configureRootContext
+     * Configures the root context and installs root container.
+     */
+    function _configureRootContext() {
+        rootContext.addHandlers(rootContainer, 
+                                new miruken.validate.ValidationCallbackHandler,
+                                new miruken.error.ErrorCallbackHandler);
+    }
+
+    /**
+     * @function _synthesizeModulePackage
      * Synthesizes Miruken packages from angular modules.
      * @param    {String}   moduleName  - module name
      * @returns  {Package}  the corresponding package.
      */
-    function _synthesizePackage(moduleName) {
+    function _synthesizeModulePackage(moduleName) {
         var parent = base2,
             names  = moduleName.split(".");
         for (var i = 0; i < names.length; ++i) {
-            var packageName = names[i];
-            if (!base2.hasOwnProperty(packageName)) {
-                var package = new base2.Package(null, {
+            var packageName = names[i],
+                package     = parent[packageName];
+            if (!package) {
+                package = new base2.Package(null, {
                     name:   packageName,
                     parent: parent
                 });
@@ -82,8 +86,8 @@ new function () { // closure
                 if (parent === base2) {
                     global[packageName] = package;
                 }
-                parent = package;
             }
+            parent = package;
         }
         return package;
     }
@@ -115,13 +119,12 @@ new function () { // closure
             }
             destroyScope.apply(this, Array.prototype.slice.call(arguments));
         };
-
         $rootScope.rootContext = $rootScope.context = rootContext;
     }
 
     /**
      * @function _registerControllers
-     * Registers the controller from package into the container and module.
+     * Registers the controllers from package into the container and module.
      * @param  {Package}   package              - module package
      * @param  {Provider}  $controllerProvider  - controller provider
      */
@@ -130,7 +133,8 @@ new function () { // closure
         package.getClasses(function (member) {
             if (member.member.prototype instanceof Controller) {
                 var controller = member.member;
-                $controllerProvider.register(member.name, ['$scope', _controllerShim(controller)]);
+                $controllerProvider.register(member.name, 
+                    ['$scope', '$injector', _controllerShim(controller)]);
                 container.register($component(controller).contextual());
             }
         });
@@ -146,10 +150,18 @@ new function () { // closure
      * @returns  {Function}  controller constructor shim.  
      */
     function _controllerShim(controller) {
-        return function($scope) {
-            var context  = $scope.context,
-                instance = context.resolve($instant(controller));
-            instance.setContext(context);
+        return function($scope, $injector) {
+            var context = $scope.context;
+            $provide(context, null, function (resolution) {
+                var key = Modifier.unwrap(resolution.getKey());
+                if ($isString(key)) {
+                    return $injector.get(key);
+                }
+            });
+            var instance = context.resolve($instant(controller));
+            if (instance) {
+                instance.setContext(context);
+            }
             return instance;
         };
     }
@@ -4296,7 +4308,8 @@ new function () { // closure
                 },
                 formattedDependencyChain: function () {
                     var invariant  = $eq.test(key),
-                        keyDisplay = invariant ? ('`' + Modifier.unwrap(key) + '`') : key,
+                        rawKey     = Modifier.unwrap(key),
+                        keyDisplay = invariant ? ('`' + rawKey + '`') : rawKey,
                         display    = _class ? ("(" + keyDisplay + " <- " + _class + ")") : keyDisplay;
                     return parent 
                          ? (display + " <= " + parent.formattedDependencyChain())
@@ -4488,11 +4501,16 @@ new function () { // closure
     function _resolveDependency(dependency, required, promise, child, all, composer) {
         var result = all ? composer.resolveAll(dependency) : composer.resolve(dependency);
         if (result === undefined) {
-            return required
-                 ? Promise.reject(new DependencyResolutionError(dependency,
+            if (required) {
+                var error = new DependencyResolutionError(dependency,
                        lang.format("Dependency %1 could not be resolved.",
-                                   dependency.formattedDependencyChain())))
-                 : result;
+                                   dependency.formattedDependencyChain()));
+                if ($instant.test(dependency.getKey())) {
+                    throw error;
+                }
+                return Promise.reject(error);
+            }
+            return result;
         } else if (child && !all) {
             result = $isPromise(result) 
                  ? result.then(function (parent) { return _createChild(parent); })
