@@ -2857,7 +2857,7 @@ new function () { // closure
         version: miruken.version,
         parent:  miruken,
         imports: "miruken,miruken.callback",
-        exports: "ContextState,ContextObserver,Context,Contextual,ContextualMixin,ContextualHelper"
+        exports: "ContextState,ContextObserver,Context,Contextual,ContextualMixin,ContextualHelper,$defineContextProperty"
     });
 
     eval(this.imports);
@@ -3057,6 +3057,23 @@ new function () { // closure
             if (object.__context) object.__context.end();
         }
     });
+
+    /**
+     * @function $defineContextProperty
+     * Defines a 'context' property for the target.
+     */
+    function $defineContextProperty(target) {
+        var definition = {};
+        if ($isFunction(target.getContext)) {
+            definition.get = target.getContext;
+        }
+        if ($isFunction(target.setContext)) {
+            definition.set = target.setContext;
+        }
+        if (definition.get || definition.set) {
+            Object.defineProperty(target, 'context', definition);
+        }
+    }
 
     /**
      * ContextualHelper mixin
@@ -5672,11 +5689,7 @@ new function () { // closure
      */
     var Controller = Miruken.extend(Contextual, ContextualMixin, {
     });
-
-    Object.defineProperty(Controller.prototype, 'context', {
-        get: Controller.prototype.getContext,
-        set: Controller.prototype.setContext
-    });
+    $defineContextProperty(Controller.prototype);
 
     /**
      * @protocol {MasterDetail}
