@@ -1,13 +1,11 @@
-new function () {
-    var AboutController = miruken.ng.Controller.extend({
+eval(miruken.mvc.namespace);
+
+mytodoApp.export(
+    Controller.extend({
         awesomeThings: [
            'HTML5 Boilerplate',
            'AngularJS',
            'Karma'
         ]
-    });
-
-    angular.module('mytodoApp')
-           .controller('AboutController', AboutController);
-
-}
+    }),
+    "AboutController");

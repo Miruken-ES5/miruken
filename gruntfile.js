@@ -34,7 +34,7 @@ module.exports = function(grunt) {
       dist: {
         files: {
            'build/miruken-bundle.js': ['lib/index.js'],
-           'build/miruken-ng-bundle.js': ['lib/index.js', 'lib/angular/ng.js']
+           'build/miruken-ng-bundle.js': ['lib/index.js', 'lib/mvc/index.js', 'lib/angular/index.js']
         }
       }
     }

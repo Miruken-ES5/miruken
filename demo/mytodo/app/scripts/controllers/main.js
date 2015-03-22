@@ -1,4 +1,4 @@
-eval(miruken.ng.namespace);
+eval(miruken.mvc.namespace);
 
 mytodoApp.export(
     Controller.extend({

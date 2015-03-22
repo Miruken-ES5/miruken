@@ -1,4 +1,9 @@
 (function e(t,n,r){function s(o,u){if(!n[o]){if(!t[o]){var a=typeof require=="function"&&require;if(!u&&a)return a(o,!0);if(i)return i(o,!0);var f=new Error("Cannot find module '"+o+"'");throw f.code="MODULE_NOT_FOUND",f}var l=n[o]={exports:{}};t[o][0].call(l.exports,function(e){var n=t[o][1][e];return s(n?n:e)},l,l.exports,e,t,n,r)}return n[o].exports}var i=typeof require=="function"&&require;for(var o=0;o<r.length;o++)s(r[o]);return s})({1:[function(require,module,exports){
+module.exports = require('./ng.js');
+
+
+
+},{"./ng.js":2}],2:[function(require,module,exports){
 (function (global){
 var miruken = require('../miruken.js');
 
@@ -15,8 +20,8 @@ new function () { // closure
         name:    "ng",
         version: miruken.version,
         parent:  miruken,
-        imports: "miruken,miruken.callback,miruken.context,miruken.validate,miruken.error,miruken.ioc",
-        exports: "bootstrap,rootContext,Controller"
+        imports: "miruken,miruken.callback,miruken.context,miruken.ioc,miruken.mvc",
+        exports: "bootstrap,rootContext"
     });
 
     eval(this.imports);
@@ -24,16 +29,11 @@ new function () { // closure
     var _bootstrapped       = false,
         _instrumentedScopes = false;
 
-    /**
-     * @class {Controller}
-     */
-    var Controller = Miruken.extend(Contextual, ContextualMixin, {
-    });
-
-    var rootContext = new Context;
-    rootContext.addHandlers(new IoContainer, 
-                            new ValidationCallbackHandler,
-                            new ErrorCallbackHandler);
+    var rootContext   = new Context,
+        rootContainer = new IoContainer;
+    rootContext.addHandlers(rootContainer, 
+                            new miruken.validate.ValidationCallbackHandler,
+                            new miruken.error.ErrorCallbackHandler);
 
     /**
      * @function bootstrapMiruken
@@ -134,17 +134,23 @@ new function () { // closure
                 container.register($component(controller).contextual());
             }
         });
+        package.getPackages(function (member) {
+            _registerControllers(member.member, $controllerProvider);
+        });
     }
 
     /**
      * @function _controllerShim
      * Registers the controller from package into the container and module.
-     * @param    {Function}  controller   - controller class
+     * @param    {Function}  controller  - controller class
      * @returns  {Function}  controller constructor shim.  
      */
     function _controllerShim(controller) {
         return function($scope) {
-            return $scope.context.resolve(controller);
+            var context  = $scope.context,
+                instance = context.resolve($instant(controller));
+            instance.setContext(context);
+            return instance;
         };
     }
 
@@ -152,7 +158,7 @@ new function () { // closure
 }
 
 }).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
-},{"../miruken.js":10}],2:[function(require,module,exports){
+},{"../miruken.js":11}],3:[function(require,module,exports){
 /*
   base2 - copyright 2007-2009, Dean Edwards
   http://code.google.com/p/base2/
@@ -1834,7 +1840,7 @@ if (typeof exports !== 'undefined') {
 
 }; ////////////////////  END: CLOSURE  /////////////////////////////////////
 
-},{}],3:[function(require,module,exports){
+},{}],4:[function(require,module,exports){
 (function (global){
 var miruken = require('./miruken.js'),
     Promise = require('bluebird');
@@ -2825,7 +2831,7 @@ new function () { // closure
 }
 
 }).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
-},{"./miruken.js":10,"bluebird":12}],4:[function(require,module,exports){
+},{"./miruken.js":11,"bluebird":15}],5:[function(require,module,exports){
 var miruken = require('./miruken.js');
               require('./callback.js');
 
@@ -3218,7 +3224,7 @@ new function () { // closure
 
 }
 
-},{"./callback.js":3,"./miruken.js":10}],5:[function(require,module,exports){
+},{"./callback.js":4,"./miruken.js":11}],6:[function(require,module,exports){
 var miruken    = require('./miruken.js'),
     prettyjson = require('prettyjson'),
     Promise    = require('bluebird');
@@ -3339,7 +3345,7 @@ new function() { // closure
 
 }
 
-},{"./callback.js":3,"./miruken.js":10,"bluebird":12,"prettyjson":14}],6:[function(require,module,exports){
+},{"./callback.js":4,"./miruken.js":11,"bluebird":15,"prettyjson":17}],7:[function(require,module,exports){
 module.exports = require('./miruken.js');
 require('./callback.js');
 require('./context.js');
@@ -3347,7 +3353,7 @@ require('./validate.js');
 require('./error.js');
 require('./ioc');
 
-},{"./callback.js":3,"./context.js":4,"./error.js":5,"./ioc":8,"./miruken.js":10,"./validate.js":11}],7:[function(require,module,exports){
+},{"./callback.js":4,"./context.js":5,"./error.js":6,"./ioc":9,"./miruken.js":11,"./validate.js":14}],8:[function(require,module,exports){
 var miruken = require('../miruken.js'),
     Promise = require('bluebird');
               require('./ioc.js');
@@ -3671,12 +3677,12 @@ new function () { // closure
 
     eval(this.exports);
 }
-},{"../miruken.js":10,"./ioc.js":9,"bluebird":12}],8:[function(require,module,exports){
+},{"../miruken.js":11,"./ioc.js":10,"bluebird":15}],9:[function(require,module,exports){
 module.exports = require('./ioc.js');
 require('./config.js');
 
 
-},{"./config.js":7,"./ioc.js":9}],9:[function(require,module,exports){
+},{"./config.js":8,"./ioc.js":10}],10:[function(require,module,exports){
 var miruken = require('../miruken.js'),
     Promise = require('bluebird');
               require('../context.js'),
@@ -4510,7 +4516,7 @@ new function () { // closure
     eval(this.exports);
 
 }
-},{"../context.js":4,"../miruken.js":10,"../validate.js":11,"bluebird":12}],10:[function(require,module,exports){
+},{"../context.js":5,"../miruken.js":11,"../validate.js":14,"bluebird":15}],11:[function(require,module,exports){
 (function (global){
 require('./base2.js');
 
@@ -5620,7 +5626,39 @@ new function () { // closure
 }
 
 }).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
-},{"./base2.js":2}],11:[function(require,module,exports){
+},{"./base2.js":3}],12:[function(require,module,exports){
+module.exports = require('./mvc.js');
+
+
+
+},{"./mvc.js":13}],13:[function(require,module,exports){
+var miruken = require('../miruken.js');
+
+new function () { // closure
+
+    /**
+     * @namespace miruken.mvc
+     */
+    var mvc = new base2.Package(this, {
+        name:    "mvc",
+        version: miruken.version,
+        parent:  miruken,
+        imports: "miruken,miruken.context",
+        exports: "Controller"
+    });
+
+    eval(this.imports);
+
+    /**
+     * @class {Controller}
+     */
+    var Controller = Miruken.extend(Contextual, ContextualMixin, {
+    });
+
+    eval(this.exports);
+}
+
+},{"../miruken.js":11}],14:[function(require,module,exports){
 var miruken = require('./miruken.js'),
     Promise = require('bluebird');
               require('./callback.js');
@@ -5818,7 +5856,7 @@ new function () { // closure
 
 }
 
-},{"./callback.js":3,"./miruken.js":10,"bluebird":12}],12:[function(require,module,exports){
+},{"./callback.js":4,"./miruken.js":11,"bluebird":15}],15:[function(require,module,exports){
 (function (process,global){
 /* @preserve
  * The MIT License (MIT)
@@ -10486,7 +10524,7 @@ module.exports = ret;
 },{"./es5.js":14}]},{},[4])(4)
 });                    ;if (typeof window !== 'undefined' && window !== null) {                               window.P = window.Promise;                                                     } else if (typeof self !== 'undefined' && self !== null) {                             self.P = self.Promise;                                                         }
 }).call(this,require('_process'),typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
-},{"_process":13}],13:[function(require,module,exports){
+},{"_process":16}],16:[function(require,module,exports){
 // shim for using process in browser
 
 var process = module.exports = {};
@@ -10546,7 +10584,7 @@ process.chdir = function (dir) {
 };
 process.umask = function() { return 0; };
 
-},{}],14:[function(require,module,exports){
+},{}],17:[function(require,module,exports){
 'use strict';
 
 // ### Module dependencies
@@ -10777,7 +10815,7 @@ exports.renderString = function renderString(data, options, indentation) {
   return output;
 };
 
-},{"../package.json":17,"./utils":15,"colors":16}],15:[function(require,module,exports){
+},{"../package.json":20,"./utils":18,"colors":19}],18:[function(require,module,exports){
 'use strict';
 
 /**
@@ -10799,7 +10837,7 @@ exports.getMaxIndexLength = function(input) {
   return maxWidth;
 };
 
-},{}],16:[function(require,module,exports){
+},{}],19:[function(require,module,exports){
 /*
 colors.js
 
@@ -11143,7 +11181,7 @@ addProperty('zalgo', function () {
   return zalgo(this);
 });
 
-},{}],17:[function(require,module,exports){
+},{}],20:[function(require,module,exports){
 module.exports={
   "author": {
     "name": "Rafael de Oleza",
@@ -11219,4 +11257,4 @@ module.exports={
   "_resolved": "https://registry.npmjs.org/prettyjson/-/prettyjson-1.1.0.tgz"
 }
 
-},{}]},{},[6,1]);
+},{}]},{},[7,12,1]);
