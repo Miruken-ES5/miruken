@@ -33,8 +33,8 @@ module.exports = function(grunt) {
     browserify: {
       dist: {
         files: {
-           'build/miruken-bundle.js': ['lib/index.js'],
-           'build/miruken-ng-bundle.js': ['lib/index.js', 'lib/mvc/index.js', 'lib/angular/index.js']
+           'dist/miruken-bundle.js': ['lib/index.js'],
+           'dist/miruken-ng-bundle.js': ['lib/index.js', 'lib/mvc/index.js', 'lib/angular/index.js']
         }
       }
     }
