@@ -7,6 +7,7 @@ new function () {
             'ngAnimate',
             'ngCookies',
             'ngResource',
+            'ui.router',
             'ngRoute',
             'ngSanitize',
             'ngTouch'

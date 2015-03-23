@@ -3,8 +3,8 @@ new function () {
     var todo = new base2.Package(this, {
         name:    "todo",
         parent:  mytodoApp,
-        imports: "miruken,miruken.mvc",
-        exports: "TodoController"
+        imports: "miruken,miruken.mvc,miruken.ioc.config",
+        exports: "TodoController,TodoInstaller"
     });
 
     eval(this.imports);
@@ -18,6 +18,15 @@ new function () {
             });
         }
     });
+
+    var TodoInstaller = Installer.extend({
+        $inject: ['$stateProvider'],
+        constructor: function ($stateProvider) {
+            this.extend({
+                register: function(container, composer) { 
+                }
+            });
+    }});
 
     eval(this.exports);
 }
