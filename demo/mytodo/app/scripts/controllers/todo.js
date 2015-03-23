@@ -9,17 +9,13 @@ new function () {
 
     eval(this.imports);
 
-    var TodoFeature = Protocol.extend({
-        fetchTodos: function () {}
-    });
-
     var TodoController =  Controller.extend({
-        getTodos: function () {
-            return TodoFeature(this.context).fetchTodos();
-        },
-
-        fetchTodos: function () {
-            return [ 'Item 1', 'Item 2', 'Item 3' ];
+        constructor: function () {
+            var _todos = [ 'Item 1', 'Item 2', 'Item 3' ];
+            this.extend({
+                getTodos: function () { return _todos; },
+                addTodo: function (todo) { _todos.push(todo); }
+            });
         }
     });
 

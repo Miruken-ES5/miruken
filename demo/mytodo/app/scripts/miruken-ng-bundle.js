@@ -38,10 +38,10 @@ new function () { // closure
         var ngModule = angular.module;
         ngModule('ng').config(_configureRootContext)
                       .run(['$rootScope', _instrumentScopes]);
-        angular.module = function (name, requires) {
-            var module = ngModule.apply(this, Array.prototype.slice.call(arguments));
+        angular.module = function (name, requires, configFn) {
+            var module = ngModule.call(this, name, requires, configFn);
             if (requires) {
-                var package = _synthesizeModulePackage(name);
+                var package = _autoSynthesizeModulePackage(name);
                 module.config(['$controllerProvider', function ($controllerProvider) {
                     _registerControllers(package, $controllerProvider);
                 }]);
@@ -61,12 +61,12 @@ new function () { // closure
     }
 
     /**
-     * @function _synthesizeModulePackage
+     * @function _autoSynthesizeModulePackage
      * Synthesizes Miruken packages from angular modules.
      * @param    {String}   moduleName  - module name
      * @returns  {Package}  the corresponding package.
      */
-    function _synthesizeModulePackage(moduleName) {
+    function _autoSynthesizeModulePackage(moduleName) {
         var parent = base2,
             names  = moduleName.split(".");
         for (var i = 0; i < names.length; ++i) {
@@ -84,6 +84,7 @@ new function () { // closure
             }
             parent = package;
         }
+        _provideInjector(rootContainer, angular.injector(['ng', moduleName]));
         return package;
     }
 
@@ -97,8 +98,8 @@ new function () { // closure
         var scopeProto   = $rootScope.constructor.prototype,
             newScope     = scopeProto.$new,
             destroyScope = scopeProto.$destroy;
-        scopeProto.$new = function () {
-            var childScope  = newScope.apply(this, Array.prototype.slice.call(arguments)),
+        scopeProto.$new = function (isolate, parent) {
+            var childScope  = newScope.call(this, isolate, parent),
                 parentScope = childScope.$parent;
             childScope.context = parentScope && parentScope.context
                                ? parentScope.context.newChild()
@@ -112,7 +113,7 @@ new function () { // closure
                 delete this.context;
                 context.end();
             }
-            destroyScope.apply(this, Array.prototype.slice.call(arguments));
+            destroyScope.call(this);
         };
         $rootScope.rootContext = $rootScope.context = rootContext;
     }
@@ -147,18 +148,22 @@ new function () { // closure
     function _controllerShim(controller) {
         return function($scope, $injector) {
             var context = $scope.context;
-            $provide(context, null, function (resolution) {
-                var key = Modifier.unwrap(resolution.getKey());
-                if ($isString(key)) {
-                    return $injector.get(key);
-                }
-            });
+            _provideInjector(context, $injector);
             var instance = context.resolve($instant(controller));
             if (instance) {
                 instance.setContext(context);
             }
             return instance;
         };
+    }
+
+    function _provideInjector(owner, $injector) {
+        $provide(owner, null, function (resolution) {
+            var key = Modifier.unwrap(resolution.getKey());
+            if ($isString(key)) {
+                return $injector.get(key);
+            }
+        });
     }
 
     eval(this.exports);
