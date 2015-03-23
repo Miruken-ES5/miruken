@@ -5215,7 +5215,7 @@ new function () { // closure
      * Package extensions
      */
     Package.implement({
-        export: function (member, name) {
+        export: function (name, member) {
             this.addName(name, member);
         },
         getProtocols: function (cb) {
