@@ -129,16 +129,22 @@ new function () { // closure
         package.getClasses(function (member) {
             var clazz = member.member;
             if (clazz.prototype instanceof Controller) {
-                $controllerProvider.register(member.name, 
-                    ['$scope', '$injector', _controllerShim(clazz)]);
-                container.register($component(clazz).contextual());
+                var controller = new ComponentModel;
+                controller.setKey(clazz);
+                controller.setLifestyle(new ContextualLifestyle);
+                container.addComponent(controller).then(function () {
+                    var deps = _stringDependencies(controller);
+                    deps.unshift('$scope', '$injector');
+                    deps.push(_controllerShim(clazz, deps.slice()));
+                    $controllerProvider.register(member.name, deps);
+                });
             } else if (clazz.prototype instanceof Installer) {
-                var register = (clazz.prototype.$inject || clazz.$inject || []).slice();
-                register.push(function () {
-                    var installer = clazz.new.apply(clazz, Array.prototype.slice.call(arguments));
+                var deps = (clazz.prototype.$inject || clazz.$inject || []).slice();
+                deps.push(function () {
+                    var installer = clazz.new.apply(clazz, arguments);
                     container.register(installer);
                 });
-                injector.invoke(register);
+                injector.invoke(deps);
             }
         });
         package.getPackages(function (member) {
@@ -150,21 +156,37 @@ new function () { // closure
      * @function _controllerShim
      * Registers the controller from package into the container and module.
      * @param    {Function}  controller  - controller class
+     * @param    {Array}     controller  - string dependencies
      * @returns  {Function}  controller constructor shim.  
      */
-    function _controllerShim(controller) {
+    function _controllerShim(controller, deps) {
         return function($scope, $injector) {
-            var context = $scope.context;
+            var context    = $scope.context,
+                parameters = Array2.combine(deps, arguments);
+            _provideLiteral(context, parameters);
             _provideInjector(context, $injector);
             return context.resolve($instant(controller));
         };
     }
 
     /**
+     * @function _provideLiteral
+     * Provides all keys from the object literal.
+     * @param  {Object}  owner    - owning instance
+     * @param  {Object}  literal  - object literal
+     */
+    function _provideLiteral(owner, literal) {
+        $provide(owner, null, function (resolution) {
+            var key = Modifier.unwrap(resolution.getKey());
+            return literal[key];
+        });
+    }
+
+    /**
      * @function _provideInjector
      * Attaches the supplied injector to owners $providers.
-     * @param    {Object}  owner     - owning instance
-     * @param  {Injector}  injector  - angular injector.  
+     * @param  {Object}     owner    - owning instance
+     * @param  {Injector}  injector  - angular injector
      */
     function _provideInjector(owner, injector) {
         $provide(owner, null, function (resolution) {
@@ -173,6 +195,20 @@ new function () { // closure
                 return injector.get(key);
             }
         });
+    }
+
+    /**
+     * @function _stringDependencies
+     * Extracts the string dependencies for the component.
+     * @param    {Function}  controller  - controller class
+     * @returns  {Function}  controller constructor shim.  
+     */
+    function _stringDependencies(componentModel) {
+        var deps = componentModel.getDependencies();
+        return deps ? Array2.filter(Array2.map(deps,
+                          function (dep) { return dep.getDependency(); }),
+                          function (dep) { return $isString(dep); })
+                    : [];
     }
 
     eval(this.exports);
@@ -3780,6 +3816,13 @@ new function () { // closure
          * @returns {Promise} a promise representing the registration.
          */
         register: function (/*registrations*/) {},
+        /**
+         * Adds a configured component to the container with policies.
+         * @param   {ComponentModel}    componentModel  - component model
+         * @param   {Array}             policies        - component policies
+         * @returns {Promise} a promise representing the component.
+         */
+        addComponent: function (componentModel, policies) {},
         /**
          * Resolves the component for the key.
          * @param   {Any} key  - key used to identify the component

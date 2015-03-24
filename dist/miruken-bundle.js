@@ -3600,6 +3600,13 @@ new function () { // closure
          */
         register: function (/*registrations*/) {},
         /**
+         * Adds a configured component to the container with policies.
+         * @param   {ComponentModel}    componentModel  - component model
+         * @param   {Array}             policies        - component policies
+         * @returns {Promise} a promise representing the component.
+         */
+        addComponent: function (componentModel, policies) {},
+        /**
          * Resolves the component for the key.
          * @param   {Any} key  - key used to identify the component
          * @returns {Any} component (or Promise) satisfying the key.
