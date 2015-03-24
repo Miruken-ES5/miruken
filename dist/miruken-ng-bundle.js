@@ -21,20 +21,20 @@ new function () { // closure
         version: miruken.version,
         parent:  miruken,
         imports: "miruken,miruken.callback,miruken.context,miruken.ioc,miruken.ioc.config,miruken.mvc",
-        exports: "bootstrap,rootContext"
+        exports: "$bootstrap,$rootContext"
     });
 
     eval(this.imports);
 
-    var rootContext   = new Context,
-        rootContainer = new IoContainer;
+    var $rootContext   = new Context,
+        rootContainer  = new IoContainer;
 
     /**
-     * @function bootstrapMiruken
+     * @function $bootstrap
      * Bootstraps angular with Miruekn.
      * @param  {Object}  options  - bootstrap options
      */
-    function bootstrap(options) {
+    function $bootstrap(options) {
         _configureRootContext();
         var ngModule = angular.module;
         ngModule('ng').run(['$rootScope', '$injector',  _instrumentScopes]);
@@ -57,9 +57,9 @@ new function () { // closure
      * Configures the root context and installs root container.
      */
     function _configureRootContext() {
-        rootContext.addHandlers(rootContainer, 
-                                new miruken.validate.ValidationCallbackHandler,
-                                new miruken.error.ErrorCallbackHandler);
+        $rootContext.addHandlers(rootContainer, 
+                                 new miruken.validate.ValidationCallbackHandler,
+                                 new miruken.error.ErrorCallbackHandler);
     }
 
     /**
@@ -84,13 +84,13 @@ new function () { // closure
         };
         scopeProto.$destroy = function () {
             var context = this.context;
-            if (context !== rootContext) {
+            if (context !== $rootContext) {
                 delete this.context;
                 context.end();
             }
             destroyScope.call(this);
         };
-        $rootScope.rootContext = $rootScope.context = rootContext;
+        $rootScope.rootContext = $rootScope.context = $rootContext;
         _provideInjector(rootContainer, $injector);
     }
 
@@ -107,11 +107,7 @@ new function () { // closure
             var packageName = names[i],
                 package     = parent[packageName];
             if (!package) {
-                package = new base2.Package(null, {
-                    name:   packageName,
-                    parent: parent
-                });
-                parent.addName(packageName, package);
+                package = parent.addPackage(packageName);
                 if (parent === base2) {
                     global[packageName] = package;
                 }
@@ -129,7 +125,7 @@ new function () { // closure
      * @param  {Provider}  $controllerProvider  - controller provider
      */
     function _installPackage(package, injector, $controllerProvider) {
-        var container = Container(rootContext);
+        var container = Container($rootContext);
         package.getClasses(function (member) {
             var clazz = member.member;
             if (clazz.prototype instanceof Controller) {
@@ -160,11 +156,7 @@ new function () { // closure
         return function($scope, $injector) {
             var context = $scope.context;
             _provideInjector(context, $injector);
-            var instance = context.resolve($instant(controller));
-            if (instance) {
-                instance.setContext(context);
-            }
-            return instance;
+            return context.resolve($instant(controller));
         };
     }
 
@@ -425,6 +417,12 @@ var Package = Base.extend({
   namespace: "",
   parent: null,
 
+  open: function(_private, _public) {
+    _public.name   = this.name;
+    _public.parent = this.parent;
+    return new Package(_private, _public);
+  },  
+
   addName: function(name, value) {
     if (!this[name]) {
       this[name] = value;
@@ -437,9 +435,11 @@ var Package = Base.extend({
   },
 
   addPackage: function(name) {
-    this.addName(name, new Package(null, {name: name, parent: this}));
+    var package = new Package(null, {name: name, parent: this});
+    this.addName(name, package);
+    return package;
   },
-  
+
   toString: function() {
     return format("[%1]", this.parent ? String2.slice(this.parent, 1, -1) + "." + this.name : this.name);
   }
@@ -4152,13 +4152,15 @@ new function () { // closure
                 _recordInstance: function (id, instance, context) {
                     var _this  = this;
                     _cache[id] = instance;
-                    if (Contextual.adoptedBy(instance) ||
-                        $isFunction(instance.setContext)) {
+                    if (Contextual.adoptedBy(instance) || $isFunction(instance.setContext)) {
                         ContextualHelper.bindContext(instance, context);
                     }
                     this.trackInstance(instance);
                     var cancel = context.observe({
                         contextEnded: function () {
+                            if ($isFunction(instance.setContext)) {
+                                instance.setContext(null);
+                            }
                             _this.disposeInstance(instance);
                             delete _cache[id];
                             cancel();

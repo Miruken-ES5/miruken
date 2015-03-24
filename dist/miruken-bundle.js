@@ -236,6 +236,12 @@ var Package = Base.extend({
   namespace: "",
   parent: null,
 
+  open: function(_private, _public) {
+    _public.name   = this.name;
+    _public.parent = this.parent;
+    return new Package(_private, _public);
+  },  
+
   addName: function(name, value) {
     if (!this[name]) {
       this[name] = value;
@@ -248,9 +254,11 @@ var Package = Base.extend({
   },
 
   addPackage: function(name) {
-    this.addName(name, new Package(null, {name: name, parent: this}));
+    var package = new Package(null, {name: name, parent: this});
+    this.addName(name, package);
+    return package;
   },
-  
+
   toString: function() {
     return format("[%1]", this.parent ? String2.slice(this.parent, 1, -1) + "." + this.name : this.name);
   }
@@ -3963,13 +3971,15 @@ new function () { // closure
                 _recordInstance: function (id, instance, context) {
                     var _this  = this;
                     _cache[id] = instance;
-                    if (Contextual.adoptedBy(instance) ||
-                        $isFunction(instance.setContext)) {
+                    if (Contextual.adoptedBy(instance) || $isFunction(instance.setContext)) {
                         ContextualHelper.bindContext(instance, context);
                     }
                     this.trackInstance(instance);
                     var cancel = context.observe({
                         contextEnded: function () {
+                            if ($isFunction(instance.setContext)) {
+                                instance.setContext(null);
+                            }
                             _this.disposeInstance(instance);
                             delete _cache[id];
                             cancel();

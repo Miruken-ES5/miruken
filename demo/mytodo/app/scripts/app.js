@@ -1,6 +1,6 @@
 new function () {
 
-    miruken.ng.bootstrap();
+    miruken.ng.$bootstrap();
 
     angular
         .module('mytodoApp', [
