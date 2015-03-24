@@ -35,17 +35,17 @@ new function () { // closure
      * @param  {Object}  options  - bootstrap options
      */
     function bootstrap(options) {
+        _configureRootContext();
         var ngModule = angular.module;
-        ngModule('ng').config(_configureRootContext)
-                      .run(['$rootScope', _instrumentScopes]);
-        _provideInjector(rootContainer, angular.injector(['ng']));
+        ngModule('ng').run(['$rootScope', '$injector',  _instrumentScopes]);
         angular.module = function (name, requires, configFn) {
             var module = ngModule.call(this, name, requires, configFn);
             if (requires) {
-                var injector = angular.injector([name]),
-                    package  = _autoSynthesizeModulePackage(name, injector);
+                var package  = _synthesizeModulePackage(name);
                 module.config(['$injector', '$controllerProvider', function ($injector, $controllerProvider) {
                     _installPackage(package, $injector, $controllerProvider);
+                }]).run(['$injector', function ($injector) {
+                    _provideInjector(rootContainer, $injector);
                 }]);
             }
             return module;
@@ -66,8 +66,9 @@ new function () { // closure
      * @function _instrumentScopes
      * Instruments angular scopes with miruken contexts.
      * @param  {Scope}   $rootScope  - angular's root scope
+     * @param  {Scope}   $injector   - angular's ng injector
      */
-    function _instrumentScopes($rootScope)
+    function _instrumentScopes($rootScope, $injector)
     {
         var scopeProto   = $rootScope.constructor.prototype,
             newScope     = scopeProto.$new,
@@ -90,16 +91,16 @@ new function () { // closure
             destroyScope.call(this);
         };
         $rootScope.rootContext = $rootScope.context = rootContext;
+        _provideInjector(rootContainer, $injector);
     }
 
     /**
-     * @function _autoSynthesizeModulePackage
+     * @function _synthesizeModulePackage
      * Synthesizes Miruken packages from angular modules.
      * @param    {String}   moduleName  - module name
-     * @param    {Injector} injector    - module injector
      * @returns  {Package}  the corresponding package.
      */
-    function _autoSynthesizeModulePackage(moduleName, injector) {
+    function _synthesizeModulePackage(moduleName) {
         var parent = base2,
             names  = moduleName.split(".");
         for (var i = 0; i < names.length; ++i) {
@@ -117,7 +118,6 @@ new function () { // closure
             }
             parent = package;
         }
-        _provideInjector(rootContainer, injector);
         return package;
     }
 
@@ -168,11 +168,17 @@ new function () { // closure
         };
     }
 
-    function _provideInjector(owner, $injector) {
+    /**
+     * @function _provideInjector
+     * Attaches the supplied injector to owners $providers.
+     * @param    {Object}  owner     - owning instance
+     * @param  {Injector}  injector  - angular injector.  
+     */
+    function _provideInjector(owner, injector) {
         $provide(owner, null, function (resolution) {
             var key = Modifier.unwrap(resolution.getKey());
             if ($isString(key)) {
-                return $injector.get(key);
+                return injector.get(key);
             }
         });
     }
@@ -258,8 +264,9 @@ var _subclass = function(_instance, _static) {
       if (this.constructor == _class || this.__constructing) {
         // Instantiation.
         this.__constructing = true;
-        _constructor.apply(this, arguments);
+        var instance = _constructor.apply(this, arguments);
         delete this.__constructing;
+        if (instance) return instance;
       } else {
         // Casting.
 	    var target = arguments[0];
@@ -342,14 +349,19 @@ var Base = _subclass.call(Object, {
 
 var Package = Base.extend({
   constructor: function(_private, _public) {
-    var pkg = this;
+    var pkg = this, openPkg;
     
     pkg.extend(_public);
 
     if (pkg.name && pkg.name != "base2") {
       if (_public.parent === undefined) pkg.parent = base2;
-      if (pkg.parent) pkg.parent.addName(pkg.name, pkg);
-      pkg.namespace = format("var %1=%2;", pkg.name, String2.slice(pkg, 1, -1));
+      openPkg = pkg.parent && pkg.parent[pkg.name];
+      if (openPkg) {
+        pkg.namespace = openPkg.namespace;
+      } else {
+        if (pkg.parent) pkg.parent.addName(pkg.name, pkg);
+        pkg.namespace = format("var %1=%2;", pkg.name, String2.slice(pkg, 1, -1));
+      }
     }
     
     if (_private) {
@@ -364,6 +376,8 @@ var Package = Base.extend({
         if (!ns) throw new ReferenceError(format("Object not found: '%1'.", name));
         namespace += ns.namespace;
       }
+      if (openPkg) namespace += openPkg.namespace;
+
       _private.init = function() {
         if (pkg.init) pkg.init();
       };
@@ -372,10 +386,11 @@ var Package = Base.extend({
       // This string should be evaluated after you have created all of the objects
       // that are being exported.
       namespace = "";
+      var nsPkg = openPkg || pkg;
       var exports = csv(pkg.exports);
       for (var i = 0; name = exports[i]; i++) {
         var fullName = pkg.name + "." + name;
-        pkg.namespace += "var " + name + "=" + fullName + ";";
+        nsPkg.namespace += "var " + name + "=" + fullName + ";";
         namespace += "if(!" + fullName + ")" + fullName + "=" + name + ";";
       }
       _private.exports = namespace + "this._label_" + pkg.name + "();";
@@ -383,14 +398,16 @@ var Package = Base.extend({
       // give objects and classes pretty toString methods
       var packageName = String2.slice(pkg, 1, -1);
       _private["_label_" + pkg.name] = function() {
-        for (var name in pkg) {
-          var object = pkg[name];
+        for (var name in nsPkg) {
+          var object = nsPkg[name];
           if (object && object.ancestorOf == Base.ancestorOf && name != "constructor") { // it's a class
             object.toString = K("[" + packageName + "." + name + "]");
           }
         }
       };
     }
+
+    if (openPkg) return openPkg;
 
     function lookup(names) {
       names = names.split(".");
@@ -5698,7 +5715,7 @@ new function () { // closure
     /**
      * @class {Controller}
      */
-    var Controller = Expandable.extend(Contextual, ContextualMixin, {
+    var Controller = CallbackHandler.extend(Contextual, ContextualMixin, {
     });
     $defineContextProperty(Controller.prototype);
 

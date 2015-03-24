@@ -4,10 +4,11 @@ module.exports = function(grunt) {
     pkg: grunt.file.readJSON('package.json'),
     watch: {
       js: {
-        files: ['lib/**.js'],
-        tasks: ['jshint'],
+        files: ['lib/**/*.js'],
+        tasks: ['build'],
         options: {
-          livereload: true,
+            spawn: false
+            //livereload: true,
         },
       },
       mocha: {
@@ -37,6 +38,13 @@ module.exports = function(grunt) {
            'dist/miruken-ng-bundle.js': ['lib/index.js', 'lib/mvc/index.js', 'lib/angular/index.js']
         }
       }
+    },
+    copy: {
+       main:{
+         files: [
+            {expand: true, flatten: true, src: ['dist/miruken-ng-bundle.js'], dest: 'demo/mytodo/app/scripts/'}
+         ]
+      }
     }
   });
 
@@ -47,10 +55,12 @@ module.exports = function(grunt) {
   grunt.loadNpmTasks('grunt-mocha-test');
   grunt.loadNpmTasks('grunt-env');
   grunt.loadNpmTasks('grunt-browserify');
+  grunt.loadNpmTasks('grunt-contrib-copy');
 
   //Making grunt default to force in order not to break the project.
   grunt.option('force', true);
 
   //Test task.
   grunt.registerTask('test', ['concurrent:test']);
+  grunt.registerTask('build', ['browserify:dist','copy:main']);
 };
