@@ -4419,7 +4419,7 @@ new function () { // closure
     var miruken = new base2.Package(this, {
         name:    "miruken",
         version: "1.0",
-        exports: "Enum,Protocol,Delegate,Miruken,Disposing,DisposingMixin,Parenting,Interceptor,InterceptorSelector,ProxyBuilder,TraversingAxis,Traversing,TraversingMixin,Traversal,Variance,Modifier,ArrayManager,IndexedList,$isProtocol,$isClass,$classOf,$ancestorOf,$isString,$isFunction,$isObject,$isPromise,$isSomething,$isNothing,$using,$lift,$eq,$use,$copy,$lazy,$eval,$every,$child,$optional,$promise,$instant,$createModifier,PARAMETERS,INTERCEPTORS,INTERCEPTOR_SELECTORS"
+        exports: "Enum,Protocol,Delegate,Miruken,Disposing,DisposingMixin,Parenting,Starting,Startup,Interceptor,InterceptorSelector,ProxyBuilder,TraversingAxis,Traversing,TraversingMixin,Traversal,Variance,Modifier,ArrayManager,IndexedList,$isProtocol,$isClass,$classOf,$ancestorOf,$isString,$isFunction,$isObject,$isPromise,$isSomething,$isNothing,$using,$lift,$eq,$use,$copy,$lazy,$eval,$every,$child,$optional,$promise,$instant,$createModifier,PARAMETERS,INTERCEPTORS,INTERCEPTOR_SELECTORS"
     });
 
     eval(this.imports);
@@ -4674,6 +4674,20 @@ new function () { // closure
          * @returns {Any} the new child.
          */
         newChild: function () {}
+    });
+
+    /**
+     * @protocol {Starting}
+     */
+    var Starting = Protocol.extend({
+        start: function () {}
+    });
+
+    /**
+     * @class {Startup}
+     */
+    var Startup = Base.extend(Starting, {
+        start: function () {}
     });
 
     /**

@@ -26,8 +26,8 @@ new function () { // closure
 
     eval(this.imports);
 
-    var $rootContext   = new Context,
-        rootContainer  = new IoContainer;
+    var $rootContext  = new Context,
+        rootContainer = new IoContainer;
 
     /**
      * @function $bootstrap
@@ -37,15 +37,19 @@ new function () { // closure
     function $bootstrap(options) {
         _configureRootContext();
         var ngModule = angular.module;
-        ngModule('ng').run(['$rootScope', '$injector',  _instrumentScopes]);
+        ngModule('ng').run(['$rootScope', '$injector', _instrumentScopes]);
         angular.module = function (name, requires, configFn) {
             var module = ngModule.call(this, name, requires, configFn);
             if (requires) {
                 var package  = _synthesizeModulePackage(name);
                 module.config(['$injector', '$controllerProvider', function ($injector, $controllerProvider) {
-                    _installPackage(package, $injector, $controllerProvider);
-                }]).run(['$injector', function ($injector) {
+                    _installPackage(package, module, $injector, $controllerProvider);
+                }]).run(['$injector', '$q', '$log', function ($injector, $q, $log) {
+                    var startupContext   = $rootContext.newChild(),
+                        startupContainer = new IoContainer;
+                    startupContext.addHandlers(startupContainer);
                     _provideInjector(rootContainer, $injector);
+                    _startPackage(package, $q, $log, startupContext);
                 }]);
             }
             return module;
@@ -121,10 +125,11 @@ new function () { // closure
      * @function _installPackage
      * Install the package with Installers and Controllers.
      * @param  {Package}   package              - module package
-     * @param  {Injector} injector              - module injector
+     * @param  {Module}    module               - angular module
+     * @param  {Injector}  injector             - module injector
      * @param  {Provider}  $controllerProvider  - controller provider
      */
-    function _installPackage(package, injector, $controllerProvider) {
+    function _installPackage(package, module, injector, $controllerProvider) {
         var container = Container($rootContext);
         package.getClasses(function (member) {
             var clazz = member.member;
@@ -139,16 +144,49 @@ new function () { // closure
                     $controllerProvider.register(member.name, deps);
                 });
             } else if (clazz.prototype instanceof Installer) {
-                var deps = (clazz.prototype.$inject || clazz.$inject || []).slice();
+                var deps      = (clazz.prototype.$inject || clazz.$inject || []).slice(),
+                    moduleIdx = deps.indexOf('$module');
+                if (moduleIdx >= 0) {
+                    deps.splice(moduleIdx, 1);
+                }
                 deps.push(function () {
-                    var installer = clazz.new.apply(clazz, arguments);
+                    var args = arguments;
+                    if (moduleIdx >= 0) {
+                        args = Array.prototype.slice.call(arguments, 0);
+                        args.splice(moduleIdx, 0, module);
+                    }
+                    var installer = clazz.new.apply(clazz, args);
                     container.register(installer);
                 });
                 injector.invoke(deps);
             }
         });
         package.getPackages(function (member) {
-            _installPackage(member.member, injector, $controllerProvider);
+            _installPackage(member.member, module, injector, $controllerProvider);
+        });
+    }
+
+    /**
+     * @function _startPackage
+     * Start the package using the 'Starting' components.
+     * @param  {Package}   package         - module package
+     * @param  {Object}    $q              - $q service
+     * @param  {Object}    $log            - $log service
+     * @param  {Context}   startupContext  - isolated context
+     */
+    function _startPackage(package, $q, $log, startupContext) {
+        Container(startupContext).register(
+            $classes.fromPackage(package).basedOn(Starting)).then(function () {
+            $q.when(Container(startupContext).resolveAll(Starting)).then(function (starters) {
+                for (var i = 0; i < starters.length; ++i) {
+                    starters[i].start();
+                }
+            }, function (error) {
+                $log.error(lang.format("Startup for package %1 failed: %2", package, error.message));
+            });
+        });
+        package.getPackages(function (member) {
+            _startPackage(member.member, $q, $log, startupContext);
         });
     }
 
@@ -191,7 +229,7 @@ new function () { // closure
     function _provideInjector(owner, injector) {
         $provide(owner, null, function (resolution) {
             var key = Modifier.unwrap(resolution.getKey());
-            if ($isString(key)) {
+            if ($isString(key) && injector.has(key)) {
                 return injector.get(key);
             }
         });
@@ -4636,7 +4674,7 @@ new function () { // closure
     var miruken = new base2.Package(this, {
         name:    "miruken",
         version: "1.0",
-        exports: "Enum,Protocol,Delegate,Miruken,Disposing,DisposingMixin,Parenting,Interceptor,InterceptorSelector,ProxyBuilder,TraversingAxis,Traversing,TraversingMixin,Traversal,Variance,Modifier,ArrayManager,IndexedList,$isProtocol,$isClass,$classOf,$ancestorOf,$isString,$isFunction,$isObject,$isPromise,$isSomething,$isNothing,$using,$lift,$eq,$use,$copy,$lazy,$eval,$every,$child,$optional,$promise,$instant,$createModifier,PARAMETERS,INTERCEPTORS,INTERCEPTOR_SELECTORS"
+        exports: "Enum,Protocol,Delegate,Miruken,Disposing,DisposingMixin,Parenting,Starting,Startup,Interceptor,InterceptorSelector,ProxyBuilder,TraversingAxis,Traversing,TraversingMixin,Traversal,Variance,Modifier,ArrayManager,IndexedList,$isProtocol,$isClass,$classOf,$ancestorOf,$isString,$isFunction,$isObject,$isPromise,$isSomething,$isNothing,$using,$lift,$eq,$use,$copy,$lazy,$eval,$every,$child,$optional,$promise,$instant,$createModifier,PARAMETERS,INTERCEPTORS,INTERCEPTOR_SELECTORS"
     });
 
     eval(this.imports);
@@ -4891,6 +4929,20 @@ new function () { // closure
          * @returns {Any} the new child.
          */
         newChild: function () {}
+    });
+
+    /**
+     * @protocol {Starting}
+     */
+    var Starting = Protocol.extend({
+        start: function () {}
+    });
+
+    /**
+     * @class {Startup}
+     */
+    var Startup = Base.extend(Starting, {
+        start: function () {}
     });
 
     /**

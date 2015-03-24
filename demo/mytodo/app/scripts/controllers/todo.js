@@ -4,7 +4,7 @@ new function () {
         name:    "todo",
         parent:  mytodoApp,
         imports: "miruken,miruken.mvc,miruken.ioc.config",
-        exports: "TodoController,TodoInstaller"
+        exports: "TodoController,TodoInstaller,TodoStartup"
     });
 
     eval(this.imports);
@@ -21,10 +21,20 @@ new function () {
     });
 
     var TodoInstaller = Installer.extend({
-        $inject: ['$stateProvider'],
-        constructor: function ($stateProvider) {
+        $inject: ['$module', '$stateProvider'],
+        constructor: function ($module, $stateProvider) {
             this.extend({
                 register: function(container, composer) { 
+                }
+            });
+    }});
+
+    var TodoStartup = Startup.extend({
+        $inject: ['$http', '$log'],
+        constructor: function ($http, $log) {
+            this.extend({
+                start: function() {
+                    $log.info("Starting todo");
                 }
             });
     }});
