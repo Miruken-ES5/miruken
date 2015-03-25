@@ -10,8 +10,8 @@ new function () {
     eval(this.imports);
 
     var TodoController =  Controller.extend({
-        $inject: ['$http'],
-        constructor: function ($http) {
+        $inject: ['$scope', '$http'],
+        constructor: function ($scope, $http) {
             var _todos = [ 'Item 1', 'Item 2', 'Item 3' ];
             this.extend({
                 getTodos: function () { return _todos; },

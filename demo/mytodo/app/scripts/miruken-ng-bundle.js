@@ -30,6 +30,16 @@ new function () { // closure
         rootContainer = new IoContainer;
 
     /**
+     * Packagelifecycle enum
+     * @enum {Number}
+     */
+    var PackageLifecycle = Enum({
+        Created:   1,
+        Installed: 2,
+        Started:   3
+        });
+
+    /**
      * @function $bootstrap
      * Bootstraps angular with Miruekn.
      * @param  {Object}  options  - bootstrap options
@@ -48,11 +58,20 @@ new function () { // closure
                                _installPackage(package, module, $injector, $controllerProvider);
                            }])
                       .run(['$injector', '$q', '$log', function ($injector, $q, $log) {
-                           var startupContext   = $rootContext.newChild(),
-                               startupContainer = new IoContainer;
-                           startupContext.addHandlers(startupContainer);
                            _provideInjector(rootContainer, $injector);
-                           _startPackage(package, $q, $log, startupContext);
+                           var registrations = [],
+                               container     = Container($rootContext),
+                               startup       = _collectStartupRegistrations(package, registrations);
+                           container.register(registrations).then(function () {
+                               $q.when(container.resolveAll(Starting)).then(function (starters) {
+                                   for (var i = 0; i < starters.length; ++i) {
+                                       starters[i].start();
+                                   }
+                               }, function (error) {
+                                   $log.error(lang.format("Startup for package %1 failed: %2", 
+                                                          package, error.message));
+                                   });
+                               });
                        }]);
             }
             return module;
@@ -86,7 +105,6 @@ new function () { // closure
             childScope.context = parentScope && parentScope.context
                                ? parentScope.context.newChild()
                                : new Context;
-            $provide(childScope.context, "$scope", childScope);
             return childScope;
         };
         scopeProto.$destroy = function () {
@@ -115,6 +133,7 @@ new function () { // closure
                 package     = parent[packageName];
             if (!package) {
                 package = parent.addPackage(packageName);
+                package.lifecycle = PackageLifecycle.Created;
                 if (parent === base2) {
                     global[packageName] = package;
                 }
@@ -133,72 +152,57 @@ new function () { // closure
      * @param  {Provider}  $controllerProvider  - controller provider
      */
     function _installPackage(package, module, injector, $controllerProvider) {
-        var container = Container($rootContext);
-        package.getClasses(function (member) {
-            var clazz = member.member;
-            if (clazz.prototype instanceof Controller) {
-                var controller = new ComponentModel;
-                controller.setKey(clazz);
-                controller.setLifestyle(new ContextualLifestyle);
-                container.addComponent(controller).then(function () {
-                    var deps = _angularDependencies(controller);
-                    deps.unshift('$scope', '$injector');
-                    deps.push(_controllerShim(clazz, deps.slice()));
-                    $controllerProvider.register(member.name, deps);
-                });
-            } else if (clazz.prototype instanceof Installer) {
-                var deps      = (clazz.prototype.$inject || clazz.$inject || []).slice(),
-                    moduleIdx = deps.indexOf('$module');
-                if (moduleIdx >= 0) {
-                    deps.splice(moduleIdx, 1);
-                }
-                deps.push(function () {
-                    var args = arguments;
+        var container = Container($rootContext),
+            lifecycle = package.lifecycle || PackageLifecycle.Created;
+        if (lifecycle === PackageLifecycle.Created) {
+            package.getClasses(function (member) {
+                var clazz = member.member;
+                if (clazz.prototype instanceof Controller) {
+                    var controller = new ComponentModel;
+                    controller.setKey(clazz);
+                    controller.setLifestyle(new ContextualLifestyle);
+                    container.addComponent(controller).then(function () {
+                        var deps = _angularDependencies(controller);
+                        deps.unshift('$scope', '$injector');
+                        deps.push(_controllerShim(clazz, deps.slice()));
+                        $controllerProvider.register(member.name, deps);
+                    });
+                } else if (clazz.prototype instanceof Installer) {
+                    var deps      = (clazz.prototype.$inject || clazz.$inject || []).slice(),
+                        moduleIdx = deps.indexOf('$module');
                     if (moduleIdx >= 0) {
-                        args = Array.prototype.slice.call(arguments, 0);
-                        args.splice(moduleIdx, 0, module);
+                        deps.splice(moduleIdx, 1);
                     }
-                    var installer = clazz.new.apply(clazz, args);
-                    container.register(installer);
-                });
-                injector.invoke(deps);
-            }
-        });
+                    deps.push(function () {
+                        var args = arguments;
+                        if (moduleIdx >= 0) {
+                            args = Array.prototype.slice.call(arguments, 0);
+                            args.splice(moduleIdx, 0, module);
+                        }
+                       var installer = clazz.new.apply(clazz, args);
+                        container.register(installer);
+                    });
+                    injector.invoke(deps);
+                }
+            });
+            package.lifecycle = PackageLifecycle.Installed;
+        }
         package.getPackages(function (member) {
             _installPackage(member.member, module, injector, $controllerProvider);
         });
     }
 
     /**
-     * @function _startPackage
-     * Start the package using the 'Starting' components.
-     * @param  {Package}   package         - module package
-     * @param  {Object}    $q              - $q service
-     * @param  {Object}    $log            - $log service
-     * @param  {Context}   startupContext  - isolated context
-     */
-    function _startPackage(package, $q, $log, startupContext) {
-        var registrations = [];
-        _collectStartupRegistrations(package, registrations);
-        Container(startupContext).register(registrations).then(function () {
-            $q.when(Container(startupContext).resolveAll(Starting)).then(function (starters) {
-                for (var i = 0; i < starters.length; ++i) {
-                    starters[i].start();
-                }
-            }, function (error) {
-                $log.error(lang.format("Startup for package %1 failed: %2", package, error.message));
-            });
-        });
-    }
-
-    /**
-     * @function _collectStartupPackages
+     * @function _collectStartupRegistrations
      * Collects all related packages startup registrations.
      * @param    {Package}   package        - source package
      * @param    {Array}     registrations  - receives registrations
      */
     function _collectStartupRegistrations(package, registrations) {
-        registrations.push($classes.fromPackage(package).basedOn(Starting));
+        if (package.lifecycle === PackageLifecycle.Installed) {
+            registrations.push($classes.fromPackage(package).basedOn(Starting).withKeys.self());
+            package.lifecycle = PackageLifecycle.Started;
+        }
         package.getPackages(function (member) {
             _collectStartupRegistrations(member.member, registrations);
         });
