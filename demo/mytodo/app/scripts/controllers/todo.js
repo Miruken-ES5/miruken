@@ -21,8 +21,8 @@ new function () {
     });
 
     var TodoInstaller = Installer.extend({
-        $inject: ['$module', '$stateProvider'],
-        constructor: function ($module, $stateProvider) {
+        $inject: ['$module', '$rootContext', '$stateProvider'],
+        constructor: function ($module, $rootContext, $stateProvider) {
             this.extend({
                 register: function(container, composer) { 
                 }
@@ -30,8 +30,8 @@ new function () {
     }});
 
     var TodoStartup = Startup.extend({
-        $inject: ['$http', '$log'],
-        constructor: function ($http, $log) {
+        $inject: ['$rootContext', '$log'],
+        constructor: function ($rootContext, $log) {
             this.extend({
                 start: function() {
                     $log.info("Starting todo");

@@ -42,15 +42,18 @@ new function () { // closure
             var module = ngModule.call(this, name, requires, configFn);
             if (requires) {
                 var package  = _synthesizeModulePackage(name);
-                module.config(['$injector', '$controllerProvider', function ($injector, $controllerProvider) {
-                    _installPackage(package, module, $injector, $controllerProvider);
-                }]).run(['$injector', '$q', '$log', function ($injector, $q, $log) {
-                    var startupContext   = $rootContext.newChild(),
-                        startupContainer = new IoContainer;
-                    startupContext.addHandlers(startupContainer);
-                    _provideInjector(rootContainer, $injector);
-                    _startPackage(package, $q, $log, startupContext);
-                }]);
+                module.constant('$rootContext', $rootContext)
+                      .config(['$injector', '$controllerProvider',
+                           function ($injector, $controllerProvider) {
+                               _installPackage(package, module, $injector, $controllerProvider);
+                           }])
+                      .run(['$injector', '$q', '$log', function ($injector, $q, $log) {
+                           var startupContext   = $rootContext.newChild(),
+                               startupContainer = new IoContainer;
+                           startupContext.addHandlers(startupContainer);
+                           _provideInjector(rootContainer, $injector);
+                           _startPackage(package, $q, $log, startupContext);
+                       }]);
             }
             return module;
         };
@@ -138,7 +141,7 @@ new function () { // closure
                 controller.setKey(clazz);
                 controller.setLifestyle(new ContextualLifestyle);
                 container.addComponent(controller).then(function () {
-                    var deps = _stringDependencies(controller);
+                    var deps = _angularDependencies(controller);
                     deps.unshift('$scope', '$injector');
                     deps.push(_controllerShim(clazz, deps.slice()));
                     $controllerProvider.register(member.name, deps);
@@ -236,12 +239,12 @@ new function () { // closure
     }
 
     /**
-     * @function _stringDependencies
+     * @function _angularDependencies
      * Extracts the string dependencies for the component.
      * @param    {Function}  controller  - controller class
      * @returns  {Function}  controller constructor shim.  
      */
-    function _stringDependencies(componentModel) {
+    function _angularDependencies(componentModel) {
         var deps = componentModel.getDependencies();
         return deps ? Array2.filter(Array2.map(deps,
                           function (dep) { return dep.getDependency(); }),
