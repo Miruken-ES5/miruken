@@ -21,8 +21,8 @@ new function () {
     });
 
     var TodoInstaller = Installer.extend({
-        $inject: ['$module', '$rootContext', '$stateProvider'],
-        constructor: function ($module, $rootContext, $stateProvider) {
+        $inject: ['$module', '$rootContext'],
+        constructor: function ($module, $rootContext) {
             this.extend({
                 register: function(container, composer) { 
                 }
