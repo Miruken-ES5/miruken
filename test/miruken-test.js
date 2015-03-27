@@ -159,6 +159,20 @@ describe("$isFunction", function () {
     });
 });
 
+describe("$property", function () {
+    it("should expand properties", function () {
+        var Person = Base.extend({
+            firstName: {
+                get: function () { return this._name; },
+                set: function (value) { this._name = value.toUpperCase(); } 
+            }
+        }),
+        friend = new Person;
+        friend.firstName = 'Phil';
+        expect(friend.firstName).to.equal('PHIL');
+    });
+});
+
 describe("DisposingMixin", function () {
     describe("dispose", function () {
         it("should provide dispose", function () {

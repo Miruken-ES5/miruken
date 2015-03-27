@@ -4,7 +4,7 @@ new function () {
         name:    "todo",
         parent:  mytodoApp,
         imports: "miruken,miruken.mvc,miruken.ioc.config",
-        exports: "TodoController,TodoInstaller,TodoStartup"
+        exports: "TodoController,TodoInstaller,TodoRunner,TodoStartup"
     });
 
     eval(this.imports);
@@ -24,7 +24,17 @@ new function () {
         $inject: ['$module', '$rootContext'],
         constructor: function ($module, $rootContext) {
             this.extend({
-                register: function(container, composer) { 
+                register: function(container, composer) {
+                }
+            });
+    }});
+
+    var TodoRunner = ng.Runner.extend({
+        $inject: ['$module', '$rootContext', '$log'],
+        constructor: function ($module, $rootContext, $log) {
+            this.extend({
+                run: function() {
+                    $log.info("todo ran");
                 }
             });
     }});
@@ -34,7 +44,7 @@ new function () {
         constructor: function ($rootContext, $log) {
             this.extend({
                 start: function() {
-                    $log.info("Starting todo");
+                    $log.info("todo started");
                 }
             });
     }});

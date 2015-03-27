@@ -96,7 +96,7 @@ describe("ValidationResult", function () {
 
         it("should add invalid child validation results", function () {
             var team            = new Team,
-	        player          = new Player,
+                player          = new Player,
                 validation      = new ValidationResult(team),
    	        childValidation = new ValidationResult(player);
                 childValidation.addKeyError("FirstName", new ValidationError("First name required", {
@@ -105,43 +105,43 @@ describe("ValidationResult", function () {
                 }));
 	        validation.addKeyError("Player", childValidation);
 	        expect(validation.isValid()).to.be.false;
-                expect(validation.getKeyErrors("Player")[0].getKeyErrors("FirstName")).to.eql([
-                    new ValidationError("First name required", {
-                       key:  "FirstName",
-                       code: ValidationErrorCode.Required
-                   })
-		]);
-	});
+            expect(validation.getKeyErrors("Player")[0].getKeyErrors("FirstName")).to.eql([
+                new ValidationError("First name required", {
+                    key:  "FirstName",
+                    code: ValidationErrorCode.Required
+                })
+	        ]);
+	    });
 
         it("should not add valid child validation results", function () {
             var team            = new Team,
-	        player          = new Player,
+                player          = new Player,
                 validation      = new ValidationResult(team),
-   	        childValidation = new ValidationResult(player);
-	        validation.addKeyError("Player", childValidation);
-	        expect(validation.isValid()).to.be.true;
-                expect(validation.getKeyErrors("Player")).to.be.undefined;
-	});
+                childValidation = new ValidationResult(player);
+            validation.addKeyError("Player", childValidation);
+            expect(validation.isValid()).to.be.true;
+            expect(validation.getKeyErrors("Player")).to.be.undefined;
+        });
 
         it("should add anonymous invalid child validation results", function () {
             var team            = new Team,
-	        player          = new Player,
+                player          = new Player,
                 validation      = new ValidationResult(team),
-   	        childValidation = new ValidationResult(player);
-                childValidation.addKeyError("FirstName", new ValidationError("First name required", {
+                childValidation = new ValidationResult(player);
+            childValidation.addKeyError("FirstName", new ValidationError("First name required", {
+                key:  "FirstName",
+                code: ValidationErrorCode.Required
+            }));
+            validation.addChildResult(childValidation);
+            expect(validation.isValid()).to.be.false;
+            expect(validation.getKeyCulprits()).to.eql([]);
+            expect(validation.getChildResults()[0].getKeyErrors("FirstName")).to.eql([
+                new ValidationError("First name required", {
                     key:  "FirstName",
                     code: ValidationErrorCode.Required
-                }));
-	       validation.addChildResult(childValidation);
-	        expect(validation.isValid()).to.be.false;
-		expect(validation.getKeyCulprits()).to.eql([]);
-                expect(validation.getChildResults()[0].getKeyErrors("FirstName")).to.eql([
-                    new ValidationError("First name required", {
-                       key:  "FirstName",
-                       code: ValidationErrorCode.Required
-                   })
-		]);
-	});
+                })
+		    ]);
+	    });
     });
 });
 

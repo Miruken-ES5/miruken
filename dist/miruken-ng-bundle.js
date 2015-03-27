@@ -21,7 +21,7 @@ new function () { // closure
         version: miruken.version,
         parent:  miruken,
         imports: "miruken,miruken.callback,miruken.context,miruken.ioc,miruken.ioc.config,miruken.mvc",
-        exports: "$bootstrap,$rootContext"
+        exports: "$bootstrap,$rootContext,Runner"
     });
 
     eval(this.imports);
@@ -35,9 +35,15 @@ new function () { // closure
      */
     var PackageLifecycle = Enum({
         Created:   1,
-        Installed: 2,
-        Started:   3
+        Installed: 2
         });
+
+    /**
+     * @class {Runner}
+     */
+    var Runner = Base.extend({
+        run: function () {}
+    });
 
     /**
      * @function $bootstrap
@@ -51,22 +57,23 @@ new function () { // closure
         angular.module = function (name, requires, configFn) {
             var module = ngModule.call(this, name, requires, configFn);
             if (requires) {
-                var package  = _synthesizeModulePackage(name);
+                var runners   = [], starters  = [],
+                    container = Container($rootContext),
+                    package   = _synthesizeModulePackage(name);
                 module.constant('$rootContext', $rootContext)
                       .config(['$injector', '$controllerProvider',
                            function ($injector, $controllerProvider) {
-                               _installPackage(package, module, $injector, $controllerProvider);
+                               _installPackage(package, module, $injector, $controllerProvider, 
+                                               runners, starters);
                            }])
                       .run(['$injector', '$q', '$log', function ($injector, $q, $log) {
                            _provideInjector(rootContainer, $injector);
-                           var registrations = [],
-                               container     = Container($rootContext),
-                               startup       = _collectStartupRegistrations(package, registrations);
-                           container.register(registrations).then(function () {
+                           Array2.forEach(runners, function (runner) {
+                               $injector.invoke(runner);
+                           });
+                           container.register(starters).then(function () {
                                $q.when(container.resolveAll(Starting)).then(function (starters) {
-                                   for (var i = 0; i < starters.length; ++i) {
-                                       starters[i].start();
-                                   }
+                                   Array2.invoke(starters, "start");
                                }, function (error) {
                                    $log.error(lang.format("Startup for package %1 failed: %2", 
                                                           package, error.message));
@@ -145,13 +152,15 @@ new function () { // closure
 
     /**
      * @function _installPackage
-     * Install the package with Installers and Controllers.
+     * Install the package Installers, Runners, Starters and Controllers.
      * @param  {Package}   package              - module package
      * @param  {Module}    module               - angular module
      * @param  {Injector}  injector             - module injector
      * @param  {Provider}  $controllerProvider  - controller provider
+     * @param  {Array}     runners              - collects runners
+     * @param  {Array}     starters             - collects starters
      */
-    function _installPackage(package, module, injector, $controllerProvider) {
+    function _installPackage(package, module, injector, $controllerProvider, runners, starters) {
         var container = Container($rootContext),
             lifecycle = package.lifecycle || PackageLifecycle.Created;
         if (lifecycle === PackageLifecycle.Created) {
@@ -167,7 +176,8 @@ new function () { // closure
                         deps.push(_controllerShim(clazz, deps.slice()));
                         $controllerProvider.register(member.name, deps);
                     });
-                } else if (clazz.prototype instanceof Installer) {
+                } else if (clazz.prototype instanceof Installer ||
+                           clazz.prototype instanceof Runner) {
                     var deps      = (clazz.prototype.$inject || clazz.$inject || []).slice(),
                         moduleIdx = deps.indexOf('$module');
                     if (moduleIdx >= 0) {
@@ -179,32 +189,25 @@ new function () { // closure
                             args = Array.prototype.slice.call(arguments, 0);
                             args.splice(moduleIdx, 0, module);
                         }
-                       var installer = clazz.new.apply(clazz, args);
-                        container.register(installer);
+                       var component = clazz.new.apply(clazz, args);
+                       if (component instanceof Installer) {
+                           container.register(component);
+                       } else {
+                           component.run();
+                       }
                     });
-                    injector.invoke(deps);
+                    if (clazz.prototype instanceof Installer) {
+                        injector.invoke(deps);
+                    } else {
+                        runners.push(deps);
+                    }
                 }
             });
+            starters.push($classes.fromPackage(package).basedOn(Starting).withKeys.self());
             package.lifecycle = PackageLifecycle.Installed;
         }
         package.getPackages(function (member) {
-            _installPackage(member.member, module, injector, $controllerProvider);
-        });
-    }
-
-    /**
-     * @function _collectStartupRegistrations
-     * Collects all related packages startup registrations.
-     * @param    {Package}   package        - source package
-     * @param    {Array}     registrations  - receives registrations
-     */
-    function _collectStartupRegistrations(package, registrations) {
-        if (package.lifecycle === PackageLifecycle.Installed) {
-            registrations.push($classes.fromPackage(package).basedOn(Starting).withKeys.self());
-            package.lifecycle = PackageLifecycle.Started;
-        }
-        package.getPackages(function (member) {
-            _collectStartupRegistrations(member.member, registrations);
+            _installPackage(member.member, module, injector, $controllerProvider, runners, starters);
         });
     }
 
@@ -5893,7 +5896,7 @@ new function () { // closure
         /**
          * Validates the object in the scope.
          * @param   {Object} object  - object to validate
-         * @param   {String} scope   - scope of validation
+         * @param   {Object} scope   - scope of validation
          * @returns {Promise(ValidationResult)} a promise for the validation result
          */
         validate: function (object, scope) {}
