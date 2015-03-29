@@ -4695,7 +4695,7 @@ new function () { // closure
     var miruken = new base2.Package(this, {
         name:    "miruken",
         version: "1.0",
-        exports: "Enum,Protocol,Delegate,Miruken,Disposing,DisposingMixin,Parenting,Starting,Startup,Interceptor,InterceptorSelector,ProxyBuilder,TraversingAxis,Traversing,TraversingMixin,Traversal,Variance,Modifier,ArrayManager,IndexedList,$isProtocol,$isClass,$classOf,$ancestorOf,$isString,$isFunction,$isObject,$isPromise,$isSomething,$isNothing,$using,$lift,$eq,$use,$copy,$lazy,$eval,$every,$child,$optional,$promise,$instant,$createModifier,PARAMETERS,INTERCEPTORS,INTERCEPTOR_SELECTORS"
+        exports: "Enum,Protocol,Delegate,Miruken,ClassBuilder,Disposing,DisposingMixin,Parenting,Starting,Startup,Interceptor,InterceptorSelector,ProxyBuilder,TraversingAxis,Traversing,TraversingMixin,Traversal,Variance,Modifier,ArrayManager,IndexedList,$isProtocol,$isClass,$classOf,$ancestorOf,$isString,$isFunction,$isObject,$isPromise,$isSomething,$isNothing,$using,$lift,$eq,$use,$copy,$lazy,$eval,$every,$child,$optional,$promise,$instant,$createModifier,PARAMETERS,INTERCEPTORS,INTERCEPTOR_SELECTORS"
     });
 
     eval(this.imports);
@@ -4735,6 +4735,7 @@ new function () { // closure
         Invariant:     3   // exact
         });
 
+
     /**
      * @class {Delegate}
      */
@@ -4766,6 +4767,14 @@ new function () { // closure
                 }
             });
         }
+    });
+
+    /**
+     * @class {Protocol}
+     */
+    var ClassBuilder = Base.extend({
+        beforeExtend: function(baseClass, instanceDef, staticDef) {},
+        afterExtend:  function(derivedClass, instanceDef, staticDef) {}
     });
 
     /**
@@ -4832,7 +4841,8 @@ new function () { // closure
                 return (function (base, args) {
                     var constraints = args,
                         protocols   = [],
-                        mixins      = [];
+                        mixins      = [],
+                        builders    = [];
                     if (base.prototype instanceof Protocol) {
                         protocols.push(base);
                     }
@@ -4847,6 +4857,11 @@ new function () { // closure
                             protocols.push(constraints.shift());
                         } else if (constraint.prototype) {
                             mixins.push(constraints.shift());
+                        } else if (constraint instanceof ClassBuilder) {
+                            builders.push(constraint);
+                        } else if ($isFunction(constraint) 
+                               &&  constraint.prototype instanceof ClassBuilder) {
+                            builders.push(new constraint);
                         } else {
                             break;
                         }
@@ -4964,6 +4979,16 @@ new function () { // closure
      */
     var Startup = Base.extend(Starting, {
         start: function () {}
+    });
+
+    /**
+     * @class {Miruken}
+     * Base class to prefer coercion over casting.
+     */
+    var Miruken = Base.extend(null, {
+        coerce: function () {
+            return this.new.apply(this, arguments);
+        }
     });
 
     /**
@@ -5769,16 +5794,6 @@ new function () { // closure
             }
         }
     }
-
-    /**
-     * @class {Miruken}
-     * This class is intended to replace Base and prefer coercion over casting.
-     */
-    var Miruken = Base.extend(null, {
-        coerce: function () {
-            return this.new.apply(this, arguments);
-        }
-    });
 
     /**
      * @function new
