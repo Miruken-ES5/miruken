@@ -6085,8 +6085,8 @@ new function () { // closure
  * 
  */
 /**
- * bluebird build version 2.9.14
- * Features enabled: core, race, call_get, generators, map, nodeify, promisify, props, reduce, settle, some, progress, cancel, using, filter, any, each, timers
+ * bluebird build version 2.9.20
+ * Features enabled: core, race, call_get, generators, map, nodeify, promisify, props, reduce, settle, some, cancel, using, filter, any, each, timers
 */
 !function(e){if("object"==typeof exports&&"undefined"!=typeof module)module.exports=e();else if("function"==typeof define&&define.amd)define([],e);else{var f;"undefined"!=typeof window?f=window:"undefined"!=typeof global?f=global:"undefined"!=typeof self&&(f=self),f.Promise=e()}}(function(){var define,module,exports;return (function e(t,n,r){function s(o,u){if(!n[o]){if(!t[o]){var a=typeof _dereq_=="function"&&_dereq_;if(!u&&a)return a(o,!0);if(i)return i(o,!0);var f=new Error("Cannot find module '"+o+"'");throw f.code="MODULE_NOT_FOUND",f}var l=n[o]={exports:{}};t[o][0].call(l.exports,function(e){var n=t[o][1][e];return s(n?n:e)},l,l.exports,e,t,n,r)}return n[o].exports}var i=typeof _dereq_=="function"&&_dereq_;for(var o=0;o<r.length;o++)s(r[o]);return s})({1:[function(_dereq_,module,exports){
 "use strict";
@@ -6118,11 +6118,13 @@ try {throw new Error(); } catch (e) {firstLineError = e;}
 var schedule = _dereq_("./schedule.js");
 var Queue = _dereq_("./queue.js");
 var _process = typeof process !== "undefined" ? process : undefined;
+var util = _dereq_("./util.js");
 
 function Async() {
     this._isTickUsed = false;
     this._lateQueue = new Queue(16);
     this._normalQueue = new Queue(16);
+    this._trampolineEnabled = true;
     var self = this;
     this.drainQueues = function () {
         self._drainQueues();
@@ -6130,6 +6132,21 @@ function Async() {
     this._schedule =
         schedule.isStatic ? schedule(this.drainQueues) : schedule;
 }
+
+Async.prototype.disableTrampolineIfNecessary = function() {
+    if (util.hasDevTools) {
+        this._trampolineEnabled = false;
+    }
+};
+
+Async.prototype.enableTrampoline = function() {
+    if (!this._trampolineEnabled) {
+        this._trampolineEnabled = true;
+        this._schedule = function(fn) {
+            setTimeout(fn, 0);
+        };
+    }
+};
 
 Async.prototype.haveItemsQueued = function () {
     return this._normalQueue.length() > 0;
@@ -6163,26 +6180,62 @@ Async.prototype.throwLater = function(fn, arg) {
     }
 };
 
-Async.prototype.invokeLater = function (fn, receiver, arg) {
+function AsyncInvokeLater(fn, receiver, arg) {
     fn = this._withDomain(fn);
     this._lateQueue.push(fn, receiver, arg);
     this._queueTick();
-};
+}
+
+function AsyncInvoke(fn, receiver, arg) {
+    fn = this._withDomain(fn);
+    this._normalQueue.push(fn, receiver, arg);
+    this._queueTick();
+}
+
+function AsyncSettlePromises(promise) {
+    this._normalQueue._pushOne(promise);
+    this._queueTick();
+}
+
+if (!util.hasDevTools) {
+    Async.prototype.invokeLater = AsyncInvokeLater;
+    Async.prototype.invoke = AsyncInvoke;
+    Async.prototype.settlePromises = AsyncSettlePromises;
+} else {
+    Async.prototype.invokeLater = function (fn, receiver, arg) {
+        if (this._trampolineEnabled) {
+            AsyncInvokeLater.call(this, fn, receiver, arg);
+        } else {
+            setTimeout(function() {
+                fn.call(receiver, arg);
+            }, 100);
+        }
+    };
+
+    Async.prototype.invoke = function (fn, receiver, arg) {
+        if (this._trampolineEnabled) {
+            AsyncInvoke.call(this, fn, receiver, arg);
+        } else {
+            setTimeout(function() {
+                fn.call(receiver, arg);
+            }, 0);
+        }
+    };
+
+    Async.prototype.settlePromises = function(promise) {
+        if (this._trampolineEnabled) {
+            AsyncSettlePromises.call(this, promise);
+        } else {
+            setTimeout(function() {
+                promise._settlePromises();
+            }, 0);
+        }
+    };
+}
 
 Async.prototype.invokeFirst = function (fn, receiver, arg) {
     fn = this._withDomain(fn);
     this._normalQueue.unshift(fn, receiver, arg);
-    this._queueTick();
-};
-
-Async.prototype.invoke = function (fn, receiver, arg) {
-    fn = this._withDomain(fn);
-    this._normalQueue.push(fn, receiver, arg);
-    this._queueTick();
-};
-
-Async.prototype.settlePromises = function(promise) {
-    this._normalQueue._pushOne(promise);
     this._queueTick();
 };
 
@@ -6219,7 +6272,7 @@ Async.prototype._reset = function () {
 module.exports = new Async();
 module.exports.firstLineError = firstLineError;
 
-},{"./queue.js":28,"./schedule.js":31}],3:[function(_dereq_,module,exports){
+},{"./queue.js":28,"./schedule.js":31,"./util.js":38}],3:[function(_dereq_,module,exports){
 "use strict";
 module.exports = function(Promise, INTERNAL, tryConvertToPromise) {
 var rejectThis = function(_, e) {
@@ -6460,6 +6513,7 @@ Promise.prototype.cancel = function (reason) {
 
 Promise.prototype.cancellable = function () {
     if (this._cancellable()) return this;
+    async.enableTrampoline();
     this._setCancellable();
     this._cancellationParent = undefined;
     return this;
@@ -7096,6 +7150,10 @@ var debugging = false || (util.isNode &&
                     (!!process.env["BLUEBIRD_DEBUG"] ||
                      process.env["NODE_ENV"] === "development"));
 
+if (debugging) {
+    async.disableTrampolineIfNecessary();
+}
+
 Promise.prototype._ensurePossibleRejectionHandled = function () {
     this._setRejectionIsUnhandled();
     async.invokeLater(this._notifyUnhandledRejection, this, undefined);
@@ -7208,6 +7266,9 @@ Promise.longStackTraces = function () {
         throw new Error("cannot enable long stack traces after promises have been created\u000a\u000a    See http://goo.gl/DT1qyG\u000a");
     }
     debugging = CapturedTrace.isSupported();
+    if (debugging) {
+        async.disableTrampolineIfNecessary();
+    }
 };
 
 Promise.hasLongStackTraces = function () {
@@ -8071,6 +8132,7 @@ function errorAdapter(reason, nodeback) {
     }
 }
 
+Promise.prototype.asCallback = 
 Promise.prototype.nodeify = function (nodeback, options) {
     if (typeof nodeback == "function") {
         var adapter = successAdapter;
@@ -8818,6 +8880,7 @@ Promise.prototype._settlePromises = function () {
 };
 
 Promise._makeSelfResolutionError = makeSelfResolutionError;
+_dereq_("./progress.js")(Promise, PromiseArray);
 _dereq_("./method.js")(Promise, INTERNAL, tryConvertToPromise, apiRejection);
 _dereq_("./bind.js")(Promise, INTERNAL, tryConvertToPromise);
 _dereq_("./finally.js")(Promise, NEXT_FILTER, tryConvertToPromise);
@@ -8826,18 +8889,17 @@ _dereq_("./synchronous_inspection.js")(Promise);
 _dereq_("./join.js")(Promise, PromiseArray, tryConvertToPromise, INTERNAL);
 Promise.Promise = Promise;
 _dereq_('./map.js')(Promise, PromiseArray, apiRejection, tryConvertToPromise, INTERNAL);
+_dereq_('./cancel.js')(Promise);
 _dereq_('./using.js')(Promise, apiRejection, tryConvertToPromise, createContext);
 _dereq_('./generators.js')(Promise, apiRejection, INTERNAL, tryConvertToPromise);
 _dereq_('./nodeify.js')(Promise);
-_dereq_('./cancel.js')(Promise);
-_dereq_('./promisify.js')(Promise, INTERNAL);
+_dereq_('./call_get.js')(Promise);
 _dereq_('./props.js')(Promise, PromiseArray, tryConvertToPromise, apiRejection);
 _dereq_('./race.js')(Promise, INTERNAL, tryConvertToPromise, apiRejection);
 _dereq_('./reduce.js')(Promise, PromiseArray, apiRejection, tryConvertToPromise, INTERNAL);
 _dereq_('./settle.js')(Promise, PromiseArray);
-_dereq_('./call_get.js')(Promise);
 _dereq_('./some.js')(Promise, PromiseArray, apiRejection);
-_dereq_('./progress.js')(Promise, PromiseArray);
+_dereq_('./promisify.js')(Promise, INTERNAL);
 _dereq_('./any.js')(Promise);
 _dereq_('./each.js')(Promise, INTERNAL);
 _dereq_('./timers.js')(Promise, INTERNAL);
@@ -9804,8 +9866,23 @@ Promise.reduce = function (promises, fn, initialValue, _each) {
 },{"./async.js":2,"./util.js":38}],31:[function(_dereq_,module,exports){
 "use strict";
 var schedule;
+var noAsyncScheduler = function() {
+    throw new Error("No async scheduler available\u000a\u000a    See http://goo.gl/m3OTXk\u000a");
+};
 if (_dereq_("./util.js").isNode) {
-    schedule = process.nextTick;
+    var version = process.versions.node.split(".").map(Number);
+    schedule = (version[0] === 0 && version[1] > 10) || (version[0] > 0)
+        ? global.setImmediate : process.nextTick;
+
+    if (!schedule) {
+        if (typeof setImmediate !== "undefined") {
+            schedule = setImmediate;
+        } else if (typeof setTimeout !== "undefined") {
+            schedule = setTimeout;
+        } else {
+            schedule = noAsyncScheduler;
+        }
+    }
 } else if (typeof MutationObserver !== "undefined") {
     schedule = function(fn) {
         var div = document.createElement("div");
@@ -9814,14 +9891,16 @@ if (_dereq_("./util.js").isNode) {
         return function() { div.classList.toggle("foo"); };
     };
     schedule.isStatic = true;
+} else if (typeof setImmediate !== "undefined") {
+    schedule = function (fn) {
+        setImmediate(fn);
+    };
 } else if (typeof setTimeout !== "undefined") {
     schedule = function (fn) {
         setTimeout(fn, 0);
     };
 } else {
-    schedule = function() {
-        throw new Error("No async scheduler available\u000a\u000a    See http://goo.gl/m3OTXk\u000a");
-    };
+    schedule = noAsyncScheduler;
 }
 module.exports = schedule;
 
@@ -10717,6 +10796,8 @@ var ret = {
     markAsOriginatingFromRejection: markAsOriginatingFromRejection,
     classString: classString,
     copyDescriptors: copyDescriptors,
+    hasDevTools: typeof chrome !== "undefined" && chrome &&
+                 typeof chrome.loadTimes === "function",
     isNode: typeof process !== "undefined" &&
         classString(process).toLowerCase() === "[object process]"
 };
@@ -11435,27 +11516,11 @@ module.exports={
     "coveralls": "^2.10.0",
     "mocha-lcov-reporter": "0.0.1"
   },
-  "gitHead": "5ab0755baae84985f094d27ad0332d6437f34e86",
+  "readme": "# prettyjson [![Build Status](https://secure.travis-ci.org/rafeca/prettyjson.png)](http://travis-ci.org/rafeca/prettyjson) [![NPM version](https://badge.fury.io/js/prettyjson.png)](http://badge.fury.io/js/prettyjson) [![Coverage Status](https://coveralls.io/repos/rafeca/prettyjson/badge.png?branch=master)](https://coveralls.io/r/rafeca/prettyjson?branch=master)\n\nPackage for formatting JSON data in a coloured YAML-style, perfect for CLI output.\n\n## How to install\n\nJust install it via NPM:\n\n```bash\n$ npm install -g prettyjson\n```\n\nThis will install `prettyjson` globally, so it will be added automatically\nto your `PATH`.\n\n## Using it (from the CLI)\n\nThis package installs a command line interface to render JSON data in a more\nconvenient way. You can use the CLI in three different ways:\n\n**Decode a JSON file:** If you want to see the contents of a JSON file, just pass\nit as the first argument to the CLI:\n\n```bash\n$ prettyjson package.json\n```\n\n![Example 1](https://raw.github.com/rafeca/prettyjson/master/images/example3.png)\n\n**Decode the stdin:** You can also pipe the result of a command (for example an\nHTTP request) to the CLI to see the JSON result in a clearer way:\n\n```bash\n$ curl https://api.github.com/users/rafeca | prettyjson\n```\n\n![Example 2](https://raw.github.com/rafeca/prettyjson/master/images/example4.png)\n\n**Decode random strings:** if you call the CLI with no arguments, you'll get a\nprompt where you can past JSON strings and they'll be automatically displayed in a clearer way:\n\n![Example 3](https://raw.github.com/rafeca/prettyjson/master/images/example5.png)\n\n### Command line options\n\nIt's possible to customize the output through some command line options:\n\n```bash\n# Change colors\n$ prettyjson --string=red --keys=blue --dash=yellow --number=green package.json\n\n# Do not use colors\n$ prettyjson --nocolor=1 package.json\n\n# Change indentation\n$ prettyjson --indent=4 package.json\n```\n\n**Deprecation Notice**: The old configuration through environment variables is\ndeprecated and it will be removed in the next major version (1.0.0).\n\n## Using it (from Node.js)\n\nIt's pretty easy to use it. You just have to include it in your script and call\nthe `render()` method:\n\n```javascript\nvar prettyjson = require('prettyjson');\n\nvar data = {\n  username: 'rafeca',\n  url: 'https://github.com/rafeca',\n  twitter_account: 'https://twitter.com/rafeca',\n  projects: ['prettyprint', 'connfu']\n};\n\nvar options = {\n  noColor: true\n};\n\nconsole.log(prettyjson.render(data, options));\n```\n\nAnd will output:\n\n![Example 4](https://raw.github.com/rafeca/prettyjson/master/images/example1.png)\n\nYou can also configure the colors of the hash keys and array dashes\n(using [colors.js](https://github.com/Marak/colors.js) colors syntax):\n\n```javascript\nvar prettyjson = require('prettyjson');\n\nvar data = {\n  username: 'rafeca',\n  url: 'https://github.com/rafeca',\n  twitter_account: 'https://twitter.com/rafeca',\n  projects: ['prettyprint', 'connfu']\n};\n\nconsole.log(prettyjson.render(data, {\n  keysColor: 'rainbow',\n  dashColor: 'magenta',\n  stringColor: 'white'\n}));\n```\n\nWill output something like:\n\n![Example 5](https://raw.github.com/rafeca/prettyjson/master/images/example2.png)\n\n## Running Tests\n\nTo run the test suite first invoke the following command within the repo,\ninstalling the development dependencies:\n\n```bash\n$ npm install\n```\n\nthen run the tests:\n\n```bash\n$ npm test\n```\n\nOn windows, you can run the tests with:\n\n```cmd\nC:\\git\\prettyjson> npm run-script testwin\n```\n",
+  "readmeFilename": "README.md",
   "_id": "prettyjson@1.1.0",
   "_shasum": "de1bc2711a5b7b7a944c217849ec65f299bd4751",
-  "_from": "prettyjson@>=1.0.0 <2.0.0",
-  "_npmVersion": "2.4.1",
-  "_nodeVersion": "0.10.32",
-  "_npmUser": {
-    "name": "rafeca",
-    "email": "rafeca@gmail.com"
-  },
-  "maintainers": [
-    {
-      "name": "rafeca",
-      "email": "rafeca@gmail.com"
-    }
-  ],
-  "dist": {
-    "shasum": "de1bc2711a5b7b7a944c217849ec65f299bd4751",
-    "tarball": "http://registry.npmjs.org/prettyjson/-/prettyjson-1.1.0.tgz"
-  },
-  "directories": {},
+  "_from": "prettyjson@^1.0.0",
   "_resolved": "https://registry.npmjs.org/prettyjson/-/prettyjson-1.1.0.tgz"
 }
 

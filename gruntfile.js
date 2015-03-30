@@ -35,7 +35,8 @@ module.exports = function(grunt) {
       dist: {
         files: {
            'dist/miruken-bundle.js': ['lib/index.js'],
-           'dist/miruken-ng-bundle.js': ['lib/index.js', 'lib/mvc/index.js', 'lib/angular/index.js']
+           'dist/miruken-ng-bundle.js': ['lib/index.js', 'lib/mvc/index.js', 'lib/angular/index.js'],
+           'dist/miruken-tests.js': ['test/**/*.js']
         }
       }
     },
@@ -45,6 +46,12 @@ module.exports = function(grunt) {
             {expand: true, flatten: true, src: ['dist/miruken-ng-bundle.js'], dest: 'demo/mytodo/app/scripts/'}
          ]
       }
+    },
+    karma: {
+        dist: {
+          configFile: 'karma.conf.js',
+          singleRun: true
+        }
     }
   });
 
@@ -56,11 +63,12 @@ module.exports = function(grunt) {
   grunt.loadNpmTasks('grunt-env');
   grunt.loadNpmTasks('grunt-browserify');
   grunt.loadNpmTasks('grunt-contrib-copy');
+  grunt.loadNpmTasks('grunt-karma');
 
   //Making grunt default to force in order not to break the project.
   grunt.option('force', true);
 
   //Test task.
   grunt.registerTask('test', ['concurrent:test']);
-  grunt.registerTask('build', ['browserify:dist','copy:main']);
+  grunt.registerTask('build', ['browserify:dist','copy:main', 'karma:dist']);
 };
