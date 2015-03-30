@@ -39,7 +39,7 @@ new function () { // closure
         talk: function () { return 'Ruff Ruff'; },
         fetch: function (item) { return 'Fetched ' + item; }
     });
-    
+
     var Elephant = Base.extend(CircusAnimal, {
     });
     
@@ -159,17 +159,60 @@ describe("$isFunction", function () {
     });
 });
 
-describe("$property", function () {
-    it("should expand properties", function () {
-        var Person = Base.extend({
-            firstName: {
-                get: function () { return this._name; },
-                set: function (value) { this._name = value.toUpperCase(); } 
-            }
-        }),
-        friend = new Person;
-        friend.firstName = 'Phil';
-        expect(friend.firstName).to.equal('PHIL');
+describe("$synthesizeProperties", function () {
+    var Person = Base.extend($synthesizeProperties, {
+         getFirstName: function () { return this._name; },
+         setFirstName: function (value) { this._name = value; }
+    });
+    
+    it("should synthesize instance properties", function () {
+        var person = new Person;
+        person.firstName = 'Sean';
+        expect(person.firstName).to.equal('Sean');
+        expect(person.getFirstName()).to.equal('Sean');
+    });
+
+    it("should synthesize instance properties when extended", function () {
+        var Doctor = Person.extend({
+                getSpeciality: function () { return this._speciality; },
+                setSpeciality: function (value) { this._speciality = value; }
+            }),
+            Surgeon = Doctor.extend({
+                getHospital: function () { return this._hospital; },
+                setHospital: function (value) { this._hospital = value; }
+            }),
+        doctor  = new Doctor,
+        surgeon = new Surgeon;
+        doctor.speciality = 'Orthopedics';
+        surgeon.hospital  = 'Baylor';
+        expect(doctor.speciality).to.equal('Orthopedics');
+        expect(doctor.getSpeciality()).to.equal('Orthopedics');
+        expect(surgeon.hospital).to.equal('Baylor');
+        expect(surgeon.getHospital()).to.equal('Baylor');
+    });
+
+    it("should synthesize instance properties when implemented", function () {
+        Person.implement({
+            getMother: function () { return this._mother; },
+            setMother: function (value) { this._mother = value; } 
+        });
+        var mom = new Person,
+            son = new Person;
+        son.mother = mom;
+        expect(son.mother).to.equals(mom);
+        expect(son.getMother()).to.equal(mom);
+
+    });
+
+    it("should synthesize properties when extending instances", function () {
+        var person = new Person;
+        person.extend({
+            getAge: function () { return this._age; },
+            setAge: function (value) { this._age = value; }
+        });
+        person.age = 23;
+        expect(person.age).to.equal(23);
+        expect(person.getAge()).to.equal(23);
     });
 });
 
