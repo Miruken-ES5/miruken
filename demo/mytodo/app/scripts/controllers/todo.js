@@ -15,7 +15,7 @@ new function () {
             var _todos = [ 'Item 1', 'Item 2', 'Item 3' ];
             this.extend({
                 getTodos: function () { return _todos; },
-                        addTodo: function (todo) { _todos.push(todo); console.log(this.context)},
+                addTodo: function (todo) { _todos.push(todo); },
                 removeTodoAt: function (index) { _todos.splice(index, 1); }        
             });
         }

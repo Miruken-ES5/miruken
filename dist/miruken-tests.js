@@ -1728,7 +1728,7 @@ new function () { // closure
     /**
      * @class {Expandable}
      */
-    var Expandable = Miruken.extend({}, {
+    var Expandable = Base.extend({}, {
         init: function () {
             var base    = this.extend;
             this.extend = function () {
@@ -2712,7 +2712,7 @@ new function () { // closure
         version: miruken.version,
         parent:  miruken,
         imports: "miruken,miruken.callback",
-        exports: "ContextState,ContextObserver,Context,Contextual,ContextualMixin,ContextualHelper,$defineContextProperty"
+        exports: "ContextState,ContextObserver,Context,Contextual,ContextualMixin,ContextualHelper"
     });
 
     eval(this.imports);
@@ -2912,23 +2912,6 @@ new function () { // closure
             if (object.__context) object.__context.end();
         }
     });
-
-    /**
-     * @function $defineContextProperty
-     * Defines a 'context' property for the target.
-     */
-    function $defineContextProperty(target) {
-        var definition = {};
-        if ($isFunction(target.getContext)) {
-            definition.get = target.getContext;
-        }
-        if ($isFunction(target.setContext)) {
-            definition.set = target.setContext;
-        }
-        if (definition.get || definition.set) {
-            Object.defineProperty(target, 'context', definition);
-        }
-    }
 
     /**
      * ContextualHelper mixin
@@ -4427,7 +4410,7 @@ new function () { // closure
     var miruken = new base2.Package(this, {
         name:    "miruken",
         version: "1.0",
-        exports: "Enum,Protocol,Delegate,Miruken,MetaTransform,Disposing,DisposingMixin,Parenting,Starting,Startup,Interceptor,InterceptorSelector,ProxyBuilder,TraversingAxis,Traversing,TraversingMixin,Traversal,Variance,Modifier,ArrayManager,IndexedList,$isProtocol,$isClass,$classOf,$ancestorOf,$isString,$isFunction,$isObject,$isPromise,$isSomething,$isNothing,$using,$lift,$eq,$use,$copy,$lazy,$eval,$every,$child,$optional,$promise,$instant,$createModifier,$synthesizeProperties,PARAMETERS,INTERCEPTORS,INTERCEPTOR_SELECTORS"
+        exports: "Enum,Protocol,Delegate,Miruken,MetaMacro,Disposing,DisposingMixin,Parenting,Starting,Startup,Interceptor,InterceptorSelector,ProxyBuilder,TraversingAxis,Traversing,TraversingMixin,Traversal,Variance,Modifier,ArrayManager,IndexedList,$isProtocol,$isClass,$classOf,$ancestorOf,$isString,$isFunction,$isObject,$isPromise,$isSomething,$isNothing,$using,$lift,$eq,$use,$copy,$lazy,$eval,$every,$child,$optional,$promise,$instant,$createModifier,$inferProperties,$synthesizeProperties,PARAMETERS,INTERCEPTORS,INTERCEPTOR_SELECTORS"
     });
 
     eval(this.imports);
@@ -4502,11 +4485,12 @@ new function () { // closure
     });
 
     /**
-     * @class {MetaTransform}
+     * @class {MetaMacro}
      */
-    var MetaTransform = Base.extend({
-        shouldInherit: function () { return true; },
-        transform: function(target, definition) {}
+    var MetaMacro = Base.extend({
+        isActive: function () { return false; },
+        shouldInherit: function () { return false; },
+        apply: function(target, definition) {}
     }, {
         coerce: function () {
             return this.new.apply(this, arguments);
@@ -4575,10 +4559,10 @@ new function () { // closure
                         }
                     };
                 return (function (base, args) {
-                    var protocols      = [],
-                        mixins         = [],
-                        metaTransforms = [],
-                        constraints    = args;
+                    var protocols   = [],
+                        mixins      = [],
+                        metaMacros  = [],
+                        constraints = args;
                     if (base.prototype instanceof Protocol) {
                         protocols.push(base);
                     }
@@ -4591,11 +4575,11 @@ new function () { // closure
                             break;
                         } else if (constraint.prototype instanceof Protocol) {
                             protocols.push(constraint);
-                        } else if (constraint instanceof MetaTransform) {
-                            metaTransforms.push(constraint);
+                        } else if (constraint instanceof MetaMacro) {
+                            metaMacros.push(constraint);
                         } else if ($isFunction(constraint) 
-                               &&  constraint.prototype instanceof MetaTransform) {
-                            metaTransforms.push(new constraint);
+                               &&  constraint.prototype instanceof MetaMacro) {
+                            metaMacros.push(new constraint);
                         } else if (constraint.prototype) {
                             mixins.push(constraint);
                         } else {
@@ -4611,40 +4595,7 @@ new function () { // closure
                     subclass.getProtocols    = getProtocols;
                     subclass.getAllProtocols = getAllProtocols;
                     subclass.conformsTo      = _conformsTo.bind(subclass, _protocols);
-                    Array2.invoke(metaTransforms, 'transform', subclass.prototype, instanceDef);
-                    if (metaTransforms.length > 0) {
-                        subclass.implement({
-                            extend: function (key, value) {
-                                var instanceDef = (arguments.length === 1) ? key : {};
-                                if (arguments.length >= 2) {
-                                    instanceDef[key] = value;
-                                }                                
-                                var instance = this.base(instanceDef);
-                                Array2.invoke(metaTransforms, 'transform', instance, instanceDef);
-                                return instance;
-                            }
-                        });
-                        var subclassImplement = subclass.implement;
-                        subclass.implement = function (source) {
-                            if ($isFunction(source)) {
-                                source = source.prototype; 
-                            }
-                            var implemented = subclassImplement.call(subclass, source);
-                            Array2.invoke(metaTransforms, 'transform', implemented.prototype, source);
-                            return implemented;
-                        };
-                        var inheritedTransforms = Array2.filter(metaTransforms, function (transform) {
-                            return transform.shouldInherit();
-                        });
-                        if (inheritedTransforms.length > 0) {
-                            var subclassExtend = subclass.extend;
-                            subclass.extend = function () {
-                                var args = Array.prototype.slice.call(arguments);
-                                args.unshift.apply(args, inheritedTransforms);
-                                return subclassExtend.apply(subclass, args);
-                            }
-                        }
-                    }
+                    _applyMetaMacros(subclass, metaMacros, instanceDef);
                     Array2.forEach(mixins, subclass.implement, subclass);
                     return subclass;
                 })(this, Array.prototype.slice.call(arguments));
@@ -4687,6 +4638,53 @@ new function () { // closure
         },
         coerce: function (object, strict) { return new this(object, strict); }
     });
+    
+    function _applyMetaMacros(subclass, metaMacros, instanceDef) {
+        var active, inherit;
+        if (metaMacros.length == 0) {
+            return;
+        }
+        for (var i = 0; i < metaMacros.length; ++i) {
+            var metaMacro = metaMacros[i];
+            if (metaMacro.isActive()) {
+                (active || (active = [])).push(metaMacro);
+            }
+            if (metaMacro.shouldInherit()) {
+                (inherit || (inherit = [])).push(metaMacro);
+            }
+            metaMacro.apply(subclass.prototype, instanceDef);
+        }
+        if (active) {
+            subclass.implement({
+                extend: function (key, value) {
+                    var instanceDef = (arguments.length === 1) ? key : {};
+                    if (arguments.length >= 2) {
+                        instanceDef[key] = value;
+                    }                                
+                    var instance = this.base(instanceDef);
+                    Array2.invoke(active, 'apply', instance, instanceDef);
+                    return instance;
+                }
+            });
+            var implement = subclass.implement;
+            subclass.implement = function (source) {
+                if ($isFunction(source)) {
+                    source = source.prototype; 
+                }
+                var implemented = implement.call(subclass, source);
+                Array2.invoke(active, 'apply', implemented.prototype, source);
+                return implemented;
+            };
+        }
+        if (inherit) {
+            var extend = Base.extend;
+            subclass.extend = function () {
+                var args = Array.prototype.slice.call(arguments);
+                args.unshift.apply(args, inherit);
+                return extend.apply(subclass, args);
+            }
+        }
+    }
 
     function _conformsTo(protocols, protocol) {
         if (!(protocol && (protocol.prototype instanceof Protocol))) {
@@ -4707,19 +4705,21 @@ new function () { // closure
     };
 
     /**
-     * @class {$synthesizeProperties}
+     * @class {$inferProperties}
      */
-    var $synthesizeProperties = MetaTransform.extend({
+    var $inferProperties = MetaMacro.extend({
         constructor: function () {
             this.extend({
-                transform: function(target, definition) {
-                    _synthesizeProperties(target, definition);
+                apply: function(target, definition) {
+                    _inferProperties(target, definition);
                 }
             });
-        }
+        },
+        shouldInherit: function () { return true; },
+        isActive: function () { return true; }
     });
 
-    function _synthesizeProperties(target, definition) {
+    function _inferProperties(target, definition) {
         if ($isNothing(definition)) {
             return;
         }
@@ -4758,11 +4758,79 @@ new function () { // closure
         return property;
     }
 
+
+    /**
+     * @class {$synthesizeProperties}
+     */
+    var $synthesizeProperties = MetaMacro.extend({
+        constructor: function (/*properties*/) {
+            var _properties = Array.prototype.slice.call(arguments);
+            this.extend({
+                apply: function(target, definition) {
+                    _synthesizeProperties(target, _properties);
+                }
+            });
+        }
+    });
+
+    function _synthesizeProperties(target, properties) {
+        for (var i = 0; i < properties.length; ++i) {
+            var property = properties[i];
+            if ($isString(property)) {
+                var uname = property.charAt(0).toUpperCase() + property.slice(1);
+                _synthesizeProperty(target, property, null, 'get' + uname, 'set' + uname);
+            } else {
+                for (name in property) {
+                    var prop  = property[name],
+                        field = prop.field,
+                        uname = name.charAt(0).toUpperCase() + name.slice(1),
+                        get   = ('get' in prop) ? prop.get : 'get' + uname,
+                        set   = ('set' in prop) ? prop.get : 'set' + uname;
+                    if (!(set && get) && !field) {
+                        field = ('_' + name)
+                    }
+                    _synthesizeProperty(target, name, field, get, set);
+                }
+            }
+        }
+    }
+
+    function _synthesizeProperty(target, name, field, get, set) {
+        if ((name in target) || !(get || set) || 
+            (get && (get in target)) || (set && (set in target))) {
+            return;
+        }
+        (function (backend) {
+            var getter, setter, methods = {};
+            if (get) {
+                getter = field
+                       ? function () { return this[field]; }
+                       : function () { return backend; };
+                methods[get] = getter;
+            }
+            if (set) {
+                setter = field
+                       ? function (value) { this[field] = value; }
+                       : function (value) { backend = value; };
+                methods[set] = setter;
+            }
+            target.extend(methods);  // could activate $inferProperties
+            if (!(name in target)) {
+                Object.defineProperty(target, name, {
+                    get: getter, 
+                    set: setter,
+                    enumerable: true 
+                });
+            }
+        })();
+    }
+
     /**
      * @class {Miruken}
      * Base class to prefer coercion over casting.
      */
-    var Miruken = Base.extend(null, {
+    var Miruken = Base.extend(
+        $inferProperties, null, {
         coerce: function () {
             return this.new.apply(this, arguments);
         }
@@ -21224,39 +21292,54 @@ describe("$isFunction", function () {
     });
 });
 
-describe("$synthesizeProperties", function () {
-    var Person = Base.extend($synthesizeProperties, {
-         getFirstName: function () { return this._name; },
-         setFirstName: function (value) { this._name = value; }
+describe("$inferProperties", function () {
+    var Person = Base.extend( 
+        $inferProperties, {
+        constructor: function (firstName) {
+            this.firstName = firstName;
+        },
+        getFirstName: function () { return this._name; },
+        setFirstName: function (value) { this._name = value; }
     });
     
-    it("should synthesize instance properties", function () {
-        var person = new Person;
-        person.firstName = 'Sean';
+    it("should infer instance properties", function () {
+        var person = new Person('Sean');
         expect(person.firstName).to.equal('Sean');
         expect(person.getFirstName()).to.equal('Sean');
     });
 
-    it("should synthesize instance properties when extended", function () {
+    it("should infer extended properties", function () {
         var Doctor = Person.extend({
+                constructor: function (firstName, speciality) {
+                    this.base(firstName);
+                    this.speciality = speciality;
+                },
                 getSpeciality: function () { return this._speciality; },
                 setSpeciality: function (value) { this._speciality = value; }
             }),
             Surgeon = Doctor.extend({
+                constructor: function (firstName, speciality, hospital) {
+                    this.base(firstName, speciality);
+                    this.hospital = hospital;
+                },
                 getHospital: function () { return this._hospital; },
                 setHospital: function (value) { this._hospital = value; }
             }),
-        doctor  = new Doctor,
-        surgeon = new Surgeon;
-        doctor.speciality = 'Orthopedics';
-        surgeon.hospital  = 'Baylor';
+            doctor  = new Doctor('Frank', 'Orthopedics'),
+            surgeon = new Surgeon('Brenda', 'Cardiac', 'Baylor');
+        expect(doctor.firstName).to.equal('Frank');
+        expect(doctor.getFirstName()).to.equal('Frank');
         expect(doctor.speciality).to.equal('Orthopedics');
         expect(doctor.getSpeciality()).to.equal('Orthopedics');
+        expect(surgeon.firstName).to.equal('Brenda');
+        expect(surgeon.getFirstName()).to.equal('Brenda');
+        expect(surgeon.speciality).to.equal('Cardiac');
+        expect(surgeon.getSpeciality()).to.equal('Cardiac');
         expect(surgeon.hospital).to.equal('Baylor');
         expect(surgeon.getHospital()).to.equal('Baylor');
     });
 
-    it("should synthesize instance properties when implemented", function () {
+    it("should infer implemented properties", function () {
         Person.implement({
             getMother: function () { return this._mother; },
             setMother: function (value) { this._mother = value; } 
@@ -21269,7 +21352,7 @@ describe("$synthesizeProperties", function () {
 
     });
 
-    it("should synthesize properties when extending instances", function () {
+    it("should infer extended instance properties", function () {
         var person = new Person;
         person.extend({
             getAge: function () { return this._age; },
@@ -21278,6 +21361,56 @@ describe("$synthesizeProperties", function () {
         person.age = 23;
         expect(person.age).to.equal(23);
         expect(person.getAge()).to.equal(23);
+    });
+});
+
+describe("$synthesizeProperties", function () {
+    var Person = Base.extend(
+        $synthesizeProperties('firstName', {
+            age:      { field: '__age' },
+            gender:   { set: undefined },
+            password: { get: undefined }
+        })
+    );
+    
+    it("should synthesize instance properties", function () {
+        var person       = new Person;
+        person.firstName = 'John';
+        expect(person.firstName).to.equal('John');
+        expect(person.getFirstName()).to.equal('John');
+        expect(person).to.not.have.ownProperty('_firstName');
+        person.setFirstName('Sarah');
+        expect(person.firstName).to.equal('Sarah');
+        expect(person.getFirstName()).to.equal('Sarah');
+    });
+
+    it("should synthesize custom instance properties", function () {
+        var person = new Person;
+        person.age = 18;
+        expect(person.age).to.equal(18);
+        expect(person.getAge()).to.equal(18);
+        expect(person.__age).to.equal(18);
+        person.setAge(45);
+        expect(person.age).to.equal(45);
+        expect(person.getAge()).to.equal(45);
+        expect(person.__age).to.equal(45);
+    });
+
+    it("should synthesize readonly instance properties", function () {
+        var person    = new Person;
+        person._gender = 'male';
+        expect(person.gender).to.equal('male');
+        expect(person.getGender()).to.equal('male');
+        expect(person._gender).to.equal('male');
+        expect(person.setGender).to.be.undefined;
+    });
+
+    it("should synthesize writeonly instance properties", function () {
+        var person      = new Person;
+        person.password = '%@ks1224';
+        expect(person.password).to.be.undefined;
+        expect(person._password).to.equal('%@ks1224');
+        expect(person.getPassword).to.be.undefined;
     });
 });
 

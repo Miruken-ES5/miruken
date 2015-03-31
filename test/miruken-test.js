@@ -122,6 +122,16 @@ describe("Miruken", function () {
         expect(global.Miruken).to.equal(base2.miruken.Miruken);
     });
 
+    it("should pass arguments to base", function () {
+        var Something = Miruken.extend({
+            constructor: function () {
+                this.base({name: 'Larry'});
+            }
+        }),
+        something = new Something;
+        expect(something.name).to.equal('Larry');
+    });
+
     it("should perform coercion by default", function () {
         var Pet = Miruken.extend({
                 constructor: function (name) {
@@ -159,39 +169,54 @@ describe("$isFunction", function () {
     });
 });
 
-describe("$synthesizeProperties", function () {
-    var Person = Base.extend($synthesizeProperties, {
-         getFirstName: function () { return this._name; },
-         setFirstName: function (value) { this._name = value; }
+describe("$inferProperties", function () {
+    var Person = Base.extend( 
+        $inferProperties, {
+        constructor: function (firstName) {
+            this.firstName = firstName;
+        },
+        getFirstName: function () { return this._name; },
+        setFirstName: function (value) { this._name = value; }
     });
     
-    it("should synthesize instance properties", function () {
-        var person = new Person;
-        person.firstName = 'Sean';
+    it("should infer instance properties", function () {
+        var person = new Person('Sean');
         expect(person.firstName).to.equal('Sean');
         expect(person.getFirstName()).to.equal('Sean');
     });
 
-    it("should synthesize instance properties when extended", function () {
+    it("should infer extended properties", function () {
         var Doctor = Person.extend({
+                constructor: function (firstName, speciality) {
+                    this.base(firstName);
+                    this.speciality = speciality;
+                },
                 getSpeciality: function () { return this._speciality; },
                 setSpeciality: function (value) { this._speciality = value; }
             }),
             Surgeon = Doctor.extend({
+                constructor: function (firstName, speciality, hospital) {
+                    this.base(firstName, speciality);
+                    this.hospital = hospital;
+                },
                 getHospital: function () { return this._hospital; },
                 setHospital: function (value) { this._hospital = value; }
             }),
-        doctor  = new Doctor,
-        surgeon = new Surgeon;
-        doctor.speciality = 'Orthopedics';
-        surgeon.hospital  = 'Baylor';
+            doctor  = new Doctor('Frank', 'Orthopedics'),
+            surgeon = new Surgeon('Brenda', 'Cardiac', 'Baylor');
+        expect(doctor.firstName).to.equal('Frank');
+        expect(doctor.getFirstName()).to.equal('Frank');
         expect(doctor.speciality).to.equal('Orthopedics');
         expect(doctor.getSpeciality()).to.equal('Orthopedics');
+        expect(surgeon.firstName).to.equal('Brenda');
+        expect(surgeon.getFirstName()).to.equal('Brenda');
+        expect(surgeon.speciality).to.equal('Cardiac');
+        expect(surgeon.getSpeciality()).to.equal('Cardiac');
         expect(surgeon.hospital).to.equal('Baylor');
         expect(surgeon.getHospital()).to.equal('Baylor');
     });
 
-    it("should synthesize instance properties when implemented", function () {
+    it("should infer implemented properties", function () {
         Person.implement({
             getMother: function () { return this._mother; },
             setMother: function (value) { this._mother = value; } 
@@ -204,7 +229,7 @@ describe("$synthesizeProperties", function () {
 
     });
 
-    it("should synthesize properties when extending instances", function () {
+    it("should infer extended instance properties", function () {
         var person = new Person;
         person.extend({
             getAge: function () { return this._age; },
@@ -213,6 +238,56 @@ describe("$synthesizeProperties", function () {
         person.age = 23;
         expect(person.age).to.equal(23);
         expect(person.getAge()).to.equal(23);
+    });
+});
+
+describe("$synthesizeProperties", function () {
+    var Person = Base.extend(
+        $synthesizeProperties('firstName', {
+            age:      { field: '__age' },
+            gender:   { set: undefined },
+            password: { get: undefined }
+        })
+    );
+    
+    it("should synthesize instance properties", function () {
+        var person       = new Person;
+        person.firstName = 'John';
+        expect(person.firstName).to.equal('John');
+        expect(person.getFirstName()).to.equal('John');
+        expect(person).to.not.have.ownProperty('_firstName');
+        person.setFirstName('Sarah');
+        expect(person.firstName).to.equal('Sarah');
+        expect(person.getFirstName()).to.equal('Sarah');
+    });
+
+    it("should synthesize custom instance properties", function () {
+        var person = new Person;
+        person.age = 18;
+        expect(person.age).to.equal(18);
+        expect(person.getAge()).to.equal(18);
+        expect(person.__age).to.equal(18);
+        person.setAge(45);
+        expect(person.age).to.equal(45);
+        expect(person.getAge()).to.equal(45);
+        expect(person.__age).to.equal(45);
+    });
+
+    it("should synthesize readonly instance properties", function () {
+        var person    = new Person;
+        person._gender = 'male';
+        expect(person.gender).to.equal('male');
+        expect(person.getGender()).to.equal('male');
+        expect(person._gender).to.equal('male');
+        expect(person.setGender).to.be.undefined;
+    });
+
+    it("should synthesize writeonly instance properties", function () {
+        var person      = new Person;
+        person.password = '%@ks1224';
+        expect(person.password).to.be.undefined;
+        expect(person._password).to.equal('%@ks1224');
+        expect(person.getPassword).to.be.undefined;
     });
 });
 
