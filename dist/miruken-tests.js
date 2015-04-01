@@ -4490,7 +4490,7 @@ new function () { // closure
     var MetaMacro = Base.extend({
         isActive: function () { return false; },
         shouldInherit: function () { return false; },
-        apply: function(target, definition) {}
+        apply: function(clazz, target, definition) {}
     }, {
         coerce: function () {
             return this.new.apply(this, arguments);
@@ -4523,110 +4523,6 @@ new function () { // closure
             });
         }
     }, {
-        init: function () {
-            var extend  = Base.extend;
-            Base.extend = function () {
-                var _protocols      = [],
-                    isProtocol      = (this === Protocol) || (this.prototype instanceof Protocol),
-                    getProtocols    = function () { return _protocols.slice(0); },
-                    getAllProtocols = function () {
-                        var protocols = this.getProtocols(),
-                            inner     = protocols.slice(0);
-                        if (!isProtocol) {
-                            var ancestor = $ancestorOf(this);
-                            if (ancestor !== Base) {
-                                inner.push(ancestor);
-                            }
-                        }
-                        for (var i = 0; i < inner.length; ++i) {
-                            var innerProtocols = inner[i].getAllProtocols();
-                            for (var ii = 0; ii < innerProtocols.length; ++ii) {
-                                var protocol = innerProtocols[ii];
-                                if (protocols.indexOf(protocol) < 0) {
-                                    protocols.push(protocol);
-                                }
-                            } 
-                        }
-                        return protocols;
-                    },
-                    addProtocol  = function (protocol) {
-                        if ((protocol.prototype instanceof Protocol) 
-                        &&  (_protocols.indexOf(protocol) === -1)) {
-                            if (isProtocol) {
-                                _liftMethods.call(this.prototype, protocol);
-                            }
-                            _protocols.push(protocol);
-                        }
-                    };
-                return (function (base, args) {
-                    var protocols   = [],
-                        mixins      = [],
-                        metaMacros  = [],
-                        constraints = args;
-                    if (base.prototype instanceof Protocol) {
-                        protocols.push(base);
-                    }
-                    if (args.length > 0 && (args[0] instanceof Array)) {
-                        constraints = args.shift();
-                    }
-                    while (constraints.length > 0) {
-                        var constraint = constraints[0];
-                        if (!constraint) {
-                            break;
-                        } else if (constraint.prototype instanceof Protocol) {
-                            protocols.push(constraint);
-                        } else if (constraint instanceof MetaMacro) {
-                            metaMacros.push(constraint);
-                        } else if ($isFunction(constraint) 
-                               &&  constraint.prototype instanceof MetaMacro) {
-                            metaMacros.push(new constraint);
-                        } else if (constraint.prototype) {
-                            mixins.push(constraint);
-                        } else {
-                            break;
-                        }
-                        constraints.shift();
-                    }
-                    var instanceDef = args.shift(),
-                        staticDef   = args.shift(),
-                        subclass    = extend.call(base, instanceDef, staticDef);
-                    Array2.forEach(protocols, addProtocol, subclass);
-                    subclass.addProtocol     = addProtocol;
-                    subclass.getProtocols    = getProtocols;
-                    subclass.getAllProtocols = getAllProtocols;
-                    subclass.conformsTo      = _conformsTo.bind(subclass, _protocols);
-                    _applyMetaMacros(subclass, metaMacros, instanceDef);
-                    Array2.forEach(mixins, subclass.implement, subclass);
-                    return subclass;
-                })(this, Array.prototype.slice.call(arguments));
-            };
-
-            Base.prototype.conformsTo = function (protocol) {
-                return $classOf(this).conformsTo(protocol);
-            };
-
-            // Proxying methods
-            this.extend = function () {
-                var derived = Base.extend.apply(this, arguments);
-                for (var key in derived.prototype) {
-                    if (!(key in Base.prototype)) {
-                        var member = derived.prototype[key];
-                        if ($isFunction(member)) {
-                            (function (methodName) {
-                                var proxiedMethod = {};
-                                proxiedMethod[methodName] = function () {
-                                    var args = Array.prototype.slice.call(arguments);
-                                    return this.delegate(methodName, args);
-                                }
-                                derived.implement(proxiedMethod);
-                            })(key);
-                        }
-                    }
-                }
-                derived.adoptedBy = Protocol.adoptedBy;
-                return derived;
-            };
-        },
         isProtocol: function (target) {
             return target && (target.prototype instanceof Protocol);
         },
@@ -4638,53 +4534,85 @@ new function () { // closure
         },
         coerce: function (object, strict) { return new this(object, strict); }
     });
-    
-    function _applyMetaMacros(subclass, metaMacros, instanceDef) {
-        var active, inherit;
-        if (metaMacros.length == 0) {
-            return;
-        }
-        for (var i = 0; i < metaMacros.length; ++i) {
-            var metaMacro = metaMacros[i];
-            if (metaMacro.isActive()) {
-                (active || (active = [])).push(metaMacro);
-            }
-            if (metaMacro.shouldInherit()) {
-                (inherit || (inherit = [])).push(metaMacro);
-            }
-            metaMacro.apply(subclass.prototype, instanceDef);
-        }
-        if (active) {
-            subclass.implement({
-                extend: function (key, value) {
-                    var instanceDef = (arguments.length === 1) ? key : {};
-                    if (arguments.length >= 2) {
-                        instanceDef[key] = value;
-                    }                                
-                    var instance = this.base(instanceDef);
-                    Array2.invoke(active, 'apply', instance, instanceDef);
-                    return instance;
+
+    var extend  = Base.extend;
+    Base.extend = function () {
+        var _protocols      = [],
+            isProtocol      = (this === Protocol) || (this.prototype instanceof Protocol),
+            getProtocols    = function () { return _protocols.slice(0); },
+            getAllProtocols = function () {
+                var protocols = this.getProtocols(),
+                    inner     = protocols.slice(0);
+                if (!isProtocol) {
+                    var ancestor = $ancestorOf(this);
+                    if (ancestor !== Base) {
+                        inner.push(ancestor);
+                    }
                 }
-            });
-            var implement = subclass.implement;
-            subclass.implement = function (source) {
-                if ($isFunction(source)) {
-                    source = source.prototype; 
+                for (var i = 0; i < inner.length; ++i) {
+                    var innerProtocols = inner[i].getAllProtocols();
+                    for (var ii = 0; ii < innerProtocols.length; ++ii) {
+                        var protocol = innerProtocols[ii];
+                        if (protocols.indexOf(protocol) < 0) {
+                            protocols.push(protocol);
+                        }
+                    } 
                 }
-                var implemented = implement.call(subclass, source);
-                Array2.invoke(active, 'apply', implemented.prototype, source);
-                return implemented;
+                return protocols;
+            },
+            addProtocol  = function (protocol) {
+                if ((protocol.prototype instanceof Protocol) 
+                    &&  (_protocols.indexOf(protocol) === -1)) {
+                    if (isProtocol) {
+                        _liftMethods.call(this.prototype, protocol);
+                    }
+                    _protocols.push(protocol);
+                }
             };
-        }
-        if (inherit) {
-            var extend = Base.extend;
-            subclass.extend = function () {
-                var args = Array.prototype.slice.call(arguments);
-                args.unshift.apply(args, inherit);
-                return extend.apply(subclass, args);
+        return (function (base, args) {
+            var protocols  = [], mixins      = [],
+                metaMacros = [], constraints = args;
+            if (base.prototype instanceof Protocol) {
+                protocols.push(base);
             }
-        }
-    }
+            if (args.length > 0 && (args[0] instanceof Array)) {
+                constraints = args.shift();
+            }
+            while (constraints.length > 0) {
+                var constraint = constraints[0];
+                if (!constraint) {
+                    break;
+                } else if (constraint.prototype instanceof Protocol) {
+                    protocols.push(constraint);
+                } else if (constraint instanceof MetaMacro) {
+                    metaMacros.push(constraint);
+                } else if ($isFunction(constraint) 
+                           &&  constraint.prototype instanceof MetaMacro) {
+                    metaMacros.push(new constraint);
+                } else if (constraint.prototype) {
+                    mixins.push(constraint);
+                } else {
+                    break;
+                }
+                constraints.shift();
+            }
+            var instanceDef = args.shift(),
+                staticDef   = args.shift(),
+                subclass    = extend.call(base, instanceDef, staticDef);
+            Array2.forEach(protocols, addProtocol, subclass);
+            subclass.addProtocol     = addProtocol;
+            subclass.getProtocols    = getProtocols;
+            subclass.getAllProtocols = getAllProtocols;
+            subclass.conformsTo      = _conformsTo.bind(subclass, _protocols);
+            _applyMetaMacros(subclass, metaMacros, instanceDef);
+            Array2.forEach(mixins, subclass.implement, subclass);
+            return subclass;
+            })(this, Array.prototype.slice.call(arguments));
+    };
+    
+    Base.prototype.conformsTo = function (protocol) {
+        return $classOf(this).conformsTo(protocol);
+    };
 
     function _conformsTo(protocols, protocol) {
         if (!(protocol && (protocol.prototype instanceof Protocol))) {
@@ -4703,17 +4631,100 @@ new function () { // closure
             ? ancestor.conformsTo(protocol)
             : false;
     };
+    
+    /**
+     * @function _applyMetaMacros
+     * Applies any meta-macros to the class definition.
+     * @param    {Class}  clazz       - clazz
+     * @param    {Array}  metaMacros  - meta macros
+     * @param    {Object} instanceDef - instance definition
+     */
+    function _applyMetaMacros(clazz, metaMacros, instanceDef) {
+        var active, inherit;
+        if (metaMacros.length == 0) {
+            return;
+        }
+        for (var i = 0; i < metaMacros.length; ++i) {
+            var metaMacro = metaMacros[i];
+            if (metaMacro.isActive()) {
+                (active || (active = [])).push(metaMacro);
+            }
+            if (metaMacro.shouldInherit()) {
+                (inherit || (inherit = [])).push(metaMacro);
+            }
+            metaMacro.apply(clazz, clazz.prototype, instanceDef);
+        }
+        if (active) {
+            clazz.implement({
+                extend: function (key, value) {
+                    var instanceDef = (arguments.length === 1) ? key : {};
+                    if (arguments.length >= 2) {
+                        instanceDef[key] = value;
+                    }                                
+                    var instance = this.base(instanceDef);
+                    Array2.invoke(active, 'apply', clazz, instance, instanceDef);
+                    return instance;
+                }
+            });
+            var implement = Base.implement;
+            clazz.implement = function (source) {
+                if ($isFunction(source)) {
+                    source = source.prototype; 
+                }
+                var implemented = implement.call(clazz, source);
+                if (!clazz.__implementing) {
+                    clazz.__implementing = true;
+                    Array2.invoke(active, 'apply', clazz, implemented.prototype, source);
+                    delete clazz.__implementing;
+                }
+                return implemented;
+            };
+        }
+        if (inherit) {
+            var extend = Base.extend;
+            clazz.extend = function () {
+                var args = Array.prototype.slice.call(arguments);
+                args.unshift.apply(args, inherit);
+                return extend.apply(clazz, args);
+            }
+        }
+    }
+
+    /**
+     * @class {$proxyProtocol}
+     * Metamacro to proxy protocol methods through delegate.
+     */
+    var $proxyProtocol = MetaMacro.extend({
+        apply: function(clazz, target, definition) {
+            for (var key in definition) {
+                if (key === 'delegate' || (key in Base.prototype)) {
+                    continue;
+                }
+                var member = target[key];
+                if ($isFunction(member)) {
+                    (function (methodName) {
+                        target[methodName] = function () {
+                            var args = Array.prototype.slice.call(arguments);
+                            return this.delegate(methodName, args);
+                        }
+                    })(key);
+                }
+            }
+            clazz.adoptedBy = Protocol.adoptedBy;
+        },
+        shouldInherit: function () { return true; },
+        isActive: function () { return true; }
+    });
+
+    _applyMetaMacros(Protocol, [new $proxyProtocol], {});
 
     /**
      * @class {$inferProperties}
+     * Metamacro to derive properties from existng methods.
      */
     var $inferProperties = MetaMacro.extend({
-        constructor: function () {
-            this.extend({
-                apply: function(target, definition) {
-                    _inferProperties(target, definition);
-                }
-            });
+        apply: function(clazz, target, definition) {
+            _inferProperties(target, definition);
         },
         shouldInherit: function () { return true; },
         isActive: function () { return true; }
@@ -4761,12 +4772,13 @@ new function () { // closure
 
     /**
      * @class {$synthesizeProperties}
+     * Metamacro to create properties with getters and setters.
      */
     var $synthesizeProperties = MetaMacro.extend({
         constructor: function (/*properties*/) {
             var _properties = Array.prototype.slice.call(arguments);
             this.extend({
-                apply: function(target, definition) {
+                apply: function(clazz, target, definition) {
                     _synthesizeProperties(target, _properties);
                 }
             });
@@ -4800,18 +4812,18 @@ new function () { // closure
             (get && (get in target)) || (set && (set in target))) {
             return;
         }
-        (function (backend) {
+        (function (backing) {
             var getter, setter, methods = {};
             if (get) {
                 getter = field
                        ? function () { return this[field]; }
-                       : function () { return backend; };
+                       : function () { return backing; };
                 methods[get] = getter;
             }
             if (set) {
                 setter = field
                        ? function (value) { this[field] = value; }
-                       : function (value) { backend = value; };
+                       : function (value) { backing = value; };
                 methods[set] = setter;
             }
             target.extend(methods);  // could activate $inferProperties
@@ -4830,7 +4842,11 @@ new function () { // closure
      * Base class to prefer coercion over casting.
      */
     var Miruken = Base.extend(
-        $inferProperties, null, {
+        $inferProperties, {
+        constructor: function () {
+            this.base.apply(this, arguments);
+        }
+    }, {
         coerce: function () {
             return this.new.apply(this, arguments);
         }
@@ -21253,6 +21269,16 @@ describe("Enum", function () {
 describe("Miruken", function () {
     it("should be in global namespace", function () {
         expect(global.Miruken).to.equal(base2.miruken.Miruken);
+    });
+
+    it("should pass arguments to base", function () {
+        var Something = Miruken.extend({
+            constructor: function () {
+                this.base({name: 'Larry'});
+            }
+        }),
+        something = new Something;
+        expect(something.name).to.equal('Larry');
     });
 
     it("should perform coercion by default", function () {

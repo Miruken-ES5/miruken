@@ -38,6 +38,12 @@ module.exports = function(grunt) {
            'dist/miruken-ng-bundle.js': ['lib/index.js', 'lib/mvc/index.js', 'lib/angular/index.js'],
            'dist/miruken-tests.js':     ['test/**/*.js']
         }
+      },
+      dev: {
+        files: {
+           'dist/miruken-bundle.js':    ['lib/index.js'],
+           'dist/miruken-tests.js':     ['test/**/*.js']
+        }
       }
     },
     copy: {
@@ -51,6 +57,13 @@ module.exports = function(grunt) {
         dist: {
           configFile: 'karma.conf.js',
           singleRun: true
+        },
+        dev: {
+          configFile: 'karma.conf.js',
+          options: {
+              files: ['dist/miruken-tests.js']
+          },
+          singleRun: false
         }
     }
   });
@@ -71,4 +84,5 @@ module.exports = function(grunt) {
   //Test task.
   grunt.registerTask('test', ['concurrent:test']);
   grunt.registerTask('build', ['browserify:dist','copy:main', 'karma:dist']);
+  grunt.registerTask('dev', ['browserify:dev','karma:dev']);
 };

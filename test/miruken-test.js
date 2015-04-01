@@ -450,6 +450,22 @@ describe("Protocol", function () {
         });
     });
 
+    describe("#implement", function () {
+        it("should extend protocol", function () {
+            Animal.implement({
+               reproduce: function () {}
+            }),
+            dog = new Dog;
+            expect(Animal(dog).reproduce()).to.be.undefined;
+            dog.extend({
+                reproduce: function () {
+                    return new Dog('Hazel');
+                }
+            });
+            expect(Animal(dog).reproduce().getName()).to.equal('Hazel');
+        });
+    });
+
     describe("#conformsTo", function () {
         it("should conform to protocols by class", function () {
             expect(Dog.conformsTo()).to.be.false;
