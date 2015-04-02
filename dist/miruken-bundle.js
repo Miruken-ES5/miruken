@@ -1731,7 +1731,7 @@ new function () { // closure
     var InternalCallback = Protocol.extend();
 
     /**
-     * @function $expand
+     * @class $expand
      * Metamacro to expand registered definitions.
      */
     var $expand = MetaMacro.extend({
@@ -2874,6 +2874,17 @@ new function () { // closure
          * @param   {Context} context  - associated context
          */
         setContext: function (context) {}
+    });
+
+    /**
+     * @class {$contextual}
+     * Metamacro to implement Contextual protocol.
+     */
+    var $contextual = MetaMacro.extend({
+        apply: function(clazz, target) {
+            clazz.addProtocol(Contextual);
+            _synthesizeProperty(target, 'context', null, 'getContext', 'setContext');
+        }
     });
 
     /**
@@ -4524,7 +4535,9 @@ new function () { // closure
                  ? target.conformsTo(this)
                  : false;
         },
-        coerce: function (object, strict) { return new this(object, strict); }
+        coerce: function (object, strict) {
+            return new this(object, strict);
+        }
     });
 
     var extend  = Base.extend;
@@ -4667,7 +4680,7 @@ new function () { // closure
                 inherit    = clazz !== source;
             for (var i = 0; i < metaMacros.length; ++i) {
                 var metaMacro = metaMacros[i];
-                if ((!active  || metaMacro.isActive()) ||
+                if ((!active  || metaMacro.isActive()) &&
                     (!inherit || metaMacro.shouldInherit())) {
                     metaMacro.apply(clazz, instance, instanceDef);
                 }
@@ -4775,27 +4788,29 @@ new function () { // closure
             var property = properties[i];
             if ($isString(property)) {
                 var uname = property.charAt(0).toUpperCase() + property.slice(1);
-                _synthesizeProperty(target, property, null, 'get' + uname, 'set' + uname);
+                _synthesizeProperty(target, property, null);
             } else {
                 for (name in property) {
                     var prop  = property[name],
                         field = prop.field,
-                        uname = name.charAt(0).toUpperCase() + name.slice(1),
-                        get   = ('get' in prop) ? prop.get : 'get' + uname,
-                        set   = ('set' in prop) ? prop.get : 'set' + uname;
-                    if (!(set && get) && !field) {
-                        field = ('_' + name)
-                    }
-                    _synthesizeProperty(target, name, field, get, set);
+                        get   = prop.nogetter ? Undefined : prop.get,
+                        set   = prop.nosetter ? Undefined : prop.set;
+                    _synthesizeProperty(target, name, field, prop.get, prop.set);
                 }
             }
         }
     }
 
     function _synthesizeProperty(target, name, field, get, set) {
-        if ((name in target) || !(get || set) || 
+        var uname = name.charAt(0).toUpperCase() + name.slice(1);
+        get = (get === Undefined) ? null : (get || 'get' + uname);
+        set = (set === Undefined) ? null : (set || 'set' + uname);
+        if (!(get || set) || (name in target) || 
             (get && (get in target)) || (set && (set in target))) {
             return;
+        }
+        if (!(set && get) && !field) {
+            field = ('_' + name);
         }
         (function (backing) {
             var getter, setter, methods = {};
@@ -4811,7 +4826,7 @@ new function () { // closure
                        : function (value) { backing = value; };
                 methods[set] = setter;
             }
-            target.extend(methods);  // could activate $inferProperties
+            target.extend(methods);  // could trigger $inferProperties
             if (!(name in target)) {
                 Object.defineProperty(target, name, {
                     get: getter, 
@@ -4840,13 +4855,10 @@ new function () { // closure
             if ($isFunction(value)) {
                 continue;
             }
-            var name  = key.charAt(0) == '_' ? key.substring(1) : key,
-                uname = name.charAt(0).toUpperCase() + name.slice(1),
-                field = '_' + name;
-
+            var name = key.charAt(0) == '_' ? key.substring(1) : key;
             delete target[key];
-            target[field] = value;
-            _synthesizeProperty(target, name, field, 'get' + uname, 'set' + uname);
+            _synthesizeProperty(target, name);
+            target[name] = value;
         }
     }
 

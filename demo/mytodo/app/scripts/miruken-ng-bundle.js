@@ -4800,7 +4800,9 @@ new function () { // closure
                  ? target.conformsTo(this)
                  : false;
         },
-        coerce: function (object, strict) { return new this(object, strict); }
+        coerce: function (object, strict) {
+            return new this(object, strict);
+        }
     });
 
     var extend  = Base.extend;
@@ -4943,7 +4945,7 @@ new function () { // closure
                 inherit    = clazz !== source;
             for (var i = 0; i < metaMacros.length; ++i) {
                 var metaMacro = metaMacros[i];
-                if ((!active  || metaMacro.isActive()) ||
+                if ((!active  || metaMacro.isActive()) &&
                     (!inherit || metaMacro.shouldInherit())) {
                     metaMacro.apply(clazz, instance, instanceDef);
                 }
@@ -5087,7 +5089,7 @@ new function () { // closure
                        : function (value) { backing = value; };
                 methods[set] = setter;
             }
-            target.extend(methods);  // could activate $inferProperties
+            target.extend(methods);  // could trigger $inferProperties
             if (!(name in target)) {
                 Object.defineProperty(target, name, {
                     get: getter, 
@@ -5117,12 +5119,10 @@ new function () { // closure
                 continue;
             }
             var name  = key.charAt(0) == '_' ? key.substring(1) : key,
-                uname = name.charAt(0).toUpperCase() + name.slice(1),
-                field = '_' + name;
-
+                uname = name.charAt(0).toUpperCase() + name.slice(1);
             delete target[key];
-            target[field] = value;
-            _synthesizeProperty(target, name, field, 'get' + uname, 'set' + uname);
+            _synthesizeProperty(target, name, null, 'get' + uname, 'set' + uname);
+            target[name] = value;
         }
     }
 
@@ -6053,8 +6053,7 @@ new function () { // closure
      * @class {Controller}
      */
     var Controller = CallbackHandler.extend(
-        Contextual, ContextualMixin,
-        $inferProperties, {
+        Contextual, ContextualMixin, $inferProperties, {
     });
 
     /**
