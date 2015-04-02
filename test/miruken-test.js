@@ -291,6 +291,50 @@ describe("$synthesizeProperties", function () {
     });
 });
 
+describe("$synthesizePropertiesFromField", function () {
+    var Person = Base.extend(
+        $synthesizePropertiesFromFields
+    );
+    
+    it("should synthesize properties from fields", function () {
+        var person = new Person({_firstName : 'Mike', _age: 12 });
+        expect(person.firstName).to.equal('Mike');
+        expect(person.getFirstName()).to.equal('Mike');
+        expect(person._firstName).to.equal('Mike');
+        person.firstName = 'Casey';
+        expect(person.getFirstName()).to.equal('Casey');
+        expect(person.age).to.equal(12);
+        expect(person.getAge()).to.equal(12);
+        expect(person._age).to.equal(12);
+    });
+
+    it("should synthesize properties and normalize fields", function () {
+        var person = new Person({firstName : 'Mike', age: 12 });
+        expect(person.firstName).to.equal('Mike');
+        expect(person.getFirstName()).to.equal('Mike');
+        expect(person._firstName).to.equal('Mike');
+        person.firstName = 'Casey';
+        expect(person.getFirstName()).to.equal('Casey');
+        expect(person.age).to.equal(12);
+        expect(person.getAge()).to.equal(12);
+        expect(person._age).to.equal(12);
+    });
+
+    it("should synthesize properties from fields explicitly", function () {
+        var Car = Base.extend(
+            $synthesizeProperties('make', 'model'),
+            $synthesizePropertiesFromFields
+        ),
+        car = new Car({make : 'Audi', model: 'A4' });
+        expect(car.make).to.equal('Audi');
+        expect(car.getMake()).to.equal('Audi');
+        expect(car._make).to.equal('Audi');
+        expect(car.model).to.equal('A4');
+        expect(car.getModel()).to.equal('A4');
+        expect(car._model).to.equal('A4');
+    });
+});
+
 describe("DisposingMixin", function () {
     describe("dispose", function () {
         it("should provide dispose", function () {
@@ -452,6 +496,7 @@ describe("Protocol", function () {
 
     describe("#implement", function () {
         it("should extend protocol", function () {
+                debugger;
             Animal.implement({
                reproduce: function () {}
             }),

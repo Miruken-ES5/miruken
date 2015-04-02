@@ -1736,21 +1736,23 @@ new function () { // closure
      */
     var $expand = MetaMacro.extend({
         apply: function(clazz, target, definition) {
-            var source = target;
+            if ($isNothing(definition)) {
+                return;
+            }
             if (target === clazz.prototype) {
                 target = clazz;
             }
             for (tag in _definitions) {
                 var list = null;
-                if (source.hasOwnProperty(tag)) {
-                    list = source[tag];
-                    delete source[tag];
+                if (definition.hasOwnProperty(tag)) {
+                    list = definition[tag];
+                    delete definition[tag];
                 }
                 if ($isFunction(list)) {
                     list = list();
                 }
                 if (!list || list.length == 0) {
-                    return;
+                    continue;
                 }
                 var define = _definitions[tag];
                 for (var idx = 0; idx < list.length; ++idx) {
@@ -4400,7 +4402,7 @@ new function () { // closure
     var miruken = new base2.Package(this, {
         name:    "miruken",
         version: "1.0",
-        exports: "Enum,Protocol,Delegate,Miruken,MetaMacro,Disposing,DisposingMixin,Parenting,Starting,Startup,Interceptor,InterceptorSelector,ProxyBuilder,TraversingAxis,Traversing,TraversingMixin,Traversal,Variance,Modifier,ArrayManager,IndexedList,$isProtocol,$isClass,$classOf,$ancestorOf,$isString,$isFunction,$isObject,$isPromise,$isSomething,$isNothing,$using,$lift,$eq,$use,$copy,$lazy,$eval,$every,$child,$optional,$promise,$instant,$createModifier,$inferProperties,$synthesizeProperties,PARAMETERS,INTERCEPTORS,INTERCEPTOR_SELECTORS"
+        exports: "Enum,Protocol,Delegate,Miruken,MetaMacro,Disposing,DisposingMixin,Parenting,Starting,Startup,Interceptor,InterceptorSelector,ProxyBuilder,TraversingAxis,Traversing,TraversingMixin,Traversal,Variance,Modifier,ArrayManager,IndexedList,$isProtocol,$isClass,$classOf,$ancestorOf,$isString,$isFunction,$isObject,$isPromise,$isSomething,$isNothing,$using,$lift,$eq,$use,$copy,$lazy,$eval,$every,$child,$optional,$promise,$instant,$createModifier,$inferProperties,$synthesizeProperties,$synthesizePropertiesFromFields,PARAMETERS,INTERCEPTORS,INTERCEPTOR_SELECTORS"
     });
 
     eval(this.imports);
@@ -4594,15 +4596,40 @@ new function () { // closure
             subclass.getProtocols    = getProtocols;
             subclass.getAllProtocols = getAllProtocols;
             subclass.conformsTo      = _conformsTo.bind(subclass, _protocols);
-            _applyMetaMacros(subclass, metaMacros, instanceDef, staticDef);
+            subclass.metaMacros      = metaMacros;
+            _applyMetaMacros(subclass, null, false, instanceDef, staticDef);
             Array2.forEach(mixins, subclass.implement, subclass);
             return subclass;
             })(this, Array.prototype.slice.call(arguments));
     };
-    
+
     Base.prototype.conformsTo = function (protocol) {
         return $classOf(this).conformsTo(protocol);
     };
+    
+    var implement = Base.implement;
+    Base.implement = function (source) {
+        if ($isFunction(source)) {
+            source = source.prototype; 
+        }
+        var implemented = implement.call(this, source);
+        _applyMetaMacros(implemented, null, true, source);
+        return implemented;
+    }
+
+    var extendInstance = Base.prototype.extend;
+    Base.prototype.extend = function (key, value) {
+        if (!this.metaMacros || this.metaMacros.length == 0) {
+            extendInstance.call(this, key, value);
+        }
+        var definition = (arguments.length === 1) ? key : {};
+        if (arguments.length >= 2) {
+            definition[key] = value;
+        }                                
+        var instance = extendInstance.call(this, definition);
+        _applyMetaMacros(instance.constructor, instance, true, definition);
+        return instance;
+    }
 
     function _conformsTo(protocols, protocol) {
         if (!(protocol && (protocol.prototype instanceof Protocol))) {
@@ -4618,66 +4645,34 @@ new function () { // closure
         }
         var ancestor = this.ancestor;
         return ancestor && (ancestor !== Base) && (ancestor !== Protocol)
-            ? ancestor.conformsTo(protocol)
-            : false;
+             ? ancestor.conformsTo(protocol)
+             : false;
     };
     
     /**
      * @function _applyMetaMacros
      * Applies any meta-macros to the class definition.
-     * @param    {Class}  clazz       - clazz
-     * @param    {Array}  metaMacros  - meta macros
-     * @param    {Object} instanceDef - instance definition
-     * @param    {Object} staticDef   - static definition
+     * @param    {Function} clazz       - clazz target
+     * @param    {objec}    instance    - instance target
+     * @param    {Boolean}  active      - restrict active
+     * @param    {Object}   instanceDef - instance definition
+     * @param    {Object}   staticDef   - static definition
      */
-    function _applyMetaMacros(clazz, metaMacros, instanceDef, staticDef) {
-        var active, inherit;
-        if (metaMacros.length == 0) {
-            return;
-        }
-        for (var i = 0; i < metaMacros.length; ++i) {
-            var metaMacro = metaMacros[i];
-            if (metaMacro.isActive()) {
-                (active || (active = [])).push(metaMacro);
-            }
-            if (metaMacro.shouldInherit()) {
-                (inherit || (inherit = [])).push(metaMacro);
-            }
-            metaMacro.apply(clazz, clazz.prototype, instanceDef);
-        }
-        if (active) {
-            clazz.implement({
-                extend: function (key, value) {
-                    var instanceDef = (arguments.length === 1) ? key : {};
-                    if (arguments.length >= 2) {
-                        instanceDef[key] = value;
-                    }                                
-                    var instance = this.base(instanceDef);
-                    Array2.invoke(active, 'apply', clazz, instance, instanceDef);
-                    return instance;
+    function _applyMetaMacros(clazz, instance, active, instanceDef, staticDef) {
+        var source = clazz;
+        instance   = instance || clazz.prototype;
+        while (source && source.metaMacros &&
+               (source !== Base) && (source !== Object)) {
+            var metaMacros = source.metaMacros,
+                inherit    = clazz !== source;
+            for (var i = 0; i < metaMacros.length; ++i) {
+                var metaMacro = metaMacros[i];
+                if ((!active  || metaMacro.isActive()) ||
+                    (!inherit || metaMacro.shouldInherit())) {
+                    metaMacro.apply(clazz, instance, instanceDef);
                 }
-            });
-            var implement = Base.implement;
-            clazz.implement = function (source) {
-                if ($isFunction(source)) {
-                    source = source.prototype; 
-                }
-                var implemented = implement.call(clazz, source);
-                if (!clazz.__implementing) {
-                    clazz.__implementing = true;
-                    Array2.invoke(active, 'apply', clazz, implemented.prototype, source);
-                    delete clazz.__implementing;
-                }
-                return implemented;
-            };
-        }
-        if (inherit) {
-            var extend = Base.extend;
-            clazz.extend = function () {
-                var args = Array.prototype.slice.call(arguments);
-                args.unshift.apply(args, inherit);
-                return extend.apply(clazz, args);
             }
+            source = $ancestorOf(source);
         }
     }
 
@@ -4706,7 +4701,10 @@ new function () { // closure
         shouldInherit: function () { return true; },
         isActive: function () { return true; }
     });
-    _applyMetaMacros(Protocol, [new $proxyProtocol], {});
+    Protocol.extend     = Base.extend
+    Protocol.implement  = Base.implement;;
+    Protocol.metaMacros = [new $proxyProtocol];
+    _applyMetaMacros(Protocol);
 
     /**
      * @class {$inferProperties}
@@ -4721,9 +4719,6 @@ new function () { // closure
     });
 
     function _inferProperties(target, definition) {
-        if ($isNothing(definition)) {
-            return;
-        }
         for (var key in definition) {
             var value = definition[key];
             if (!$isFunction(value)) {
@@ -4768,7 +4763,7 @@ new function () { // closure
         constructor: function (/*properties*/) {
             var _properties = Array.prototype.slice.call(arguments);
             this.extend({
-                apply: function(clazz, target, definition) {
+                apply: function(clazz, target) {
                     _synthesizeProperties(target, _properties);
                 }
             });
@@ -4828,11 +4823,38 @@ new function () { // closure
     }
 
     /**
+     * @class {$synthesizePropertiesFromFields}
+     * Metamacro to create properties from fields.
+     */
+    var $synthesizePropertiesFromFields = MetaMacro.extend({
+        apply: function(clazz, target, definition) {
+            _synthesizePropertiesFromFields(target, definition);
+        },
+        shouldInherit: function () { return true; },
+        isActive: function () { return true; }
+    });
+
+    function _synthesizePropertiesFromFields(target, definition) {
+        for (var key in definition) {
+            var value = definition[key];
+            if ($isFunction(value)) {
+                continue;
+            }
+            var name  = key.charAt(0) == '_' ? key.substring(1) : key,
+                uname = name.charAt(0).toUpperCase() + name.slice(1),
+                field = '_' + name;
+
+            delete definition[key];
+            definition[field] = value;
+            _synthesizeProperty(target, name, field, 'get' + uname, 'set' + uname);
+        }
+    }
+
+    /**
      * @class {Miruken}
      * Base class to prefer coercion over casting.
      */
-    var Miruken = Base.extend(
-        $inferProperties, {
+    var Miruken = Base.extend({
         constructor: function () {
             this.base.apply(this, arguments);
         }

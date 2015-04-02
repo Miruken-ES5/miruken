@@ -1701,1388 +1701,6 @@ if (typeof exports !== 'undefined') {
 
 },{}],2:[function(require,module,exports){
 (function (global){
-var miruken = require('./miruken.js'),
-    Promise = require('bluebird');
-
-new function () { // closure
-
-    /**
-     * @namespace miruken.callback
-     */
-    var callback = new base2.Package(this, {
-        name:    "callback",
-        version: miruken.version,
-        parent:  miruken,
-        imports: "miruken",
-        exports: "CallbackHandler,CallbackHandlerDecorator,CallbackHandlerFilter,CallbackHandlerAspect,CascadeCallbackHandler,CompositeCallbackHandler,ConditionalCallbackHandler,AcceptingCallbackHandler,ProvidingCallbackHandler,MethodCallbackHandler,InvocationOptions,Resolution,HandleMethod,getEffectivePromise,$handle,$expand,$define,$provide,$lookup,$NOT_HANDLED"
-    });
-
-    eval(this.imports);
-
-    var _definitions = {},
-        $handle      = $define('$handle',  Variance.Contravariant),
-        $provide     = $define('$provide', Variance.Covariant),
-        $lookup      = $define('$lookup' , Variance.Invariant),
-        $NOT_HANDLED = {};
-
-    /**
-     * @protocol {InternalCallback}
-     */
-    var InternalCallback = Protocol.extend();
-
-    /**
-     * @function $expand
-     * Metamacro to expand registered definitions.
-     */
-    var $expand = MetaMacro.extend({
-        apply: function(clazz, target, definition) {
-            var source = target;
-            if (target === clazz.prototype) {
-                target = clazz;
-            }
-            for (tag in _definitions) {
-                var list = null;
-                if (source.hasOwnProperty(tag)) {
-                    list = source[tag];
-                    delete source[tag];
-                }
-                if ($isFunction(list)) {
-                    list = list();
-                }
-                if (!list || list.length == 0) {
-                    return;
-                }
-                var define = _definitions[tag];
-                for (var idx = 0; idx < list.length; ++idx) {
-                    var constraint = list[idx];
-                    if (++idx >= list.length) {
-                        throw new Error(lang.format(
-                            "Incomplete '%1' definition: missing handler for constraint %2.",
-                            tag, constraint));
-                        }
-                    define(target, constraint, list[idx]);
-                }
-            }
-        },
-        shouldInherit: function () { return true; },
-        isActive: function () { return true; }
-    });
-
-    /**
-     * @class {HandleMethod}
-     */
-    var HandleMethod = Base.extend({
-        constructor: function (protocol, methodName, args, strict) {
-            if (protocol && !$isProtocol(protocol)) {
-                throw new TypeError("Invalid protocol supplied.");
-            }
-            var _returnValue, _exception;
-            this.extend({
-                getProtocol:    function () { return protocol; },
-                getMethodName:  function () { return methodName; },
-                getArguments:   function () { return args; },
-                getReturnValue: function () { return _returnValue; },
-                setReturnValue: function (value) { _returnValue = value; },
-                getException:   function () { return _exception; },
-                invokeOn:       function (target, composer) {
-                    if (!target || (strict && protocol && !protocol.adoptedBy(target))) {
-                        return false;
-                    }
-                    var method = target[methodName];
-                    if (!$isFunction(method)) {
-                        return false;
-                    }
-                    try {
-                        var oldComposer  = global.$composer;
-                        global.$composer = composer;
-                        var result = method.apply(target, args.slice(0));
-                        if (result === $NOT_HANDLED) {
-                            return false;
-                        }
-                        if (_returnValue === undefined) {
-                            _returnValue = result;
-                        }
-                    } catch(exception) {
-                        if (_returnValue === undefined && _exception === undefined) {
-                            _exception = exception;
-                        }
-                        throw exception;
-                    } finally {
-                        if (oldComposer) {
-                            global.$composer = oldComposer;
-                        } else {
-                            delete global.$composer;
-                        }
-                    }
-                    return true;
-                }
-            });
-        }
-    });
-
-    /**
-     * @class {Lookup}
-     */
-    var Lookup = Base.extend({
-            constructor: function (key, many) {
-            if ($isNothing(key)) {
-                throw new TypeError("The key is required.");
-            }
-            many = !!many;
-            var _results = [],
-                _instant = $instant.test(key);
-            this.extend({
-                getKey: function () { return key; },
-                isMany: function () { return many; },
-                getResults: function () { return _results; },
-                addResult: function (result) {
-                    if (!(_instant && $isPromise(result))) {
-                        _results.push(result);
-                    }
-                }
-            });
-        }
-    });
-
-    /**
-     * @class {Deferred}
-     */
-    var Deferred = Base.extend({
-        constructor: function (callback, many) {
-            if ($isNothing(callback)) {
-                throw new TypeError("The callback is required.");
-            }
-            many = !!many;
-            var _pending = [];
-            this.extend({
-                isMany: function () { return many; },
-                getCallback: function () { return callback; },
-                getPending: function () { return _pending; },
-                track: function (result) {
-                    if ($isPromise(result)) {
-                        _pending.push(result);
-                    }
-                }
-            });
-        }
-    });
-
-    /**
-     * @class {Resolution}
-     */
-    var Resolution = Base.extend({
-        constructor: function (key, many) {
-            if ($isNothing(key)) {
-                throw new TypeError("The key is required.");
-            }
-            many = !!many;
-            var _resolutions = [],
-                _instant     = $instant.test(key);
-            this.extend({
-                getKey: function () { return key; },
-                isMany: function () { return many; },
-                getResolutions: function () { return _resolutions; },
-                resolve: function (resolution) {
-                    if (!(_instant && $isPromise(resolution))) {
-                        _resolutions.push(resolution);
-                    }
-                }
-            });
-        }
-    });
-
-    /**
-     * @class {CallbackHandler}
-     */
-    var CallbackHandler = Base.extend($expand,{
-        constructor: function (delegate) {
-            this.extend({
-                getDelegate : function () { return delegate; }
-            });
-        },
-        getDelegate: function () { return null; },
-        /**
-         * Handles the callback.
-         * @param   {Object}          callback    - any callback
-         * @param   {Boolean}         greedy      - true of handle greedily
-         * @param   {CallbackHandler} [composer]  - initiated the handle for composition
-         * @returns {Boolean} true if the callback was handled, false otherwise.
-         */
-        handle: function (callback, greedy, composer) {
-            return !$isNothing(callback) &&
-                   !!this.handleCallback(callback, !!greedy, composer || this);
-        },
-        handleCallback: function (callback, greedy, composer) {
-            return $handle.dispatch(this, callback, null, composer, greedy);
-        },
-        $handle:[
-            Lookup, function (lookup, composer) {
-                return $lookup.dispatch(this, lookup,lookup.getKey(), composer, 
-                                        lookup.isMany(), lookup.addResult);
-            },
-            Deferred, function (deferred, composer) {
-                return $handle.dispatch(this, deferred.getCallback(), null, composer,
-                                        deferred.isMany(), deferred.track);
-            },
-            Resolution, function (resolution, composer) {
-                var key      = resolution.getKey(),
-                    many     = resolution.isMany(),
-                    resolved = $provide.dispatch(this, resolution, key, composer, many, resolution.resolve);
-                if (!resolved) { // check if delegate or handler implicitly satisfy key
-                    var implied  = new _Node(key),
-                        delegate = this.getDelegate();
-                    if (delegate && implied.match($classOf(delegate), Variance.Contravariant)) {
-                        resolution.resolve(delegate);
-                        resolved = true;
-                    }
-                    if ((!resolved || many) && implied.match($classOf(this), Variance.Contravariant)) {
-                        resolution.resolve(this);
-                        resolved = true;
-                    }
-                }
-                return resolved;
-            },
-            HandleMethod, function (method, composer) {
-                return method.invokeOn(this.getDelegate(), composer) || method.invokeOn(this, composer);
-            }
-        ],
-        toDelegate: function () { return new InvocationDelegate(this); }
-    }, {
-        coerce: function (object) { return new this(object); }
-    });
-
-    Base.implement({
-        toCallbackHandler: function () { return CallbackHandler(this); }
-    });
-
-    /**
-     * @class {CallbackHandlerDecorator}
-     */
-    var CallbackHandlerDecorator = CallbackHandler.extend({
-        constructor: function (decoratee) {
-            if ($isNothing(decoratee)) {
-                throw new TypeError("No decoratee specified.");
-            }
-            this.extend({
-                getDecoratee: function () { return decoratee; },
-                setDecoratee: function (value) {
-                    decoratee = value.toCallbackHandler();
-                },
-                handleCallback: function (callback, greedy, composer) {
-                    return this.getDecoratee().handle(callback, greedy, composer)
-                        || this.base(callback, greedy, composer);
-                }
-            });
-            this.setDecoratee(decoratee);
-        }
-    });
-
-    /**
-     * @class {CallbackHandlerFilter}
-     */
-    var CallbackHandlerFilter = CallbackHandlerDecorator.extend({
-        constructor: function (decoratee, filter) {
-            this.base(decoratee);
-            if ($isNothing(filter)) {
-                throw new TypeError("No filter specified.");
-            } else if (!$isFunction(filter)) {
-                throw new TypeError(lang.format("Invalid filter: %1 is not a function.", filter));
-            }
-            this.extend({
-                handleCallback: function (callback, greedy, composer) {
-                    var decoratee = this.getDecoratee();
-                    if (InternalCallback.adoptedBy(callback)) {
-                        return decoratee.handle(callback, greedy);
-                    }
-                    if (composer == this) {
-                        composer = decoratee;
-                    }
-                    return filter(callback, composer, function () {
-                        return decoratee.handle(callback, greedy);
-                    })
-                }});
-        }
-    });
-
-    /**
-     * @class {CallbackHandlerAspect}
-     */
-    var CallbackHandlerAspect = CallbackHandlerFilter.extend({
-        constructor: function (decoratee, before, after) {
-            this.base(decoratee, function (callback, composer, proceed) {
-                var promise;
-                if ($isFunction(before) && before(callback, composer) === false) {
-                    return true;
-                }
-                try {
-                    var handled = proceed();
-                    if (handled && (promise = getEffectivePromise(callback))) {
-                        // Use 'fulfilled' or 'rejected' handlers instead of 'finally' to ensure
-                        // aspect boundary is consistent with synchronous invocations and avoid
-                        // reentrancy issues.
-                        if ($isFunction(after))
-                            promise.then(function (result) {
-                                after(callback, composer);
-                            }, function (error) {
-                                after(callback, composer);
-                            });
-                        return handled;
-                    }
-                } finally {
-                    if (!promise && $isFunction(after)) {
-                        after(callback, composer);
-                    }
-                }
-            });
-        }
-    });
-
-    /**
-     * @class {CascadeCallbackHandler}
-     */
-    var CascadeCallbackHandler = CallbackHandler.extend({
-        constructor: function (handler, cascadeToHandler) {
-            if ($isNothing(handler)) {
-                throw new TypeError("No handler specified.");
-            } else if ($isNothing(cascadeToHandler)) {
-                throw new TypeError("No cascadeToHandler specified.");
-            }
-            handler          = handler.toCallbackHandler();
-            cascadeToHandler = cascadeToHandler.toCallbackHandler();
-            this.extend({
-                handleCallback: function (callback, greedy, composer) {
-                    var handled = greedy
-                        ? (handler.handle(callback, true, composer)
-                           | cascadeToHandler.handle(callback, true, composer))
-                        : (handler.handle(callback, false, composer)
-                           || cascadeToHandler.handle(callback, false, composer));
-                    if (!handled || greedy) {
-                        handled = this.base(callback, greedy, composer) || handled;
-                    }
-                    return !!handled;
-                }
-            });
-        }
-    });
-
-    /**
-     * @class {CompositeCallbackHandler}
-     */
-    var CompositeCallbackHandler = CallbackHandler.extend({
-        constructor: function () {
-            var _handlers = new Array2;
-            this.extend({
-                getHandlers: function () { return _handlers.copy(); },
-                addHandlers: function () {
-                    Array2.flatten(arguments).forEach(function (handler) {
-                        if (handler) {
-                            _handlers.push(handler.toCallbackHandler());
-                        }
-                    });
-                    return this;
-                },
-                removeHandlers: function () {
-                    Array2.flatten(arguments).forEach(function (handler) {
-                        if (!handler) {
-                            return;
-                        }
-                        var count = _handlers.length;
-                        for (var idx = 0; idx < count; ++idx) {
-                            var testHandler = _handlers[idx];
-                            if (testHandler == handler || testHandler.getDelegate() == handler) {
-                                _handlers.removeAt(idx);
-                                return;
-                            }
-                        }
-                    });
-                    return this;
-                },
-                handleCallback: function (callback, greedy, composer) {
-                    var handled = false,
-                        count   = _handlers.length;
-                    for (var idx = 0; idx < count; ++idx) {
-                        var handler = _handlers[idx];
-                        if (handler.handle(callback, greedy, composer)) {
-                            if (!greedy) {
-                                return true;
-                            }
-                            handled = true;
-                        }
-                    }
-                    if (!handled || greedy) {
-                        handled = this.base(callback, greedy, composer) || handled;
-                    }
-                    return handled;
-                }
-            });
-            this.addHandlers(arguments);
-        }
-    });
-
-    /**
-     * @class {ConditionalCallbackHandler}
-     */
-    var ConditionalCallbackHandler = CallbackHandlerDecorator.extend({
-        constructor: function (decoratee, condition) {
-            this.base(decoratee);
-            if ($isNothing(condition)) {
-                throw new TypeError("No condition specified.");
-            } else if (!$isFunction(condition)) {
-                throw new TypeError(lang.format(
-                    "Invalid condition: %1 is not a function.", condition));
-            }
-            this.extend({
-                handleCallback: function (callback, greedy, composer) {
-                    return condition(callback)
-                         ? this.base(callback, greedy, composer)
-                         : false;
-                }
-            });
-        }
-    });
-
-    /**
-     * @class {AcceptingCallbackHandler}
-     */
-    var AcceptingCallbackHandler = CallbackHandler.extend({
-        constructor: function (handler, constraint) {
-            $handle(this, constraint, handler);
-        }
-    });
-
-    if (Function.prototype.accepting === undefined)
-        Function.prototype.accepting = function (constraint) {
-            return new AcceptingCallbackHandler(this, constraint);
-        };
-
-    CallbackHandler.accepting = function (handler, constraint) {
-        return new AcceptingCallbackHandler(handler, constraint);
-    };
-
-    /**
-     * @class {ProvidingCallbackHandler}
-     */
-    var ProvidingCallbackHandler = CallbackHandler.extend({
-        constructor: function (provider, constraint) {
-            $provide(this, constraint, provider);
-        }
-    });
-
-    if (Function.prototype.providing === undefined)
-        Function.prototype.providing = function (constraint) {
-            return new ProvidingCallbackHandler(this, constraint);
-        };
-
-    CallbackHandler.providing = function (provider, constraint) {
-        return new ProvidingCallbackHandler(provider, constraint);
-    };
-
-    /**
-     * @class {MethodCallbackHandler}
-     */
-    var MethodCallbackHandler = CallbackHandler.extend({
-        constructor: function (methodName, method) {
-            if (!$isString(methodName) || methodName.length === 0 || !methodName.trim()) {
-                throw new TypeError("No methodName specified.");
-            } else if (!$isFunction(method)) {
-                throw new TypeError(lang.format("Invalid method: %1 is not a function.", method));
-            }
-            this.extend({
-                handleCallback: function (callback, greedy, composer) {
-                    if (callback instanceof HandleMethod) {
-                        var target         = new Object;
-                        target[methodName] = method;
-                        return callback.invokeOn(target);
-                    }
-                    return false;
-                }
-            });
-        }
-    });
-
-    if (Function.prototype.implementing === undefined)
-        Function.prototype.implementing = function (methodName) {
-            return new MethodCallbackHandler(methodName, this);
-        };
-
-    CallbackHandler.implementing = function (methodName, method) {
-        return new MethodCallbackHandler(methodName, method);
-    };
-
-    /**
-     * InvocationOptions enum
-     * @enum {Number}
-     */
-    var InvocationOptions = {
-        None:        0,
-        Broadcast:   1 << 0,
-        BestEffort:  1 << 1,
-        Strict:      1 << 2,
-    };
-    InvocationOptions.Notify = InvocationOptions.Broadcast | InvocationOptions.BestEffort;
-    InvocationOptions = Enum(InvocationOptions);
-
-    /**
-     * @class {InvocationSemantics}
-     */
-    var InvocationSemantics = Base.extend(InternalCallback, {
-        constructor: function (options) {
-            var _options   = options || InvocationOptions.None,
-                _specified = _options;
-            this.extend({
-                getOption: function (option) {
-                    return (_options & option) === option;
-                },
-                setOption: function (option, enabled) {
-                    if (enabled) {
-                        _options = _options | option;
-                    } else {
-                        _options = _options & (~option);
-                    }
-                    _specified = _specified | option;
-                },
-                isSpecified: function (option) {
-                    return (_specified & option) === option;
-                },
-                mergeInto: function (constraints) {
-                    for (var index = 0; index <= 2; ++index) {
-                        var option = (1 << index);
-                        if (this.isSpecified(option) && !constraints.isSpecified(option)) {
-                            constraints.setOption(option, this.getOption(option));
-                        }
-                    }
-                }
-            });
-        }
-    });
-
-    /**
-     * @class {InvocationOptionsHandler}
-     */
-    var InvocationOptionsHandler = CallbackHandler.extend({
-        constructor: function (handler, options) {
-            var semantics = new InvocationSemantics(options);
-            this.extend({
-                handleCallback: function (callback, greedy, composer) {
-                    if (callback instanceof InvocationSemantics) {
-                        semantics.mergeInto(callback);
-                        return true;
-                    }
-                    return handler.handle(callback, greedy, composer);
-                }
-            });
-        }
-    });
-
-    /**
-     * @class {InvocationDelegate}
-     */
-    var InvocationDelegate = Delegate.extend({
-        constructor: function (handler) {
-            this.extend({
-                delegate: function (protocol, methodName, args, strict) {
-                    var semantics  = new InvocationSemantics();
-                    handler.handle(semantics, true);
-                    var broadcast    = semantics.getOption(InvocationOptions.Broadcast),
-                        bestEffort   = semantics.getOption(InvocationOptions.BestEffort),
-                        strict       = !!(strict | semantics.getOption(InvocationOptions.Strict)),
-                        handleMethod = new HandleMethod(protocol, methodName, args, strict);
-                    if (handler.handle(handleMethod, !!broadcast) === false && !bestEffort) {
-                        throw new TypeError(lang.format(
-                            "Object %1 has no method '%2'", handler, methodName));
-                    }
-                    return handleMethod.getReturnValue();
-                }
-            });
-        }
-    });
-
-    CallbackHandler.implement({
-        strict: function () { return this.callOptions(InvocationOptions.Strict); },
-        broadcast: function () { return this.callOptions(InvocationOptions.Broadcast); },
-        bestEffort: function () { return this.callOptions(InvocationOptions.BestEffort); },
-        notify: function () { return this.callOptions(InvocationOptions.Notify); },
-        callOptions: function (options) { return new InvocationOptionsHandler(this, options); }
-    });
-
-    CallbackHandler.implement({
-        defer: function (callback) {
-            var deferred = new Deferred(callback);
-            return this.handle(deferred, false, global.$composer)
-                 ? Promise.all(deferred.getPending()).return(true)
-                 : Promise.resolve(false);
-        },
-        deferAll: function (callback) {
-            var deferred = new Deferred(callback, true);
-            return this.handle(deferred, true, global.$composer)
-                 ? Promise.all(deferred.getPending()).return(true)
-                 : Promise.resolve(false);
-        },
-        resolve: function (key) {
-            var resolution = (key instanceof Resolution) ? key : new Resolution(key);
-            if (this.handle(resolution, false, global.$composer)) {
-                var resolutions = resolution.getResolutions();
-                if (resolutions.length > 0) {
-                    return resolutions[0];
-                }
-            }
-        },
-        resolveAll: function (key) {
-            var resolution = (key instanceof Resolution) ? key : new Resolution(key, true);
-            if (this.handle(resolution, true, global.$composer)) {
-                var resolutions = resolution.getResolutions();
-                if (resolutions.length > 0) {
-                    return $instant.test(key)
-                         ? Array2.flatten(resolutions)
-                         : Promise.all(resolutions).then(Array2.flatten);
-                }
-            }
-            return [];
-        },
-        lookup: function (key) {
-            var lookup = (key instanceof Lookup) ? key : new Lookup(key);
-            if (this.handle(lookup, false, global.$composer)) {
-                var results = lookup.getResults();
-                if (results.length > 0) {
-                    return results[0];
-                }
-            }
-        },
-        lookupAll: function (key) {
-            var lookup = (key instanceof Lookup) ? key : new Lookup(key, true);
-            if (this.handle(lookup, true, global.$composer)) {
-                var results = lookup.getResults();
-                if (results.length > 0) {
-                    return $instant.test(key)
-                         ? Array2.flatten(resolutions)
-                         : Promise.all(results).then(Array2.flatten);
-                }
-            }
-            return [];
-        },
-        filter: function (filter) {
-            return new CallbackHandlerFilter(this, filter);
-        },
-        aspect: function (before, after) {
-            return new CallbackHandlerAspect(this, before, after);
-        },
-        when: function (constraint) {
-            var when      = new _Node(constraint),
-                condition = function (callback) {
-                if (callback instanceof Deferred) {
-                    return when.match($classOf(callback.getCallback()), Variance.Contravariant);
-                } else if (callback instanceof Resolution) {
-                    return when.match(callback.getKey(), Variance.Covariant);
-                } else {
-                    return when.match($classOf(callback), Variance.Contravariant);
-                }
-            };
-            return new ConditionalCallbackHandler(this, condition);
-        },
-        next: function () {
-            switch(arguments.length) {
-            case 0:  return this;
-            case 1:  return new CascadeCallbackHandler(this, arguments[0])
-            default: return new CompositeCallbackHandler((Array2.unshift(arguments, this), arguments));
-            }
-        }
-    });
-
-    /**
-     * @function $define
-     * Defines a new handler relationship.
-     * @param    {String}   tag       - name of definition
-     * @param    {Variance} variance  - variance of definition
-     * @returns  {Function} function to add to definition.
-     */
-    function $define(tag, variance) {
-        if (!$isString(tag) || tag.length === 0 || /\s/.test(tag)) {
-            throw new TypeError("The tag must be a non-empty string with no whitespace.");
-        } else if (_definitions[tag]) {
-            throw new TypeError(lang.format("'%1' is already defined.", tag));
-        }
-
-        var handled, comparer;
-        variance = variance || Variance.Contravariant;
-        switch (variance) {
-            case Variance.Covariant:
-                handled  = _resultRequired;
-                comparer = _covariantComparer; 
-                break;
-            case Variance.Contravariant:
-                handled  = _successImplied;
-                comparer = _contravariantComparer; 
-                break;
-            case Variance.Invariant:
-                handled  = _resultRequired;
-                comparer = _invariantComparer; 
-                break;
-            default:
-                throw new Error("Variance must be Covariant, Contravariant or Invariant");
-        }
-
-        function definition(owner, constraint, handler, removed) {
-            if (constraint instanceof Array) {
-                return Array2.reduce(constraint, function (result, c) {
-                    var undefine = _definition(owner, c, handler, removed);
-                    return function (notifyRemoved) {
-                        result(notifyRemoved);
-                        undefine(notifyRemoved);
-                    };
-                }, Undefined);
-            }
-            return _definition(owner, constraint, handler, removed);
-        }
-        function _definition(owner, constraint, handler, removed) {
-            if ($isNothing(owner)) {
-                throw new TypeError("Definitions must have an owner.");
-            } else if ($isNothing(handler)) {
-                handler    = constraint;
-                constraint = $classOf(Modifier.unwrap(constraint));
-            }
-            if ($isNothing(handler)) {
-                throw new TypeError(lang.format(
-                    "Incomplete '%1' definition: missing handler for constraint %2.",
-                    tag, constraint));
-            } else if (removed && !$isFunction(removed)) {
-                throw new TypeError("The removed argument is not a function.");
-            }
-            if (!$isFunction(handler)) {
-                if ($copy.test(handler)) {
-                    var source = Modifier.unwrap(handler);
-                    if (!$isFunction(source.copy)) {
-                        throw new Error("$copy requires the target to have a copy method.");
-                    }
-                    handler = source.copy.bind(source);
-                } else {
-                    var source = $use.test(handler) ? Modifier.unwrap(handler) : handler;
-                    handler    = $lift(source);
-                }
-            }
-            var definitions = owner.hasOwnProperty('$miruken')
-                            ? owner.$miruken : (owner.$miruken = {}),
-                node        = new _Node(constraint, handler, removed),
-                index       = _createIndex(node.constraint),
-                list        = definitions.hasOwnProperty(tag) ? definitions[tag]
-                            : definitions[tag] = new IndexedList(comparer);
-            list.insert(node, index);
-            return function (notifyRemoved) {
-                list.remove(node);
-                if (list.isEmpty()) {
-                    delete definitions[tag];
-                }
-                if (node.removed && (notifyRemoved !== false)) {
-                    node.removed(owner);
-                }
-            };
-        };
-        definition.removeAll = function (owner) {
-            var definitions = owner.$miruken;
-            if (definitions) {
-                var list = definitions[tag],
-                    head = list.head;
-                while (head) {
-                    if (head.removed) {
-                        head.removed(owner);
-                    }
-                    head = head.next;
-                }
-                delete definitions[tag];
-            }
-        };
-        definition.dispatch = function (handler, callback, constraint, composer, all, results) {
-            var v        = variance,
-                delegate = handler.getDelegate();
-            constraint = constraint || callback;
-            if (constraint) {
-                if ($eq.test(constraint)) {
-                    v = Variance.Invariant;
-                }
-                constraint = Modifier.unwrap(constraint);
-                if (typeOf(constraint) === 'object') {
-                    constraint = $classOf(constraint);
-                }
-            }
-            var ok = _dispatch(delegate, delegate, callback, constraint, v, composer, all, results);
-            if (!ok || all) {
-                ok = ok || _dispatch(handler, handler, callback, constraint, v, composer, all, results);
-            }
-            return ok;
-        };
-        function _dispatch(target, owner, callback, constraint, v, composer, all, results) {
-            var dispatched = false;
-            while (owner && (owner !== Base) && (owner !== Object)) {
-                var definitions = owner.$miruken,
-                    index       = _createIndex(constraint),
-                    list        = definitions && definitions[tag],
-                    invariant   = (v === Variance.Invariant);
-                owner = (owner === target) ? $classOf(owner) : $ancestorOf(owner);
-                if (list && (!invariant || index)) {
-                    var node = list.getIndex(index) || list.head;
-                    while (node) {
-                        if (node.match(constraint, v)) {
-                            var base       = target.base,
-                                baseCalled = false;
-                            target.base    = function () {
-                                var baseResult;
-                                baseCalled = true;
-                                _dispatch(target, owner, callback, constraint, v, composer, false,
-                                          function (result) { baseResult = result; });
-                                return baseResult;
-                            };
-                            try {
-                                var result = node.handler.call(target, callback, composer);
-                                if (handled(result)) {
-                                    if (results) {
-                                        results.call(callback, result);
-                                    }
-                                    if (!all) {
-                                        return true;
-                                    }
-                                    dispatched = true;
-                                } else if (baseCalled) {
-                                    if (!all) {
-                                        return false;
-                                    }
-                                }
-                            } finally {
-                                target.base = base;
-                            }
-                        } else if (invariant) {
-                            break;  // stop matching if invariant not satisifed
-                        }
-                        node = node.next;
-                    }
-                }
-            }
-            return dispatched;
-        }
-        _definitions[tag] = definition;
-        return definition;
-    }
-
-    /**
-     * @class {_Node}
-     */
-    function _Node(constraint, handler, removed) {
-        var invariant   = $eq.test(constraint);
-        constraint      = Modifier.unwrap(constraint);
-        this.constraint = constraint;
-        this.handler    = handler;
-        if ($isNothing(constraint)) {
-            this.match = invariant ? False : _matchEverything;
-        } else if ($isProtocol(constraint)) {
-            this.match = invariant ? _matchInvariant : _matchProtocol;
-        } else if ($isClass(constraint)) {
-            this.match = invariant ? _matchInvariant : _matchClass;
-        } else if ($isString(constraint)) {
-            this.match = _matchString;
-        } else if (instanceOf(constraint, RegExp)) {
-            this.match = invariant ? False : _matchRegExp;
-        } else if ($isFunction(constraint)) {
-            this.match = constraint;
-        } else {
-            this.match = False;
-        }
-        if (removed) {
-            this.removed = removed;
-        }
-    }
-
-    function _createIndex(constraint) {
-        if (constraint) {
-            if ($isString(constraint)) {
-                return constraint;
-            } else if ($isFunction(constraint)) {
-                return assignID(constraint);
-            }
-        }
-    }
-
-    function _matchInvariant(match) {
-        return this.constraint === match;
-    }
-
-    function _matchEverything(match, variance) {
-        return variance !== Variance.Invariant;
-    }
-
-    function _matchProtocol(match, variance) {
-        var constraint = this.constraint;
-        if (constraint === match) {
-            return true;
-        } else if (variance === Variance.Covariant) {
-            return constraint.conformsTo(match);
-        } else if (variance === Variance.Contravariant) {
-            return match.conformsTo && match.conformsTo(constraint);
-        }
-        return false;
-    }
-
-    function _matchClass(match, variance) {
-        var constraint = this.constraint;
-        if (constraint === match) {
-            return true;
-        } else if (variance === Variance.Contravariant) {
-            return match.prototype instanceof constraint;
-        }
-        else if (variance === Variance.Covariant) {
-            return match.prototype &&
-                (constraint.prototype instanceof match
-                 || ($isProtocol(match) && match.adoptedBy(constraint)));
-        }
-        return false;
-    }
-
-    function _matchString(match) {
-        return $isString(match) && this.constraint == match;
-    }
-
-    function _matchRegExp(match, variance) {
-        return (variance !== Variance.Invariant) && this.constraint.test(match);
-    }
-
-    function _covariantComparer(node, insert) {
-        if (insert.match(node.constraint, Variance.Invariant)) {
-            return 0;
-        } else if (insert.match(node.constraint, Variance.Covariant)) {
-            return -1;
-        }
-        return 1;
-    }
-    
-    function _contravariantComparer(node, insert) {
-        if (insert.match(node.constraint, Variance.Invariant)) {
-            return 0;
-        } else if (insert.match(node.constraint, Variance.Contravariant)) {
-            return -1;
-        }
-        return 1;
-    }
-
-    function _invariantComparer(node, insert) {
-        return insert.match(node.constraint, Variance.Invariant) ? 0 : -1;
-    }
-
-    function _resultRequired(result) {
-        return ((result !== null) && (result !== undefined) && (result !== $NOT_HANDLED));
-    }
-
-    function _successImplied(result) {
-        return result ? (result !== $NOT_HANDLED) : (result === undefined);
-    }
-
-    function getEffectivePromise(object) {
-        if (object instanceof HandleMethod) {
-            object = object.getReturnValue();
-        }
-        return $isPromise(object) ? object : null;
-    }
-
-    if (typeof module !== 'undefined' && module.exports) {
-        module.exports = exports = callback;
-    }
-
-    eval(this.exports);
-
-}
-
-}).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
-},{"./miruken.js":4,"bluebird":6}],3:[function(require,module,exports){
-var miruken = require('./miruken.js');
-              require('./callback.js');
-
-new function () { // closure
-
-    /**
-     * @namespace miruken.context
-     */
-    var context = new base2.Package(this, {
-        name:    "context",
-        version: miruken.version,
-        parent:  miruken,
-        imports: "miruken,miruken.callback",
-        exports: "ContextState,ContextObserver,Context,Contextual,ContextualMixin,ContextualHelper"
-    });
-
-    eval(this.imports);
-
-    /**
-     * ContextState enum
-     * @enum {Number}
-     */
-    var ContextState = Enum({
-        Active: 1,
-        Ending: 2,
-        Ended:  3 
-    });
-
-    /**
-     * @protocol {ContextObserver}
-     */
-    var ContextObserver = Protocol.extend({
-        contextEnding:      function (context) {},
-        contextEnded:       function (context) {},
-        childContextEnding: function (context) {},
-        childContextEnded:  function (context) {}
-    });
-
-    /**
-     * @class {Context}
-     */
-    var Context = CompositeCallbackHandler.extend(
-    Parenting, Traversing, Disposing, TraversingMixin, {
-        constructor: function (parent) {
-            this.base();
-
-            var _state              = ContextState.Active,
-                _parent             = parent,
-                _children           = new Array2,
-                _baseHandleCallback = this.handleCallback,
-                _observers;
-
-            this.extend({
-                getState: function () {
-                    return _state; 
-                },
-                getParent: function () {
-                    return _parent; 
-                },
-                getChildren: function () {
-                    return _children.copy(); 
-                },
-                hasChildren: function () {
-                    return _children.length > 0; 
-                },
-                getRoot: function () {
-                    var root = this;    
-                    while (root && root.getParent()) {
-                        root = root.getParent();
-                    }
-                    return root;
-                },
-                newChild: function () {
-                    _ensureActive();
-                    var childContext = new ($classOf(this))(this).extend({
-                        end: function () {
-                            if (_observers) {
-                                _observers.invoke('childContextEnding', childContext);
-                            }
-                            _children.remove(childContext);
-                            this.base();
-                            if (_observers) {
-                                _observers.invoke('childContextEnded', childContext);
-                            }
-                        }
-                    });
-                    _children.push(childContext);
-                    return childContext;
-                },
-                store: function (object) {
-                    if ($isSomething(object)) {
-                        $provide(this, object);
-                    }
-                },
-                handleCallback: function (callback, greedy, composer) {
-                    var handled = this.base(callback, greedy, composer);
-                    if (handled && !greedy) {
-                        return handled;
-                    }
-                    if (_parent) {
-                        handled = handled | _parent.handle(callback, greedy, composer);
-                    }
-                    return !!handled;
-                },
-                handleAxis: function (axis, callback, greedy, composer) {
-                    if (callback === null || callback === undefined) {
-                        return false;
-                    }
-                    greedy   = !!greedy;
-                    composer = composer || this;
-                    if (axis == TraversingAxis.Self) {
-                        return _baseHandleCallback.call(this, callback, greedy, composer);
-                    }
-                    var handled = false;
-                    this.traverse(axis, function (node) {
-                        handled = handled
-                                | node.handleAxis(TraversingAxis.Self, callback, greedy, composer);
-                        return handled && !greedy;
-                    });
-                    return !!handled;
-                },
-                observe: function (observer) {
-                    _ensureActive();
-                    if (observer === null || observer === undefined) {
-                        return;
-                    }
-                    observer = ContextObserver(observer);
-                    (_observers || (_observers = new Array2)).push(observer);
-                    return function () { _observers.remove(observer); };
-                },
-                unwindToRootContext: function () {
-                    var current = this;
-                    while (current) {
-                        if (current.getParent() == null) {
-                            current.unwind();
-                            return current;
-                        }
-                        current = current.getParent();
-                    }
-                    return null;
-                },
-                unwind: function () {
-                    this.getChildren().invoke('end');
-                },
-                end: function () { 
-                    if (_state == ContextState.Active) {
-                        _state = ContextState.Ending;
-                        if (_observers) {
-                            _observers.invoke('contextEnding', this);
-                        }
-                        this.unwind();
-                        _state = ContextState.Ended;
-                        if (_observers) {
-                            _observers.invoke('contextEnded', this);
-                        }
-                        _observers = null;
-                    }
-                },
-                dispose: function () { this.end(); }
-            });
-
-            function _ensureActive() {
-                if (_state != ContextState.Active) {
-                    throw new Error("The context has already ended.");
-                }
-            }
-        }
-    });
-
-    /**
-     * @protocol {Contextual}
-     */
-    var Contextual = Protocol.extend({
-        /**
-         * Gets the Context associated with this object.
-         * @returns {Context} this associated Context.
-         */
-        getContext: function () {},
-        /**
-         * Sets the Context associated with this object.
-         * @param   {Context} context  - associated context
-         */
-        setContext: function (context) {}
-    });
-
-    /**
-     * Contextual mixin
-     * @class {Contextual}
-     */
-    var ContextualMixin = Module.extend({
-        getContext: function (object) {
-            return object.__context;
-        },
-        setContext: function (object, context) {
-            if (object.__context === context) {
-                return;
-            }
-            if (object.__context)
-                object.__context.removeHandlers(object);
-            if (context) {
-                object.__context = context;
-                context.addHandlers(object);
-            } else {
-                delete object.__context;
-            }
-        },
-        isActiveContext: function (object) {
-            return object.__context && (object.__context.getState() === ContextState.Active);
-        },
-        endContext: function (object) {
-            if (object.__context) object.__context.end();
-        }
-    });
-
-    /**
-     * ContextualHelper mixin
-     * @class {ContextualHelper}
-     */
-    var ContextualHelper = Module.extend({
-        resolveContext: function (contextual) {
-            if (!contextual) return null;
-            if (contextual instanceof Context) return contextual;
-            return $isFunction(contextual.getContext)
-                 ? contextual.getContext() : null;
-        },
-        requireContext: function (contextual) {
-            var context = ContextualHelper.resolveContext(contextual);
-            if (!(context instanceof Context))
-                throw new Error("The supplied object is not a Context or Contextual object.");
-            return context;
-        },
-        clearContext: function (contextual) {
-            if (!contextual ||
-                !$isFunction(contextual.getContext) || 
-                !$isFunction(contextual.setContext)) {
-                return;
-            }
-            var context = contextual.getContext();
-            if (context) {
-                try {
-                    context.end();
-                }
-                finally {
-                    contextual.setContext(null);
-                }
-            }
-        },
-        bindContext: function (contextual, context, replace) {
-            if (!contextual ||
-                (!replace && $isFunction(contextual.getContext)
-                 && contextual.getContext())) {
-                return contextual;
-            }
-            if (contextual.setContext === undefined) {
-                contextual = ContextualMixin(contextual);
-            } else if (!$isFunction(contextual.setContext)) {
-                throw new Error("Unable to set the context on " + contextual + ".");
-            }
-            contextual.setContext(ContextualHelper.resolveContext(context));
-            return contextual;
-        },
-        bindChildContext: function (contextual, child) {
-            var childContext;
-            if (child) {
-                if ($isFunction(child.getContext)) {
-                    childContext = child.getContext();
-                    if (childContext && childContext.getState() === ContextState.Active) {
-                        return childContext;
-                    }
-                }
-                var context  = ContextualHelper.requireContext(contextual);
-                while (context && context.getState() !== ContextState.Active) {
-                    context = context.getParent();
-                }
-                if (context) {
-                    childContext = context.newChild();
-                    ContextualHelper.bindContext(child, childContext, true);
-                }
-            }
-            return childContext;
-        }
-    });
-
-   /**
-     * Context traversal
-     */
-    Context.implement({
-        self: function () {
-            return _newContextTraversal(this, TraversingAxis.Self);
-        },
-        root: function () {
-            return _newContextTraversal(this, TraversingAxis.Root);   
-        },
-        child: function () {
-            return _newContextTraversal(this, TraversingAxis.Child);   
-        },
-        sibling: function () {
-            return _newContextTraversal(this, TraversingAxis.Sibling);   
-        },
-        childOrSelf: function () {
-            return _newContextTraversal(this, TraversingAxis.ChildOrSelf);   
-        },
-        siblingOrSelf: function () {
-            return _newContextTraversal(this, TraversingAxis.SiblingOrSelf);   
-        },
-        ancestor: function () {
-            return _newContextTraversal(this, TraversingAxis.Ancestor);   
-        },
-        ancestorOrSelf: function () {
-            return _newContextTraversal(this, TraversingAxis.AncestorOrSelf);   
-        },
-        descendant: function () {
-            return _newContextTraversal(this, TraversingAxis.Descendant);   
-        },
-        descendantOrSelf: function () {
-            return _newContextTraversal(this, TraversingAxis.DescendantOrSelf);   
-        },
-        parentSiblingOrSelf: function () {
-            return _newContextTraversal(this, TraversingAxis.ParentSiblingOrSelf);   
-        }
-    });
-
-    function _newContextTraversal(context, axis) {
-        function Traversal() {
-            for (var key in context) {
-                if (key in Base.prototype) {
-                    continue;
-                }
-                var member = context[key];
-                if ($isFunction(member))
-                    this[key] = (function (k, m) {
-                        return function () {
-                            var owner       = (k in CallbackHandler.prototype) ? this : context, 
-                                returnValue = m.apply(owner, arguments);
-                            if (returnValue === context) {
-                                returnValue = this;
-                            }
-                            else if (returnValue &&
-                                     $isFunction(returnValue.getDecoratee) &&
-                                     $isFunction(returnValue.setDecoratee) &&
-                                     returnValue.getDecoratee() == context) {
-                                returnValue.setDecoratee(this);
-                            }
-                            return returnValue;
-                        }
-                    })(key, member);
-            }
-            this.extend({
-                handle: function (callback, greedy, composer) {
-                    return this.handleAxis(axis, callback, greedy, composer);
-                }});
-        }
-        Traversal.prototype = context.constructor.prototype;
-        return new Traversal();
-    }
-
-    // =========================================================================
-    // Function context extensions
-    // =========================================================================
-
-    if (Function.prototype.newInContext === undefined)
-        Function.prototype.newInContext = function () {
-            var args        = Array.prototype.slice.call(arguments),
-                context     = args.shift(),
-                constructor = this;
-            function Fake() { constructor.apply(this, args); }
-            Fake.prototype  = constructor.prototype;
-            var object      = new Fake;
-            ContextualHelper.bindContext(object, context);
-            return object;
-        };
-
-    if (Function.prototype.newInChildContext === undefined)
-        Function.prototype.newInChildContext = function () {
-            var args        = Array.prototype.slice.call(arguments),
-                context     = args.shift(),
-                constructor = this;
-            function Fake() { constructor.apply(this, args); }
-            Fake.prototype  = constructor.prototype;
-            var object      = new Fake;
-            ContextualHelper.bindChildContext(context, object);
-            return object;
-        };
-
-    if (typeof module !== 'undefined' && module.exports) {
-        module.exports = exports = context;
-    }
-
-    eval(this.exports);
-
-}
-
-},{"./callback.js":2,"./miruken.js":4}],4:[function(require,module,exports){
-(function (global){
 require('./base2.js');
 
 new function () { // closure
@@ -3093,7 +1711,7 @@ new function () { // closure
     var miruken = new base2.Package(this, {
         name:    "miruken",
         version: "1.0",
-        exports: "Enum,Protocol,Delegate,Miruken,MetaMacro,Disposing,DisposingMixin,Parenting,Starting,Startup,Interceptor,InterceptorSelector,ProxyBuilder,TraversingAxis,Traversing,TraversingMixin,Traversal,Variance,Modifier,ArrayManager,IndexedList,$isProtocol,$isClass,$classOf,$ancestorOf,$isString,$isFunction,$isObject,$isPromise,$isSomething,$isNothing,$using,$lift,$eq,$use,$copy,$lazy,$eval,$every,$child,$optional,$promise,$instant,$createModifier,$inferProperties,$synthesizeProperties,PARAMETERS,INTERCEPTORS,INTERCEPTOR_SELECTORS"
+        exports: "Enum,Protocol,Delegate,Miruken,MetaMacro,Disposing,DisposingMixin,Parenting,Starting,Startup,Interceptor,InterceptorSelector,ProxyBuilder,TraversingAxis,Traversing,TraversingMixin,Traversal,Variance,Modifier,ArrayManager,IndexedList,$isProtocol,$isClass,$classOf,$ancestorOf,$isString,$isFunction,$isObject,$isPromise,$isSomething,$isNothing,$using,$lift,$eq,$use,$copy,$lazy,$eval,$every,$child,$optional,$promise,$instant,$createModifier,$inferProperties,$synthesizeProperties,$synthesizePropertiesFromFields,PARAMETERS,INTERCEPTORS,INTERCEPTOR_SELECTORS"
     });
 
     eval(this.imports);
@@ -3287,15 +1905,40 @@ new function () { // closure
             subclass.getProtocols    = getProtocols;
             subclass.getAllProtocols = getAllProtocols;
             subclass.conformsTo      = _conformsTo.bind(subclass, _protocols);
-            _applyMetaMacros(subclass, metaMacros, instanceDef, staticDef);
+            subclass.metaMacros      = metaMacros;
+            _applyMetaMacros(subclass, null, false, instanceDef, staticDef);
             Array2.forEach(mixins, subclass.implement, subclass);
             return subclass;
             })(this, Array.prototype.slice.call(arguments));
     };
-    
+
     Base.prototype.conformsTo = function (protocol) {
         return $classOf(this).conformsTo(protocol);
     };
+    
+    var implement = Base.implement;
+    Base.implement = function (source) {
+        if ($isFunction(source)) {
+            source = source.prototype; 
+        }
+        var implemented = implement.call(this, source);
+        _applyMetaMacros(implemented, null, true, source);
+        return implemented;
+    }
+
+    var extendInstance = Base.prototype.extend;
+    Base.prototype.extend = function (key, value) {
+        if (!this.metaMacros || this.metaMacros.length == 0) {
+            extendInstance.call(this, key, value);
+        }
+        var definition = (arguments.length === 1) ? key : {};
+        if (arguments.length >= 2) {
+            definition[key] = value;
+        }                                
+        var instance = extendInstance.call(this, definition);
+        _applyMetaMacros(instance.constructor, instance, true, definition);
+        return instance;
+    }
 
     function _conformsTo(protocols, protocol) {
         if (!(protocol && (protocol.prototype instanceof Protocol))) {
@@ -3311,66 +1954,34 @@ new function () { // closure
         }
         var ancestor = this.ancestor;
         return ancestor && (ancestor !== Base) && (ancestor !== Protocol)
-            ? ancestor.conformsTo(protocol)
-            : false;
+             ? ancestor.conformsTo(protocol)
+             : false;
     };
     
     /**
      * @function _applyMetaMacros
      * Applies any meta-macros to the class definition.
-     * @param    {Class}  clazz       - clazz
-     * @param    {Array}  metaMacros  - meta macros
-     * @param    {Object} instanceDef - instance definition
-     * @param    {Object} staticDef   - static definition
+     * @param    {Function} clazz       - clazz target
+     * @param    {objec}    instance    - instance target
+     * @param    {Boolean}  active      - restrict active
+     * @param    {Object}   instanceDef - instance definition
+     * @param    {Object}   staticDef   - static definition
      */
-    function _applyMetaMacros(clazz, metaMacros, instanceDef, staticDef) {
-        var active, inherit;
-        if (metaMacros.length == 0) {
-            return;
-        }
-        for (var i = 0; i < metaMacros.length; ++i) {
-            var metaMacro = metaMacros[i];
-            if (metaMacro.isActive()) {
-                (active || (active = [])).push(metaMacro);
-            }
-            if (metaMacro.shouldInherit()) {
-                (inherit || (inherit = [])).push(metaMacro);
-            }
-            metaMacro.apply(clazz, clazz.prototype, instanceDef);
-        }
-        if (active) {
-            clazz.implement({
-                extend: function (key, value) {
-                    var instanceDef = (arguments.length === 1) ? key : {};
-                    if (arguments.length >= 2) {
-                        instanceDef[key] = value;
-                    }                                
-                    var instance = this.base(instanceDef);
-                    Array2.invoke(active, 'apply', clazz, instance, instanceDef);
-                    return instance;
+    function _applyMetaMacros(clazz, instance, active, instanceDef, staticDef) {
+        var source = clazz;
+        instance   = instance || clazz.prototype;
+        while (source && source.metaMacros &&
+               (source !== Base) && (source !== Object)) {
+            var metaMacros = source.metaMacros,
+                inherit    = clazz !== source;
+            for (var i = 0; i < metaMacros.length; ++i) {
+                var metaMacro = metaMacros[i];
+                if ((!active  || metaMacro.isActive()) ||
+                    (!inherit || metaMacro.shouldInherit())) {
+                    metaMacro.apply(clazz, instance, instanceDef);
                 }
-            });
-            var implement = Base.implement;
-            clazz.implement = function (source) {
-                if ($isFunction(source)) {
-                    source = source.prototype; 
-                }
-                var implemented = implement.call(clazz, source);
-                if (!clazz.__implementing) {
-                    clazz.__implementing = true;
-                    Array2.invoke(active, 'apply', clazz, implemented.prototype, source);
-                    delete clazz.__implementing;
-                }
-                return implemented;
-            };
-        }
-        if (inherit) {
-            var extend = Base.extend;
-            clazz.extend = function () {
-                var args = Array.prototype.slice.call(arguments);
-                args.unshift.apply(args, inherit);
-                return extend.apply(clazz, args);
             }
+            source = $ancestorOf(source);
         }
     }
 
@@ -3399,7 +2010,10 @@ new function () { // closure
         shouldInherit: function () { return true; },
         isActive: function () { return true; }
     });
-    _applyMetaMacros(Protocol, [new $proxyProtocol], {});
+    Protocol.extend     = Base.extend
+    Protocol.implement  = Base.implement;;
+    Protocol.metaMacros = [new $proxyProtocol];
+    _applyMetaMacros(Protocol);
 
     /**
      * @class {$inferProperties}
@@ -3414,9 +2028,6 @@ new function () { // closure
     });
 
     function _inferProperties(target, definition) {
-        if ($isNothing(definition)) {
-            return;
-        }
         for (var key in definition) {
             var value = definition[key];
             if (!$isFunction(value)) {
@@ -3461,7 +2072,7 @@ new function () { // closure
         constructor: function (/*properties*/) {
             var _properties = Array.prototype.slice.call(arguments);
             this.extend({
-                apply: function(clazz, target, definition) {
+                apply: function(clazz, target) {
                     _synthesizeProperties(target, _properties);
                 }
             });
@@ -3521,11 +2132,38 @@ new function () { // closure
     }
 
     /**
+     * @class {$synthesizePropertiesFromFields}
+     * Metamacro to create properties from fields.
+     */
+    var $synthesizePropertiesFromFields = MetaMacro.extend({
+        apply: function(clazz, target, definition) {
+            _synthesizePropertiesFromFields(target, definition);
+        },
+        shouldInherit: function () { return true; },
+        isActive: function () { return true; }
+    });
+
+    function _synthesizePropertiesFromFields(target, definition) {
+        for (var key in definition) {
+            var value = definition[key];
+            if ($isFunction(value)) {
+                continue;
+            }
+            var name  = key.charAt(0) == '_' ? key.substring(1) : key,
+                uname = name.charAt(0).toUpperCase() + name.slice(1),
+                field = '_' + name;
+
+            delete definition[key];
+            definition[field] = value;
+            _synthesizeProperty(target, name, field, 'get' + uname, 'set' + uname);
+        }
+    }
+
+    /**
      * @class {Miruken}
      * Base class to prefer coercion over casting.
      */
-    var Miruken = Base.extend(
-        $inferProperties, {
+    var Miruken = Base.extend({
         constructor: function () {
             this.base.apply(this, arguments);
         }
@@ -4413,205 +3051,7 @@ new function () { // closure
 }
 
 }).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
-},{"./base2.js":1}],5:[function(require,module,exports){
-var miruken = require('./miruken.js'),
-    Promise = require('bluebird');
-              require('./callback.js');
-
-new function () { // closure
-
-    /**
-     * @namespace miruken.validate
-     */
-    var validate = new base2.Package(this, {
-        name:    "validate",
-        version: miruken.version,
-        parent:  miruken,
-        imports: "miruken,miruken.callback",
-        exports: "Validator,ValidationErrorCode,ValidationError,ValidationResult,ValidationCallbackHandler,$validate"
-    });
-
-    eval(this.imports);
-
-    var $validate = $define('$validate');
-
-    /**
-     * @protocol {Validator}
-     */
-    var Validator = Protocol.extend({
-        /**
-         * Validates the object in the scope.
-         * @param   {Object} object  - object to validate
-         * @param   {Object} scope   - scope of validation
-         * @returns {Promise(ValidationResult)} a promise for the validation result
-         */
-        validate: function (object, scope) {}
-    });
-
-    /**
-     * ValidationErrorCode enum
-     * @enum {Number}
-     */
-    var ValidationErrorCode = Enum({
-        Invalid:           100,
-        Required:          101,
-        TypeMismatch:      102,
-        MutuallyExclusive: 103,
-        NumberTooLarge:    104,
-        NumberTooSmall:    105,
-        DateTooLate:       106,
-        DateTooSoon:       107
-        });
-
-    /**
-     * @class {ValidationError}
-     * @param {String} message   - validation error message
-     * @param {Object} userInfo  - additional error info
-     *   Standard userInfo keys:
-     *   key    => identifies invald key
-     *   domain => identifies category of error
-     *   code   => identifies type of error
-     *   source => captures invalid value
-     */
-    function ValidationError(message, userInfo) {
-        this.message  = message;
-        this.userInfo = userInfo;
-        this.stack    = (new Error).stack;
-    }
-    ValidationError.prototype             = new Error;
-    ValidationError.prototype.constructor = ValidationError;
-
-    // =========================================================================
-    // ValidationResult
-    // =========================================================================
-    
-    var $childResultsKey = '__childResults';
-
-    /**
-     * @class {ValidationResult}
-     */
-    var ValidationResult = Base.extend({
-        constructor: function (object, scope) {
-            var _errors = {};
-            this.extend({
-                getObject: function () { return object; },
-                getScope: function () { return scope; },
-                isValid: function () {
-                    for (var k in _errors) {
-                        return false;
-                    }
-                    return true;
-                },
-                getKeyCulprits: function () {
-                    var keys = [];
-                    for (var k in _errors) {
-                        if (k !== $childResultsKey) {
-                            keys.push(k);
-                        }
-                    }
-                    return keys;
-                },
-                getKeyErrors: function (key) { return _errors[key]; },
-                addKeyError: function (key, error) {
-                    if (!((error instanceof ValidationResult) && error.isValid())) {
-                        var keyErrors = _errors[key];
-                        if (!keyErrors) {
-                            keyErrors = _errors[key] = [];
-                        }
-                        keyErrors.push(error);
-                    }
-                    return this;
-                },
-                getChildResults: function () { 
-                    return this.getKeyErrors($childResultsKey);
-                },
-                addChildResult: function (childResult) {
-                    this.addKeyError($childResultsKey, childResult);
-                }
-            });
-        },
-        toString: function () {
-            var str = "",
-                keys = this.getKeyCulprits();
-            for (var ki = 0; ki < keys.length; ++ki) {
-                var key    = keys[ki],
-                    errors = this.getKeyErrors(key);
-                str += key;
-                for (var ei = 0; ei < errors.length; ++ei) {
-                    var error = errors[ei];
-                    str += '\n    - ';
-                    str += error.message;
-                }
-                str += '\n';
-            }
-            return str;
-        }
-    });
-
-    ValidationResult.implement({
-        invalid: function(key, source, message) {
-            _addValidationError(this, key, ValidationErrorCode.Invalid, message, source);
-        },
-        required: function(key, message) {
-            _addValidationError(this, key, ValidationErrorCode.Required, message);
-        },
-        typeMismatch: function(key, source, message) {
-            _addValidationError(this, key, ValidationErrorCode.TypeMismatch, message);
-        },
-        mutuallyExclusive: function(key, source, message) {
-            _addValidationError(this, key, ValidationErrorCode.MutuallyExclusive, message);
-        },
-        numberToLarge: function(key, source, message) {
-            _addValidationError(this, key, ValidationErrorCode.NumberToLarge, message);
-        },
-        numberToSmall: function(key, source, message) {
-            _addValidationError(this, key, ValidationErrorCode.NumberToSmall, message);
-        },
-        dateToLate: function(key, source, message) {
-            _addValidationError(this, key, ValidationErrorCode.DateToLate, message);
-        },
-        dateToSoon: function(key, source, message) {
-            _addValidationError(this, key, ValidationErrorCode.DateToSoon, message);
-        }
-    });
-
-    function _addValidationError(result, key, code, message, source) {
-        var userInfo = { key: key, code: code };
-        if (source) {
-            userInfo.source = source;
-        }
-        result.addKeyError(key, new ValidationError(message, userInfo));
-    }
-
-    /**
-     * @class {ValidationCallbackHandler}
-     */
-    var ValidationCallbackHandler = CallbackHandler.extend({
-        validate: function (object, scope) {
-            var validation = new ValidationResult(object, scope);
-            return Promise.resolve($composer.deferAll(validation)).then(function (handled) {
-                return !handled || validation.isValid() ? validation : Promise.reject(validation);
-            });
-        }
-    });
-
-    $handle(CallbackHandler, ValidationResult, function (validation, composer) {
-        var target = validation.getObject(),
-            source = target && target.constructor;
-        if (source) {
-            return $validate.dispatch(this, validation, source, composer);
-        }
-    });
-
-    if (typeof module !== 'undefined' && module.exports) {
-        module.exports = exports = validate;
-    }
-
-    eval(this.exports);
-
-}
-
-},{"./callback.js":2,"./miruken.js":4,"bluebird":6}],6:[function(require,module,exports){
+},{"./base2.js":1}],3:[function(require,module,exports){
 (function (process,global){
 /* @preserve
  * The MIT License (MIT)
@@ -9279,10 +7719,10 @@ module.exports = ret;
 },{"./es5.js":14}]},{},[4])(4)
 });                    ;if (typeof window !== 'undefined' && window !== null) {                               window.P = window.Promise;                                                     } else if (typeof self !== 'undefined' && self !== null) {                             self.P = self.Promise;                                                         }
 }).call(this,require('_process'),typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
-},{"_process":43}],7:[function(require,module,exports){
+},{"_process":40}],4:[function(require,module,exports){
 module.exports = require('./lib/chai');
 
-},{"./lib/chai":8}],8:[function(require,module,exports){
+},{"./lib/chai":5}],5:[function(require,module,exports){
 /*!
  * chai
  * Copyright(c) 2011-2014 Jake Luer <jake@alogicalparadox.com>
@@ -9371,7 +7811,7 @@ exports.use(should);
 var assert = require('./chai/interface/assert');
 exports.use(assert);
 
-},{"./chai/assertion":9,"./chai/config":10,"./chai/core/assertions":11,"./chai/interface/assert":12,"./chai/interface/expect":13,"./chai/interface/should":14,"./chai/utils":25,"assertion-error":34}],9:[function(require,module,exports){
+},{"./chai/assertion":6,"./chai/config":7,"./chai/core/assertions":8,"./chai/interface/assert":9,"./chai/interface/expect":10,"./chai/interface/should":11,"./chai/utils":22,"assertion-error":31}],6:[function(require,module,exports){
 /*!
  * chai
  * http://chaijs.com
@@ -9508,7 +7948,7 @@ module.exports = function (_chai, util) {
   });
 };
 
-},{"./config":10}],10:[function(require,module,exports){
+},{"./config":7}],7:[function(require,module,exports){
 module.exports = {
 
   /**
@@ -9560,7 +8000,7 @@ module.exports = {
 
 };
 
-},{}],11:[function(require,module,exports){
+},{}],8:[function(require,module,exports){
 /*!
  * chai
  * http://chaijs.com
@@ -10921,7 +9361,7 @@ module.exports = function (chai, _) {
   });
 };
 
-},{}],12:[function(require,module,exports){
+},{}],9:[function(require,module,exports){
 /*!
  * chai
  * Copyright(c) 2011-2014 Jake Luer <jake@alogicalparadox.com>
@@ -11979,7 +10419,7 @@ module.exports = function (chai, util) {
   ('Throw', 'throws');
 };
 
-},{}],13:[function(require,module,exports){
+},{}],10:[function(require,module,exports){
 /*!
  * chai
  * Copyright(c) 2011-2014 Jake Luer <jake@alogicalparadox.com>
@@ -11993,7 +10433,7 @@ module.exports = function (chai, util) {
 };
 
 
-},{}],14:[function(require,module,exports){
+},{}],11:[function(require,module,exports){
 /*!
  * chai
  * Copyright(c) 2011-2014 Jake Luer <jake@alogicalparadox.com>
@@ -12073,7 +10513,7 @@ module.exports = function (chai, util) {
   chai.Should = loadShould;
 };
 
-},{}],15:[function(require,module,exports){
+},{}],12:[function(require,module,exports){
 /*!
  * Chai - addChainingMethod utility
  * Copyright(c) 2012-2014 Jake Luer <jake@alogicalparadox.com>
@@ -12186,7 +10626,7 @@ module.exports = function (ctx, name, method, chainingBehavior) {
   });
 };
 
-},{"../config":10,"./flag":18,"./transferFlags":32}],16:[function(require,module,exports){
+},{"../config":7,"./flag":15,"./transferFlags":29}],13:[function(require,module,exports){
 /*!
  * Chai - addMethod utility
  * Copyright(c) 2012-2014 Jake Luer <jake@alogicalparadox.com>
@@ -12231,7 +10671,7 @@ module.exports = function (ctx, name, method) {
   };
 };
 
-},{"../config":10,"./flag":18}],17:[function(require,module,exports){
+},{"../config":7,"./flag":15}],14:[function(require,module,exports){
 /*!
  * Chai - addProperty utility
  * Copyright(c) 2012-2014 Jake Luer <jake@alogicalparadox.com>
@@ -12273,7 +10713,7 @@ module.exports = function (ctx, name, getter) {
   });
 };
 
-},{}],18:[function(require,module,exports){
+},{}],15:[function(require,module,exports){
 /*!
  * Chai - flag utility
  * Copyright(c) 2012-2014 Jake Luer <jake@alogicalparadox.com>
@@ -12307,7 +10747,7 @@ module.exports = function (obj, key, value) {
   }
 };
 
-},{}],19:[function(require,module,exports){
+},{}],16:[function(require,module,exports){
 /*!
  * Chai - getActual utility
  * Copyright(c) 2012-2014 Jake Luer <jake@alogicalparadox.com>
@@ -12327,7 +10767,7 @@ module.exports = function (obj, args) {
   return args.length > 4 ? args[4] : obj._obj;
 };
 
-},{}],20:[function(require,module,exports){
+},{}],17:[function(require,module,exports){
 /*!
  * Chai - getEnumerableProperties utility
  * Copyright(c) 2012-2014 Jake Luer <jake@alogicalparadox.com>
@@ -12354,7 +10794,7 @@ module.exports = function getEnumerableProperties(object) {
   return result;
 };
 
-},{}],21:[function(require,module,exports){
+},{}],18:[function(require,module,exports){
 /*!
  * Chai - message composition utility
  * Copyright(c) 2012-2014 Jake Luer <jake@alogicalparadox.com>
@@ -12406,7 +10846,7 @@ module.exports = function (obj, args) {
   return flagMsg ? flagMsg + ': ' + msg : msg;
 };
 
-},{"./flag":18,"./getActual":19,"./inspect":26,"./objDisplay":27}],22:[function(require,module,exports){
+},{"./flag":15,"./getActual":16,"./inspect":23,"./objDisplay":24}],19:[function(require,module,exports){
 /*!
  * Chai - getName utility
  * Copyright(c) 2012-2014 Jake Luer <jake@alogicalparadox.com>
@@ -12428,7 +10868,7 @@ module.exports = function (func) {
   return match && match[1] ? match[1] : "";
 };
 
-},{}],23:[function(require,module,exports){
+},{}],20:[function(require,module,exports){
 /*!
  * Chai - getPathValue utility
  * Copyright(c) 2012-2014 Jake Luer <jake@alogicalparadox.com>
@@ -12532,7 +10972,7 @@ function _getPathValue (parsed, obj) {
   return res;
 };
 
-},{}],24:[function(require,module,exports){
+},{}],21:[function(require,module,exports){
 /*!
  * Chai - getProperties utility
  * Copyright(c) 2012-2014 Jake Luer <jake@alogicalparadox.com>
@@ -12569,7 +11009,7 @@ module.exports = function getProperties(object) {
   return result;
 };
 
-},{}],25:[function(require,module,exports){
+},{}],22:[function(require,module,exports){
 /*!
  * chai
  * Copyright(c) 2011 Jake Luer <jake@alogicalparadox.com>
@@ -12685,7 +11125,7 @@ exports.addChainableMethod = require('./addChainableMethod');
 exports.overwriteChainableMethod = require('./overwriteChainableMethod');
 
 
-},{"./addChainableMethod":15,"./addMethod":16,"./addProperty":17,"./flag":18,"./getActual":19,"./getMessage":21,"./getName":22,"./getPathValue":23,"./inspect":26,"./objDisplay":27,"./overwriteChainableMethod":28,"./overwriteMethod":29,"./overwriteProperty":30,"./test":31,"./transferFlags":32,"./type":33,"deep-eql":35}],26:[function(require,module,exports){
+},{"./addChainableMethod":12,"./addMethod":13,"./addProperty":14,"./flag":15,"./getActual":16,"./getMessage":18,"./getName":19,"./getPathValue":20,"./inspect":23,"./objDisplay":24,"./overwriteChainableMethod":25,"./overwriteMethod":26,"./overwriteProperty":27,"./test":28,"./transferFlags":29,"./type":30,"deep-eql":32}],23:[function(require,module,exports){
 // This is (almost) directly from Node.js utils
 // https://github.com/joyent/node/blob/f8c335d0caf47f16d31413f89aa28eda3878e3aa/lib/util.js
 
@@ -13020,7 +11460,7 @@ function objectToString(o) {
   return Object.prototype.toString.call(o);
 }
 
-},{"./getEnumerableProperties":20,"./getName":22,"./getProperties":24}],27:[function(require,module,exports){
+},{"./getEnumerableProperties":17,"./getName":19,"./getProperties":21}],24:[function(require,module,exports){
 /*!
  * Chai - flag utility
  * Copyright(c) 2012-2014 Jake Luer <jake@alogicalparadox.com>
@@ -13071,7 +11511,7 @@ module.exports = function (obj) {
   }
 };
 
-},{"../config":10,"./inspect":26}],28:[function(require,module,exports){
+},{"../config":7,"./inspect":23}],25:[function(require,module,exports){
 /*!
  * Chai - overwriteChainableMethod utility
  * Copyright(c) 2012-2014 Jake Luer <jake@alogicalparadox.com>
@@ -13126,7 +11566,7 @@ module.exports = function (ctx, name, method, chainingBehavior) {
   };
 };
 
-},{}],29:[function(require,module,exports){
+},{}],26:[function(require,module,exports){
 /*!
  * Chai - overwriteMethod utility
  * Copyright(c) 2012-2014 Jake Luer <jake@alogicalparadox.com>
@@ -13179,7 +11619,7 @@ module.exports = function (ctx, name, method) {
   }
 };
 
-},{}],30:[function(require,module,exports){
+},{}],27:[function(require,module,exports){
 /*!
  * Chai - overwriteProperty utility
  * Copyright(c) 2012-2014 Jake Luer <jake@alogicalparadox.com>
@@ -13235,7 +11675,7 @@ module.exports = function (ctx, name, getter) {
   });
 };
 
-},{}],31:[function(require,module,exports){
+},{}],28:[function(require,module,exports){
 /*!
  * Chai - test utility
  * Copyright(c) 2012-2014 Jake Luer <jake@alogicalparadox.com>
@@ -13263,7 +11703,7 @@ module.exports = function (obj, args) {
   return negate ? !expr : expr;
 };
 
-},{"./flag":18}],32:[function(require,module,exports){
+},{"./flag":15}],29:[function(require,module,exports){
 /*!
  * Chai - transferFlags utility
  * Copyright(c) 2012-2014 Jake Luer <jake@alogicalparadox.com>
@@ -13309,7 +11749,7 @@ module.exports = function (assertion, object, includeAll) {
   }
 };
 
-},{}],33:[function(require,module,exports){
+},{}],30:[function(require,module,exports){
 /*!
  * Chai - type utility
  * Copyright(c) 2012-2014 Jake Luer <jake@alogicalparadox.com>
@@ -13356,7 +11796,7 @@ module.exports = function (obj) {
   return typeof obj;
 };
 
-},{}],34:[function(require,module,exports){
+},{}],31:[function(require,module,exports){
 /*!
  * assertion-error
  * Copyright(c) 2013 Jake Luer <jake@qualiancy.com>
@@ -13468,10 +11908,10 @@ AssertionError.prototype.toJSON = function (stack) {
   return props;
 };
 
-},{}],35:[function(require,module,exports){
+},{}],32:[function(require,module,exports){
 module.exports = require('./lib/eql');
 
-},{"./lib/eql":36}],36:[function(require,module,exports){
+},{"./lib/eql":33}],33:[function(require,module,exports){
 /*!
  * deep-eql
  * Copyright(c) 2013 Jake Luer <jake@alogicalparadox.com>
@@ -13730,10 +12170,10 @@ function objectEqual(a, b, m) {
   return true;
 }
 
-},{"buffer":39,"type-detect":37}],37:[function(require,module,exports){
+},{"buffer":36,"type-detect":34}],34:[function(require,module,exports){
 module.exports = require('./lib/type');
 
-},{"./lib/type":38}],38:[function(require,module,exports){
+},{"./lib/type":35}],35:[function(require,module,exports){
 /*!
  * type-detect
  * Copyright(c) 2013 jake luer <jake@alogicalparadox.com>
@@ -13877,7 +12317,7 @@ Library.prototype.test = function (obj, type) {
   }
 };
 
-},{}],39:[function(require,module,exports){
+},{}],36:[function(require,module,exports){
 /*!
  * The buffer module from node.js, for the browser.
  *
@@ -15213,7 +13653,7 @@ function decodeUtf8Char (str) {
   }
 }
 
-},{"base64-js":40,"ieee754":41,"is-array":42}],40:[function(require,module,exports){
+},{"base64-js":37,"ieee754":38,"is-array":39}],37:[function(require,module,exports){
 var lookup = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/';
 
 ;(function (exports) {
@@ -15339,7 +13779,7 @@ var lookup = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/';
 	exports.fromByteArray = uint8ToBase64
 }(typeof exports === 'undefined' ? (this.base64js = {}) : exports))
 
-},{}],41:[function(require,module,exports){
+},{}],38:[function(require,module,exports){
 exports.read = function(buffer, offset, isLE, mLen, nBytes) {
   var e, m,
       eLen = nBytes * 8 - mLen - 1,
@@ -15425,7 +13865,7 @@ exports.write = function(buffer, value, offset, isLE, mLen, nBytes) {
   buffer[offset + i - d] |= s * 128;
 };
 
-},{}],42:[function(require,module,exports){
+},{}],39:[function(require,module,exports){
 
 /**
  * isArray
@@ -15460,7 +13900,7 @@ module.exports = isArray || function (val) {
   return !! val && '[object Array]' == str.call(val);
 };
 
-},{}],43:[function(require,module,exports){
+},{}],40:[function(require,module,exports){
 // shim for using process in browser
 
 var process = module.exports = {};
@@ -15520,272 +13960,1124 @@ process.chdir = function (dir) {
 };
 process.umask = function() { return 0; };
 
-},{}],44:[function(require,module,exports){
-var miruken  = require('../lib/miruken.js'),
-    context  = require('../lib/context.js')
-    validate = require('../lib/validate.js'),
-    Promise  = require('bluebird'),
-    chai     = require("chai"),
-    expect   = chai.expect;
+},{}],41:[function(require,module,exports){
+(function (global){
+var miruken = require('../lib/miruken.js'),
+    Promise = require('bluebird'),
+    chai    = require("chai"),
+    expect  = chai.expect;
 
 eval(base2.namespace);
+eval(base2.js.namespace);
 eval(miruken.namespace);
-eval(miruken.callback.namespace);
-eval(miruken.context.namespace);
-eval(validate.namespace);
+
+Promise.onPossiblyUnhandledRejection(Undefined);
 
 new function () { // closure
 
-    var validate_test = new base2.Package(this, {
-        name:    "validate_test",
-        exports: "Player,Team,"
+    var miruken_test = new base2.Package(this, {
+        name:    "miruken_test",
+        exports: "Animal,Tricks,CircusAnimal,Dog,Elephant,AsianElephant,Tracked,ShoppingCart,TreeNode,LogInterceptor"
     });
 
     eval(this.imports);
 
-    var Player = Base.extend({
-        constructor: function (firstName, lastName, dob) {
+    var Animal = Protocol.extend({
+        talk: function () {},
+        eat:  function (food) {}
+    });
+    
+    var Tricks = Protocol.extend({
+        fetch: function (item) {}
+    });
+    
+    var CircusAnimal = Animal.extend(Tricks, {
+    });
+    
+    var Dog = Base.extend(Animal, Tricks, {
+        constructor: function (name) {
+           this.extend({
+               getName: function () { return name; }
+           });
+        },
+        talk: function () { return 'Ruff Ruff'; },
+        fetch: function (item) { return 'Fetched ' + item; }
+    });
+
+    var Elephant = Base.extend(CircusAnimal, {
+    });
+    
+	var Tracked = Protocol.extend({
+		getTag: function () {}
+	});
+
+    var AsianElephant = Elephant.extend(Tracked);
+
+    var ShoppingCart = Base.extend(Disposing, DisposingMixin, {
+        constructor: function () {
+            var _items = [];
             this.extend({
-                getFirstName: function () { return firstName; },
-                setFirstName: function (value) { firstName = value; },
-                getLastName:  function () { return lastName; },
-                setLastName:  function (value) { lastName = value; },
-                getDOB:       function () { return dob; },
-                setDOB:       function (value) { dob = value; }
+                getItems: function () { return _items; },
+                addItem: function (item) { _items.push(item); }, 
+                _dispose: function () { _items = []; }
+            });
+        }
+    });
+    
+    var TreeNode = Base.extend(Traversing, TraversingMixin, {
+        constructor: function (data) { 
+            var _children = [];
+            this.extend({
+                getParent:   function () { return null; },
+                getData:     function () { return data; },
+                getChildren: function () { return _children; },
+                addChild:    function (nodes) {
+                    var parent = this;
+                    Array2.forEach(arguments, function (node) {
+                        node.extend({getParent: function () { return parent; }});
+                        _children.push(node);
+                    });
+                    return this;
+                }
             });
         }});
-    
-    var Team = CallbackHandler.extend({
-        constructor: function (name, division) {
-            this.extend({
-                getName:     function () { return name; },
-                setName:     function (value) { name = value; },
-                getDivision: function () { return division; },
-                setDivision: function (value) { division = value; }
-            });
-        },
-        $validate:[
-            Player, function (validation, composer) {
-                var player = validation.getObject();
-                if (!player.getFirstName() || player.getFirstName().length == 0) {
-                    validation.required("FirstName", "First name required");
-                }
-                if (!player.getLastName()  || player.getLastName().length == 0) {
-                    validation.required("LastName", "Last name required");
-                }
-                if ((player.getDOB() instanceof Date) === false) {
-                    validation.invalid("DOB", player.getDOB(), "Valid Date-of-birth required");
-                }
-            }]
+
+    var LogInterceptor = Interceptor.extend({
+        intercept: function (invocation) {
+            console.log(lang.format("Called %1 with (%2) from %3",
+                        invocation.getMethod(),
+                        invocation.getArgs().join(", "), 
+                        invocation.getSource()));
+            var result = invocation.proceed();
+            console.log(lang.format("    And returned %1", result));
+            return result;
+        }
     });
-    
-  eval(this.exports);
+
+    eval(this.exports);
 };
 
-eval(base2.validate_test.namespace);
+eval(base2.miruken_test.namespace);
 
-describe("ValidationResult", function () {
-    describe("#getObject", function () {
-        it("should get the validated object", function () {
-            var team       = new Team("Aspros"),
-                validation = new ValidationResult(team);
-            expect(validation.getObject()).to.equal(team);
-        });
-    });
-
-    describe("#getScope", function () {
-        it("should get the validation scope", function () {
-            var team       = new Team("Aspros"),
-                validation = new ValidationResult(team, "players");
-            expect(validation.getScope()).to.equal("players");
-        });
-    });
-
-    describe("#addKeyError", function () {
-        it("should add validation errors", function () {
-            var team       = new Team,
-                validation = new ValidationResult(team);
-            validation.addKeyError("Name", new ValidationError("Team name required", {
-                key:  "Name",
-                code: ValidationErrorCode.Required
-            }));
-            expect(validation.getKeyErrors("Name")).to.eql([
-                new ValidationError("Team name required", {
-                    key:  "Name",
-                    code: ValidationErrorCode.Required
-                })
-            ]);
-        });
-
-        it("should add invalid child validation results", function () {
-            var team            = new Team,
-                player          = new Player,
-                validation      = new ValidationResult(team),
-   	        childValidation = new ValidationResult(player);
-                childValidation.addKeyError("FirstName", new ValidationError("First name required", {
-                    key:  "FirstName",
-                    code: ValidationErrorCode.Required
-                }));
-	        validation.addKeyError("Player", childValidation);
-	        expect(validation.isValid()).to.be.false;
-            expect(validation.getKeyErrors("Player")[0].getKeyErrors("FirstName")).to.eql([
-                new ValidationError("First name required", {
-                    key:  "FirstName",
-                    code: ValidationErrorCode.Required
-                })
-	        ]);
-	    });
-
-        it("should not add valid child validation results", function () {
-            var team            = new Team,
-                player          = new Player,
-                validation      = new ValidationResult(team),
-                childValidation = new ValidationResult(player);
-            validation.addKeyError("Player", childValidation);
-            expect(validation.isValid()).to.be.true;
-            expect(validation.getKeyErrors("Player")).to.be.undefined;
-        });
-
-        it("should add anonymous invalid child validation results", function () {
-            var team            = new Team,
-                player          = new Player,
-                validation      = new ValidationResult(team),
-                childValidation = new ValidationResult(player);
-            childValidation.addKeyError("FirstName", new ValidationError("First name required", {
-                key:  "FirstName",
-                code: ValidationErrorCode.Required
-            }));
-            validation.addChildResult(childValidation);
-            expect(validation.isValid()).to.be.false;
-            expect(validation.getKeyCulprits()).to.eql([]);
-            expect(validation.getChildResults()[0].getKeyErrors("FirstName")).to.eql([
-                new ValidationError("First name required", {
-                    key:  "FirstName",
-                    code: ValidationErrorCode.Required
-                })
-		    ]);
-	    });
+describe("miruken", function () {
+    it("should be in global namespace", function () {
+        expect(global.miruken).to.equal(base2.miruken);
     });
 });
 
-describe("ValidationCallbackHandler", function () {
-    describe("#validate", function () {
-        it("should invalidate object", function (done) {
-            var team   = new Team("Liverpool", "U8"),
-                league = new Context()
-                    .addHandlers(team, new ValidationCallbackHandler()),
-            player = new Player;
-            Promise.resolve(Validator(league).validate(player)).caught(function (error) {
-                done();
-            });
+describe("Enum", function () {
+    it("should be immutable", function () {
+        var Color = Enum({red: 1, blue: 2, green: 3});
+        expect(Color.prototype).to.be.instanceOf(Enum);
+        Color.black = 4;
+        expect(Color.black).to.be.undefined;
+    });
+
+    it("should reject enum construction", function () {
+        var Color = Enum({red: 1, blue: 2, green: 3});
+        expect(function () { 
+            new Color(2);
+        }).to.throw(Error, /Enums cannot be instantiated./);
+    });
+});
+
+describe("Miruken", function () {
+    it("should be in global namespace", function () {
+        expect(global.Miruken).to.equal(base2.miruken.Miruken);
+    });
+
+    it("should pass arguments to base", function () {
+        var Something = Miruken.extend({
+            constructor: function () {
+                this.base({name: 'Larry'});
+            }
+        }),
+        something = new Something;
+        expect(something.name).to.equal('Larry');
+    });
+
+    it("should perform coercion by default", function () {
+        var Pet = Miruken.extend({
+                constructor: function (name) {
+                    this.extend({
+                        getName: function () { return name; }
+                    });
+                }
+            }),
+            pet = Pet('Spike');
+        expect(pet).to.be.instanceOf(Pet);
+        expect(pet.getName()).to.equal('Spike');
+    });
+});
+
+describe("$isClass", function () {
+    it("should identify miruken classes", function () {
+        expect($isClass(Dog)).to.be.true;
+    });
+
+    it("should reject non-miruken classes", function () {
+        var SomeClass = function () {};
+        expect($isClass(SomeClass)).to.be.false;
+    });
+});
+
+describe("$isFunction", function () {
+    it("should identify functions", function () {
+        var fn = function () {};
+        expect($isFunction(fn)).to.be.true;
+    });
+
+    it("should reject no functions", function () {
+        expect($isFunction(1)).to.be.false;
+        expect($isFunction("hello")).to.be.false;
+    });
+});
+
+describe("$inferProperties", function () {
+    var Person = Base.extend( 
+        $inferProperties, {
+        constructor: function (firstName) {
+            this.firstName = firstName;
+        },
+        getFirstName: function () { return this._name; },
+        setFirstName: function (value) { this._name = value; }
+    });
+    
+    it("should infer instance properties", function () {
+        var person = new Person('Sean');
+        expect(person.firstName).to.equal('Sean');
+        expect(person.getFirstName()).to.equal('Sean');
+    });
+
+    it("should infer extended properties", function () {
+        var Doctor = Person.extend({
+                constructor: function (firstName, speciality) {
+                    this.base(firstName);
+                    this.speciality = speciality;
+                },
+                getSpeciality: function () { return this._speciality; },
+                setSpeciality: function (value) { this._speciality = value; }
+            }),
+            Surgeon = Doctor.extend({
+                constructor: function (firstName, speciality, hospital) {
+                    this.base(firstName, speciality);
+                    this.hospital = hospital;
+                },
+                getHospital: function () { return this._hospital; },
+                setHospital: function (value) { this._hospital = value; }
+            }),
+            doctor  = new Doctor('Frank', 'Orthopedics'),
+            surgeon = new Surgeon('Brenda', 'Cardiac', 'Baylor');
+        expect(doctor.firstName).to.equal('Frank');
+        expect(doctor.getFirstName()).to.equal('Frank');
+        expect(doctor.speciality).to.equal('Orthopedics');
+        expect(doctor.getSpeciality()).to.equal('Orthopedics');
+        expect(surgeon.firstName).to.equal('Brenda');
+        expect(surgeon.getFirstName()).to.equal('Brenda');
+        expect(surgeon.speciality).to.equal('Cardiac');
+        expect(surgeon.getSpeciality()).to.equal('Cardiac');
+        expect(surgeon.hospital).to.equal('Baylor');
+        expect(surgeon.getHospital()).to.equal('Baylor');
+    });
+
+    it("should infer implemented properties", function () {
+        Person.implement({
+            getMother: function () { return this._mother; },
+            setMother: function (value) { this._mother = value; } 
+        });
+        var mom = new Person,
+            son = new Person;
+        son.mother = mom;
+        expect(son.mother).to.equals(mom);
+        expect(son.getMother()).to.equal(mom);
+
+    });
+
+    it("should infer extended instance properties", function () {
+        var person = new Person;
+        person.extend({
+            getAge: function () { return this._age; },
+            setAge: function (value) { this._age = value; }
+        });
+        person.age = 23;
+        expect(person.age).to.equal(23);
+        expect(person.getAge()).to.equal(23);
+    });
+});
+
+describe("$synthesizeProperties", function () {
+    var Person = Base.extend(
+        $synthesizeProperties('firstName', {
+            age:      { field: '__age' },
+            gender:   { set: undefined },
+            password: { get: undefined }
+        })
+    );
+    
+    it("should synthesize instance properties", function () {
+        var person       = new Person;
+        person.firstName = 'John';
+        expect(person.firstName).to.equal('John');
+        expect(person.getFirstName()).to.equal('John');
+        expect(person).to.not.have.ownProperty('_firstName');
+        person.setFirstName('Sarah');
+        expect(person.firstName).to.equal('Sarah');
+        expect(person.getFirstName()).to.equal('Sarah');
+    });
+
+    it("should synthesize custom instance properties", function () {
+        var person = new Person;
+        person.age = 18;
+        expect(person.age).to.equal(18);
+        expect(person.getAge()).to.equal(18);
+        expect(person.__age).to.equal(18);
+        person.setAge(45);
+        expect(person.age).to.equal(45);
+        expect(person.getAge()).to.equal(45);
+        expect(person.__age).to.equal(45);
+    });
+
+    it("should synthesize readonly instance properties", function () {
+        var person    = new Person;
+        person._gender = 'male';
+        expect(person.gender).to.equal('male');
+        expect(person.getGender()).to.equal('male');
+        expect(person._gender).to.equal('male');
+        expect(person.setGender).to.be.undefined;
+    });
+
+    it("should synthesize writeonly instance properties", function () {
+        var person      = new Person;
+        person.password = '%@ks1224';
+        expect(person.password).to.be.undefined;
+        expect(person._password).to.equal('%@ks1224');
+        expect(person.getPassword).to.be.undefined;
+    });
+});
+
+describe("$synthesizePropertiesFromField", function () {
+    var Person = Base.extend(
+        $synthesizePropertiesFromFields
+    );
+    
+    it("should synthesize properties from fields", function () {
+        var person = new Person({_firstName : 'Mike', _age: 12 });
+        expect(person.firstName).to.equal('Mike');
+        expect(person.getFirstName()).to.equal('Mike');
+        expect(person._firstName).to.equal('Mike');
+        person.firstName = 'Casey';
+        expect(person.getFirstName()).to.equal('Casey');
+        expect(person.age).to.equal(12);
+        expect(person.getAge()).to.equal(12);
+        expect(person._age).to.equal(12);
+    });
+
+    it("should synthesize properties and normalize fields", function () {
+        var person = new Person({firstName : 'Mike', age: 12 });
+        expect(person.firstName).to.equal('Mike');
+        expect(person.getFirstName()).to.equal('Mike');
+        expect(person._firstName).to.equal('Mike');
+        person.firstName = 'Casey';
+        expect(person.getFirstName()).to.equal('Casey');
+        expect(person.age).to.equal(12);
+        expect(person.getAge()).to.equal(12);
+        expect(person._age).to.equal(12);
+    });
+});
+
+describe("DisposingMixin", function () {
+    describe("dispose", function () {
+        it("should provide dispose", function () {
+            var shoppingCart = new ShoppingCart;
+            shoppingCart.addItem("Sneakers");
+            shoppingCart.addItem("Milk");
+            expect(shoppingCart.getItems()).to.eql(["Sneakers", "Milk"]);
+            shoppingCart.dispose();
+            expect(shoppingCart.getItems()).to.eql([]);
         });
 
-        it("should be valid if no validators", function (done) {
-            var league = new Context()
-                    .addHandlers(new ValidationCallbackHandler()),
-            player = new Player;
-            Promise.resolve(Validator(league).validate(player)).then(function (validated) {
-                expect(validated.isValid(player)).to.be.true;
-                done();
+        it("should only dispose once", function () {
+            var counter = 0,
+                DisposeCounter = Base.extend(Disposing, DisposingMixin, {
+                _dispose: function () { ++counter; }
             });
+            var disposeCounter = new DisposeCounter;
+            expect(counter).to.equal(0);
+            disposeCounter.dispose();
+            expect(counter).to.equal(1);
+            disposeCounter.dispose();
+            expect(counter).to.equal(1);
         });
+    });
+});
 
-        it("should provide invalid keys", function (done) {
-            var team       = new Team("Liverpool", "U8"),
-                league     = new Context()
-                    .addHandlers(team, new ValidationCallbackHandler()),
-                player     = new Player("Matthew");
-            Promise.resolve(Validator(league).validate(player)).caught(function (error) {
-		    expect(error.getKeyCulprits()).to.eql(["LastName", "DOB"]);
+describe("$using", function () {
+    it("should call block then dispose", function () {
+        var shoppingCart = new ShoppingCart;
+        shoppingCart.addItem("Halo II");
+        shoppingCart.addItem("Porsche");
+        $using(shoppingCart, function (cart) {
+            expect(shoppingCart.getItems()).to.eql(["Halo II", "Porsche"]);
+        });
+        expect(shoppingCart.getItems()).to.eql([]);
+    });
+
+    it("should call block then dispose if exeception", function () {
+        var shoppingCart = new ShoppingCart;
+        shoppingCart.addItem("Halo II");
+        shoppingCart.addItem("Porsche");
+        expect(function () { 
+            $using(shoppingCart, function (cart) {
+                throw new Error("Something bad");
+            });
+        }).to.throw(Error, "Something bad");
+        expect(shoppingCart.getItems()).to.eql([]);
+    });
+
+    it("should wait for promise to fulfill then dispose", function (done) {
+        var shoppingCart = new ShoppingCart;
+        shoppingCart.addItem("Halo II");
+        shoppingCart.addItem("Porsche");
+        $using(shoppingCart, Promise.delay(100).then(function () {
+               shoppingCart.addItem("Book");
+               expect(shoppingCart.getItems()).to.eql(["Halo II", "Porsche", "Book"]);
+               }) 
+        ).finally(function () {
+            expect(shoppingCart.getItems()).to.eql([]);
             done();
-            });
+        });
+    });
+
+    it("should wait for promise to fail then dispose", function (done) {
+        var shoppingCart = new ShoppingCart;
+        shoppingCart.addItem("Halo II");
+        shoppingCart.addItem("Porsche");
+        $using(shoppingCart, Promise.delay(100).then(function () {
+               throw new Error("Something bad");
+               }) 
+        ).finally(function () {
+            expect(shoppingCart.getItems()).to.eql([]);
+            done();
+        });
+    });
+});
+
+describe("Modifier", function () {
+    describe("$createModifier", function () {
+        it("should create a new modifier", function () {
+            var wrap    = $createModifier('wrap');
+        expect(wrap.prototype).to.be.instanceOf(Modifier);
         });
 
-        it("should provide key errors", function (done) {
-            var team       = new Team("Liverpool", "U8"),
-                league     = new Context()
-                    .addHandlers(team, new ValidationCallbackHandler()),
-                player     = new Player("Matthew");
-            Promise.resolve(Validator(league).validate(player)).caught(function (error) {
-                expect(error.getKeyErrors("LastName")).to.eql([
-                    new ValidationError("Last name required", {
-                        key:  "LastName",
-                        code: ValidationErrorCode.Required
-                    })
-                ]);
-                expect(error.getKeyErrors("DOB")).to.eql([
-                    new ValidationError("Valid Date-of-birth required", {
-                        key:  "DOB",
-                        code: ValidationErrorCode.Invalid
-                    })
-                ]);
-                done();
-            });
+        it("should apply a  modifier using function call", function () {
+            var wrap    = $createModifier('wrap'),
+                wrapped = wrap(22);
+            expect(wrap.test(wrapped)).to.be.true;
+            expect(wrapped.getSource()).to.equal(22);
+        });
+        
+        it("should not apply a modifier the using new operator", function () {
+            var wrap    = $createModifier('wrap');
+            expect(function () { 
+                new wrap(22);
+            }).to.throw(Error, /Modifiers should not be called with the new operator./);
+        });
+        
+        it("should ignore modifier if already present", function () {
+            var wrap    = $createModifier('wrap'),
+                wrapped = wrap(wrap("soccer"));
+            expect(wrapped.getSource()).to.equal("soccer");
+        });
+    })
+
+    describe("#test", function () {
+        it("should test chained modifiers", function () {
+            var shape = $createModifier('shape'),
+                wrap  = $createModifier('wrap'),
+                roll  = $createModifier('roll'),
+                chain = shape(wrap(roll(19)));
+            expect(shape.test(chain)).to.be.true;
+            expect(wrap.test(chain)).to.be.true;
+            expect(roll.test(chain)).to.be.true;
+        });
+    });
+
+    describe("#unwrap", function () {
+        it("should unwrap source when modifiers chained", function () {
+            var shape = $createModifier('shape'),
+                wrap  = $createModifier('wrap'),
+                roll  = $createModifier('roll'),
+                chain = shape(wrap(roll(19)));
+            expect(Modifier.unwrap(chain)).to.equal(19);
+        });
+    });
+});
+
+describe("Protocol", function () {
+    describe("#isProtocol", function () {
+        it("should determine if type is a protocol", function () {
+            expect(Protocol.isProtocol(Animal)).to.be.true;
+            expect(Protocol.isProtocol(CircusAnimal)).to.be.true;
+            expect(Protocol.isProtocol(Dog)).to.be.false;
+            expect(Protocol.isProtocol(AsianElephant)).be.false;
         });
 
-        it("should dynamically add validation", function (done) {
-            var team   = new Team("Liverpool", "U8"),
-                league = new Context()
-                    .addHandlers(team, new ValidationCallbackHandler()),
-            player = new Player("Diego", "Morales", new Date(2006, 7, 19));
-            $validate(league, Player, function (validation, composer) {
-                var player = validation.getObject(),
-                    start  = new Date(2006, 8, 1),
-                    end    = new Date(2007, 7, 31);
-                if (player.getDOB() < start) {
-                    validation.addKeyError("DOB", new ValidationError(
-                        "Player too old for division " + team.getDivision(), {
-                            key:    "DOB",
-                            code:   ValidationErrorCode.DateTooSoon,
-                            source: player.getDOB()
-			}));
-                } else if (player.getDOB() > end) {
-                    validation.addKeyError("DOB", new ValidationError(
-                        "Player too young for division " + team.getDivision(), {
-                            key:    "DOB",
-                            code:   ValidationErrorCode.DateTooLate,
-                            source: player.getDOB()
-			}));
-		}
-            });
-            Promise.resolve(Validator(league).validate(player)).caught(function (error) {
-                expect(error.getKeyErrors("DOB")).to.eql([
-                    new ValidationError("Player too old for division U8", {
-                        key:    "DOB",
-                        code:   ValidationErrorCode.DateTooSoon,
-                        source: new Date(2006, 7, 19)
-                    })
-                ]);
-                done();
-            });
+        it("should not consider Protocol a protocol", function () {
+            expect(Protocol.isProtocol(Protocol)).to.be.false;
+        });
+    });
+
+    describe("#getProtocols", function () {
+        it("should retrieve declaring protocols", function () {
+            expect(Dog.getProtocols()).to.eql([Animal, Tricks]);
+            expect(TreeNode.getProtocols()).to.eql([Traversing]);
+        });
+    });
+
+    describe("#getAllProtocols", function () {
+        it("should retrieve all protocol protocols", function () {
+            expect(CircusAnimal.getAllProtocols()).to.eql([Animal, Tricks]);
         });
 
-        it("should validate unknown sources", function (done) {
-            var league = new Context()
-                    .addHandlers(new ValidationCallbackHandler());
-            $validate(league, null, function (validation, composer) {
-                var source = validation.getObject();
-                if ((source instanceof Team) &&
-                    (!source.getName() || source.getName().length == 0)) {
-                    validation.addKeyError("Name", new ValidationError("Team name required", {
-                        key:    "Name",
-                        code:   ValidationErrorCode.Required,
-                        source: source.getName()
-                    }));
+        it("should retrieve all class protocols", function () {
+            expect(AsianElephant.getAllProtocols()).to.eql([Tracked, CircusAnimal, Animal, Tricks]);
+        });
+    });
+
+    describe("#implement", function () {
+        it("should extend protocol", function () {
+                debugger;
+            Animal.implement({
+               reproduce: function () {}
+            }),
+            dog = new Dog;
+            expect(Animal(dog).reproduce()).to.be.undefined;
+            dog.extend({
+                reproduce: function () {
+                    return new Dog('Hazel');
                 }
             });
-            Promise.resolve(Validator(league).validate(new Team)).caught(function (error) {
-                expect(error.getKeyErrors("Name")).to.eql([
-                    new ValidationError("Team name required", {
-                        key:    "Name",
-                        code:   ValidationErrorCode.Required,
-                        source: undefined
-                    })
-                ]);
-                done();
+            expect(Animal(dog).reproduce().getName()).to.equal('Hazel');
+        });
+    });
+
+    describe("#conformsTo", function () {
+        it("should conform to protocols by class", function () {
+            expect(Dog.conformsTo()).to.be.false;
+			expect(Dog.conformsTo(Animal)).to.be.true;
+		    expect(Dog.conformsTo(Tricks)).to.be.true;
+            expect(TreeNode.conformsTo(Animal)).to.be.false;
+        });
+
+        it("should conform to protocols by protocol", function () {
+            expect(CircusAnimal.conformsTo(Animal)).to.be.true;
+            expect(CircusAnimal.conformsTo(Tricks)).to.be.true;
+            expect(Animal.conformsTo(Tricks)).to.be.false;
+            expect(CircusAnimal.conformsTo(CircusAnimal)).to.be.true;
+        });
+
+        it("should conform to protocols by object", function () {
+            var dog = new Dog;
+            expect(dog.conformsTo(Animal)).to.be.true;
+            expect(dog.conformsTo(Tricks)).to.be.true;
+        });
+
+        it("should only list protocol once", function () {
+            var Cat = Base.extend(Animal, Animal);
+            expect(Cat.conformsTo(Animal)).to.be.true;
+            expect(Cat.getProtocols()).to.eql([Animal]);
+        });
+
+        it("should only list protocol once if extended", function () {
+            var Cat = Animal.extend(Animal);
+            expect(Cat.conformsTo(Animal)).to.be.true;
+            expect(Cat.getProtocols()).to.eql([Animal]);
+        });
+
+        it("should support protocol inheritance", function () {
+            expect(Elephant.conformsTo(Animal)).to.be.true;
+            expect(CircusAnimal.getProtocols()).to.eql([Animal, Tricks]);
+        });
+
+        it("should inherit protocol conformance", function () {
+            expect(AsianElephant.conformsTo(Animal)).to.be.true;
+            expect(AsianElephant.conformsTo(Tricks)).to.be.true;
+        });
+
+        it("should accept array of protocols", function () {
+            var EndangeredAnimal = Base.extend([Animal, Tracked]);
+            expect(EndangeredAnimal.conformsTo(Animal)).to.be.true;
+            expect(EndangeredAnimal.conformsTo(Tracked)).to.be.true;
+            expect(EndangeredAnimal.getProtocols()).to.eql([Animal, Tracked]);
+        });
+
+        it("should allow redefining method", function () {
+            var SmartTricks = Tricks.extend({
+                    fetch: function (item) {}
+                }),
+                SmartDog = Dog.extend({
+                    fetch: function (item) { return 'Buried ' + item; }
+                }),
+                dog = new SmartDog;
+            expect(SmartTricks(dog).fetch('bone')).to.equal('Buried bone');
+        });
+
+        it("should support strict when redefing method", function () {
+            var SmartTricks = Tricks.extend({
+                    constructor: function (proxy) {
+                        this.base(proxy, true);
+                    },
+                    fetch: function (item) {}
+                }),
+                SmartDog = Dog.extend({
+                    fetch: function (item) { return 'Buried ' + item; }
+                }),
+                dog = new SmartDog;
+            expect(Tricks(dog).fetch('bone')).to.equal('Buried bone');
+            expect(SmartTricks(dog).fetch('bone')).to.be.undefined;
+        });
+    });
+
+    describe("#adoptedBy", function () {
+        it("should determine if protocol adopted by class", function () {
+            expect(Animal.adoptedBy(Dog)).to.be.true;
+        });
+
+        it("should determine if protocol adopted by protocol", function () {
+            expect(Protocol.adoptedBy(Animal)).to.be.false;
+            expect(Tricks.adoptedBy(Animal)).to.be.false;
+            expect(Animal.adoptedBy(CircusAnimal)).to.be.true;
+        });
+
+        it("should determine if protocol adopted by object", function () {
+            expect(Animal.adoptedBy(new Dog)).to.be.true;
+            expect(Animal.adoptedBy(new TreeNode)).to.be.false;
+        });
+    });
+
+    describe("#addProtocol", function () {
+        it("should add protocol to class", function () {
+            var Bird  = Base.extend(Animal),
+                eagle = (new Bird).extend({
+                   getTag : function () { return "Eagle"; }
+				});
+            Bird.addProtocol(Tracked);
+            expect(Bird.conformsTo(Tracked)).to.be.true;
+			expect(eagle.getTag()).to.equal("Eagle");
+        });
+
+        it("should add protocol to protocol", function () {
+            var Bear      = Base.extend(Animal),
+                polarBear = (new Bear).extend({
+                getTag : function () { return "Polar Bear"; }
             });
+			Animal.addProtocol(Tracked);
+            expect(polarBear.conformsTo(Tracked)).to.be.true;
+			expect(polarBear.getTag()).to.equal("Polar Bear");
+			expect(Animal(polarBear).getTag()).to.equal("Polar Bear");
+        });
+    })
+});
+
+describe("Proxy", function () {
+    describe("#proxyMethod", function () {
+        it("should proxy calls to normal objects", function () {
+            var dog = Animal(new Dog);
+            expect(dog.talk()).to.equal('Ruff Ruff');
+        });
+
+        it("should ignore null or undefined target", function () {
+            Animal().talk();
+            Animal(null).talk();
+        });
+
+        it("should ignore missing methods", function () {
+            var dog = Animal(new Dog);
+            dog.eat('bug');
+        });
+
+        it("should support specialization", function () {
+            expect(CircusAnimal(new Dog).fetch("bone")).to.equal('Fetched bone');
+        });
+
+        it("should ignore if strict and protocol not adopted", function () {
+            var Toy = Base.extend({
+                talk: function () { return 'To infinity and beyond'; }
+            });
+            expect(Animal(new Toy).talk()).to.equal('To infinity and beyond');
+            expect(Animal(new Toy, true).talk()).to.be.undefined;
         });
     });
 });
 
-},{"../lib/context.js":3,"../lib/miruken.js":4,"../lib/validate.js":5,"bluebird":6,"chai":7}]},{},[44]);
+describe("ProxyBuilder", function () {
+    var ToUpperInterceptor = Interceptor.extend({
+        intercept: function (invocation) {
+            var args = invocation.getArgs();
+            for (var i = 0; i < args.length; ++i) {
+                if ($isString(args[i])) {
+                    args[i] = args[i].toUpperCase();
+                }
+            }
+            var result = invocation.proceed();
+            if ($isString(result)) {
+                result = result.toUpperCase();
+            }
+            return result;
+        }
+    });
+        
+    describe("#buildProxy", function () {
+        it("should proxy class", function () {
+            var proxyBuilder = new ProxyBuilder,
+                DogProxy     = proxyBuilder.buildProxy([Dog]),
+                dog          = new DogProxy({
+                                   parameters:   ['Patches'],
+                                   interceptors: [new LogInterceptor]
+                               });
+            expect(dog.getName()).to.equal('Patches');
+            expect(dog.talk()).to.equal('Ruff Ruff');
+            expect(dog.fetch("bone")).to.equal('Fetched bone');
+        });
+
+        it("should proxy protocol", function () {
+            var proxyBuilder = new ProxyBuilder,
+                AnimalProxy  = proxyBuilder.buildProxy([Animal]),
+                AnimalInterceptor = Interceptor.extend({
+                    intercept: function (invocation) {
+                            var method = invocation.getMethod(),
+                                args = invocation.getArgs();
+                        if (method === 'talk') {
+                            return "I don't know what to say.";
+                        } else if (method === 'eat') {
+                            return lang.format("I don't like %1.", args[0]);
+                        }
+                        return invocation.proceed();
+                    }
+                }),
+                animal = new AnimalProxy({
+                             interceptors: [new AnimalInterceptor]
+                         });
+            expect(animal.talk()).to.equal("I don't know what to say.");
+            expect(animal.eat('pizza')).to.equal("I don't like pizza.");
+        });
+
+        it("should proxy classes and protocols", function () {
+            var proxyBuilder   = new ProxyBuilder,
+                Flying         = Protocol.extend({ fly: function () {} }),
+                FlyingInterceptor = Interceptor.extend({
+                    intercept: function (invocation) {
+                        if (invocation.getMethod() !== 'fly') {
+                            return invocation.proceed();
+                        }
+                    }
+                }),
+                FlyingDogProxy = proxyBuilder.buildProxy([Dog, Flying, DisposingMixin]);
+            $using(new FlyingDogProxy({
+                       parameters:   ['Wonder Dog'],
+                       interceptors: [new FlyingInterceptor, new LogInterceptor]
+                   }), function (wonderDog) {
+                expect(wonderDog.getName()).to.equal('Wonder Dog');
+                expect(wonderDog.talk()).to.equal('Ruff Ruff');
+                expect(wonderDog.fetch("purse")).to.equal('Fetched purse');
+                wonderDog.fly();
+                }
+            );
+        });
+
+        it("should modify arguments and return value", function () {
+            var proxyBuilder = new ProxyBuilder,
+                DogProxy     = proxyBuilder.buildProxy([Dog]),
+                dog          = new DogProxy({
+                                   parameters:   ['Patches'],
+                                   interceptors: [new ToUpperInterceptor]
+                               });
+            expect(dog.getName()).to.equal('PATCHES');
+            expect(dog.talk()).to.equal('RUFF RUFF');
+            expect(dog.fetch("bone")).to.equal('FETCHED BONE');
+        });
+
+        it("should restrict proxied method with interceptor selector options", function () {
+            var proxyBuilder = new ProxyBuilder,
+                selector     =  (new InterceptorSelector).extend({
+                    selectInterceptors: function (type, method, interceptors) {
+                        return method === 'getName' ? interceptors : [];
+                }}),
+                DogProxy     = proxyBuilder.buildProxy([Dog]),
+                dog          = new DogProxy({
+                                   parameters:           ['Patches'],
+                                   interceptors:         [new ToUpperInterceptor],
+                                   interceptorSelectors: [selector]
+                               });
+            expect(dog.getName()).to.equal('PATCHES');
+            expect(dog.talk()).to.equal('Ruff Ruff');
+            expect(dog.fetch("bone")).to.equal('Fetched bone');
+        });
+
+        it("should fail if no types array provided", function () {
+            var proxyBuilder = new ProxyBuilder;
+            expect(function () {
+                proxyBuilder.buildProxy();
+            }).to.throw(Error, "ProxyBuilder requires an array of types to proxy.");
+        });
+
+        it("should fail if no method to proceed too", function () {
+            var proxyBuilder = new ProxyBuilder,
+                AnimalProxy  = proxyBuilder.buildProxy([Animal]),
+                animal       = new AnimalProxy([]);
+            expect(function () {
+                animal.talk();
+            }).to.throw(Error, "Interceptor cannot proceed without a class or delegate method 'talk'.");
+        });
+    });
+
+    describe("#extend", function () {
+        it("should reject extending  proxy classes.", function () {
+            var proxyBuilder = new ProxyBuilder,
+                DogProxy     = proxyBuilder.buildProxy([Dog]);
+            expect(function () {
+                DogProxy.extend();
+            }).to.throw(TypeError, "Proxy classes are sealed and cannot be extended from.");
+        });
+
+        it("should proxy new method", function () {
+            var proxyBuilder = new ProxyBuilder,
+                DogProxy     = proxyBuilder.buildProxy([Dog]),
+                dog          = new DogProxy({
+                                  parameters:  ['Patches'],
+                                  interceptors:[new ToUpperInterceptor]
+                               });
+            dog.extend("getColor", function () { return "white with brown spots"; });
+            dog.extend({
+                getBreed: function () { return "King James Cavalier"; }
+            });
+            expect(dog.getColor()).to.equal("WHITE WITH BROWN SPOTS");
+            expect(dog.getBreed()).to.equal("KING JAMES CAVALIER");
+        });
+
+        it("should proxy existing methods", function () {
+            var proxyBuilder = new ProxyBuilder,
+                DogProxy     = proxyBuilder.buildProxy([Dog]),
+                dog          = new DogProxy({
+                                  parameters:  ['Patches'],
+                                  interceptors:[new ToUpperInterceptor]
+                               });
+            expect(dog.getName()).to.equal("PATCHES");
+            dog.extend({
+                getName: function () { return "Spike"; }
+            });
+            expect(dog.getName()).to.equal("SPIKE");
+        });
+    });
+
+    describe("#implement", function () {
+        it("should reject extending  proxy classes.", function () {
+            var proxyBuilder = new ProxyBuilder,
+                DogProxy     = proxyBuilder.buildProxy([Dog]);
+            expect(function () {
+                DogProxy.implement(DisposingMixin);
+            }).to.throw(TypeError, "Proxy classes are sealed and cannot be extended from.");
+        });
+    });
+});
+
+describe("Traversing", function () {
+    describe("#traverse", function () {
+        it("should traverse self", function () {
+            var root    = new TreeNode('root'),
+                visited = [];
+            root.traverse(TraversingAxis.Self, function (node) {
+                visited.push(node);
+            });
+            expect(visited).to.eql([root]);
+        });
+
+        it("should traverse root", function () {
+            var root    = new TreeNode('root'),
+                child1  = new TreeNode('child 1'),
+                child2  = new TreeNode('child 2'),
+                child3  = new TreeNode('child 3');
+                visited = [];
+            root.addChild(child1, child2, child3);
+            root.traverse(TraversingAxis.Root, function (node) {
+                visited.push(node);
+            });
+            expect(visited).to.eql([root]);
+        });
+
+        it("should traverse children", function () {
+            var root    = new TreeNode('root'),
+                child1  = new TreeNode('child 1'),
+                child2  = new TreeNode('child 2'),
+                child3  = new TreeNode('child 3')
+                .addChild(new TreeNode('child 3 1'))
+            visited = [];
+            root.addChild(child1, child2, child3);
+            root.traverse(TraversingAxis.Child, function (node) {
+                visited.push(node);
+            });
+            expect(visited).to.eql([child1, child2, child3]);
+        });
+
+        it("should traverse siblings", function () {
+            var root    = new TreeNode('root'),
+                child1  = new TreeNode('child 1'),
+                child2  = new TreeNode('child 2'),
+                child3  = new TreeNode('child 3')
+                .addChild(new TreeNode('child 3 1'))
+            visited = [];
+            root.addChild(child1, child2, child3);
+            child2.traverse(TraversingAxis.Sibling, function (node) {
+                visited.push(node);
+            });
+            expect(visited).to.eql([child1, child3]);
+        });
+
+        it("should traverse children and self", function () {
+            var root    = new TreeNode('root'),
+                child1  = new TreeNode('child 1'),
+                child2  = new TreeNode('child 2'),
+                child3  = new TreeNode('child 3')
+                .addChild(new TreeNode('child 3 1'))
+            visited = [];
+            root.addChild(child1, child2, child3);
+            root.traverse(TraversingAxis.ChildOrSelf, function (node) {
+                visited.push(node);
+            });
+            expect(visited).to.eql([root, child1, child2, child3]);
+        });
+
+        it("should traverse siblings and self", function () {
+            var root    = new TreeNode('root'),
+                child1  = new TreeNode('child 1'),
+                child2  = new TreeNode('child 2'),
+                child3  = new TreeNode('child 3')
+                .addChild(new TreeNode('child 3 1'))
+            visited = [];
+            root.addChild(child1, child2, child3);
+            child2.traverse(TraversingAxis.SiblingOrSelf, function (node) {
+                visited.push(node);
+            });
+            expect(visited).to.eql([child2, child1, child3]);
+        });
+
+        it("should traverse ancestors", function () {
+            var root       = new TreeNode('root'),
+                child      = new TreeNode('child'),
+                grandChild = new TreeNode('grandChild'),
+                visited    = [];
+            root.addChild(child);
+            child.addChild(grandChild);
+            grandChild.traverse(TraversingAxis.Ancestor, function (node) {
+                visited.push(node);
+            });
+            expect(visited).to.eql([child, root]);
+        });
+
+        it("should traverse ancestors or self", function () {
+            var root       = new TreeNode('root'),
+                child      = new TreeNode('child'),
+                grandChild = new TreeNode('grandChild'),
+                visited    = [];
+            root.addChild(child);
+            child.addChild(grandChild);
+            grandChild.traverse(TraversingAxis.AncestorOrSelf, function (node) {
+                visited.push(node);
+            });
+            expect(visited).to.eql([grandChild, child, root]);
+        });
+
+        it("should traverse descendants", function () {
+            var root     = new TreeNode('root'),
+                child1   = new TreeNode('child 1'),
+                child2   = new TreeNode('child 2'),
+                child3   = new TreeNode('child 3'),
+                child3_1 = new TreeNode('child 3 1'),
+                visited  = [];
+            child3.addChild(child3_1);
+            root.addChild(child1, child2, child3);
+            root.traverse(TraversingAxis.Descendant, function (node) {
+                visited.push(node);
+            });
+            expect(visited).to.eql([child1, child2, child3, child3_1]);
+        });
+
+        it("should traverse descendants reverse", function () {
+            var root     = new TreeNode('root'),
+                child1   = new TreeNode('child 1'),
+                child2   = new TreeNode('child 2'),
+                child3   = new TreeNode('child 3'),
+                child3_1 = new TreeNode('child 3 1'),
+                visited  = [];
+            child3.addChild(child3_1);
+            root.addChild(child1, child2, child3);
+            root.traverse(TraversingAxis.DescendantReverse, function (node) {
+                visited.push(node);
+            });
+            expect(visited).to.eql([child3_1, child1, child2, child3]);
+        });
+
+        it("should traverse descendants or self", function () {
+            var root     = new TreeNode('root'),
+                child1   = new TreeNode('child 1'),
+                child2   = new TreeNode('child 2'),
+                child3   = new TreeNode('child 3'),
+                child3_1 = new TreeNode('child 3 1'),
+                visited  = [];
+            child3.addChild(child3_1);
+            root.addChild(child1, child2, child3);
+            root.traverse(TraversingAxis.DescendantOrSelf, function (node) {
+                visited.push(node);
+            });
+            expect(visited).to.eql([root, child1, child2, child3, child3_1]);
+        });
+
+        it("should traverse descendants or self reverse", function () {
+            var root     = new TreeNode('root'),
+                child1   = new TreeNode('child 1'),
+                child2   = new TreeNode('child 2'),
+                child3   = new TreeNode('child 3'),
+                child3_1 = new TreeNode('child 3 1'),
+                visited  = [];
+            child3.addChild(child3_1);
+            root.addChild(child1, child2, child3);
+            root.traverse(TraversingAxis.DescendantOrSelfReverse, function (node) {
+                visited.push(node);
+            });
+            expect(visited).to.eql([child3_1, child1, child2, child3, root]);
+        });
+
+        it("should traverse parent, siblings or self", function () {
+            var root     = new TreeNode('root'),
+                child1   = new TreeNode('child 1'),
+                child2   = new TreeNode('child 2'),
+                child3   = new TreeNode('child 3'),
+                child3_1 = new TreeNode('child 3 1'),
+                visited  = [];
+            child3.addChild(child3_1);
+            root.addChild(child1, child2, child3);
+            child3.traverse(TraversingAxis.ParentSiblingOrSelf, function (node) {
+                visited.push(node);
+            });
+            expect(visited).to.eql([child3, child1, child2, root]);
+        });
+
+        it("should detect circular references", function () {
+            var CircularParent = Base.extend(TraversingMixin, {
+                constructor: function (data) { 
+                    this.extend({
+                        getParent:   function () { return this; },
+                        getChildren: function () { return []; },
+                    });
+                }});
+
+            var CircularChildren = Base.extend(TraversingMixin, {
+                constructor: function (data) { 
+                    this.extend({
+                        getParent:   function () { return null; },
+                        getChildren: function () { return [this]; },
+                    });
+                }});
+
+            var circularParent = new CircularParent();
+            expect(function () { 
+                circularParent.traverse(TraversingAxis.Ancestor, function (node) {})
+            }).to.throw(Error, /Circularity detected/);
+
+            var circularChildren = new CircularChildren();
+            expect(function () { 
+                circularChildren.traverse(TraversingAxis.Descendant, function (node) {})
+            }).to.throw(Error, /Circularity detected/);
+        });
+    });
+});
+
+describe("Package", function () {
+    describe("#getProtocols", function () {
+        it("should expose protocol definitions", function () {
+            var protocols = [];
+            miruken_test.getProtocols(function (protocol) {
+                protocols.push(protocol.member);
+            });
+            expect(protocols).to.have.members([Animal, Tricks, CircusAnimal, Tracked]);
+        });
+    });
+
+    describe("#getClasses", function () {
+        it("should expose class definitions", function () {
+            var classes = [];
+            miruken_test.getClasses(function (cls) {
+                classes.push(cls.member);
+            });
+            expect(classes).to.have.members([Dog, Elephant, AsianElephant, ShoppingCart,
+                                             TreeNode, LogInterceptor]);
+        });
+    });
+
+    describe("#getPackages", function () {
+        it("should expose package definitions", function () {
+            var packages = [];
+            base2.getPackages(function (package) {
+                packages.push(package.member);
+            });
+            expect(packages).to.contain(miruken_test);
+        });
+    });
+});
+
+describe("Traversal", function () {
+    var root     = new TreeNode('root'),
+        child1   = new TreeNode('child 1'),
+        child1_1 = new TreeNode('child 1 1'),
+        child2   = new TreeNode('child 2'),
+        child2_1 = new TreeNode('child 2 1');
+        child2_2 = new TreeNode('child 2 2');
+        child3   = new TreeNode('child 3'),
+        child3_1 = new TreeNode('child 3 1');
+        child3_2 = new TreeNode('child 3 2');
+        child3_3 = new TreeNode('child 3 3');
+        child1.addChild(child1_1);
+        child2.addChild(child2_1, child2_2);
+        child3.addChild(child3_1, child3_2, child3_3);
+    root.addChild(child1, child2, child3);
+
+    describe("#preOrder", function () {
+        it("should traverse graph in pre-order", function () {
+            var visited  = [];
+            Traversal.preOrder(root, function (node) { visited.push(node); });
+            expect(visited).to.eql([root,     child1, child1_1, child2,  child2_1,
+                                    child2_2, child3, child3_1, child3_2,child3_3]);
+        });
+    });
+
+    describe("#postOrder", function () {
+        it("should traverse graph in post-order", function () {
+            var visited  = [];
+            Traversal.postOrder(root, function (node) { visited.push(node); });
+            expect(visited).to.eql([child1_1, child1,   child2_1, child2_2, child2,
+                                    child3_1, child3_2, child3_3, child3,   root]);
+        });
+    });
+
+    describe("#levelOrder", function () {
+        it("should traverse graph in level-order", function () {
+            var visited  = [];
+            Traversal.levelOrder(root, function (node) { visited.push(node); });
+            expect(visited).to.eql([root,     child1,   child2,   child3,   child1_1,
+                                    child2_1, child2_2, child3_1, child3_2, child3_3]);
+        });
+    });
+
+    describe("#reverseLevelOrder", function () {
+        it("should traverse graph in reverse level-order", function () {
+            var visited  = [];
+            Traversal.reverseLevelOrder(root, function (node) { visited.push(node); });
+
+            expect(visited).to.eql([child1_1, child2_1, child2_2, child3_1, child3_2,
+                                    child3_3, child1,   child2,   child3,   root]);
+        });
+    });
+});
+
+}).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
+},{"../lib/miruken.js":2,"bluebird":3,"chai":4}]},{},[41]);
