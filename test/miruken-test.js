@@ -226,7 +226,6 @@ describe("$inferProperties", function () {
         son.mother = mom;
         expect(son.mother).to.equals(mom);
         expect(son.getMother()).to.equal(mom);
-
     });
 
     it("should infer extended instance properties", function () {
@@ -332,6 +331,28 @@ describe("$synthesizePropertiesFromField", function () {
         expect(car.model).to.equal('A4');
         expect(car.getModel()).to.equal('A4');
         expect(car._model).to.equal('A4');
+    });
+
+    it("should infer and synthesize properties from fields explicitly", function () {
+        var Car = Base.extend(
+            $inferProperties,
+            $synthesizeProperties('_make', '_model'),
+            $synthesizePropertiesFromFields, {
+                getEngine: function () { return this._engine; },
+                setEngine: function (value) { this._engine = value; }
+            }
+        ),
+        car = new Car({make : 'Porsche', model: 'Carrera' });
+        car.engine = 'V6';
+        expect(car.make).to.equal('Porsche');
+        expect(car.getMake()).to.equal('Porsche');
+        expect(car._make).to.equal('Porsche');
+        expect(car.model).to.equal('Carrera');
+        expect(car.getModel()).to.equal('Carrera');
+        expect(car._model).to.equal('Carrera');
+        expect(car.engine).to.equal('V6');
+        expect(car.getEngine()).to.equal('V6');
+        expect(car._engine).to.equal('V6');
     });
 });
 

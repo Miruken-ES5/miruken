@@ -4678,7 +4678,7 @@ new function () { // closure
     var miruken = new base2.Package(this, {
         name:    "miruken",
         version: "1.0",
-        exports: "Enum,Protocol,Delegate,Miruken,MetaMacro,Disposing,DisposingMixin,Parenting,Starting,Startup,Interceptor,InterceptorSelector,ProxyBuilder,TraversingAxis,Traversing,TraversingMixin,Traversal,Variance,Modifier,ArrayManager,IndexedList,$isProtocol,$isClass,$classOf,$ancestorOf,$isString,$isFunction,$isObject,$isPromise,$isSomething,$isNothing,$using,$lift,$eq,$use,$copy,$lazy,$eval,$every,$child,$optional,$promise,$instant,$createModifier,$inferProperties,$synthesizeProperties,PARAMETERS,INTERCEPTORS,INTERCEPTOR_SELECTORS"
+        exports: "Enum,Protocol,Delegate,Miruken,MetaMacro,Disposing,DisposingMixin,Parenting,Starting,Startup,Interceptor,InterceptorSelector,ProxyBuilder,TraversingAxis,Traversing,TraversingMixin,Traversal,Variance,Modifier,ArrayManager,IndexedList,$isProtocol,$isClass,$classOf,$ancestorOf,$isString,$isFunction,$isObject,$isPromise,$isSomething,$isNothing,$using,$lift,$eq,$use,$copy,$lazy,$eval,$every,$child,$optional,$promise,$instant,$createModifier,$inferProperties,$synthesizeProperties,$synthesizePropertiesFromFields,PARAMETERS,INTERCEPTORS,INTERCEPTOR_SELECTORS"
     });
 
     eval(this.imports);
@@ -5039,7 +5039,7 @@ new function () { // closure
         constructor: function (/*properties*/) {
             var _properties = Array.prototype.slice.call(arguments);
             this.extend({
-                apply: function(clazz, target, definition) {
+                apply: function(clazz, target) {
                     _synthesizeProperties(target, _properties);
                 }
             });
@@ -5096,6 +5096,34 @@ new function () { // closure
                 });
             }
         })();
+    }
+
+    /**
+     * @class {$synthesizePropertiesFromFields}
+     * Metamacro to create properties from fields.
+     */
+    var $synthesizePropertiesFromFields = MetaMacro.extend({
+        apply: function(clazz, target, definition) {
+            _synthesizePropertiesFromFields(target, definition);
+        },
+        shouldInherit: function () { return true; },
+        isActive: function () { return true; }
+    });
+
+    function _synthesizePropertiesFromFields(target, definition) {
+        for (var key in definition) {
+            var value = definition[key];
+            if ($isFunction(value)) {
+                continue;
+            }
+            var name  = key.charAt(0) == '_' ? key.substring(1) : key,
+                uname = name.charAt(0).toUpperCase() + name.slice(1),
+                field = '_' + name;
+
+            delete target[key];
+            target[field] = value;
+            _synthesizeProperty(target, name, field, 'get' + uname, 'set' + uname);
+        }
     }
 
     /**
@@ -6017,15 +6045,15 @@ new function () { // closure
      * @class {Model}
      */
     var Model = Base.extend(
-        $inferProperties, {
-        constructor: function (state) {
-        }
-    });
+        $inferProperties,
+        $synthesizePropertiesFromFields
+    );
 
     /**
      * @class {Controller}
      */
-    var Controller = CallbackHandler.extend(Contextual, ContextualMixin,
+    var Controller = CallbackHandler.extend(
+        Contextual, ContextualMixin,
         $inferProperties, {
     });
 

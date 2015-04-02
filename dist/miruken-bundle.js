@@ -4844,8 +4844,8 @@ new function () { // closure
                 uname = name.charAt(0).toUpperCase() + name.slice(1),
                 field = '_' + name;
 
-            delete definition[key];
-            definition[field] = value;
+            delete target[key];
+            target[field] = value;
             _synthesizeProperty(target, name, field, 'get' + uname, 'set' + uname);
         }
     }
