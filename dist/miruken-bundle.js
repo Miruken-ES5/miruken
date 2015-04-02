@@ -1714,7 +1714,7 @@ new function () { // closure
         version: miruken.version,
         parent:  miruken,
         imports: "miruken",
-        exports: "CallbackHandler,CallbackHandlerDecorator,CallbackHandlerFilter,CallbackHandlerAspect,CascadeCallbackHandler,CompositeCallbackHandler,ConditionalCallbackHandler,AcceptingCallbackHandler,ProvidingCallbackHandler,MethodCallbackHandler,InvocationOptions,Resolution,HandleMethod,Expandable,getEffectivePromise,$handle,$expand,$define,$provide,$lookup,$NOT_HANDLED"
+        exports: "CallbackHandler,CallbackHandlerDecorator,CallbackHandlerFilter,CallbackHandlerAspect,CascadeCallbackHandler,CompositeCallbackHandler,ConditionalCallbackHandler,AcceptingCallbackHandler,ProvidingCallbackHandler,MethodCallbackHandler,InvocationOptions,Resolution,HandleMethod,getEffectivePromise,$handle,$expand,$define,$provide,$lookup,$NOT_HANDLED"
     });
 
     eval(this.imports);
@@ -1726,21 +1726,47 @@ new function () { // closure
         $NOT_HANDLED = {};
 
     /**
-     * @class {Expandable}
-     */
-    var Expandable = Base.extend({}, {
-        init: function () {
-            var base    = this.extend;
-            this.extend = function () {
-                return $expand(base.apply(this, arguments));
-            };
-        }
-    });
-
-    /**
      * @protocol {InternalCallback}
      */
     var InternalCallback = Protocol.extend();
+
+    /**
+     * @function $expand
+     * Metamacro to expand registered definitions.
+     */
+    var $expand = MetaMacro.extend({
+        apply: function(clazz, target, definition) {
+            var source = target;
+            if (target === clazz.prototype) {
+                target = clazz;
+            }
+            for (tag in _definitions) {
+                var list = null;
+                if (source.hasOwnProperty(tag)) {
+                    list = source[tag];
+                    delete source[tag];
+                }
+                if ($isFunction(list)) {
+                    list = list();
+                }
+                if (!list || list.length == 0) {
+                    return;
+                }
+                var define = _definitions[tag];
+                for (var idx = 0; idx < list.length; ++idx) {
+                    var constraint = list[idx];
+                    if (++idx >= list.length) {
+                        throw new Error(lang.format(
+                            "Incomplete '%1' definition: missing handler for constraint %2.",
+                            tag, constraint));
+                        }
+                    define(target, constraint, list[idx]);
+                }
+            }
+        },
+        shouldInherit: function () { return true; },
+        isActive: function () { return true; }
+    });
 
     /**
      * @class {HandleMethod}
@@ -1868,7 +1894,7 @@ new function () { // closure
     /**
      * @class {CallbackHandler}
      */
-    var CallbackHandler = Expandable.extend({
+    var CallbackHandler = Base.extend($expand,{
         constructor: function (delegate) {
             this.extend({
                 getDelegate : function () { return delegate; }
@@ -2363,43 +2389,6 @@ new function () { // closure
     });
 
     /**
-     * @function $expand
-     * Expands the registered definitions in owner
-     * @param    {Object} owner  - source of definitions
-     */
-    function $expand(owner) {
-        if ($isNothing(owner)) {
-            throw new TypeError("Definitions must have an owner.");
-        }
-        for (tag in _definitions) {
-            var list = null;
-            if (owner.prototype && owner.prototype.hasOwnProperty(tag)) {
-                list = owner.prototype[tag];
-                delete owner.prototype[tag];
-            } else if (owner.hasOwnProperty(tag)) {
-                list = owner[tag];
-                delete owner[tag];
-            }
-            if ($isFunction(list)) {
-                list = list();
-            }
-            if (list && list.length > 0) {
-                var define = _definitions[tag];
-                for (var idx = 0; idx < list.length; ++idx) {
-                    var constraint = list[idx];
-                    if (++idx >= list.length) {
-                        throw new Error(lang.format(
-                            "Incomplete '%1' definition: missing handler for constraint %2.",
-                            tag, constraint));
-                    }
-                    define(owner, constraint, list[idx]);
-                }
-            }
-        }
-        return owner;
-    }
-
-    /**
      * @function $define
      * Defines a new handler relationship.
      * @param    {String}   tag       - name of definition
@@ -2470,7 +2459,8 @@ new function () { // closure
                     handler    = $lift(source);
                 }
             }
-            var definitions = owner.$miruken || (owner.$miruken = {}),
+            var definitions = owner.hasOwnProperty('$miruken')
+                            ? owner.$miruken : (owner.$miruken = {}),
                 node        = new _Node(constraint, handler, removed),
                 index       = _createIndex(node.constraint),
                 list        = definitions.hasOwnProperty(tag) ? definitions[tag]
@@ -4604,7 +4594,7 @@ new function () { // closure
             subclass.getProtocols    = getProtocols;
             subclass.getAllProtocols = getAllProtocols;
             subclass.conformsTo      = _conformsTo.bind(subclass, _protocols);
-            _applyMetaMacros(subclass, metaMacros, instanceDef);
+            _applyMetaMacros(subclass, metaMacros, instanceDef, staticDef);
             Array2.forEach(mixins, subclass.implement, subclass);
             return subclass;
             })(this, Array.prototype.slice.call(arguments));
@@ -4638,8 +4628,9 @@ new function () { // closure
      * @param    {Class}  clazz       - clazz
      * @param    {Array}  metaMacros  - meta macros
      * @param    {Object} instanceDef - instance definition
+     * @param    {Object} staticDef   - static definition
      */
-    function _applyMetaMacros(clazz, metaMacros, instanceDef) {
+    function _applyMetaMacros(clazz, metaMacros, instanceDef, staticDef) {
         var active, inherit;
         if (metaMacros.length == 0) {
             return;
@@ -4715,7 +4706,6 @@ new function () { // closure
         shouldInherit: function () { return true; },
         isActive: function () { return true; }
     });
-
     _applyMetaMacros(Protocol, [new $proxyProtocol], {});
 
     /**

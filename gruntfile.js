@@ -41,8 +41,8 @@ module.exports = function(grunt) {
       },
       dev: {
         files: {
-           'dist/miruken-bundle.js':    ['lib/index.js'],
-           'dist/miruken-tests.js':     ['test/**/*.js']
+           'dist/miruken-bundle.js': ['lib/index.js'],
+           'dist/miruken-tests.js':  ['test/validate-test.js']
         }
       }
     },
@@ -82,7 +82,7 @@ module.exports = function(grunt) {
   grunt.option('force', true);
 
   //Test task.
-  grunt.registerTask('test', ['concurrent:test']);
+  grunt.registerTask('test',  ['concurrent:test']);
   grunt.registerTask('build', ['browserify:dist','copy:main', 'karma:dist']);
-  grunt.registerTask('dev', ['browserify:dev','karma:dev']);
+  grunt.registerTask('dev',   ['browserify:dev','karma:dev']);
 };

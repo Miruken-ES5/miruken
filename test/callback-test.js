@@ -90,7 +90,7 @@ new function () { // closure
         }
     });
 
-    var Accountable = Expandable.extend({
+    var Accountable = Base.extend($expand, {
         constructor: function (assets, liabilities) {
             assets      = Number(assets || 0);
             liabilities = Number(liabilities || 0);
@@ -443,6 +443,7 @@ describe("Definitions", function () {
     });
 });
 
+/*
 describe("CallbackHandler", function () {
     describe("#handle", function () {
         it("should not handle nothing", function () {
@@ -588,7 +589,7 @@ describe("CallbackHandler", function () {
 
         it("should handle unknown callback via delegate", function () {
             var blackjack = new CardTable('Blackjack'),
-                inventory = new (Expandable.extend({
+                inventory = new (Base.extend($expand, {
                     $handle:[null, function (callback) {
                         callback.check = true;
                     }]
@@ -1414,3 +1415,4 @@ describe("InvocationCallbackHandler", function () {
         });
     })
 });
+*/

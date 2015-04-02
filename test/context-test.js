@@ -12,7 +12,7 @@ describe("Context", function() {
     
     describe("#getState", function() {
         it("should start in the default state", function() {
-            var context = new Context();
+            var context = new Context;
             expect(context.getState()).to.equal(ContextState.Active);
             expect(context.getChildren()).to.be.empty;
         });
@@ -20,12 +20,12 @@ describe("Context", function() {
     
     describe("#getParent", function() {
         it("should not have a parent when root", function() {
-            var context = new Context();
+            var context = new Context;
             expect(context.getParent()).to.not.exist;
         });
         
         it("should have a parent when a child", function() {
-            var context = new Context(),
+            var context = new Context,
             child   = context.newChild();
             expect(child.getParent()).to.equal(context);
         });
@@ -33,7 +33,7 @@ describe("Context", function() {
     
     describe("#getChildren", function() {
         it("should have children when created", function() {
-            var context = new Context(),
+            var context = new Context,
                 child1  = context.newChild(),
                 child2  = context.newChild();
             expect(context.getChildren()).to.include(child1, child2);
@@ -42,12 +42,12 @@ describe("Context", function() {
     
     describe("#hasChildren", function() {
         it("should not have children by default", function() {
-            var context = new Context();
+            var context = new Context;
             expect(context.hasChildren()).to.be.false;
         });
         
         it("should have children when created", function() {
-            var context = new Context(),
+            var context = new Context,
                 child   = context.newChild();
             expect(context.hasChildren()).to.be.true;
         });
@@ -55,12 +55,12 @@ describe("Context", function() {
     
     describe("#getRoot", function() {
         it("should return self if no childern", function() {
-            var context = new Context();
+            var context = new Context;
             expect(context.getRoot()).to.equal(context);
         });
         
         it("should return root context when descendant", function() {
-            var context    = new Context(),
+            var context    = new Context,
                 child      = context.newChild(),
                 grandChild = child.newChild();
             expect(grandChild.getRoot()).to.equal(context);
@@ -69,13 +69,13 @@ describe("Context", function() {
 
     describe("#newChild", function() {
         it("should return new child context", function() {
-            var context      = new Context(),
+            var context      = new Context,
                 childContext = context.newChild();
             expect(childContext.getParent()).to.equal(context);
         });
 
         it("should execute block with new child context and then end it", function() {
-            var context      = new Context(),
+            var context      = new Context,
                 childContext = context.newChild();
             $using(
                 childContext, function (ctx) {
@@ -88,12 +88,12 @@ describe("Context", function() {
 
     describe("#resolve", function() {
         it("should resolve context to self", function() {
-            var context = new Context();
+            var context = new Context;
             expect(context.resolve(Context)).to.equal(context);
         });
         
         it("should return root context when descendant", function() {
-            var context    = new Context(),
+            var context    = new Context,
                 child      = context.newChild(),
                 grandChild = child.newChild();
             expect(grandChild.getRoot()).to.equal(context);
@@ -102,13 +102,13 @@ describe("Context", function() {
     
     describe("#end", function() {
         it("should end the context", function() {
-            var context = new Context();
+            var context = new Context;
             context.end();
             expect(context.getState()).to.equal(ContextState.Ended);
         });
         
         it("should end children", function() {
-            var context = new Context(),
+            var context = new Context,
                 child   = context.newChild();
             context.end();
             expect(context.getState()).to.equal(ContextState.Ended);
@@ -118,7 +118,7 @@ describe("Context", function() {
 
     describe("#dispose", function() {
         it("should end the context", function() {
-            var context = new Context();
+            var context = new Context;
             context.dispose();
             expect(context.getState()).to.equal(ContextState.Ended);
         });
@@ -126,7 +126,7 @@ describe("Context", function() {
     
     describe("#unwind", function() {
         it("should end children when ended", function() {
-            var context = new Context(),
+            var context = new Context,
                 child1  = context.newChild(),
                 child2  = context.newChild();
             context.unwind();
@@ -138,7 +138,7 @@ describe("Context", function() {
 
     describe("#unwindToRootContext", function() {
         it("should end children except and root and return it", function() {
-            var context    = new Context(),
+            var context    = new Context,
                 child1     = context.newChild(),
                 child2     = context.newChild(),
                 grandChild = child1.newChild();
@@ -151,10 +151,10 @@ describe("Context", function() {
         });
     });
 
-    describe("#add", function() {
+    describe("#store", function() {
         it("should add object to the context", function() {
-            var dog     = new Dog(),
-                context = new Context();
+            var dog     = new Dog,
+                context = new Context;
             expect(context.resolve(Dog)).to.be.undefined;
             context.store(dog);
             expect(context.resolve(Dog)).to.equal(dog);
@@ -163,8 +163,8 @@ describe("Context", function() {
 
     describe("#handle", function() {
         it("should traverse ancestors", function() {
-            var dog        = new Dog(),
-                context    = new Context(),
+            var dog        = new Dog,
+                context    = new Context,
                 child1     = context.newChild(),
                 child2     = context.newChild(),
                 grandChild = child1.newChild();
@@ -175,8 +175,8 @@ describe("Context", function() {
 
     describe("#handleAxis", function() {
         it("should wrap context", function() {
-            var dog       = new Dog(),
-                context   = new Context(),
+            var dog       = new Dog,
+                context   = new Context,
                 wrapped   = context.self(),
                 decorated = wrapped.when(function(cb) { return true; });
             context.store(dog);
@@ -188,8 +188,8 @@ describe("Context", function() {
         });
 
         it("should traverse self", function() {
-            var dog     = new Dog(),
-                context = new Context(),
+            var dog     = new Dog,
+                context = new Context,
                 child   = context.newChild();
             context.store(dog);
             expect(child.self().resolve(Dog)).to.be.undefined;
@@ -197,8 +197,8 @@ describe("Context", function() {
         });
 
         it("should traverse root", function() {
-            var dog   = new Dog(),
-                root  = new Context(),
+            var dog   = new Dog,
+                root  = new Context,
                 child = root.newChild();
             child.store(dog);
             expect(child.root().resolve(Dog)).to.be.undefined;
@@ -207,8 +207,8 @@ describe("Context", function() {
         });
 
         it("should traverse children", function() {
-            var dog        = new Dog(),
-                root       = new Context(),
+            var dog        = new Dog,
+                root       = new Context,
                 child1     = root.newChild(),
                 child2     = root.newChild(),
                 child3     = root.newChild(),
@@ -220,8 +220,8 @@ describe("Context", function() {
         });
 
         it("should traverse siblings", function() {
-            var dog        = new Dog(),
-                root       = new Context(),
+            var dog        = new Dog,
+                root       = new Context,
                 child1     = root.newChild(),
                 child2     = root.newChild(),
                 child3     = root.newChild(),
@@ -234,8 +234,8 @@ describe("Context", function() {
         });
 
         it("should traverse children and self", function() {
-            var dog        = new Dog(),
-                root       = new Context(),
+            var dog        = new Dog,
+                root       = new Context,
                 child1     = root.newChild(),
                 child2     = root.newChild(),
                 child3     = root.newChild(),
@@ -248,8 +248,8 @@ describe("Context", function() {
         });
 
         it("should traverse siblings and self", function() {
-            var dog        = new Dog(),
-                root       = new Context(),
+            var dog        = new Dog,
+                root       = new Context,
                 child1     = root.newChild(),
                 child2     = root.newChild(),
                 child3     = root.newChild(),
@@ -262,8 +262,8 @@ describe("Context", function() {
         });
 
         it("should traverse ancestors", function() {
-            var dog        = new Dog(),
-                root       = new Context(),
+            var dog        = new Dog,
+                root       = new Context,
                 child      = root.newChild(),
                 grandChild = child.newChild();
             root.store(dog);
@@ -272,8 +272,8 @@ describe("Context", function() {
         });
 
         it("should traverse ancestors or self", function() {
-            var dog        = new Dog(),
-                root       = new Context(),
+            var dog        = new Dog,
+                root       = new Context,
                 child      = root.newChild(),
                 grandChild = child.newChild();
             root.store(dog);
@@ -282,8 +282,8 @@ describe("Context", function() {
         });
 
         it("should traverse descendants", function() {
-            var dog        = new Dog(),
-                root       = new Context(),
+            var dog        = new Dog,
+                root       = new Context,
                 child1     = root.newChild(),
                 child2     = root.newChild(),
                 child3     = root.newChild(),
@@ -296,8 +296,8 @@ describe("Context", function() {
         });
 
         it("should traverse descendants or self", function() {
-            var dog        = new Dog(),
-                root       = new Context(),
+            var dog        = new Dog,
+                root       = new Context,
                 child1     = root.newChild(),
                 child2     = root.newChild(),
                 child3     = root.newChild(),
@@ -310,8 +310,8 @@ describe("Context", function() {
         });
 
         it("should traverse parent, siblings or |self|", function() {
-            var dog        = new Dog(),
-                root       = new Context(),
+            var dog        = new Dog,
+                root       = new Context,
                 child1     = root.newChild(),
                 child2     = root.newChild(),
                 child3     = root.newChild(),
@@ -322,8 +322,8 @@ describe("Context", function() {
         });
 
         it("should traverse parent, |siblings| or self", function() {
-            var dog        = new Dog(),
-                root       = new Context(),
+            var dog        = new Dog,
+                root       = new Context,
                 child1     = root.newChild(),
                 child2     = root.newChild(),
                 child3     = root.newChild(),
@@ -334,8 +334,8 @@ describe("Context", function() {
         });
 
         it("should traverse |parent|, siblings or self", function() {
-            var dog        = new Dog(),
-                root       = new Context(),
+            var dog        = new Dog,
+                root       = new Context,
                 child1     = root.newChild(),
                 child2     = root.newChild(),
                 child3     = root.newChild(),
@@ -347,7 +347,7 @@ describe("Context", function() {
 
     describe("#observe", function() {
         it("should observe context end", function() {
-            var context = new Context(),
+            var context = new Context,
                 ending  = false, ended = false;
             context.observe({
                 contextEnding: function(ctx) { 
@@ -367,7 +367,7 @@ describe("Context", function() {
 
     describe("#observe", function() {
         it("should observe child context end", function() {
-            var context = new Context(),
+            var context = new Context,
                 child   = context.newChild(),
                 ending  = false, ended = false;
             context.observe({
@@ -388,7 +388,7 @@ describe("Context", function() {
 
     describe("#observe", function() {
         it("can un-observe context end", function() {
-            var context = new Context(),
+            var context = new Context,
                 ending  = false, ended = false;
             var unobserve = context.observe({
                 contextEnding: function(ctx) { 
@@ -429,23 +429,23 @@ describe("Contextual", function() {
 
     describe("#setContext", function() {
         it("should be able to set context", function() {
-            var context    = new Context(),
-            controller = new Controller();
+            var context    = new Context,
+                controller = new Controller;
             controller.setContext(context);    
             expect(controller.getContext()).to.equal(context);
         });
 
         it("should add handler when context set", function() {
-            var context    = new Context(),
-                controller = new Controller();
+            var context    = new Context,
+                controller = new Controller;
             controller.setContext(context);    
             var resolve    = context.resolve(Controller);
             expect(resolve).to.equal(controller);
         });
 
         it("should remove handler when context cleared", function() {
-            var context    = new Context(),
-                controller = new Controller();
+            var context    = new Context,
+                controller = new Controller;
             controller.setContext(context);    
             var resolve    = context.resolve(Controller);
             expect(resolve).to.equal(controller);
@@ -456,8 +456,8 @@ describe("Contextual", function() {
 
     describe("#isActiveContext", function() {
         it("should be able to test if context active", function() {
-            var context    = new Context(),
-                controller = new Controller();
+            var context    = new Context,
+                controller = new Controller;
             controller.setContext(context);
             expect(controller.isActiveContext()).to.be.true;
         });
@@ -465,8 +465,8 @@ describe("Contextual", function() {
 
     describe("#endContext", function() {
         it("should be able to end context", function() {
-            var context    = new Context(),
-                controller = new Controller();
+            var context    = new Context,
+                controller = new Controller;
             controller.setContext(context);
             controller.endContext();
             expect(context.getState()).to.equal(ContextState.Ended);
