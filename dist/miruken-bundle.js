@@ -2704,7 +2704,7 @@ new function () { // closure
         version: miruken.version,
         parent:  miruken,
         imports: "miruken,miruken.callback",
-        exports: "ContextState,ContextObserver,Context,Contextual,ContextualMixin,ContextualHelper"
+        exports: "ContextState,ContextObserver,Context,Contextual,ContextualMixin,ContextualHelper,$contextual"
     });
 
     eval(this.imports);
@@ -2877,17 +2877,6 @@ new function () { // closure
     });
 
     /**
-     * @class {$contextual}
-     * Metamacro to implement Contextual protocol.
-     */
-    var $contextual = MetaMacro.extend({
-        apply: function(clazz, target) {
-            clazz.addProtocol(Contextual);
-            _synthesizeProperty(target, 'context', null, 'getContext', 'setContext');
-        }
-    });
-
-    /**
      * Contextual mixin
      * @class {Contextual}
      */
@@ -2913,6 +2902,19 @@ new function () { // closure
         },
         endContext: function (object) {
             if (object.__context) object.__context.end();
+        }
+    });
+
+    /**
+     * @class {$contextual}
+     * Metamacro to implement Contextual protocol.
+     */
+    var $contextual = MetaMacro.extend({
+        apply: function(lifecycle, clazz, target) {
+            if (lifecycle === MetaLifecycle.Subclass) {
+                clazz.addProtocol(Contextual);
+                clazz.implement(ContextualMixin);
+            }
         }
     });
 
@@ -4413,7 +4415,7 @@ new function () { // closure
     var miruken = new base2.Package(this, {
         name:    "miruken",
         version: "1.0",
-        exports: "Enum,Protocol,Delegate,Miruken,MetaMacro,Disposing,DisposingMixin,Parenting,Starting,Startup,Interceptor,InterceptorSelector,ProxyBuilder,TraversingAxis,Traversing,TraversingMixin,Traversal,Variance,Modifier,ArrayManager,IndexedList,$isProtocol,$isClass,$classOf,$ancestorOf,$isString,$isFunction,$isObject,$isPromise,$isSomething,$isNothing,$using,$lift,$eq,$use,$copy,$lazy,$eval,$every,$child,$optional,$promise,$instant,$createModifier,$inferProperties,$synthesizeProperties,$synthesizePropertiesFromFields,PARAMETERS,INTERCEPTORS,INTERCEPTOR_SELECTORS"
+        exports: "Enum,Protocol,Delegate,Miruken,MetaLifecycle,MetaMacro,Disposing,DisposingMixin,Parenting,Starting,Startup,Interceptor,InterceptorSelector,ProxyBuilder,TraversingAxis,Traversing,TraversingMixin,Traversal,Variance,Modifier,ArrayManager,IndexedList,$isProtocol,$isClass,$classOf,$ancestorOf,$isString,$isFunction,$isObject,$isPromise,$isSomething,$isNothing,$using,$lift,$eq,$use,$copy,$lazy,$eval,$every,$child,$optional,$promise,$instant,$createModifier,$properties,$inferProperties,$propertiesFromFields,$inheritStatic,synthesizeProperty,PARAMETERS,INTERCEPTORS,INTERCEPTOR_SELECTORS"
     });
 
     eval(this.imports);
@@ -4453,7 +4455,6 @@ new function () { // closure
         Invariant:     3   // exact
         });
 
-
     /**
      * @class {Delegate}
      */
@@ -4488,12 +4489,22 @@ new function () { // closure
     });
 
     /**
+     * MetaLifecycle enum
+     * @enum {Number}
+     */
+    var MetaLifecycle = Enum({
+        Subclass:  1,
+        Implement: 2,
+        Extend:    3
+        });
+
+    /**
      * @class {MetaMacro}
      */
     var MetaMacro = Base.extend({
         isActive: function () { return false; },
         shouldInherit: function () { return false; },
-        apply: function(clazz, target, definition) {}
+        apply: function(lifecycle, clazz, target, definition) {}
     }, {
         coerce: function () {
             return this.new.apply(this, arguments);
@@ -4610,7 +4621,7 @@ new function () { // closure
             subclass.getAllProtocols = getAllProtocols;
             subclass.conformsTo      = _conformsTo.bind(subclass, _protocols);
             subclass.metaMacros      = metaMacros;
-            _applyMetaMacros(subclass, null, false, instanceDef, staticDef);
+            _applyMetaMacros(MetaLifecycle.Subclass, subclass, null, false, instanceDef, staticDef);
             Array2.forEach(mixins, subclass.implement, subclass);
             return subclass;
             })(this, Array.prototype.slice.call(arguments));
@@ -4626,7 +4637,7 @@ new function () { // closure
             source = source.prototype; 
         }
         var implemented = implement.call(this, source);
-        _applyMetaMacros(implemented, null, true, source);
+        _applyMetaMacros(MetaLifecycle.Implement, implemented, null, true, source);
         return implemented;
     }
 
@@ -4640,7 +4651,7 @@ new function () { // closure
             definition[key] = value;
         }                                
         var instance = extendInstance.call(this, definition);
-        _applyMetaMacros(instance.constructor, instance, true, definition);
+        _applyMetaMacros(MetaLifecycle.Extend, instance.constructor, instance, true, definition);
         return instance;
     }
 
@@ -4665,13 +4676,14 @@ new function () { // closure
     /**
      * @function _applyMetaMacros
      * Applies any meta-macros to the class definition.
+     * @param    {Enum}     lifecycle   - reason for apply
      * @param    {Function} clazz       - clazz target
      * @param    {objec}    instance    - instance target
      * @param    {Boolean}  active      - restrict active
      * @param    {Object}   instanceDef - instance definition
      * @param    {Object}   staticDef   - static definition
      */
-    function _applyMetaMacros(clazz, instance, active, instanceDef, staticDef) {
+    function _applyMetaMacros(lifecycle, clazz, instance, active, instanceDef, staticDef) {
         var source = clazz;
         instance   = instance || clazz.prototype;
         while (source && source.metaMacros &&
@@ -4682,7 +4694,7 @@ new function () { // closure
                 var metaMacro = metaMacros[i];
                 if ((!active  || metaMacro.isActive()) &&
                     (!inherit || metaMacro.shouldInherit())) {
-                    metaMacro.apply(clazz, instance, instanceDef);
+                    metaMacro.apply(lifecycle, clazz, instance, instanceDef);
                 }
             }
             source = $ancestorOf(source);
@@ -4694,7 +4706,7 @@ new function () { // closure
      * Metamacro to proxy protocol methods through delegate.
      */
     var $proxyProtocol = MetaMacro.extend({
-        apply: function(clazz, target, definition) {
+        apply: function(lifecycle, clazz, target, definition) {
             for (var key in definition) {
                 if (key === 'delegate' || (key in Base.prototype)) {
                     continue;
@@ -4709,7 +4721,9 @@ new function () { // closure
                     })(key);
                 }
             }
-            clazz.adoptedBy = Protocol.adoptedBy;
+            if (lifecycle === MetaLifecycle.Subclass) {
+                clazz.adoptedBy = Protocol.adoptedBy;
+            }
         },
         shouldInherit: function () { return true; },
         isActive: function () { return true; }
@@ -4717,14 +4731,105 @@ new function () { // closure
     Protocol.extend     = Base.extend
     Protocol.implement  = Base.implement;;
     Protocol.metaMacros = [new $proxyProtocol];
-    _applyMetaMacros(Protocol);
+    _applyMetaMacros(MetaLifecycle.Subclass, Protocol);
+
+    /**
+     * @class {$inhertStatic}
+     * Metamacro to inherit static members in subclass.
+     */
+    var $inheritStatic = MetaMacro.extend({
+        constructor: function (/*members*/) {
+            var _members = Array.prototype.slice.call(arguments);
+            this.extend({
+                apply: function(lifecycle, clazz, target) {
+                    if (lifecycle === MetaLifecycle.Subclass) {
+                        var ancestor = $ancestorOf(clazz);
+                        if (_members.length > 0) {
+                            for (var i = 0; i < _members.length; ++i) {
+                                var member = _members[i];
+                                if (!(member in clazz)) {
+                                    clazz[member] = ancestor[member];
+                                }
+                            }
+                        } else {
+                            for (var key in ancestor) {
+                                if (ancestor !== Base && ancestor !== Object &&
+                                    ancestor.hasOwnProperty(key) && !(key in clazz)) {
+                                    clazz[key] = ancestor[key];
+                                }
+                            }
+                        }
+                    }
+                },
+                shouldInherit: function () { return true; }
+            });
+        }
+    });
+
+    /**
+     * @class {$properties}
+     * Metamacro to create properties with getters and setters.
+     */
+    var $properties = MetaMacro.extend({
+        constructor: function (/*properties*/) {
+            var _properties = Array.prototype.slice.call(arguments);
+            this.extend({
+                apply: function(lifecycle, clazz, target) {
+                    _synthesizeProperties(target, _properties);
+                }
+            });
+        }
+    });
+
+    function _synthesizeProperties(target, properties) {
+        for (var i = 0; i < properties.length; ++i) {
+            var property = properties[i];
+            if ($isString(property)) {
+                synthesizeProperty(target, property, null);
+            } else {
+                for (name in property) {
+                    var prop  = property[name],
+                        field = prop.field,
+                        get   = prop.nogetter ? Undefined : prop.get,
+                        set   = prop.nosetter ? Undefined : prop.set;
+                    synthesizeProperty(target, name, field, get, set);
+                }
+            }
+        }
+    }
+
+    function synthesizeProperty(target, name, field, get, set) {
+        var uname = name.charAt(0).toUpperCase() + name.slice(1);
+        get = (get === Undefined) ? null : (get || 'get' + uname);
+        set = (set === Undefined) ? null : (set || 'set' + uname);
+        if (!(get || set) || (name in target) || 
+            (get && (get in target)) || (set && (set in target))) {
+            return;
+        }
+        field = field || ('_' + name);
+        var getter, setter, methods = {};
+        if (get) {
+            methods[get] = getter = function () { return this[field]; };
+        }
+        if (set) {
+            methods[set] = setter = function (value) { this[field] = value; };
+        }
+        target.extend(methods);  // could trigger $inferProperties
+        if (!(name in target)) {
+            Object.defineProperty(target, name, {
+               get: getter, 
+               set: setter,
+               enumerable: true 
+            });
+        }
+    }
 
     /**
      * @class {$inferProperties}
      * Metamacro to derive properties from existng methods.
      */
     var $inferProperties = MetaMacro.extend({
-        apply: function(clazz, target, definition) {
+        apply: function(lifecycle, clazz, target, definition) {
             _inferProperties(target, definition);
         },
         shouldInherit: function () { return true; },
@@ -4767,82 +4872,12 @@ new function () { // closure
         return property;
     }
 
-
     /**
-     * @class {$synthesizeProperties}
-     * Metamacro to create properties with getters and setters.
-     */
-    var $synthesizeProperties = MetaMacro.extend({
-        constructor: function (/*properties*/) {
-            var _properties = Array.prototype.slice.call(arguments);
-            this.extend({
-                apply: function(clazz, target) {
-                    _synthesizeProperties(target, _properties);
-                }
-            });
-        }
-    });
-
-    function _synthesizeProperties(target, properties) {
-        for (var i = 0; i < properties.length; ++i) {
-            var property = properties[i];
-            if ($isString(property)) {
-                var uname = property.charAt(0).toUpperCase() + property.slice(1);
-                _synthesizeProperty(target, property, null);
-            } else {
-                for (name in property) {
-                    var prop  = property[name],
-                        field = prop.field,
-                        get   = prop.nogetter ? Undefined : prop.get,
-                        set   = prop.nosetter ? Undefined : prop.set;
-                    _synthesizeProperty(target, name, field, prop.get, prop.set);
-                }
-            }
-        }
-    }
-
-    function _synthesizeProperty(target, name, field, get, set) {
-        var uname = name.charAt(0).toUpperCase() + name.slice(1);
-        get = (get === Undefined) ? null : (get || 'get' + uname);
-        set = (set === Undefined) ? null : (set || 'set' + uname);
-        if (!(get || set) || (name in target) || 
-            (get && (get in target)) || (set && (set in target))) {
-            return;
-        }
-        if (!(set && get) && !field) {
-            field = ('_' + name);
-        }
-        (function (backing) {
-            var getter, setter, methods = {};
-            if (get) {
-                getter = field
-                       ? function () { return this[field]; }
-                       : function () { return backing; };
-                methods[get] = getter;
-            }
-            if (set) {
-                setter = field
-                       ? function (value) { this[field] = value; }
-                       : function (value) { backing = value; };
-                methods[set] = setter;
-            }
-            target.extend(methods);  // could trigger $inferProperties
-            if (!(name in target)) {
-                Object.defineProperty(target, name, {
-                    get: getter, 
-                    set: setter,
-                    enumerable: true 
-                });
-            }
-        })();
-    }
-
-    /**
-     * @class {$synthesizePropertiesFromFields}
+     * @class {$propertiesFromFields}
      * Metamacro to create properties from fields.
      */
-    var $synthesizePropertiesFromFields = MetaMacro.extend({
-        apply: function(clazz, target, definition) {
+    var $propertiesFromFields = MetaMacro.extend({
+        apply: function(lifecycle, clazz, target, definition) {
             _synthesizePropertiesFromFields(target, definition);
         },
         shouldInherit: function () { return true; },
@@ -4857,7 +4892,7 @@ new function () { // closure
             }
             var name = key.charAt(0) == '_' ? key.substring(1) : key;
             delete target[key];
-            _synthesizeProperty(target, name);
+            synthesizeProperty(target, name);
             target[name] = value;
         }
     }

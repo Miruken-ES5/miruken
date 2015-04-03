@@ -423,7 +423,7 @@ describe("Contextual", function() {
         }
     });
     
-    var Controller = Base.extend(Contextual, ContextualMixin, {
+    var Controller = Base.extend($contextual, {
         shutdown: function(shutdown) {}
     });
 

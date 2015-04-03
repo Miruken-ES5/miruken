@@ -1701,6 +1701,2710 @@ if (typeof exports !== 'undefined') {
 
 },{}],2:[function(require,module,exports){
 (function (global){
+var miruken = require('./miruken.js'),
+    Promise = require('bluebird');
+
+new function () { // closure
+
+    /**
+     * @namespace miruken.callback
+     */
+    var callback = new base2.Package(this, {
+        name:    "callback",
+        version: miruken.version,
+        parent:  miruken,
+        imports: "miruken",
+        exports: "CallbackHandler,CallbackHandlerDecorator,CallbackHandlerFilter,CallbackHandlerAspect,CascadeCallbackHandler,CompositeCallbackHandler,ConditionalCallbackHandler,AcceptingCallbackHandler,ProvidingCallbackHandler,MethodCallbackHandler,InvocationOptions,Resolution,HandleMethod,getEffectivePromise,$handle,$expand,$define,$provide,$lookup,$NOT_HANDLED"
+    });
+
+    eval(this.imports);
+
+    var _definitions = {},
+        $handle      = $define('$handle',  Variance.Contravariant),
+        $provide     = $define('$provide', Variance.Covariant),
+        $lookup      = $define('$lookup' , Variance.Invariant),
+        $NOT_HANDLED = {};
+
+    /**
+     * @protocol {InternalCallback}
+     */
+    var InternalCallback = Protocol.extend();
+
+    /**
+     * @class $expand
+     * Metamacro to expand registered definitions.
+     */
+    var $expand = MetaMacro.extend({
+        apply: function(clazz, target, definition) {
+            if ($isNothing(definition)) {
+                return;
+            }
+            if (target === clazz.prototype) {
+                target = clazz;
+            }
+            for (tag in _definitions) {
+                var list = null;
+                if (definition.hasOwnProperty(tag)) {
+                    list = definition[tag];
+                    delete definition[tag];
+                }
+                if ($isFunction(list)) {
+                    list = list();
+                }
+                if (!list || list.length == 0) {
+                    continue;
+                }
+                var define = _definitions[tag];
+                for (var idx = 0; idx < list.length; ++idx) {
+                    var constraint = list[idx];
+                    if (++idx >= list.length) {
+                        throw new Error(lang.format(
+                            "Incomplete '%1' definition: missing handler for constraint %2.",
+                            tag, constraint));
+                        }
+                    define(target, constraint, list[idx]);
+                }
+            }
+        },
+        shouldInherit: function () { return true; },
+        isActive: function () { return true; }
+    });
+
+    /**
+     * @class {HandleMethod}
+     */
+    var HandleMethod = Base.extend({
+        constructor: function (protocol, methodName, args, strict) {
+            if (protocol && !$isProtocol(protocol)) {
+                throw new TypeError("Invalid protocol supplied.");
+            }
+            var _returnValue, _exception;
+            this.extend({
+                getProtocol:    function () { return protocol; },
+                getMethodName:  function () { return methodName; },
+                getArguments:   function () { return args; },
+                getReturnValue: function () { return _returnValue; },
+                setReturnValue: function (value) { _returnValue = value; },
+                getException:   function () { return _exception; },
+                invokeOn:       function (target, composer) {
+                    if (!target || (strict && protocol && !protocol.adoptedBy(target))) {
+                        return false;
+                    }
+                    var method = target[methodName];
+                    if (!$isFunction(method)) {
+                        return false;
+                    }
+                    try {
+                        var oldComposer  = global.$composer;
+                        global.$composer = composer;
+                        var result = method.apply(target, args.slice(0));
+                        if (result === $NOT_HANDLED) {
+                            return false;
+                        }
+                        if (_returnValue === undefined) {
+                            _returnValue = result;
+                        }
+                    } catch(exception) {
+                        if (_returnValue === undefined && _exception === undefined) {
+                            _exception = exception;
+                        }
+                        throw exception;
+                    } finally {
+                        if (oldComposer) {
+                            global.$composer = oldComposer;
+                        } else {
+                            delete global.$composer;
+                        }
+                    }
+                    return true;
+                }
+            });
+        }
+    });
+
+    /**
+     * @class {Lookup}
+     */
+    var Lookup = Base.extend({
+            constructor: function (key, many) {
+            if ($isNothing(key)) {
+                throw new TypeError("The key is required.");
+            }
+            many = !!many;
+            var _results = [],
+                _instant = $instant.test(key);
+            this.extend({
+                getKey: function () { return key; },
+                isMany: function () { return many; },
+                getResults: function () { return _results; },
+                addResult: function (result) {
+                    if (!(_instant && $isPromise(result))) {
+                        _results.push(result);
+                    }
+                }
+            });
+        }
+    });
+
+    /**
+     * @class {Deferred}
+     */
+    var Deferred = Base.extend({
+        constructor: function (callback, many) {
+            if ($isNothing(callback)) {
+                throw new TypeError("The callback is required.");
+            }
+            many = !!many;
+            var _pending = [];
+            this.extend({
+                isMany: function () { return many; },
+                getCallback: function () { return callback; },
+                getPending: function () { return _pending; },
+                track: function (result) {
+                    if ($isPromise(result)) {
+                        _pending.push(result);
+                    }
+                }
+            });
+        }
+    });
+
+    /**
+     * @class {Resolution}
+     */
+    var Resolution = Base.extend({
+        constructor: function (key, many) {
+            if ($isNothing(key)) {
+                throw new TypeError("The key is required.");
+            }
+            many = !!many;
+            var _resolutions = [],
+                _instant     = $instant.test(key);
+            this.extend({
+                getKey: function () { return key; },
+                isMany: function () { return many; },
+                getResolutions: function () { return _resolutions; },
+                resolve: function (resolution) {
+                    if (!(_instant && $isPromise(resolution))) {
+                        _resolutions.push(resolution);
+                    }
+                }
+            });
+        }
+    });
+
+    /**
+     * @class {CallbackHandler}
+     */
+    var CallbackHandler = Base.extend($expand,{
+        constructor: function (delegate) {
+            this.extend({
+                getDelegate : function () { return delegate; }
+            });
+        },
+        getDelegate: function () { return null; },
+        /**
+         * Handles the callback.
+         * @param   {Object}          callback    - any callback
+         * @param   {Boolean}         greedy      - true of handle greedily
+         * @param   {CallbackHandler} [composer]  - initiated the handle for composition
+         * @returns {Boolean} true if the callback was handled, false otherwise.
+         */
+        handle: function (callback, greedy, composer) {
+            return !$isNothing(callback) &&
+                   !!this.handleCallback(callback, !!greedy, composer || this);
+        },
+        handleCallback: function (callback, greedy, composer) {
+            return $handle.dispatch(this, callback, null, composer, greedy);
+        },
+        $handle:[
+            Lookup, function (lookup, composer) {
+                return $lookup.dispatch(this, lookup,lookup.getKey(), composer, 
+                                        lookup.isMany(), lookup.addResult);
+            },
+            Deferred, function (deferred, composer) {
+                return $handle.dispatch(this, deferred.getCallback(), null, composer,
+                                        deferred.isMany(), deferred.track);
+            },
+            Resolution, function (resolution, composer) {
+                var key      = resolution.getKey(),
+                    many     = resolution.isMany(),
+                    resolved = $provide.dispatch(this, resolution, key, composer, many, resolution.resolve);
+                if (!resolved) { // check if delegate or handler implicitly satisfy key
+                    var implied  = new _Node(key),
+                        delegate = this.getDelegate();
+                    if (delegate && implied.match($classOf(delegate), Variance.Contravariant)) {
+                        resolution.resolve(delegate);
+                        resolved = true;
+                    }
+                    if ((!resolved || many) && implied.match($classOf(this), Variance.Contravariant)) {
+                        resolution.resolve(this);
+                        resolved = true;
+                    }
+                }
+                return resolved;
+            },
+            HandleMethod, function (method, composer) {
+                return method.invokeOn(this.getDelegate(), composer) || method.invokeOn(this, composer);
+            }
+        ],
+        toDelegate: function () { return new InvocationDelegate(this); }
+    }, {
+        coerce: function (object) { return new this(object); }
+    });
+
+    Base.implement({
+        toCallbackHandler: function () { return CallbackHandler(this); }
+    });
+
+    /**
+     * @class {CallbackHandlerDecorator}
+     */
+    var CallbackHandlerDecorator = CallbackHandler.extend({
+        constructor: function (decoratee) {
+            if ($isNothing(decoratee)) {
+                throw new TypeError("No decoratee specified.");
+            }
+            this.extend({
+                getDecoratee: function () { return decoratee; },
+                setDecoratee: function (value) {
+                    decoratee = value.toCallbackHandler();
+                },
+                handleCallback: function (callback, greedy, composer) {
+                    return this.getDecoratee().handle(callback, greedy, composer)
+                        || this.base(callback, greedy, composer);
+                }
+            });
+            this.setDecoratee(decoratee);
+        }
+    });
+
+    /**
+     * @class {CallbackHandlerFilter}
+     */
+    var CallbackHandlerFilter = CallbackHandlerDecorator.extend({
+        constructor: function (decoratee, filter) {
+            this.base(decoratee);
+            if ($isNothing(filter)) {
+                throw new TypeError("No filter specified.");
+            } else if (!$isFunction(filter)) {
+                throw new TypeError(lang.format("Invalid filter: %1 is not a function.", filter));
+            }
+            this.extend({
+                handleCallback: function (callback, greedy, composer) {
+                    var decoratee = this.getDecoratee();
+                    if (InternalCallback.adoptedBy(callback)) {
+                        return decoratee.handle(callback, greedy);
+                    }
+                    if (composer == this) {
+                        composer = decoratee;
+                    }
+                    return filter(callback, composer, function () {
+                        return decoratee.handle(callback, greedy);
+                    })
+                }});
+        }
+    });
+
+    /**
+     * @class {CallbackHandlerAspect}
+     */
+    var CallbackHandlerAspect = CallbackHandlerFilter.extend({
+        constructor: function (decoratee, before, after) {
+            this.base(decoratee, function (callback, composer, proceed) {
+                var promise;
+                if ($isFunction(before) && before(callback, composer) === false) {
+                    return true;
+                }
+                try {
+                    var handled = proceed();
+                    if (handled && (promise = getEffectivePromise(callback))) {
+                        // Use 'fulfilled' or 'rejected' handlers instead of 'finally' to ensure
+                        // aspect boundary is consistent with synchronous invocations and avoid
+                        // reentrancy issues.
+                        if ($isFunction(after))
+                            promise.then(function (result) {
+                                after(callback, composer);
+                            }, function (error) {
+                                after(callback, composer);
+                            });
+                        return handled;
+                    }
+                } finally {
+                    if (!promise && $isFunction(after)) {
+                        after(callback, composer);
+                    }
+                }
+            });
+        }
+    });
+
+    /**
+     * @class {CascadeCallbackHandler}
+     */
+    var CascadeCallbackHandler = CallbackHandler.extend({
+        constructor: function (handler, cascadeToHandler) {
+            if ($isNothing(handler)) {
+                throw new TypeError("No handler specified.");
+            } else if ($isNothing(cascadeToHandler)) {
+                throw new TypeError("No cascadeToHandler specified.");
+            }
+            handler          = handler.toCallbackHandler();
+            cascadeToHandler = cascadeToHandler.toCallbackHandler();
+            this.extend({
+                handleCallback: function (callback, greedy, composer) {
+                    var handled = greedy
+                        ? (handler.handle(callback, true, composer)
+                           | cascadeToHandler.handle(callback, true, composer))
+                        : (handler.handle(callback, false, composer)
+                           || cascadeToHandler.handle(callback, false, composer));
+                    if (!handled || greedy) {
+                        handled = this.base(callback, greedy, composer) || handled;
+                    }
+                    return !!handled;
+                }
+            });
+        }
+    });
+
+    /**
+     * @class {CompositeCallbackHandler}
+     */
+    var CompositeCallbackHandler = CallbackHandler.extend({
+        constructor: function () {
+            var _handlers = new Array2;
+            this.extend({
+                getHandlers: function () { return _handlers.copy(); },
+                addHandlers: function () {
+                    Array2.flatten(arguments).forEach(function (handler) {
+                        if (handler) {
+                            _handlers.push(handler.toCallbackHandler());
+                        }
+                    });
+                    return this;
+                },
+                removeHandlers: function () {
+                    Array2.flatten(arguments).forEach(function (handler) {
+                        if (!handler) {
+                            return;
+                        }
+                        var count = _handlers.length;
+                        for (var idx = 0; idx < count; ++idx) {
+                            var testHandler = _handlers[idx];
+                            if (testHandler == handler || testHandler.getDelegate() == handler) {
+                                _handlers.removeAt(idx);
+                                return;
+                            }
+                        }
+                    });
+                    return this;
+                },
+                handleCallback: function (callback, greedy, composer) {
+                    var handled = false,
+                        count   = _handlers.length;
+                    for (var idx = 0; idx < count; ++idx) {
+                        var handler = _handlers[idx];
+                        if (handler.handle(callback, greedy, composer)) {
+                            if (!greedy) {
+                                return true;
+                            }
+                            handled = true;
+                        }
+                    }
+                    if (!handled || greedy) {
+                        handled = this.base(callback, greedy, composer) || handled;
+                    }
+                    return handled;
+                }
+            });
+            this.addHandlers(arguments);
+        }
+    });
+
+    /**
+     * @class {ConditionalCallbackHandler}
+     */
+    var ConditionalCallbackHandler = CallbackHandlerDecorator.extend({
+        constructor: function (decoratee, condition) {
+            this.base(decoratee);
+            if ($isNothing(condition)) {
+                throw new TypeError("No condition specified.");
+            } else if (!$isFunction(condition)) {
+                throw new TypeError(lang.format(
+                    "Invalid condition: %1 is not a function.", condition));
+            }
+            this.extend({
+                handleCallback: function (callback, greedy, composer) {
+                    return condition(callback)
+                         ? this.base(callback, greedy, composer)
+                         : false;
+                }
+            });
+        }
+    });
+
+    /**
+     * @class {AcceptingCallbackHandler}
+     */
+    var AcceptingCallbackHandler = CallbackHandler.extend({
+        constructor: function (handler, constraint) {
+            $handle(this, constraint, handler);
+        }
+    });
+
+    if (Function.prototype.accepting === undefined)
+        Function.prototype.accepting = function (constraint) {
+            return new AcceptingCallbackHandler(this, constraint);
+        };
+
+    CallbackHandler.accepting = function (handler, constraint) {
+        return new AcceptingCallbackHandler(handler, constraint);
+    };
+
+    /**
+     * @class {ProvidingCallbackHandler}
+     */
+    var ProvidingCallbackHandler = CallbackHandler.extend({
+        constructor: function (provider, constraint) {
+            $provide(this, constraint, provider);
+        }
+    });
+
+    if (Function.prototype.providing === undefined)
+        Function.prototype.providing = function (constraint) {
+            return new ProvidingCallbackHandler(this, constraint);
+        };
+
+    CallbackHandler.providing = function (provider, constraint) {
+        return new ProvidingCallbackHandler(provider, constraint);
+    };
+
+    /**
+     * @class {MethodCallbackHandler}
+     */
+    var MethodCallbackHandler = CallbackHandler.extend({
+        constructor: function (methodName, method) {
+            if (!$isString(methodName) || methodName.length === 0 || !methodName.trim()) {
+                throw new TypeError("No methodName specified.");
+            } else if (!$isFunction(method)) {
+                throw new TypeError(lang.format("Invalid method: %1 is not a function.", method));
+            }
+            this.extend({
+                handleCallback: function (callback, greedy, composer) {
+                    if (callback instanceof HandleMethod) {
+                        var target         = new Object;
+                        target[methodName] = method;
+                        return callback.invokeOn(target);
+                    }
+                    return false;
+                }
+            });
+        }
+    });
+
+    if (Function.prototype.implementing === undefined)
+        Function.prototype.implementing = function (methodName) {
+            return new MethodCallbackHandler(methodName, this);
+        };
+
+    CallbackHandler.implementing = function (methodName, method) {
+        return new MethodCallbackHandler(methodName, method);
+    };
+
+    /**
+     * InvocationOptions enum
+     * @enum {Number}
+     */
+    var InvocationOptions = {
+        None:        0,
+        Broadcast:   1 << 0,
+        BestEffort:  1 << 1,
+        Strict:      1 << 2,
+    };
+    InvocationOptions.Notify = InvocationOptions.Broadcast | InvocationOptions.BestEffort;
+    InvocationOptions = Enum(InvocationOptions);
+
+    /**
+     * @class {InvocationSemantics}
+     */
+    var InvocationSemantics = Base.extend(InternalCallback, {
+        constructor: function (options) {
+            var _options   = options || InvocationOptions.None,
+                _specified = _options;
+            this.extend({
+                getOption: function (option) {
+                    return (_options & option) === option;
+                },
+                setOption: function (option, enabled) {
+                    if (enabled) {
+                        _options = _options | option;
+                    } else {
+                        _options = _options & (~option);
+                    }
+                    _specified = _specified | option;
+                },
+                isSpecified: function (option) {
+                    return (_specified & option) === option;
+                },
+                mergeInto: function (constraints) {
+                    for (var index = 0; index <= 2; ++index) {
+                        var option = (1 << index);
+                        if (this.isSpecified(option) && !constraints.isSpecified(option)) {
+                            constraints.setOption(option, this.getOption(option));
+                        }
+                    }
+                }
+            });
+        }
+    });
+
+    /**
+     * @class {InvocationOptionsHandler}
+     */
+    var InvocationOptionsHandler = CallbackHandler.extend({
+        constructor: function (handler, options) {
+            var semantics = new InvocationSemantics(options);
+            this.extend({
+                handleCallback: function (callback, greedy, composer) {
+                    if (callback instanceof InvocationSemantics) {
+                        semantics.mergeInto(callback);
+                        return true;
+                    }
+                    return handler.handle(callback, greedy, composer);
+                }
+            });
+        }
+    });
+
+    /**
+     * @class {InvocationDelegate}
+     */
+    var InvocationDelegate = Delegate.extend({
+        constructor: function (handler) {
+            this.extend({
+                delegate: function (protocol, methodName, args, strict) {
+                    var semantics  = new InvocationSemantics();
+                    handler.handle(semantics, true);
+                    var broadcast    = semantics.getOption(InvocationOptions.Broadcast),
+                        bestEffort   = semantics.getOption(InvocationOptions.BestEffort),
+                        strict       = !!(strict | semantics.getOption(InvocationOptions.Strict)),
+                        handleMethod = new HandleMethod(protocol, methodName, args, strict);
+                    if (handler.handle(handleMethod, !!broadcast) === false && !bestEffort) {
+                        throw new TypeError(lang.format(
+                            "Object %1 has no method '%2'", handler, methodName));
+                    }
+                    return handleMethod.getReturnValue();
+                }
+            });
+        }
+    });
+
+    CallbackHandler.implement({
+        strict: function () { return this.callOptions(InvocationOptions.Strict); },
+        broadcast: function () { return this.callOptions(InvocationOptions.Broadcast); },
+        bestEffort: function () { return this.callOptions(InvocationOptions.BestEffort); },
+        notify: function () { return this.callOptions(InvocationOptions.Notify); },
+        callOptions: function (options) { return new InvocationOptionsHandler(this, options); }
+    });
+
+    CallbackHandler.implement({
+        defer: function (callback) {
+            var deferred = new Deferred(callback);
+            return this.handle(deferred, false, global.$composer)
+                 ? Promise.all(deferred.getPending()).return(true)
+                 : Promise.resolve(false);
+        },
+        deferAll: function (callback) {
+            var deferred = new Deferred(callback, true);
+            return this.handle(deferred, true, global.$composer)
+                 ? Promise.all(deferred.getPending()).return(true)
+                 : Promise.resolve(false);
+        },
+        resolve: function (key) {
+            var resolution = (key instanceof Resolution) ? key : new Resolution(key);
+            if (this.handle(resolution, false, global.$composer)) {
+                var resolutions = resolution.getResolutions();
+                if (resolutions.length > 0) {
+                    return resolutions[0];
+                }
+            }
+        },
+        resolveAll: function (key) {
+            var resolution = (key instanceof Resolution) ? key : new Resolution(key, true);
+            if (this.handle(resolution, true, global.$composer)) {
+                var resolutions = resolution.getResolutions();
+                if (resolutions.length > 0) {
+                    return $instant.test(key)
+                         ? Array2.flatten(resolutions)
+                         : Promise.all(resolutions).then(Array2.flatten);
+                }
+            }
+            return [];
+        },
+        lookup: function (key) {
+            var lookup = (key instanceof Lookup) ? key : new Lookup(key);
+            if (this.handle(lookup, false, global.$composer)) {
+                var results = lookup.getResults();
+                if (results.length > 0) {
+                    return results[0];
+                }
+            }
+        },
+        lookupAll: function (key) {
+            var lookup = (key instanceof Lookup) ? key : new Lookup(key, true);
+            if (this.handle(lookup, true, global.$composer)) {
+                var results = lookup.getResults();
+                if (results.length > 0) {
+                    return $instant.test(key)
+                         ? Array2.flatten(resolutions)
+                         : Promise.all(results).then(Array2.flatten);
+                }
+            }
+            return [];
+        },
+        filter: function (filter) {
+            return new CallbackHandlerFilter(this, filter);
+        },
+        aspect: function (before, after) {
+            return new CallbackHandlerAspect(this, before, after);
+        },
+        when: function (constraint) {
+            var when      = new _Node(constraint),
+                condition = function (callback) {
+                if (callback instanceof Deferred) {
+                    return when.match($classOf(callback.getCallback()), Variance.Contravariant);
+                } else if (callback instanceof Resolution) {
+                    return when.match(callback.getKey(), Variance.Covariant);
+                } else {
+                    return when.match($classOf(callback), Variance.Contravariant);
+                }
+            };
+            return new ConditionalCallbackHandler(this, condition);
+        },
+        next: function () {
+            switch(arguments.length) {
+            case 0:  return this;
+            case 1:  return new CascadeCallbackHandler(this, arguments[0])
+            default: return new CompositeCallbackHandler((Array2.unshift(arguments, this), arguments));
+            }
+        }
+    });
+
+    /**
+     * @function $define
+     * Defines a new handler relationship.
+     * @param    {String}   tag       - name of definition
+     * @param    {Variance} variance  - variance of definition
+     * @returns  {Function} function to add to definition.
+     */
+    function $define(tag, variance) {
+        if (!$isString(tag) || tag.length === 0 || /\s/.test(tag)) {
+            throw new TypeError("The tag must be a non-empty string with no whitespace.");
+        } else if (_definitions[tag]) {
+            throw new TypeError(lang.format("'%1' is already defined.", tag));
+        }
+
+        var handled, comparer;
+        variance = variance || Variance.Contravariant;
+        switch (variance) {
+            case Variance.Covariant:
+                handled  = _resultRequired;
+                comparer = _covariantComparer; 
+                break;
+            case Variance.Contravariant:
+                handled  = _successImplied;
+                comparer = _contravariantComparer; 
+                break;
+            case Variance.Invariant:
+                handled  = _resultRequired;
+                comparer = _invariantComparer; 
+                break;
+            default:
+                throw new Error("Variance must be Covariant, Contravariant or Invariant");
+        }
+
+        function definition(owner, constraint, handler, removed) {
+            if (constraint instanceof Array) {
+                return Array2.reduce(constraint, function (result, c) {
+                    var undefine = _definition(owner, c, handler, removed);
+                    return function (notifyRemoved) {
+                        result(notifyRemoved);
+                        undefine(notifyRemoved);
+                    };
+                }, Undefined);
+            }
+            return _definition(owner, constraint, handler, removed);
+        }
+        function _definition(owner, constraint, handler, removed) {
+            if ($isNothing(owner)) {
+                throw new TypeError("Definitions must have an owner.");
+            } else if ($isNothing(handler)) {
+                handler    = constraint;
+                constraint = $classOf(Modifier.unwrap(constraint));
+            }
+            if ($isNothing(handler)) {
+                throw new TypeError(lang.format(
+                    "Incomplete '%1' definition: missing handler for constraint %2.",
+                    tag, constraint));
+            } else if (removed && !$isFunction(removed)) {
+                throw new TypeError("The removed argument is not a function.");
+            }
+            if (!$isFunction(handler)) {
+                if ($copy.test(handler)) {
+                    var source = Modifier.unwrap(handler);
+                    if (!$isFunction(source.copy)) {
+                        throw new Error("$copy requires the target to have a copy method.");
+                    }
+                    handler = source.copy.bind(source);
+                } else {
+                    var source = $use.test(handler) ? Modifier.unwrap(handler) : handler;
+                    handler    = $lift(source);
+                }
+            }
+            var definitions = owner.hasOwnProperty('$miruken')
+                            ? owner.$miruken : (owner.$miruken = {}),
+                node        = new _Node(constraint, handler, removed),
+                index       = _createIndex(node.constraint),
+                list        = definitions.hasOwnProperty(tag) ? definitions[tag]
+                            : definitions[tag] = new IndexedList(comparer);
+            list.insert(node, index);
+            return function (notifyRemoved) {
+                list.remove(node);
+                if (list.isEmpty()) {
+                    delete definitions[tag];
+                }
+                if (node.removed && (notifyRemoved !== false)) {
+                    node.removed(owner);
+                }
+            };
+        };
+        definition.removeAll = function (owner) {
+            var definitions = owner.$miruken;
+            if (definitions) {
+                var list = definitions[tag],
+                    head = list.head;
+                while (head) {
+                    if (head.removed) {
+                        head.removed(owner);
+                    }
+                    head = head.next;
+                }
+                delete definitions[tag];
+            }
+        };
+        definition.dispatch = function (handler, callback, constraint, composer, all, results) {
+            var v        = variance,
+                delegate = handler.getDelegate();
+            constraint = constraint || callback;
+            if (constraint) {
+                if ($eq.test(constraint)) {
+                    v = Variance.Invariant;
+                }
+                constraint = Modifier.unwrap(constraint);
+                if (typeOf(constraint) === 'object') {
+                    constraint = $classOf(constraint);
+                }
+            }
+            var ok = _dispatch(delegate, delegate, callback, constraint, v, composer, all, results);
+            if (!ok || all) {
+                ok = ok || _dispatch(handler, handler, callback, constraint, v, composer, all, results);
+            }
+            return ok;
+        };
+        function _dispatch(target, owner, callback, constraint, v, composer, all, results) {
+            var dispatched = false;
+            while (owner && (owner !== Base) && (owner !== Object)) {
+                var definitions = owner.$miruken,
+                    index       = _createIndex(constraint),
+                    list        = definitions && definitions[tag],
+                    invariant   = (v === Variance.Invariant);
+                owner = (owner === target) ? $classOf(owner) : $ancestorOf(owner);
+                if (list && (!invariant || index)) {
+                    var node = list.getIndex(index) || list.head;
+                    while (node) {
+                        if (node.match(constraint, v)) {
+                            var base       = target.base,
+                                baseCalled = false;
+                            target.base    = function () {
+                                var baseResult;
+                                baseCalled = true;
+                                _dispatch(target, owner, callback, constraint, v, composer, false,
+                                          function (result) { baseResult = result; });
+                                return baseResult;
+                            };
+                            try {
+                                var result = node.handler.call(target, callback, composer);
+                                if (handled(result)) {
+                                    if (results) {
+                                        results.call(callback, result);
+                                    }
+                                    if (!all) {
+                                        return true;
+                                    }
+                                    dispatched = true;
+                                } else if (baseCalled) {
+                                    if (!all) {
+                                        return false;
+                                    }
+                                }
+                            } finally {
+                                target.base = base;
+                            }
+                        } else if (invariant) {
+                            break;  // stop matching if invariant not satisifed
+                        }
+                        node = node.next;
+                    }
+                }
+            }
+            return dispatched;
+        }
+        _definitions[tag] = definition;
+        return definition;
+    }
+
+    /**
+     * @class {_Node}
+     */
+    function _Node(constraint, handler, removed) {
+        var invariant   = $eq.test(constraint);
+        constraint      = Modifier.unwrap(constraint);
+        this.constraint = constraint;
+        this.handler    = handler;
+        if ($isNothing(constraint)) {
+            this.match = invariant ? False : _matchEverything;
+        } else if ($isProtocol(constraint)) {
+            this.match = invariant ? _matchInvariant : _matchProtocol;
+        } else if ($isClass(constraint)) {
+            this.match = invariant ? _matchInvariant : _matchClass;
+        } else if ($isString(constraint)) {
+            this.match = _matchString;
+        } else if (instanceOf(constraint, RegExp)) {
+            this.match = invariant ? False : _matchRegExp;
+        } else if ($isFunction(constraint)) {
+            this.match = constraint;
+        } else {
+            this.match = False;
+        }
+        if (removed) {
+            this.removed = removed;
+        }
+    }
+
+    function _createIndex(constraint) {
+        if (constraint) {
+            if ($isString(constraint)) {
+                return constraint;
+            } else if ($isFunction(constraint)) {
+                return assignID(constraint);
+            }
+        }
+    }
+
+    function _matchInvariant(match) {
+        return this.constraint === match;
+    }
+
+    function _matchEverything(match, variance) {
+        return variance !== Variance.Invariant;
+    }
+
+    function _matchProtocol(match, variance) {
+        var constraint = this.constraint;
+        if (constraint === match) {
+            return true;
+        } else if (variance === Variance.Covariant) {
+            return constraint.conformsTo(match);
+        } else if (variance === Variance.Contravariant) {
+            return match.conformsTo && match.conformsTo(constraint);
+        }
+        return false;
+    }
+
+    function _matchClass(match, variance) {
+        var constraint = this.constraint;
+        if (constraint === match) {
+            return true;
+        } else if (variance === Variance.Contravariant) {
+            return match.prototype instanceof constraint;
+        }
+        else if (variance === Variance.Covariant) {
+            return match.prototype &&
+                (constraint.prototype instanceof match
+                 || ($isProtocol(match) && match.adoptedBy(constraint)));
+        }
+        return false;
+    }
+
+    function _matchString(match) {
+        return $isString(match) && this.constraint == match;
+    }
+
+    function _matchRegExp(match, variance) {
+        return (variance !== Variance.Invariant) && this.constraint.test(match);
+    }
+
+    function _covariantComparer(node, insert) {
+        if (insert.match(node.constraint, Variance.Invariant)) {
+            return 0;
+        } else if (insert.match(node.constraint, Variance.Covariant)) {
+            return -1;
+        }
+        return 1;
+    }
+    
+    function _contravariantComparer(node, insert) {
+        if (insert.match(node.constraint, Variance.Invariant)) {
+            return 0;
+        } else if (insert.match(node.constraint, Variance.Contravariant)) {
+            return -1;
+        }
+        return 1;
+    }
+
+    function _invariantComparer(node, insert) {
+        return insert.match(node.constraint, Variance.Invariant) ? 0 : -1;
+    }
+
+    function _resultRequired(result) {
+        return ((result !== null) && (result !== undefined) && (result !== $NOT_HANDLED));
+    }
+
+    function _successImplied(result) {
+        return result ? (result !== $NOT_HANDLED) : (result === undefined);
+    }
+
+    function getEffectivePromise(object) {
+        if (object instanceof HandleMethod) {
+            object = object.getReturnValue();
+        }
+        return $isPromise(object) ? object : null;
+    }
+
+    if (typeof module !== 'undefined' && module.exports) {
+        module.exports = exports = callback;
+    }
+
+    eval(this.exports);
+
+}
+
+}).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
+},{"./miruken.js":9,"bluebird":12}],3:[function(require,module,exports){
+var miruken = require('./miruken.js');
+              require('./callback.js');
+
+new function () { // closure
+
+    /**
+     * @namespace miruken.context
+     */
+    var context = new base2.Package(this, {
+        name:    "context",
+        version: miruken.version,
+        parent:  miruken,
+        imports: "miruken,miruken.callback",
+        exports: "ContextState,ContextObserver,Context,Contextual,ContextualMixin,ContextualHelper,$contextual"
+    });
+
+    eval(this.imports);
+
+    /**
+     * ContextState enum
+     * @enum {Number}
+     */
+    var ContextState = Enum({
+        Active: 1,
+        Ending: 2,
+        Ended:  3 
+    });
+
+    /**
+     * @protocol {ContextObserver}
+     */
+    var ContextObserver = Protocol.extend({
+        contextEnding:      function (context) {},
+        contextEnded:       function (context) {},
+        childContextEnding: function (context) {},
+        childContextEnded:  function (context) {}
+    });
+
+    /**
+     * @class {Context}
+     */
+    var Context = CompositeCallbackHandler.extend(
+    Parenting, Traversing, Disposing, TraversingMixin, {
+        constructor: function (parent) {
+            this.base();
+
+            var _state              = ContextState.Active,
+                _parent             = parent,
+                _children           = new Array2,
+                _baseHandleCallback = this.handleCallback,
+                _observers;
+
+            this.extend({
+                getState: function () {
+                    return _state; 
+                },
+                getParent: function () {
+                    return _parent; 
+                },
+                getChildren: function () {
+                    return _children.copy(); 
+                },
+                hasChildren: function () {
+                    return _children.length > 0; 
+                },
+                getRoot: function () {
+                    var root = this;    
+                    while (root && root.getParent()) {
+                        root = root.getParent();
+                    }
+                    return root;
+                },
+                newChild: function () {
+                    _ensureActive();
+                    var childContext = new ($classOf(this))(this).extend({
+                        end: function () {
+                            if (_observers) {
+                                _observers.invoke('childContextEnding', childContext);
+                            }
+                            _children.remove(childContext);
+                            this.base();
+                            if (_observers) {
+                                _observers.invoke('childContextEnded', childContext);
+                            }
+                        }
+                    });
+                    _children.push(childContext);
+                    return childContext;
+                },
+                store: function (object) {
+                    if ($isSomething(object)) {
+                        $provide(this, object);
+                    }
+                },
+                handleCallback: function (callback, greedy, composer) {
+                    var handled = this.base(callback, greedy, composer);
+                    if (handled && !greedy) {
+                        return handled;
+                    }
+                    if (_parent) {
+                        handled = handled | _parent.handle(callback, greedy, composer);
+                    }
+                    return !!handled;
+                },
+                handleAxis: function (axis, callback, greedy, composer) {
+                    if (callback === null || callback === undefined) {
+                        return false;
+                    }
+                    greedy   = !!greedy;
+                    composer = composer || this;
+                    if (axis == TraversingAxis.Self) {
+                        return _baseHandleCallback.call(this, callback, greedy, composer);
+                    }
+                    var handled = false;
+                    this.traverse(axis, function (node) {
+                        handled = handled
+                                | node.handleAxis(TraversingAxis.Self, callback, greedy, composer);
+                        return handled && !greedy;
+                    });
+                    return !!handled;
+                },
+                observe: function (observer) {
+                    _ensureActive();
+                    if (observer === null || observer === undefined) {
+                        return;
+                    }
+                    observer = ContextObserver(observer);
+                    (_observers || (_observers = new Array2)).push(observer);
+                    return function () { _observers.remove(observer); };
+                },
+                unwindToRootContext: function () {
+                    var current = this;
+                    while (current) {
+                        if (current.getParent() == null) {
+                            current.unwind();
+                            return current;
+                        }
+                        current = current.getParent();
+                    }
+                    return null;
+                },
+                unwind: function () {
+                    this.getChildren().invoke('end');
+                },
+                end: function () { 
+                    if (_state == ContextState.Active) {
+                        _state = ContextState.Ending;
+                        if (_observers) {
+                            _observers.invoke('contextEnding', this);
+                        }
+                        this.unwind();
+                        _state = ContextState.Ended;
+                        if (_observers) {
+                            _observers.invoke('contextEnded', this);
+                        }
+                        _observers = null;
+                    }
+                },
+                dispose: function () { this.end(); }
+            });
+
+            function _ensureActive() {
+                if (_state != ContextState.Active) {
+                    throw new Error("The context has already ended.");
+                }
+            }
+        }
+    });
+
+    /**
+     * @protocol {Contextual}
+     */
+    var Contextual = Protocol.extend({
+        /**
+         * Gets the Context associated with this object.
+         * @returns {Context} this associated Context.
+         */
+        getContext: function () {},
+        /**
+         * Sets the Context associated with this object.
+         * @param   {Context} context  - associated context
+         */
+        setContext: function (context) {}
+    });
+
+    /**
+     * Contextual mixin
+     * @class {Contextual}
+     */
+    var ContextualMixin = Module.extend({
+        getContext: function (object) {
+            return object.__context;
+        },
+        setContext: function (object, context) {
+            if (object.__context === context) {
+                return;
+            }
+            if (object.__context)
+                object.__context.removeHandlers(object);
+            if (context) {
+                object.__context = context;
+                context.addHandlers(object);
+            } else {
+                delete object.__context;
+            }
+        },
+        isActiveContext: function (object) {
+            return object.__context && (object.__context.getState() === ContextState.Active);
+        },
+        endContext: function (object) {
+            if (object.__context) object.__context.end();
+        }
+    });
+
+    /**
+     * @class {$contextual}
+     * Metamacro to implement Contextual protocol.
+     */
+    var $contextual = MetaMacro.extend({
+        apply: function(lifecycle, clazz, target) {
+            if (lifecycle === MetaLifecycle.Subclass) {
+                clazz.addProtocol(Contextual);
+                clazz.implement(ContextualMixin);
+            }
+        }
+    });
+
+    /**
+     * ContextualHelper mixin
+     * @class {ContextualHelper}
+     */
+    var ContextualHelper = Module.extend({
+        resolveContext: function (contextual) {
+            if (!contextual) return null;
+            if (contextual instanceof Context) return contextual;
+            return $isFunction(contextual.getContext)
+                 ? contextual.getContext() : null;
+        },
+        requireContext: function (contextual) {
+            var context = ContextualHelper.resolveContext(contextual);
+            if (!(context instanceof Context))
+                throw new Error("The supplied object is not a Context or Contextual object.");
+            return context;
+        },
+        clearContext: function (contextual) {
+            if (!contextual ||
+                !$isFunction(contextual.getContext) || 
+                !$isFunction(contextual.setContext)) {
+                return;
+            }
+            var context = contextual.getContext();
+            if (context) {
+                try {
+                    context.end();
+                }
+                finally {
+                    contextual.setContext(null);
+                }
+            }
+        },
+        bindContext: function (contextual, context, replace) {
+            if (!contextual ||
+                (!replace && $isFunction(contextual.getContext)
+                 && contextual.getContext())) {
+                return contextual;
+            }
+            if (contextual.setContext === undefined) {
+                contextual = ContextualMixin(contextual);
+            } else if (!$isFunction(contextual.setContext)) {
+                throw new Error("Unable to set the context on " + contextual + ".");
+            }
+            contextual.setContext(ContextualHelper.resolveContext(context));
+            return contextual;
+        },
+        bindChildContext: function (contextual, child) {
+            var childContext;
+            if (child) {
+                if ($isFunction(child.getContext)) {
+                    childContext = child.getContext();
+                    if (childContext && childContext.getState() === ContextState.Active) {
+                        return childContext;
+                    }
+                }
+                var context  = ContextualHelper.requireContext(contextual);
+                while (context && context.getState() !== ContextState.Active) {
+                    context = context.getParent();
+                }
+                if (context) {
+                    childContext = context.newChild();
+                    ContextualHelper.bindContext(child, childContext, true);
+                }
+            }
+            return childContext;
+        }
+    });
+
+   /**
+     * Context traversal
+     */
+    Context.implement({
+        self: function () {
+            return _newContextTraversal(this, TraversingAxis.Self);
+        },
+        root: function () {
+            return _newContextTraversal(this, TraversingAxis.Root);   
+        },
+        child: function () {
+            return _newContextTraversal(this, TraversingAxis.Child);   
+        },
+        sibling: function () {
+            return _newContextTraversal(this, TraversingAxis.Sibling);   
+        },
+        childOrSelf: function () {
+            return _newContextTraversal(this, TraversingAxis.ChildOrSelf);   
+        },
+        siblingOrSelf: function () {
+            return _newContextTraversal(this, TraversingAxis.SiblingOrSelf);   
+        },
+        ancestor: function () {
+            return _newContextTraversal(this, TraversingAxis.Ancestor);   
+        },
+        ancestorOrSelf: function () {
+            return _newContextTraversal(this, TraversingAxis.AncestorOrSelf);   
+        },
+        descendant: function () {
+            return _newContextTraversal(this, TraversingAxis.Descendant);   
+        },
+        descendantOrSelf: function () {
+            return _newContextTraversal(this, TraversingAxis.DescendantOrSelf);   
+        },
+        parentSiblingOrSelf: function () {
+            return _newContextTraversal(this, TraversingAxis.ParentSiblingOrSelf);   
+        }
+    });
+
+    function _newContextTraversal(context, axis) {
+        function Traversal() {
+            for (var key in context) {
+                if (key in Base.prototype) {
+                    continue;
+                }
+                var member = context[key];
+                if ($isFunction(member))
+                    this[key] = (function (k, m) {
+                        return function () {
+                            var owner       = (k in CallbackHandler.prototype) ? this : context, 
+                                returnValue = m.apply(owner, arguments);
+                            if (returnValue === context) {
+                                returnValue = this;
+                            }
+                            else if (returnValue &&
+                                     $isFunction(returnValue.getDecoratee) &&
+                                     $isFunction(returnValue.setDecoratee) &&
+                                     returnValue.getDecoratee() == context) {
+                                returnValue.setDecoratee(this);
+                            }
+                            return returnValue;
+                        }
+                    })(key, member);
+            }
+            this.extend({
+                handle: function (callback, greedy, composer) {
+                    return this.handleAxis(axis, callback, greedy, composer);
+                }});
+        }
+        Traversal.prototype = context.constructor.prototype;
+        return new Traversal();
+    }
+
+    // =========================================================================
+    // Function context extensions
+    // =========================================================================
+
+    if (Function.prototype.newInContext === undefined)
+        Function.prototype.newInContext = function () {
+            var args        = Array.prototype.slice.call(arguments),
+                context     = args.shift(),
+                constructor = this;
+            function Fake() { constructor.apply(this, args); }
+            Fake.prototype  = constructor.prototype;
+            var object      = new Fake;
+            ContextualHelper.bindContext(object, context);
+            return object;
+        };
+
+    if (Function.prototype.newInChildContext === undefined)
+        Function.prototype.newInChildContext = function () {
+            var args        = Array.prototype.slice.call(arguments),
+                context     = args.shift(),
+                constructor = this;
+            function Fake() { constructor.apply(this, args); }
+            Fake.prototype  = constructor.prototype;
+            var object      = new Fake;
+            ContextualHelper.bindChildContext(context, object);
+            return object;
+        };
+
+    if (typeof module !== 'undefined' && module.exports) {
+        module.exports = exports = context;
+    }
+
+    eval(this.exports);
+
+}
+
+},{"./callback.js":2,"./miruken.js":9}],4:[function(require,module,exports){
+var miruken    = require('./miruken.js'),
+    prettyjson = require('prettyjson'),
+    Promise    = require('bluebird');
+                 require('./callback.js'),
+
+new function() { // closure
+
+    /**
+     * @namespace miruken.error
+     */
+    var error = new base2.Package(this, {
+        name:    "error",
+        version: miruken.version,
+        parent:  miruken,
+        imports: "miruken,miruken.callback",
+        exports: "Errors,ErrorCallbackHandler"
+    });
+
+    eval(this.imports);
+
+    /**
+     * @protocol {Errors}
+     */
+    var Errors = Protocol.extend({
+        handleError:     function(error,     context) {},
+        handleException: function(exception, context) {},
+        reportError:     function(error,     context) {},
+        reportException: function(exception, context) {}
+    });
+
+    /**
+     * @class {ErrorCallbackHandler}
+     */
+    var ErrorCallbackHandler = CallbackHandler.extend({
+    /**
+     * Handles the error.
+     * @param   {Any}          error      - error (usually Error)
+     * @param   {Any}          [context]  - scope of error
+     * @returns {Promise(Any)} the handled error.
+     */
+        handleError: function(error, context) {
+            return Promise.resolve(Errors($composer).reportError(error, context));
+        },
+    /**
+     * Handles the exception.
+     * @param   {Exception}    excption   - exception
+     * @param   {Any}          [context]  - scope of error
+     * @returns {Promise(Any)} the handled exception.
+     */
+        handleException: function(exception, context) {
+            return Promise.resolve(Errors($composer).reportException(exception, context));
+        },
+    /**
+     * Reports the error. i.e. to the console.
+     * @param   {Any}          error      - error (usually Error)
+     * @param   {Any}          [context]  - scope of error
+     * @returns {Promise(Any)} the reported error (could be a dialog).
+     */
+        reportError: function(error, context) {
+            console.error(formatJson(error));
+            return Promise.resolve();
+        },
+    /**
+     * Reports the excepion. i.e. to the console.
+     * @param   {Exception}    exception  - exception
+     * @param   {Any}          [context]  - scope of exception
+     * @returns {Promise(Any)} the reported exception (could be a dialog).
+     */
+        reportException: function(exception, context) {
+            console.error(formatJson(exception));
+            return Promise.resolve();
+        }
+    });
+
+    /**
+     * Recoverable filter
+     */
+    CallbackHandler.implement({
+        recoverable: function(context) {
+            return new CallbackHandlerFilter(this, function(callback, composer, proceed) {
+                try {
+                    var promise,
+                    handled = proceed();
+                    if (handled && (promise = getEffectivePromise(callback))) {
+                        promise = promise.caught(function(error) {
+                            return Errors(composer).handleError(error, context);
+                        });
+                        if (callback instanceof HandleMethod) {
+                            callback.setReturnValue(promise);
+                        }
+                    }
+                    return handled;
+                } catch (exception) {
+                    Errors(composer).handleException(exception, context);
+                    return true;
+                }
+            });
+        },
+
+        recover: function(context) {
+            return function(error) {
+                return Errors(this).handleError(error, context);
+            }.bind(this);
+        }
+    });
+
+    function formatJson(object) {
+        var json = prettyjson.render(object);
+        json = json.split('\n').join('\n    ');
+        return '    ' + json;
+    }
+
+    if (typeof module !== 'undefined' && module.exports) {
+        module.exports = exports = error;
+    }
+
+    eval(this.exports);
+
+}
+
+},{"./callback.js":2,"./miruken.js":9,"bluebird":12,"prettyjson":50}],5:[function(require,module,exports){
+module.exports = require('./miruken.js');
+require('./callback.js');
+require('./context.js');
+require('./validate.js');
+require('./error.js');
+require('./ioc');
+
+},{"./callback.js":2,"./context.js":3,"./error.js":4,"./ioc":7,"./miruken.js":9,"./validate.js":11}],6:[function(require,module,exports){
+var miruken = require('../miruken.js'),
+    Promise = require('bluebird');
+              require('./ioc.js');
+
+new function () { // closure
+
+    /**
+     * @namespace miruken.ioc.config
+     */
+    var config = new base2.Package(this, {
+        name:    "config",
+        version: miruken.ioc.version,
+        parent:  miruken.ioc,
+        imports: "miruken,miruken.ioc",
+        exports: "Installer,$classes"
+    });
+
+    eval(this.imports);
+
+    /**
+     * @class {Installer}
+     */
+    var Installer = Base.extend(Registration, {
+        register: function(container, composer) {}
+    });
+
+    /**
+     * @class {FromBuilder}
+     */
+    var FromBuilder = Base.extend(Registration, {
+        constructor: function () {
+            var _basedOn;
+            this.extend({
+                getClasses: function () { return []; },
+                basedOn: function (/*constraints*/) {
+                    _basedOn = new BasedOnBuilder(this, Array2.flatten(arguments));
+                    return _basedOn;
+                },
+                register: function(container, composer) {
+                    var registrations,
+                        classes = this.getClasses();
+                    if (_basedOn) {  // try based on
+                        registrations = Array2.filter(
+                            Array2.map(classes, function (member) {
+                                return _basedOn.builderForClass(member);
+                            }), function (component) {
+                            return component;
+                        });
+                    } else { // try installers
+                        registrations = Array2.map(
+                            Array2.filter(classes, function (member) {
+                                var clazz = member.member || member;
+                                return clazz.prototype instanceof Installer;
+                            }), function (installer) {
+                                installer = installer.member || installer;
+                                return new installer;
+                            });
+                    }
+                    return Promise.all(container.register(registrations))
+                        .then(function (registrations) {
+                            return _unregisterBatch(registrations);
+                        });
+                }
+            });
+        }
+    });
+
+    /**
+     * @class {FromPackageBuilder}
+     */
+    var FromPackageBuilder = FromBuilder.extend(Registration, {
+        constructor: function (package) {
+            this.base();
+            this.extend({
+                getClasses: function () {
+                    var classes = [];
+                    package.getClasses(function (clazz) {
+                        classes.push(clazz);
+                    });
+                    return classes;
+                }
+            });
+        }
+    });
+
+    /**
+     * @class {BasedOnBuilder}
+     */
+    var BasedOnBuilder = Base.extend(Registration, {
+        constructor: function (from, constraints) {
+            var _if, _unless, _configuration;
+            this.withKeys = new KeyBuilder(this);
+            this.extend({
+                if: function (condition) {
+                    if (_if) {
+                        var cond = _if;
+                        _if = function (clazz) {
+                            return cond(clazz) && condition(clazz);
+                        };
+                    } else {
+                        _if = condition;
+                    }
+                    return this;
+                },
+                unless: function (condition) {
+                    if (_unless) {
+                        var cond = _unless;
+                        _unless = function (clazz) {
+                            return cond(clazz) || condition(clazz);
+                        };
+                    } else {
+                        _unless = condition;
+                    }
+                    return this;
+                },
+                configure: function (configuration) {
+                    if (_configuration) {
+                        var configure  = _configuration;
+                        _configuration = function (component) {
+                            configure(component);
+                            configuration(component);
+                        };
+                    } else {
+                        _configuration = configuration;
+                    }
+                    return this;
+                },
+                builderForClass: function (member) {
+                    var basedOn = [],
+                        clazz   = member.member || member,
+                        name    = member.name;
+                    if ((_if && !_if(clazz)) || (_unless && _unless(clazz))) {
+                        return;
+                    }
+                    for (var i = 0; i < constraints.length; ++i) {
+                        var constraint = constraints[i];
+                        if ($isProtocol(constraint)) {
+                            if (!constraint.adoptedBy(clazz)) {
+                                continue;
+                            }
+                        } else if ($isClass(constraint)) {
+                            if (!(clazz.prototype instanceof constraint)) {
+                                continue;
+                            }
+                        }
+                        if (basedOn.indexOf(constraint) < 0) {
+                            basedOn.push(constraint);
+                        }
+                    }
+                    if (basedOn.length > 0 || constraints.length === 0) {
+                        var keys      = this.withKeys.getKeys(clazz, basedOn, name),
+                            component = $component(keys).boundTo(clazz);
+                        if (_configuration) {
+                            _configuration(component);
+                        }
+                        return component;
+                    }
+                },
+                register: function(container, composer) {
+                    return from.register(container, composer);
+                }
+            });
+        }
+    });
+
+    /**
+     * @class {KeyBuilder}
+     */
+    var KeyBuilder = Base.extend({
+        constructor: function (basedOn) {
+            var _keySelector;
+            this.extend({
+                self: function () {
+                    return selectKeys(function (keys, clazz) {
+                        keys.push(clazz);
+                    });
+                },
+                basedOn: function () {
+                    return selectKeys(function (keys, clazz, constraints) {
+                        keys.push.apply(keys, constraints);
+                    });
+                },
+                anyService: function () {
+                    return selectKeys(function (keys, clazz) {
+                        var services = clazz.getAllProtocols();
+                        if (services.length > 0) {
+                            keys.push(services[0]);
+                        }
+                    });
+                },
+                allServices: function () {
+                    return selectKeys(function (keys, clazz) {
+                        keys.push.apply(keys, clazz.getAllProtocols());
+                    });
+                },
+                mostSpecificService: function (service) {
+                    return selectKeys(function (keys, clazz, constraints) {
+                        if ($isProtocol(service)) {
+                            _addMatchingProtocols(clazz, service, keys);
+                        } else {
+                            for (var i = 0; i < constraints.length; ++i) {
+                                var constraint = constraints[i];
+                                if ($isFunction(constraint)) {
+                                    _addMatchingProtocols(clazz, constraint, keys);
+                                }
+                            }
+                        }
+                        if (keys.length === 0) {
+                            for (var i = 0; i < constraints.length; ++i) {
+                                var constraint = constraints[i];
+                                if (constraint !== Base && constraint !== Object) {
+                                    if ($isProtocol(constraint)) {
+                                        if (constraint.adoptedBy(clazz)) {
+                                            keys.push(constraint);
+                                            break;
+                                        }
+                                    } else if (clazz === constraint ||
+                                               clazz.prototype instanceof constraint) {
+                                        keys.push(constraint);
+                                        break;
+                                    }
+                                }
+                            }
+                        }
+                    });
+                },
+                name: function (n) {
+                    return selectKeys(function (keys, clazz, constraints, name) {
+                        if ($isNothing(n)) {
+                            if (name) {
+                                keys.push(name);
+                            }
+                        } else if ($isFunction(n)) {
+                            if (name = n(name)) {
+                                keys.push(String(name));
+                            }
+                        } else {
+                            keys.push(String(n));
+                        }
+                    });
+                },
+                getKeys: function (clazz, constraints, name) {
+                    var keys = [];
+                    if (_keySelector) {
+                        _keySelector(keys, clazz, constraints, name);
+                    }
+                    if (keys.length > 0) {
+                        return keys;
+                    }
+                }
+            });
+
+            function selectKeys(selector) {
+                if (_keySelector) { 
+                    var select   = _keySelector;
+                    _keySelector = function (keys, clazz, constraints, name) {
+                        select(keys, clazz, constraints, name);
+                        selector(keys, clazz, constraints, name);
+                    };
+                } else {
+                    _keySelector = selector;
+                }
+                return basedOn;
+            }
+        }
+    });
+
+    /**
+     * @function $classes
+     * @param   {Any} from - source of classes 
+     * @returns {Any} a fluent class builder.
+     */
+    function $classes(from) {
+        if (from instanceof Package) {
+            return new FromPackageBuilder(from);
+        }
+        throw new TypeError(lang.format("Unrecognized $classes from %1.", hint));
+    }
+
+    $classes.fromPackage = function (package) {
+        if (!(package instanceof Package)) {
+            throw new TypeError(
+                lang.format("$classes expected a Package, but received %1 instead.", package));
+        }
+        return new FromPackageBuilder(package);
+    };
+
+    function _unregisterBatch(registrations) {
+        return function () {
+            for (var i = 0; i < registrations.length; ++i) {
+                registrations[i]();
+            }
+        };
+    }
+
+    function _addMatchingProtocols(clazz, preference, matches) {
+        var toplevel = _toplevelProtocols(clazz);
+        for (var i = 0; i < toplevel.length; ++i) {
+            var protocol = toplevel[i];
+            if (protocol.getAllProtocols().indexOf(preference) >= 0) {
+                matches.push(protocol);
+            }
+        }
+    }
+
+    function _toplevelProtocols(type) {
+        var protocols = type.getAllProtocols(),
+            toplevel  = protocols.slice(0);
+        for (var i = 0; i < protocols.length; ++i) {
+            var parents = protocols[i].getAllProtocols();
+            for (var ii = 0; ii < parents.length; ++ii) {
+                Array2.remove(toplevel, parents[ii]);
+            }
+        }
+        return toplevel;
+    }
+
+    if (typeof module !== 'undefined' && module.exports) {
+        module.exports = exports = config;
+    }
+
+    eval(this.exports);
+}
+},{"../miruken.js":9,"./ioc.js":8,"bluebird":12}],7:[function(require,module,exports){
+module.exports = require('./ioc.js');
+require('./config.js');
+
+
+},{"./config.js":6,"./ioc.js":8}],8:[function(require,module,exports){
+var miruken = require('../miruken.js'),
+    Promise = require('bluebird');
+              require('../context.js'),
+              require('../validate.js');
+
+new function () { // closure
+
+    /**
+     * @namespace miruken.ioc
+     */
+    var ioc = new base2.Package(this, {
+        name:    "ioc",
+        version: miruken.version,
+        parent:  miruken,
+        imports: "miruken,miruken.callback,miruken.context,miruken.validate",
+        exports: "Container,Registration,ComponentPolicy,Lifestyle,TransientLifestyle,SingletonLifestyle,ContextualLifestyle,DependencyModifiers,DependencyModel,DependencyManager,DependencyInspector,ComponentModel,ComponentBuilder,IoContainer,DependencyResolution,DependencyResolutionError,$component,$$composer,$container"
+    });
+
+    eval(this.imports);
+
+    /**
+     * Composer dependency.
+     */
+    var $$composer    = {},
+        $container    = $createModifier(),
+        $proxyBuilder = new ProxyBuilder;
+
+    /**
+     * @protocol {Container}
+     */
+    var Container = Protocol.extend(Disposing, {
+        constructor: function (proxy, strict) {
+            this.base(proxy, (strict === undefined) || strict);
+        },
+        /**
+         * Registers on or more components in the container.
+         * @param   {Any*}    registrations  - Registrations
+         * @returns {Promise} a promise representing the registration.
+         */
+        register: function (/*registrations*/) {},
+        /**
+         * Adds a configured component to the container with policies.
+         * @param   {ComponentModel}    componentModel  - component model
+         * @param   {Array}             policies        - component policies
+         * @returns {Promise} a promise representing the component.
+         */
+        addComponent: function (componentModel, policies) {},
+        /**
+         * Resolves the component for the key.
+         * @param   {Any} key  - key used to identify the component
+         * @returns {Any} component (or Promise) satisfying the key.
+         */
+        resolve: function (key) {},
+        /**
+         * Resolves all the components for the key.
+         * @param   {Any} key  - key used to identify the components
+         * @returns {Array} components (or Promises) satisfying the key.
+         */
+        resolveAll: function (key) {}
+    });
+
+    /**
+     * @protocol {Registration}
+     */
+    var Registration = Protocol.extend({
+        /**
+         * Encapsulates the regisration of one or more components.
+         * @param {Container}       container  - container to register components in
+         * @param {CallbackHandler} composer   - supports composition
+         */
+         register: function (container, composer) {}
+    });
+
+    /**
+     * @protocol {ComponentPolicy}
+     */
+    var ComponentPolicy = Protocol.extend({
+        /**
+         * Applies the policy to the ComponentModel.
+         * @param {ComponentModel} componentModel  - component model
+         */
+         apply: function (componentModel) {}
+    });
+
+    /**
+     * DependencyModifiers enum
+     * @enum {Number}
+     */
+    var DependencyModifiers = Enum({
+        None:       0,
+        Use:        1 << 0,
+        Lazy:       1 << 1,
+        Every:      1 << 2,
+        Dynamic:    1 << 3,
+        Optional:   1 << 4,
+        Promise:    1 << 5,
+        Invariant:  1 << 6,
+        Container:  1 << 7,
+        Child:      1 << 8
+        });
+
+    /**
+     * @class {DependencyModel}
+     */
+    var DependencyModel = Base.extend({
+        constructor: function (dependency, modifiers) {
+            modifiers = modifiers || DependencyModifiers.None;
+            if (dependency instanceof Modifier) {
+                if ($use.test(dependency)) {
+                    modifiers = modifiers | DependencyModifiers.Use;
+                }
+                if ($lazy.test(dependency)) {
+                    modifiers = modifiers | DependencyModifiers.Lazy;
+                }
+                if ($every.test(dependency)) {
+                    modifiers = modifiers | DependencyModifiers.Every;
+                }
+                if ($eval.test(dependency)) {
+                    modifiers = modifiers | DependencyModifiers.Dynamic;
+                }
+                if ($child.test(dependency)) {
+                    modifiers = modifiers | DependencyModifiers.Child;
+                }
+                if ($optional.test(dependency)) {
+                    modifiers = modifiers | DependencyModifiers.Optional;
+                }
+                if ($promise.test(dependency)) {
+                    modifiers = modifiers | DependencyModifiers.Promise;
+                }
+                if ($container.test(dependency)) {
+                    modifiers = modifiers | DependencyModifiers.Container;
+                }
+                if ($eq.test(dependency)) {
+                    modifiers = modifiers | DependencyModifiers.Invariant;
+                }
+                dependency = Modifier.unwrap(dependency);
+            }
+            this.extend({
+                getDependency: function () { return dependency; },
+                getModifiers: function () { return modifiers; },
+                test: function (modifier) {
+                    return (modifiers & modifier) === modifier;
+                }
+            });
+        }
+    }, {
+        coerce: function (object) {
+           return (object === undefined) ? undefined : new DependencyModel(object);
+        }
+    });
+
+    /**
+     * @class {DependencyManager}
+     */
+    var DependencyManager = ArrayManager.extend({
+        constructor: function (dependencies) {
+            this.base(dependencies);
+        },
+        mapItem: function (item) {
+            return DependencyModel(item);
+        }                         
+    });
+
+    /**
+     * @class {DependencyInspector}
+     */
+    var DependencyInspector = Base.extend({
+        inspect: function (componentModel, policies) {
+            // Dependencies will be merged from inject definitions
+            // starting from most derived unitl no more remain or the
+            // current definition is fully specified (no undefined).
+            var dependencies = componentModel.getDependencies();
+            if (dependencies && !Array2.contains(dependencies, undefined)) {
+                return;
+            }
+            var clazz = componentModel.getClass();
+            componentModel.manageDependencies(function (manager) {
+                while (clazz && (clazz !== Base)) {
+                    var injects = [clazz.prototype.$inject, clazz.prototype.inject,
+                                   clazz.$inject, clazz.inject];
+                    for (var i = 0; i < injects.length; ++i) {
+                        var inject = injects[i];
+                        if (inject !== undefined) {
+                            if ($isFunction(inject)) {
+                                inject = inject();
+                            }
+                            manager.merge(inject);
+                            if (!Array2.contains(inject, undefined)) {
+                                return;
+                            }
+                        }
+                    }
+                    clazz = $ancestorOf(clazz);
+                }
+            });
+        }
+    });
+
+    /**
+     * @class {ComponentModel}
+     */
+    var ComponentModel = Base.extend({
+        constructor: function () {
+            var _key, _class, _lifestyle, _factory,
+                _invariant = false, _burden = {};
+            this.extend({
+                getKey: function () {
+                    return _key || _class
+                },
+                setKey: function (value) { _key = value; },
+                getClass: function () {
+                    var clazz = _class;
+                    if (!clazz && $isClass(_key)) {
+                        clazz = _key;
+                    }
+                    return clazz;
+                },
+                setClass: function (value) {
+                    if ($isSomething(value) && !$isClass(value)) {
+                        throw new TypeError(lang.format("%1 is not a class.", value));
+                    }
+                    _class = value;
+                },
+                isInvariant: function () {
+                    return _invariant;
+                },
+                setInvariant: function (value) { _invariant = !!value; },
+                getLifestyle: function () { return _lifestyle; },
+                setLifestyle: function (value) {
+                    if (!$isSomething(value) && !(value instanceof Lifestyle)) {
+                        throw new TypeError(lang.format("%1 is not a Lifestyle.", value));
+                    }
+                    _lifestyle = value; 
+                },
+                getFactory: function () {
+                    var factory = _factory,
+                        clazz   = this.getClass();
+                    if (!factory) {
+                        var interceptors = _burden[INTERCEPTORS];
+                        if (interceptors && interceptors.length > 0) {
+                            var types = [];
+                            if (clazz) {
+                                types.push(clazz);
+                            }
+                            if ($isProtocol(_key)) {
+                                types.push(_key);
+                            }
+                            return _makeProxyFactory(types);
+                        } else if (clazz) {
+                            return _makeClassFactory(clazz);
+                        }
+                    }
+                    return factory;
+                },
+                setFactory: function (value) {
+                    if ($isSomething(value) && !$isFunction(value)) {
+                        throw new TypeError(lang.format("%1 is not a function.", value));
+                    }
+                    _factory = value;
+                },
+                getDependencies: function (key) { 
+                    return _burden[key || PARAMETERS];
+                },
+                setDependencies: function (key, value) {
+                    if (arguments.length === 1) {
+                        value = key, key = PARAMETERS;
+                    }
+                    if ($isSomething(value) && !(value instanceof Array)) {
+                        throw new TypeError(lang.format("%1 is not an array.", value));
+                    }
+                    _burden[key] = Array2.map(value, DependencyModel);
+                },
+                manageDependencies: function (key, actions) {
+                    if (arguments.length === 1) {
+                        actions = key, key = PARAMETERS;
+                    }
+                    if ($isFunction(actions)) {
+                        var dependencies = _burden[key],
+                            manager      = new DependencyManager(dependencies);
+                        actions(manager);
+                        if (dependencies === undefined) {
+                            var dependencies = manager.getItems();
+                            if (dependencies.length > 0) {
+                                _burden[key] = dependencies;
+                            }
+                        }
+                    }
+                    return dependencies;
+                },
+                getBurden: function () { return _burden; }
+            });
+        }
+    });
+
+    function _makeClassFactory(clazz) {
+        return function (burden) {
+            return clazz.new.apply(clazz, burden[PARAMETERS]);
+        }
+    }
+
+    function _makeProxyFactory(types) {
+        var proxy = $proxyBuilder.buildProxy(types);
+        return function (burden) {
+            return proxy.new.call(proxy, burden);
+        }
+    }
+
+    /**
+     * @class {Lifestyle}
+     */
+    var Lifestyle = Base.extend(ComponentPolicy, Disposing, DisposingMixin, {
+        resolve: function (factory) { return factory(); },
+        trackInstance: function (instance) {
+            if (instance && $isFunction(instance.dispose)) {
+                var _this = this;
+                instance.extend({
+                    dispose: function (disposing) {
+                        if (disposing || _this.disposeInstance(instance, true)) {
+                            this.base();
+                            this.dispose = this.base;
+                        }
+                    }
+                });
+            }
+        },
+        disposeInstance: function (instance, disposing) {
+            if (!disposing && instance && $isFunction(instance.dispose)) {
+                instance.dispose(true);
+            }
+            return !disposing;
+        },
+        apply: function (componentModel) {
+            componentModel.setLifestyle(this);
+        }
+    });
+
+   /**
+     * @class {TransientLifestyle}
+     */
+    var TransientLifestyle = Lifestyle.extend();
+
+   /**
+     * @class {SingletonLifestyle}
+     */
+    var SingletonLifestyle = Lifestyle.extend({
+        constructor: function (instance) {
+            this.extend({
+                resolve: function (factory) {
+                    if (!instance) {
+                        var object = factory();
+                        if ($isPromise(object)) {
+                            var _this = this;
+                            return Promise.resolve(object).then(function (object) {
+                                // Only cache fulfilled instances
+                                if (!instance && object) {
+                                    instance = object;
+                                    _this.trackInstance(instance);
+                                }
+                                return instance;
+                            });
+                        } else if (object) {
+                            instance = object;
+                            this.trackInstance(instance)
+                        }
+                    }
+                    return instance;
+                },
+                disposeInstance: function (obj, disposing) {
+                    // Singletons cannot be disposed directly
+                    if (!disposing && (obj === instance)) {
+                        if (this.base(obj, disposing)) {
+                           instance = undefined;
+                           return true;
+                        }
+                    }
+                    return false;
+                },
+                _dispose: function() {
+                    this.disposeInstance(instance);
+                }
+            });
+        }
+    });
+
+   /**
+     * @class {ContextualLifestyle}
+     */
+    var ContextualLifestyle = Lifestyle.extend({
+        constructor: function () {
+            var _cache = {};
+            this.extend({
+                resolve: function (factory, composer) {
+                    var context = composer.resolve(Context);
+                    if (context) {
+                        var id       = assignID(context),
+                            instance = _cache[id];
+                        if (!instance) {
+                            var object = factory();
+                            if ($isPromise(object)) {
+                                var _this = this;
+                                return Promise.resolve(object).then(function (object) {
+                                    // Only cache fulfilled instances
+                                    if (object && !(instance = _cache[id])) {
+                                        instance = object;
+                                        _this._recordInstance(id, instance, context);
+                                    }
+                                    return instance;
+                                });
+                            } else if (object) {
+                                instance = object;
+                                this._recordInstance(id, instance, context);
+                            }
+                        }
+                        return instance;
+                    }
+                },
+                _recordInstance: function (id, instance, context) {
+                    var _this  = this;
+                    _cache[id] = instance;
+                    if (Contextual.adoptedBy(instance) || $isFunction(instance.setContext)) {
+                        ContextualHelper.bindContext(instance, context);
+                    }
+                    this.trackInstance(instance);
+                    var cancel = context.observe({
+                        contextEnded: function () {
+                            if ($isFunction(instance.setContext)) {
+                                instance.setContext(null);
+                            }
+                            _this.disposeInstance(instance);
+                            delete _cache[id];
+                            cancel();
+                        }
+                    });
+                },
+                disposeInstance: function (instance, disposing) {
+                    if (!disposing) {  // Cannot be disposed directly
+                        for (contextId in _cache) {
+                            if (_cache[contextId] === instance) {
+                                this.base(instance, disposing);
+                                delete _cache[contextId];
+                                return true;
+                            } 
+                        }
+                    }
+                    return false;
+                },
+                _dispose: function() {
+                    for (contextId in _cache) {
+                        this.disposeInstance(_cache[contextId]);
+                    }
+                    _cache = {};
+                }
+            });
+        }
+    });
+
+    /**
+     * @class {ComponentBuilder}
+     */
+    var ComponentBuilder = Base.extend(Registration, {
+        constructor: function (key) {
+            var _componentModel = new ComponentModel,
+                _newInContext, _newInChildContext,
+                _policies       = [];
+            _componentModel.setKey(key);
+            this.extend({
+                invariant: function () {
+                    _componentModel.setInvariant();
+                },
+                boundTo: function (clazz) {
+                    _componentModel.setClass(clazz);
+                    return this;
+                },
+                dependsOn: function (/* dependencies */) {
+                    var dependencies;
+                    if (arguments.length === 1 && (arguments[0] instanceof Array)) {
+                        dependencies = arguments[0];
+                    } else if (arguments.length > 0) {
+                        dependencies = Array.prototype.slice.call(arguments);
+                    }
+                    _componentModel.setDependencies(dependencies);
+                    return this;
+                },
+                usingFactory: function (factory) {
+                    _componentModel.setFactory(factory);
+                    return this;
+                },
+                instance: function (instance) {
+                    _componentModel.setLifestyle(new SingletonLifestyle(instance));
+                    return this;
+                },
+                singleton: function () {
+                    _componentModel.setLifestyle(new SingletonLifestyle);
+                    return this;
+                },
+                transient: function () {
+                    _componentModel.setLifestyle(new TransientLifestyle);
+                    return this;
+                },
+                contextual: function () {
+                    _componentModel.setLifestyle(new ContextualLifestyle);
+                    return this;
+                },
+                newInContext: function () {
+                    _newInContext = true;
+                    return this;
+                },
+                newInChildContext: function () {
+                    _newInChildContext = true;
+                    return this;
+                },
+                interceptors: function (/* interceptors */) {
+                    var interceptors = (arguments.length === 1 
+                                    && (arguments[0] instanceof Array))
+                                     ? arguments[0]
+                                     : Array.prototype.slice.call(arguments);
+                    return new InterceptorBuilder(this, _componentModel, interceptors);
+                },
+                getPolicy: function (policyClass) {
+                    for (var i = 0; i < _policies.length; ++i) {
+                        var policy = _policies[i];
+                        if (policy instanceof policyClass) {
+                            return policy;
+                        }
+                    }
+                },
+                addPolicy: function (policy) {
+                    if (this.getPolicy($classOf(policy))) {
+                        return false;
+                    }
+                    _policies.push(policy);
+                    return true;
+                },
+                register: function(container) {
+                    if ( _newInContext || _newInChildContext) {
+                        var factory = _componentModel.getFactory();
+                        _componentModel.setFactory(function (dependencies) {
+                            var object  = factory(dependencies),
+                                context = this.resolve(Context);
+                            if (_newInContext) {
+                                ContextualHelper.bindContext(object, context);
+                            } else {
+                                ContextualHelper.bindChildContext(context, object);
+                            }
+                            return object;
+                        });
+                    }
+                    return container.addComponent(_componentModel, _policies);
+                }
+            });
+        }
+    });
+
+    /**
+     * @class {InterceptorBuilder}
+     */
+    var InterceptorBuilder = Base.extend(Registration, {
+        constructor: function (component, componentModel, interceptors) {
+            this.extend({
+                selectWith: function (selectors) {
+                    componentModel.manageDependencies(INTERCEPTOR_SELECTORS, function (manager) {
+                        Array2.forEach(selectors, function (selector) {
+                            if (selector instanceof InterceptorSelector) {
+                                selecter = $use(selector);
+                            }
+                            manager.append(selector);
+                        });
+                    });
+                    return this;
+                },
+                toFront: function () {
+                    return this.atIndex(0);
+                },
+                atIndex: function (index) {
+                    componentModel.manageDependencies(INTERCEPTORS, function (manager) {
+                        Array2.forEach(interceptors, function (interceptor) {
+                            manager.insertIndex(index, interceptor);
+                        });
+                    });
+                    return componentModel;
+                },
+                register: function(container, composer) {
+                    componentModel.manageDependencies(INTERCEPTORS, function (manager) {
+                        manager.append(interceptors);
+                    });
+                    return component.register(container, composer);
+                }
+            });
+        }
+    });
+
+    /**
+     * @function $component
+     * @param   {Any} key - component key
+     * @returns {ComponentBuilder} a fluent component builder.
+     */
+    function $component(key) {
+        return new ComponentBuilder(key);
+    }
+
+    /**
+     * @class {DependencyResolution}
+     */
+    var DependencyResolution = Resolution.extend({
+        constructor: function (key, parent, many) {
+            var _class, _handler;
+            this.base(key, many);
+            this.extend({
+                claim: function (handler, clazz) { 
+                    if (this.isResolvingDependency(handler)) {
+                        return false;
+                    }
+                    _handler = handler;
+                    _class   = clazz;
+                    return true;
+                },
+                isResolvingDependency: function (handler) {
+                    return (handler === _handler)
+                        || (parent && parent.isResolvingDependency(handler))
+                },
+                formattedDependencyChain: function () {
+                    var invariant  = $eq.test(key),
+                        rawKey     = Modifier.unwrap(key),
+                        keyDisplay = invariant ? ('`' + rawKey + '`') : rawKey,
+                        display    = _class ? ("(" + keyDisplay + " <- " + _class + ")") : keyDisplay;
+                    return parent 
+                         ? (display + " <= " + parent.formattedDependencyChain())
+                         : display;
+                }
+            });
+        }
+    });
+
+    /**
+     * @class {DependencyResolutionError}
+     * @param {DependencyResolution} dependency  - failing dependency
+     * @param {String}               message     - error message
+     */
+    function DependencyResolutionError(dependency, message) {
+        this.message    = message;
+        this.dependency = dependency;
+        this.stack      = (new Error).stack;
+    }
+    DependencyResolutionError.prototype             = new Error;
+    DependencyResolutionError.prototype.constructor = DependencyResolutionError;
+
+    /**
+     * @class {IoContainer}
+     */
+    var IoContainer = CallbackHandler.extend(Container, {
+        constructor: function () {
+            var _inspectors = [new DependencyInspector];
+            this.extend({
+                register: function (/*registrations*/) {
+                    var _this = this;
+                    return Promise.all(Array2.flatten(arguments).map(function (registration) {
+                               return registration.register(_this, $composer);
+                           }));
+                },
+                addComponent: function (componentModel, policies) {
+                    var _this = this;
+                    policies  = policies || [];
+                    for (var i = 0; i < _inspectors.length; ++i) {
+                        _inspectors[i].inspect(componentModel, policies);
+                    }
+                    for (var i = 0; i < policies.length; ++i) {
+                        var policy = policies[i];
+                        if ($isFunction(policy.apply)) {
+                            policy.apply(componentModel);
+                        }
+                    }
+                    return Validator($composer).validate(componentModel).then(function () {
+                        return _this.registerHandler(componentModel); 
+                    })
+                },
+                registerHandler: function(componentModel) {
+                    var key       = componentModel.getKey(),
+                        clazz     = componentModel.getClass(),
+                        lifestyle = componentModel.getLifestyle() || new SingletonLifestyle,
+                        factory   = componentModel.getFactory(),
+                        burden    = componentModel.getBurden();
+                    key = componentModel.isInvariant() ? $eq(key) : key;
+                    return _registerHandler(this, key, clazz, lifestyle, factory, burden); 
+                },
+                addInspector: function (inspector) {
+                    if (!$isFunction(inspector.inspect)) {
+                        throw new TypeError("Inspectors must have an inspect method.");
+                    }
+                    _inspectors.push(inspector);
+                },
+                removeInspector: function (inspector) {
+                    Array2.remove(_inspectors, inspector);
+                },
+                dispose: function () {
+                    $provide.removeAll(this);
+                }
+            })
+        },
+        $validate:[
+            ComponentModel, function (validation, composer) {
+                var componentModel = validation.getObject(),
+                    key            = componentModel.getKey(),
+                    factory        = componentModel.getFactory();
+                if (!key) {
+                    validation.required('Key', 'Key could not be determined for component.');
+                }
+                if (!factory) {
+                    validation.required('Factory', 'Factory could not be determined for component.');
+                }
+            }]
+    });
+
+    function _registerHandler(container, key, clazz, lifestyle, factory, burden) {
+        return $provide(container, key, function handler(resolution, composer) {
+            if (!(resolution instanceof DependencyResolution)) {
+                resolution = new DependencyResolution(resolution.getKey());
+            }
+            return resolution.claim(handler, clazz)
+                 ? lifestyle.resolve(_activate.bind(container, clazz, factory,
+                                     burden, resolution, composer), composer)
+                 : $NOT_HANDLED;  // cycle detected
+        }, lifestyle.dispose.bind(lifestyle));
+    }
+
+    function _activate(clazz, factory, burden, resolution, composer) {
+        var promises     = [],
+            dependencies = {},
+            instant      = $instant.test(resolution.getKey()),
+            containerDep = Container(composer);
+        for (var key in burden) {
+            var group = burden[key];
+            if ($isNothing(group)) {
+                continue;
+            }
+            var resolved = group.slice(0);
+            for (var index = 0; index < resolved.length; ++index) {
+                var dep = resolved[index];
+                if (dep === undefined) {
+                    continue;
+                }
+                var use        = dep.test(DependencyModifiers.Use),
+                    lazy       = dep.test(DependencyModifiers.Lazy),
+                    promise    = dep.test(DependencyModifiers.Promise),
+                    child      = dep.test(DependencyModifiers.Child),
+                    dynamic    = dep.test(DependencyModifiers.Dynamic),
+                    dependency = dep.getDependency();
+                if (use || dynamic || $isNothing(dependency)) {
+                    if (dynamic && $isFunction(dependency)) {
+                        dependency = dependency(containerDep);
+                    }
+                    if (child) {
+                        dependency = _createChild(dependency);
+                    }
+                    if (promise) {
+                        dependency = Promise.resolve(dependency);
+                    }
+                } else if (dependency === $$composer) {
+                    dependency = composer;
+                } else if (dependency === Container) {
+                    dependency = containerDep;
+                } else {
+                    var all           = dep.test(DependencyModifiers.Every),
+                        optional      = dep.test(DependencyModifiers.Optional),
+                        invariant     = dep.test(DependencyModifiers.Invariant),
+                        fromContainer = dep.test(DependencyModifiers.Container);
+                    if (invariant) {
+                        dependency = $eq(dependency);
+                    }
+                    if (instant) {
+                        dependency = $instant(dependency);
+                    }
+                    if (lazy) {
+                        dependency = (function (paramDep, created, param) {
+                            return function () {
+                                if (!created) {
+                                    created = true;
+                                    var container = fromContainer ? containerDep : composer;
+                                    param = _resolveDependency(paramDep, false, promise, child, all, container);
+                                }
+                                return param;
+                            };
+                        })(dependency);
+                    } else {
+                        var paramDep  = new DependencyResolution(dependency, resolution, all),
+                            container = fromContainer ? containerDep : composer;
+                        dependency = _resolveDependency(paramDep, !optional, promise, child, all, container);
+                        if (!promise && $isPromise(dependency)) {
+                            promises.push(dependency);
+                            (function (paramPromise, paramSet, paramIndex) {
+                                paramPromise.then(function (param) {
+                                    paramSet[paramIndex] = param;
+                                });
+                            })(dependency, resolved, index);
+                        }
+                    }
+                }
+                resolved[index] = dependency;
+            }
+            dependencies[key] = resolved;
+        }
+        function createInstance () {
+            return factory.call(composer, dependencies);
+        }
+        if (promises.length === 1) {
+            return promises[0].then(createInstance);
+        } else if (promises.length > 0) {
+            return Promise.all(promises).then(createInstance);
+        } else {
+            return createInstance();
+        }
+    }
+    
+    function _resolveDependency(dependency, required, promise, child, all, composer) {
+        var result = all ? composer.resolveAll(dependency) : composer.resolve(dependency);
+        if (result === undefined) {
+            if (required) {
+                var error = new DependencyResolutionError(dependency,
+                       lang.format("Dependency %1 could not be resolved.",
+                                   dependency.formattedDependencyChain()));
+                if ($instant.test(dependency.getKey())) {
+                    throw error;
+                }
+                return Promise.reject(error);
+            }
+            return result;
+        } else if (child && !all) {
+            result = $isPromise(result) 
+                 ? result.then(function (parent) { return _createChild(parent); })
+                 : _createChild(result)
+        }
+        return promise ? Promise.resolve(result) : result;
+    }
+
+    function _createChild(parent) {
+        if (!(parent && $isFunction(parent.newChild))) {
+            throw new Error(lang.format(
+                "Child dependency requested, but %1 is not a parent.", parent));
+        }
+        return parent.newChild();
+    }
+
+    if (typeof module !== 'undefined' && module.exports) {
+        module.exports = exports = ioc;
+    }
+
+    eval(this.exports);
+
+}
+},{"../context.js":3,"../miruken.js":9,"../validate.js":11,"bluebird":12}],9:[function(require,module,exports){
+(function (global){
 require('./base2.js');
 
 new function () { // closure
@@ -1711,7 +4415,7 @@ new function () { // closure
     var miruken = new base2.Package(this, {
         name:    "miruken",
         version: "1.0",
-        exports: "Enum,Protocol,Delegate,Miruken,MetaMacro,Disposing,DisposingMixin,Parenting,Starting,Startup,Interceptor,InterceptorSelector,ProxyBuilder,TraversingAxis,Traversing,TraversingMixin,Traversal,Variance,Modifier,ArrayManager,IndexedList,$isProtocol,$isClass,$classOf,$ancestorOf,$isString,$isFunction,$isObject,$isPromise,$isSomething,$isNothing,$using,$lift,$eq,$use,$copy,$lazy,$eval,$every,$child,$optional,$promise,$instant,$createModifier,$inferProperties,$synthesizeProperties,$synthesizePropertiesFromFields,PARAMETERS,INTERCEPTORS,INTERCEPTOR_SELECTORS"
+        exports: "Enum,Protocol,Delegate,Miruken,MetaLifecycle,MetaMacro,Disposing,DisposingMixin,Parenting,Starting,Startup,Interceptor,InterceptorSelector,ProxyBuilder,TraversingAxis,Traversing,TraversingMixin,Traversal,Variance,Modifier,ArrayManager,IndexedList,$isProtocol,$isClass,$classOf,$ancestorOf,$isString,$isFunction,$isObject,$isPromise,$isSomething,$isNothing,$using,$lift,$eq,$use,$copy,$lazy,$eval,$every,$child,$optional,$promise,$instant,$createModifier,$properties,$inferProperties,$propertiesFromFields,$inheritStatic,synthesizeProperty,PARAMETERS,INTERCEPTORS,INTERCEPTOR_SELECTORS"
     });
 
     eval(this.imports);
@@ -1751,7 +4455,6 @@ new function () { // closure
         Invariant:     3   // exact
         });
 
-
     /**
      * @class {Delegate}
      */
@@ -1786,12 +4489,22 @@ new function () { // closure
     });
 
     /**
+     * MetaLifecycle enum
+     * @enum {Number}
+     */
+    var MetaLifecycle = Enum({
+        Subclass:  1,
+        Implement: 2,
+        Extend:    3
+        });
+
+    /**
      * @class {MetaMacro}
      */
     var MetaMacro = Base.extend({
         isActive: function () { return false; },
         shouldInherit: function () { return false; },
-        apply: function(clazz, target, definition) {}
+        apply: function(lifecycle, clazz, target, definition) {}
     }, {
         coerce: function () {
             return this.new.apply(this, arguments);
@@ -1908,7 +4621,7 @@ new function () { // closure
             subclass.getAllProtocols = getAllProtocols;
             subclass.conformsTo      = _conformsTo.bind(subclass, _protocols);
             subclass.metaMacros      = metaMacros;
-            _applyMetaMacros(subclass, null, false, instanceDef, staticDef);
+            _applyMetaMacros(MetaLifecycle.Subclass, subclass, null, false, instanceDef, staticDef);
             Array2.forEach(mixins, subclass.implement, subclass);
             return subclass;
             })(this, Array.prototype.slice.call(arguments));
@@ -1924,7 +4637,7 @@ new function () { // closure
             source = source.prototype; 
         }
         var implemented = implement.call(this, source);
-        _applyMetaMacros(implemented, null, true, source);
+        _applyMetaMacros(MetaLifecycle.Implement, implemented, null, true, source);
         return implemented;
     }
 
@@ -1938,7 +4651,7 @@ new function () { // closure
             definition[key] = value;
         }                                
         var instance = extendInstance.call(this, definition);
-        _applyMetaMacros(instance.constructor, instance, true, definition);
+        _applyMetaMacros(MetaLifecycle.Extend, instance.constructor, instance, true, definition);
         return instance;
     }
 
@@ -1963,13 +4676,14 @@ new function () { // closure
     /**
      * @function _applyMetaMacros
      * Applies any meta-macros to the class definition.
+     * @param    {Enum}     lifecycle   - reason for apply
      * @param    {Function} clazz       - clazz target
      * @param    {objec}    instance    - instance target
      * @param    {Boolean}  active      - restrict active
      * @param    {Object}   instanceDef - instance definition
      * @param    {Object}   staticDef   - static definition
      */
-    function _applyMetaMacros(clazz, instance, active, instanceDef, staticDef) {
+    function _applyMetaMacros(lifecycle, clazz, instance, active, instanceDef, staticDef) {
         var source = clazz;
         instance   = instance || clazz.prototype;
         while (source && source.metaMacros &&
@@ -1980,7 +4694,7 @@ new function () { // closure
                 var metaMacro = metaMacros[i];
                 if ((!active  || metaMacro.isActive()) &&
                     (!inherit || metaMacro.shouldInherit())) {
-                    metaMacro.apply(clazz, instance, instanceDef);
+                    metaMacro.apply(lifecycle, clazz, instance, instanceDef);
                 }
             }
             source = $ancestorOf(source);
@@ -1992,7 +4706,7 @@ new function () { // closure
      * Metamacro to proxy protocol methods through delegate.
      */
     var $proxyProtocol = MetaMacro.extend({
-        apply: function(clazz, target, definition) {
+        apply: function(lifecycle, clazz, target, definition) {
             for (var key in definition) {
                 if (key === 'delegate' || (key in Base.prototype)) {
                     continue;
@@ -2007,7 +4721,9 @@ new function () { // closure
                     })(key);
                 }
             }
-            clazz.adoptedBy = Protocol.adoptedBy;
+            if (lifecycle === MetaLifecycle.Subclass) {
+                clazz.adoptedBy = Protocol.adoptedBy;
+            }
         },
         shouldInherit: function () { return true; },
         isActive: function () { return true; }
@@ -2015,14 +4731,105 @@ new function () { // closure
     Protocol.extend     = Base.extend
     Protocol.implement  = Base.implement;;
     Protocol.metaMacros = [new $proxyProtocol];
-    _applyMetaMacros(Protocol);
+    _applyMetaMacros(MetaLifecycle.Subclass, Protocol);
+
+    /**
+     * @class {$inhertStatic}
+     * Metamacro to inherit static members in subclass.
+     */
+    var $inheritStatic = MetaMacro.extend({
+        constructor: function (/*members*/) {
+            var _members = Array.prototype.slice.call(arguments);
+            this.extend({
+                apply: function(lifecycle, clazz, target) {
+                    if (lifecycle === MetaLifecycle.Subclass) {
+                        var ancestor = $ancestorOf(clazz);
+                        if (_members.length > 0) {
+                            for (var i = 0; i < _members.length; ++i) {
+                                var member = _members[i];
+                                if (!(member in clazz)) {
+                                    clazz[member] = ancestor[member];
+                                }
+                            }
+                        } else {
+                            for (var key in ancestor) {
+                                if (ancestor !== Base && ancestor !== Object &&
+                                    ancestor.hasOwnProperty(key) && !(key in clazz)) {
+                                    clazz[key] = ancestor[key];
+                                }
+                            }
+                        }
+                    }
+                },
+                shouldInherit: function () { return true; }
+            });
+        }
+    });
+
+    /**
+     * @class {$properties}
+     * Metamacro to create properties with getters and setters.
+     */
+    var $properties = MetaMacro.extend({
+        constructor: function (/*properties*/) {
+            var _properties = Array.prototype.slice.call(arguments);
+            this.extend({
+                apply: function(lifecycle, clazz, target) {
+                    _synthesizeProperties(target, _properties);
+                }
+            });
+        }
+    });
+
+    function _synthesizeProperties(target, properties) {
+        for (var i = 0; i < properties.length; ++i) {
+            var property = properties[i];
+            if ($isString(property)) {
+                synthesizeProperty(target, property, null);
+            } else {
+                for (name in property) {
+                    var prop  = property[name],
+                        field = prop.field,
+                        get   = prop.nogetter ? Undefined : prop.get,
+                        set   = prop.nosetter ? Undefined : prop.set;
+                    synthesizeProperty(target, name, field, get, set);
+                }
+            }
+        }
+    }
+
+    function synthesizeProperty(target, name, field, get, set) {
+        var uname = name.charAt(0).toUpperCase() + name.slice(1);
+        get = (get === Undefined) ? null : (get || 'get' + uname);
+        set = (set === Undefined) ? null : (set || 'set' + uname);
+        if (!(get || set) || (name in target) || 
+            (get && (get in target)) || (set && (set in target))) {
+            return;
+        }
+        field = field || ('_' + name);
+        var getter, setter, methods = {};
+        if (get) {
+            methods[get] = getter = function () { return this[field]; };
+        }
+        if (set) {
+            methods[set] = setter = function (value) { this[field] = value; };
+        }
+        target.extend(methods);  // could trigger $inferProperties
+        if (!(name in target)) {
+            Object.defineProperty(target, name, {
+               get: getter, 
+               set: setter,
+               enumerable: true 
+            });
+        }
+    }
 
     /**
      * @class {$inferProperties}
      * Metamacro to derive properties from existng methods.
      */
     var $inferProperties = MetaMacro.extend({
-        apply: function(clazz, target, definition) {
+        apply: function(lifecycle, clazz, target, definition) {
             _inferProperties(target, definition);
         },
         shouldInherit: function () { return true; },
@@ -2065,82 +4872,12 @@ new function () { // closure
         return property;
     }
 
-
     /**
-     * @class {$synthesizeProperties}
-     * Metamacro to create properties with getters and setters.
-     */
-    var $synthesizeProperties = MetaMacro.extend({
-        constructor: function (/*properties*/) {
-            var _properties = Array.prototype.slice.call(arguments);
-            this.extend({
-                apply: function(clazz, target) {
-                    _synthesizeProperties(target, _properties);
-                }
-            });
-        }
-    });
-
-    function _synthesizeProperties(target, properties) {
-        for (var i = 0; i < properties.length; ++i) {
-            var property = properties[i];
-            if ($isString(property)) {
-                var uname = property.charAt(0).toUpperCase() + property.slice(1);
-                _synthesizeProperty(target, property, null);
-            } else {
-                for (name in property) {
-                    var prop  = property[name],
-                        field = prop.field,
-                        get   = prop.nogetter ? Undefined : prop.get,
-                        set   = prop.nosetter ? Undefined : prop.set;
-                    _synthesizeProperty(target, name, field, prop.get, prop.set);
-                }
-            }
-        }
-    }
-
-    function _synthesizeProperty(target, name, field, get, set) {
-        var uname = name.charAt(0).toUpperCase() + name.slice(1);
-        get = (get === Undefined) ? null : (get || 'get' + uname);
-        set = (set === Undefined) ? null : (set || 'set' + uname);
-        if (!(get || set) || (name in target) || 
-            (get && (get in target)) || (set && (set in target))) {
-            return;
-        }
-        if (!(set && get) && !field) {
-            field = ('_' + name);
-        }
-        (function (backing) {
-            var getter, setter, methods = {};
-            if (get) {
-                getter = field
-                       ? function () { return this[field]; }
-                       : function () { return backing; };
-                methods[get] = getter;
-            }
-            if (set) {
-                setter = field
-                       ? function (value) { this[field] = value; }
-                       : function (value) { backing = value; };
-                methods[set] = setter;
-            }
-            target.extend(methods);  // could trigger $inferProperties
-            if (!(name in target)) {
-                Object.defineProperty(target, name, {
-                    get: getter, 
-                    set: setter,
-                    enumerable: true 
-                });
-            }
-        })();
-    }
-
-    /**
-     * @class {$synthesizePropertiesFromFields}
+     * @class {$propertiesFromFields}
      * Metamacro to create properties from fields.
      */
-    var $synthesizePropertiesFromFields = MetaMacro.extend({
-        apply: function(clazz, target, definition) {
+    var $propertiesFromFields = MetaMacro.extend({
+        apply: function(lifecycle, clazz, target, definition) {
             _synthesizePropertiesFromFields(target, definition);
         },
         shouldInherit: function () { return true; },
@@ -2155,7 +4892,7 @@ new function () { // closure
             }
             var name = key.charAt(0) == '_' ? key.substring(1) : key;
             delete target[key];
-            _synthesizeProperty(target, name);
+            synthesizeProperty(target, name);
             target[name] = value;
         }
     }
@@ -3052,7 +5789,301 @@ new function () { // closure
 }
 
 }).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
-},{"./base2.js":1}],3:[function(require,module,exports){
+},{"./base2.js":1}],10:[function(require,module,exports){
+var miruken = require('../miruken.js');
+              require('../callback.js');
+              require('../context.js');
+
+new function () { // closure
+
+    /**
+     * @namespace miruken.mvc
+     */
+    var mvc = new base2.Package(this, {
+        name:    "mvc",
+        version: miruken.version,
+        parent:  miruken,
+        imports: "miruken,miruken.callback,miruken.context",
+        exports: "Model,Controller,MasterDetail,MasterDetailAware"
+    });
+
+    eval(this.imports);
+
+    /**
+     * @class {Model}
+     */
+    var Model = Base.extend(
+        $inferProperties,
+        $propertiesFromFields,
+        $inheritStatic, {
+            pluck: function (/*values*/) {
+                var data = {};
+                for (var i = 0; i < arguments.length; ++i) {
+                    var key = arguments[i],
+                        value = this[key];
+                    if (!$isFunction(value)) {
+                        data[key] = value;
+                    }
+                }
+                return data;
+            }
+        }, {
+            map: function (data, property, remove) {
+                var mapping;
+                if (property in data) {
+                    var relationship = data[property];
+                    if (typeof relationship.length == "number") {
+                        mapping = Array2.map(relationship, this.new, this);
+                    } else {
+                        mapping = this.new.call(this, relationship);
+                    }
+                    if (remove) {
+                        delete data[property];
+                    }
+                }
+                return mapping;
+            },
+            mapAndDelete: function (data, property) {
+                return this.map(data, property, true);
+            }
+        }
+    );
+
+    /**
+     * @class {Controller}
+     */
+    var Controller = CallbackHandler.extend(
+        $contextual, $inferProperties);
+
+    /**
+     * @protocol {MasterDetail}
+     */
+    var MasterDetail = Protocol.extend({
+        getSelectedDetail: function (detailClass) {},
+        getSelectedDetails: function (detailClass) {},
+        selectDetail: function (selectedDetail) {},
+        deselectDetail: function (selectedDetail) {},
+        hasPreviousDetail: function (detailClass) {},
+        hasNextDetail: function (detailClass) {},
+        getPreviousDetail: function (detailClass) {},
+        getNextDetail: function (detailClass) {},
+        addDetail: function (detail) {},
+        updateDetail: function (detail) {},
+        removeDetail: function (detail, deleteIt) {}
+    });
+    
+    /**
+     * @protocol {MasterDetailAware}
+     */
+    var MasterDetailAware = Protocol.extend({
+        masterChanged: function (master) {},
+        didSelectDetail: function (detail, master) {},
+        didDeselectDetail: function (detail, master) {},
+        didRemoveDetail: function (detail, master) {}
+    });
+
+    eval(this.exports);
+}
+
+},{"../callback.js":2,"../context.js":3,"../miruken.js":9}],11:[function(require,module,exports){
+var miruken = require('./miruken.js'),
+    Promise = require('bluebird');
+              require('./callback.js');
+
+new function () { // closure
+
+    /**
+     * @namespace miruken.validate
+     */
+    var validate = new base2.Package(this, {
+        name:    "validate",
+        version: miruken.version,
+        parent:  miruken,
+        imports: "miruken,miruken.callback",
+        exports: "Validator,ValidationErrorCode,ValidationError,ValidationResult,ValidationCallbackHandler,$validate"
+    });
+
+    eval(this.imports);
+
+    var $validate = $define('$validate');
+
+    /**
+     * @protocol {Validator}
+     */
+    var Validator = Protocol.extend({
+        /**
+         * Validates the object in the scope.
+         * @param   {Object} object  - object to validate
+         * @param   {Object} scope   - scope of validation
+         * @returns {Promise(ValidationResult)} a promise for the validation result
+         */
+        validate: function (object, scope) {}
+    });
+
+    /**
+     * ValidationErrorCode enum
+     * @enum {Number}
+     */
+    var ValidationErrorCode = Enum({
+        Invalid:           100,
+        Required:          101,
+        TypeMismatch:      102,
+        MutuallyExclusive: 103,
+        NumberTooLarge:    104,
+        NumberTooSmall:    105,
+        DateTooLate:       106,
+        DateTooSoon:       107
+        });
+
+    /**
+     * @class {ValidationError}
+     * @param {String} message   - validation error message
+     * @param {Object} userInfo  - additional error info
+     *   Standard userInfo keys:
+     *   key    => identifies invald key
+     *   domain => identifies category of error
+     *   code   => identifies type of error
+     *   source => captures invalid value
+     */
+    function ValidationError(message, userInfo) {
+        this.message  = message;
+        this.userInfo = userInfo;
+        this.stack    = (new Error).stack;
+    }
+    ValidationError.prototype             = new Error;
+    ValidationError.prototype.constructor = ValidationError;
+
+    // =========================================================================
+    // ValidationResult
+    // =========================================================================
+    
+    var $childResultsKey = '__childResults';
+
+    /**
+     * @class {ValidationResult}
+     */
+    var ValidationResult = Base.extend({
+        constructor: function (object, scope) {
+            var _errors = {};
+            this.extend({
+                getObject: function () { return object; },
+                getScope: function () { return scope; },
+                isValid: function () {
+                    for (var k in _errors) {
+                        return false;
+                    }
+                    return true;
+                },
+                getKeyCulprits: function () {
+                    var keys = [];
+                    for (var k in _errors) {
+                        if (k !== $childResultsKey) {
+                            keys.push(k);
+                        }
+                    }
+                    return keys;
+                },
+                getKeyErrors: function (key) { return _errors[key]; },
+                addKeyError: function (key, error) {
+                    if (!((error instanceof ValidationResult) && error.isValid())) {
+                        var keyErrors = _errors[key];
+                        if (!keyErrors) {
+                            keyErrors = _errors[key] = [];
+                        }
+                        keyErrors.push(error);
+                    }
+                    return this;
+                },
+                getChildResults: function () { 
+                    return this.getKeyErrors($childResultsKey);
+                },
+                addChildResult: function (childResult) {
+                    this.addKeyError($childResultsKey, childResult);
+                }
+            });
+        },
+        toString: function () {
+            var str = "",
+                keys = this.getKeyCulprits();
+            for (var ki = 0; ki < keys.length; ++ki) {
+                var key    = keys[ki],
+                    errors = this.getKeyErrors(key);
+                str += key;
+                for (var ei = 0; ei < errors.length; ++ei) {
+                    var error = errors[ei];
+                    str += '\n    - ';
+                    str += error.message;
+                }
+                str += '\n';
+            }
+            return str;
+        }
+    });
+
+    ValidationResult.implement({
+        invalid: function(key, source, message) {
+            _addValidationError(this, key, ValidationErrorCode.Invalid, message, source);
+        },
+        required: function(key, message) {
+            _addValidationError(this, key, ValidationErrorCode.Required, message);
+        },
+        typeMismatch: function(key, source, message) {
+            _addValidationError(this, key, ValidationErrorCode.TypeMismatch, message);
+        },
+        mutuallyExclusive: function(key, source, message) {
+            _addValidationError(this, key, ValidationErrorCode.MutuallyExclusive, message);
+        },
+        numberToLarge: function(key, source, message) {
+            _addValidationError(this, key, ValidationErrorCode.NumberToLarge, message);
+        },
+        numberToSmall: function(key, source, message) {
+            _addValidationError(this, key, ValidationErrorCode.NumberToSmall, message);
+        },
+        dateToLate: function(key, source, message) {
+            _addValidationError(this, key, ValidationErrorCode.DateToLate, message);
+        },
+        dateToSoon: function(key, source, message) {
+            _addValidationError(this, key, ValidationErrorCode.DateToSoon, message);
+        }
+    });
+
+    function _addValidationError(result, key, code, message, source) {
+        var userInfo = { key: key, code: code };
+        if (source) {
+            userInfo.source = source;
+        }
+        result.addKeyError(key, new ValidationError(message, userInfo));
+    }
+
+    /**
+     * @class {ValidationCallbackHandler}
+     */
+    var ValidationCallbackHandler = CallbackHandler.extend({
+        validate: function (object, scope) {
+            var validation = new ValidationResult(object, scope);
+            return Promise.resolve($composer.deferAll(validation)).then(function (handled) {
+                return !handled || validation.isValid() ? validation : Promise.reject(validation);
+            });
+        }
+    });
+
+    $handle(CallbackHandler, ValidationResult, function (validation, composer) {
+        var target = validation.getObject(),
+            source = target && target.constructor;
+        if (source) {
+            return $validate.dispatch(this, validation, source, composer);
+        }
+    });
+
+    if (typeof module !== 'undefined' && module.exports) {
+        module.exports = exports = validate;
+    }
+
+    eval(this.exports);
+
+}
+
+},{"./callback.js":2,"./miruken.js":9,"bluebird":12}],12:[function(require,module,exports){
 (function (process,global){
 /* @preserve
  * The MIT License (MIT)
@@ -7720,10 +10751,10 @@ module.exports = ret;
 },{"./es5.js":14}]},{},[4])(4)
 });                    ;if (typeof window !== 'undefined' && window !== null) {                               window.P = window.Promise;                                                     } else if (typeof self !== 'undefined' && self !== null) {                             self.P = self.Promise;                                                         }
 }).call(this,require('_process'),typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
-},{"_process":40}],4:[function(require,module,exports){
+},{"_process":49}],13:[function(require,module,exports){
 module.exports = require('./lib/chai');
 
-},{"./lib/chai":5}],5:[function(require,module,exports){
+},{"./lib/chai":14}],14:[function(require,module,exports){
 /*!
  * chai
  * Copyright(c) 2011-2014 Jake Luer <jake@alogicalparadox.com>
@@ -7812,7 +10843,7 @@ exports.use(should);
 var assert = require('./chai/interface/assert');
 exports.use(assert);
 
-},{"./chai/assertion":6,"./chai/config":7,"./chai/core/assertions":8,"./chai/interface/assert":9,"./chai/interface/expect":10,"./chai/interface/should":11,"./chai/utils":22,"assertion-error":31}],6:[function(require,module,exports){
+},{"./chai/assertion":15,"./chai/config":16,"./chai/core/assertions":17,"./chai/interface/assert":18,"./chai/interface/expect":19,"./chai/interface/should":20,"./chai/utils":31,"assertion-error":40}],15:[function(require,module,exports){
 /*!
  * chai
  * http://chaijs.com
@@ -7949,7 +10980,7 @@ module.exports = function (_chai, util) {
   });
 };
 
-},{"./config":7}],7:[function(require,module,exports){
+},{"./config":16}],16:[function(require,module,exports){
 module.exports = {
 
   /**
@@ -8001,7 +11032,7 @@ module.exports = {
 
 };
 
-},{}],8:[function(require,module,exports){
+},{}],17:[function(require,module,exports){
 /*!
  * chai
  * http://chaijs.com
@@ -9362,7 +12393,7 @@ module.exports = function (chai, _) {
   });
 };
 
-},{}],9:[function(require,module,exports){
+},{}],18:[function(require,module,exports){
 /*!
  * chai
  * Copyright(c) 2011-2014 Jake Luer <jake@alogicalparadox.com>
@@ -10420,7 +13451,7 @@ module.exports = function (chai, util) {
   ('Throw', 'throws');
 };
 
-},{}],10:[function(require,module,exports){
+},{}],19:[function(require,module,exports){
 /*!
  * chai
  * Copyright(c) 2011-2014 Jake Luer <jake@alogicalparadox.com>
@@ -10434,7 +13465,7 @@ module.exports = function (chai, util) {
 };
 
 
-},{}],11:[function(require,module,exports){
+},{}],20:[function(require,module,exports){
 /*!
  * chai
  * Copyright(c) 2011-2014 Jake Luer <jake@alogicalparadox.com>
@@ -10514,7 +13545,7 @@ module.exports = function (chai, util) {
   chai.Should = loadShould;
 };
 
-},{}],12:[function(require,module,exports){
+},{}],21:[function(require,module,exports){
 /*!
  * Chai - addChainingMethod utility
  * Copyright(c) 2012-2014 Jake Luer <jake@alogicalparadox.com>
@@ -10627,7 +13658,7 @@ module.exports = function (ctx, name, method, chainingBehavior) {
   });
 };
 
-},{"../config":7,"./flag":15,"./transferFlags":29}],13:[function(require,module,exports){
+},{"../config":16,"./flag":24,"./transferFlags":38}],22:[function(require,module,exports){
 /*!
  * Chai - addMethod utility
  * Copyright(c) 2012-2014 Jake Luer <jake@alogicalparadox.com>
@@ -10672,7 +13703,7 @@ module.exports = function (ctx, name, method) {
   };
 };
 
-},{"../config":7,"./flag":15}],14:[function(require,module,exports){
+},{"../config":16,"./flag":24}],23:[function(require,module,exports){
 /*!
  * Chai - addProperty utility
  * Copyright(c) 2012-2014 Jake Luer <jake@alogicalparadox.com>
@@ -10714,7 +13745,7 @@ module.exports = function (ctx, name, getter) {
   });
 };
 
-},{}],15:[function(require,module,exports){
+},{}],24:[function(require,module,exports){
 /*!
  * Chai - flag utility
  * Copyright(c) 2012-2014 Jake Luer <jake@alogicalparadox.com>
@@ -10748,7 +13779,7 @@ module.exports = function (obj, key, value) {
   }
 };
 
-},{}],16:[function(require,module,exports){
+},{}],25:[function(require,module,exports){
 /*!
  * Chai - getActual utility
  * Copyright(c) 2012-2014 Jake Luer <jake@alogicalparadox.com>
@@ -10768,7 +13799,7 @@ module.exports = function (obj, args) {
   return args.length > 4 ? args[4] : obj._obj;
 };
 
-},{}],17:[function(require,module,exports){
+},{}],26:[function(require,module,exports){
 /*!
  * Chai - getEnumerableProperties utility
  * Copyright(c) 2012-2014 Jake Luer <jake@alogicalparadox.com>
@@ -10795,7 +13826,7 @@ module.exports = function getEnumerableProperties(object) {
   return result;
 };
 
-},{}],18:[function(require,module,exports){
+},{}],27:[function(require,module,exports){
 /*!
  * Chai - message composition utility
  * Copyright(c) 2012-2014 Jake Luer <jake@alogicalparadox.com>
@@ -10847,7 +13878,7 @@ module.exports = function (obj, args) {
   return flagMsg ? flagMsg + ': ' + msg : msg;
 };
 
-},{"./flag":15,"./getActual":16,"./inspect":23,"./objDisplay":24}],19:[function(require,module,exports){
+},{"./flag":24,"./getActual":25,"./inspect":32,"./objDisplay":33}],28:[function(require,module,exports){
 /*!
  * Chai - getName utility
  * Copyright(c) 2012-2014 Jake Luer <jake@alogicalparadox.com>
@@ -10869,7 +13900,7 @@ module.exports = function (func) {
   return match && match[1] ? match[1] : "";
 };
 
-},{}],20:[function(require,module,exports){
+},{}],29:[function(require,module,exports){
 /*!
  * Chai - getPathValue utility
  * Copyright(c) 2012-2014 Jake Luer <jake@alogicalparadox.com>
@@ -10973,7 +14004,7 @@ function _getPathValue (parsed, obj) {
   return res;
 };
 
-},{}],21:[function(require,module,exports){
+},{}],30:[function(require,module,exports){
 /*!
  * Chai - getProperties utility
  * Copyright(c) 2012-2014 Jake Luer <jake@alogicalparadox.com>
@@ -11010,7 +14041,7 @@ module.exports = function getProperties(object) {
   return result;
 };
 
-},{}],22:[function(require,module,exports){
+},{}],31:[function(require,module,exports){
 /*!
  * chai
  * Copyright(c) 2011 Jake Luer <jake@alogicalparadox.com>
@@ -11126,7 +14157,7 @@ exports.addChainableMethod = require('./addChainableMethod');
 exports.overwriteChainableMethod = require('./overwriteChainableMethod');
 
 
-},{"./addChainableMethod":12,"./addMethod":13,"./addProperty":14,"./flag":15,"./getActual":16,"./getMessage":18,"./getName":19,"./getPathValue":20,"./inspect":23,"./objDisplay":24,"./overwriteChainableMethod":25,"./overwriteMethod":26,"./overwriteProperty":27,"./test":28,"./transferFlags":29,"./type":30,"deep-eql":32}],23:[function(require,module,exports){
+},{"./addChainableMethod":21,"./addMethod":22,"./addProperty":23,"./flag":24,"./getActual":25,"./getMessage":27,"./getName":28,"./getPathValue":29,"./inspect":32,"./objDisplay":33,"./overwriteChainableMethod":34,"./overwriteMethod":35,"./overwriteProperty":36,"./test":37,"./transferFlags":38,"./type":39,"deep-eql":41}],32:[function(require,module,exports){
 // This is (almost) directly from Node.js utils
 // https://github.com/joyent/node/blob/f8c335d0caf47f16d31413f89aa28eda3878e3aa/lib/util.js
 
@@ -11461,7 +14492,7 @@ function objectToString(o) {
   return Object.prototype.toString.call(o);
 }
 
-},{"./getEnumerableProperties":17,"./getName":19,"./getProperties":21}],24:[function(require,module,exports){
+},{"./getEnumerableProperties":26,"./getName":28,"./getProperties":30}],33:[function(require,module,exports){
 /*!
  * Chai - flag utility
  * Copyright(c) 2012-2014 Jake Luer <jake@alogicalparadox.com>
@@ -11512,7 +14543,7 @@ module.exports = function (obj) {
   }
 };
 
-},{"../config":7,"./inspect":23}],25:[function(require,module,exports){
+},{"../config":16,"./inspect":32}],34:[function(require,module,exports){
 /*!
  * Chai - overwriteChainableMethod utility
  * Copyright(c) 2012-2014 Jake Luer <jake@alogicalparadox.com>
@@ -11567,7 +14598,7 @@ module.exports = function (ctx, name, method, chainingBehavior) {
   };
 };
 
-},{}],26:[function(require,module,exports){
+},{}],35:[function(require,module,exports){
 /*!
  * Chai - overwriteMethod utility
  * Copyright(c) 2012-2014 Jake Luer <jake@alogicalparadox.com>
@@ -11620,7 +14651,7 @@ module.exports = function (ctx, name, method) {
   }
 };
 
-},{}],27:[function(require,module,exports){
+},{}],36:[function(require,module,exports){
 /*!
  * Chai - overwriteProperty utility
  * Copyright(c) 2012-2014 Jake Luer <jake@alogicalparadox.com>
@@ -11676,7 +14707,7 @@ module.exports = function (ctx, name, getter) {
   });
 };
 
-},{}],28:[function(require,module,exports){
+},{}],37:[function(require,module,exports){
 /*!
  * Chai - test utility
  * Copyright(c) 2012-2014 Jake Luer <jake@alogicalparadox.com>
@@ -11704,7 +14735,7 @@ module.exports = function (obj, args) {
   return negate ? !expr : expr;
 };
 
-},{"./flag":15}],29:[function(require,module,exports){
+},{"./flag":24}],38:[function(require,module,exports){
 /*!
  * Chai - transferFlags utility
  * Copyright(c) 2012-2014 Jake Luer <jake@alogicalparadox.com>
@@ -11750,7 +14781,7 @@ module.exports = function (assertion, object, includeAll) {
   }
 };
 
-},{}],30:[function(require,module,exports){
+},{}],39:[function(require,module,exports){
 /*!
  * Chai - type utility
  * Copyright(c) 2012-2014 Jake Luer <jake@alogicalparadox.com>
@@ -11797,7 +14828,7 @@ module.exports = function (obj) {
   return typeof obj;
 };
 
-},{}],31:[function(require,module,exports){
+},{}],40:[function(require,module,exports){
 /*!
  * assertion-error
  * Copyright(c) 2013 Jake Luer <jake@qualiancy.com>
@@ -11909,10 +14940,10 @@ AssertionError.prototype.toJSON = function (stack) {
   return props;
 };
 
-},{}],32:[function(require,module,exports){
+},{}],41:[function(require,module,exports){
 module.exports = require('./lib/eql');
 
-},{"./lib/eql":33}],33:[function(require,module,exports){
+},{"./lib/eql":42}],42:[function(require,module,exports){
 /*!
  * deep-eql
  * Copyright(c) 2013 Jake Luer <jake@alogicalparadox.com>
@@ -12171,10 +15202,10 @@ function objectEqual(a, b, m) {
   return true;
 }
 
-},{"buffer":36,"type-detect":34}],34:[function(require,module,exports){
+},{"buffer":45,"type-detect":43}],43:[function(require,module,exports){
 module.exports = require('./lib/type');
 
-},{"./lib/type":35}],35:[function(require,module,exports){
+},{"./lib/type":44}],44:[function(require,module,exports){
 /*!
  * type-detect
  * Copyright(c) 2013 jake luer <jake@alogicalparadox.com>
@@ -12318,7 +15349,7 @@ Library.prototype.test = function (obj, type) {
   }
 };
 
-},{}],36:[function(require,module,exports){
+},{}],45:[function(require,module,exports){
 /*!
  * The buffer module from node.js, for the browser.
  *
@@ -13654,7 +16685,7 @@ function decodeUtf8Char (str) {
   }
 }
 
-},{"base64-js":37,"ieee754":38,"is-array":39}],37:[function(require,module,exports){
+},{"base64-js":46,"ieee754":47,"is-array":48}],46:[function(require,module,exports){
 var lookup = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/';
 
 ;(function (exports) {
@@ -13780,7 +16811,7 @@ var lookup = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/';
 	exports.fromByteArray = uint8ToBase64
 }(typeof exports === 'undefined' ? (this.base64js = {}) : exports))
 
-},{}],38:[function(require,module,exports){
+},{}],47:[function(require,module,exports){
 exports.read = function(buffer, offset, isLE, mLen, nBytes) {
   var e, m,
       eLen = nBytes * 8 - mLen - 1,
@@ -13866,7 +16897,7 @@ exports.write = function(buffer, value, offset, isLE, mLen, nBytes) {
   buffer[offset + i - d] |= s * 128;
 };
 
-},{}],39:[function(require,module,exports){
+},{}],48:[function(require,module,exports){
 
 /**
  * isArray
@@ -13901,7 +16932,7 @@ module.exports = isArray || function (val) {
   return !! val && '[object Array]' == str.call(val);
 };
 
-},{}],40:[function(require,module,exports){
+},{}],49:[function(require,module,exports){
 // shim for using process in browser
 
 var process = module.exports = {};
@@ -13961,7 +16992,4316 @@ process.chdir = function (dir) {
 };
 process.umask = function() { return 0; };
 
-},{}],41:[function(require,module,exports){
+},{}],50:[function(require,module,exports){
+'use strict';
+
+// ### Module dependencies
+require('colors');
+var Utils = require('./utils');
+
+exports.version = require('../package.json').version;
+
+// ### Render function
+// *Parameters:*
+//
+// * **`data`**: Data to render
+// * **`options`**: Hash with different options to configure the parser
+// * **`indentation`**: Base indentation of the parsed output
+//
+// *Example of options hash:*
+//
+//     {
+//       emptyArrayMsg: '(empty)', // Rendered message on empty strings
+//       keysColor: 'blue',        // Color for keys in hashes
+//       dashColor: 'red',         // Color for the dashes in arrays
+//       stringColor: 'grey',      // Color for strings
+//       defaultIndentation: 2     // Indentation on nested objects
+//     }
+exports.render = function render(data, options, indentation) {
+  // Default values
+  indentation = indentation || 0;
+  options = options || {};
+  options.emptyArrayMsg = options.emptyArrayMsg || '(empty array)';
+  options.keysColor = options.keysColor || 'green';
+  options.dashColor = options.dashColor || 'green';
+  options.numberColor = options.numberColor || 'blue';
+  options.defaultIndentation = options.defaultIndentation || 2;
+  options.noColor = !!options.noColor;
+
+  options.stringColor = options.stringColor || null;
+
+  var output = [];
+
+  // Helper function to detect if an object can be directly serializable
+  var isSerializable = function(input, onlyPrimitives) {
+    if (typeof input === 'boolean' ||
+        typeof input === 'number' || input === null || 
+		input instanceof Date) {
+      return true;
+    }
+    if (typeof input === 'string' && input.indexOf('\n') === -1) {
+      return true;
+    }
+
+    if (options.inlineArrays && !onlyPrimitives) {
+      if (Array.isArray(input) && isSerializable(input[0], true)) {
+        return true;
+      }
+    }
+
+    return false;
+  };
+
+  var indentLines = function(string, spaces){
+    var lines = string.split('\n');
+    lines = lines.map(function(line){
+      return Utils.indent(spaces) + line;
+    });
+    return lines.join('\n');
+  };
+
+  var addColorToData = function(input) {
+    if (options.noColor) {
+      return input;
+    }
+
+    if (typeof input === 'string') {
+      // Print strings in regular terminal color
+      return options.stringColor ? input[options.stringColor] : input;
+    }
+
+    var sInput = input + '';
+
+    if (input === true) {
+      return sInput.green;
+    }
+    if (input === false) {
+      return sInput.red;
+    }
+    if (input === null) {
+      return sInput.grey;
+    }
+    if (typeof input === 'number') {
+      return sInput[options.numberColor];
+    }
+    if (Array.isArray(input)) {
+      return input.join(', ');
+    }
+
+    return sInput;
+  };
+
+  // Render a string exactly equal
+  if (isSerializable(data)) {	
+    output.push(Utils.indent(indentation) + addColorToData(data));
+  }
+  else if (typeof data === 'string') {
+    //unserializable string means it's multiline
+    output.push(Utils.indent(indentation) + '"""');
+    output.push(indentLines(data, indentation + options.defaultIndentation));
+    output.push(Utils.indent(indentation) + '"""');
+  }
+  else if (Array.isArray(data)) {
+    // If the array is empty, render the `emptyArrayMsg`
+    if (data.length === 0) {
+      output.push(Utils.indent(indentation) + options.emptyArrayMsg);
+    } else {
+      data.forEach(function(element) {
+        // Prepend the dash at the begining of each array's element line
+        var line = ('- ');
+        if (!options.noColor) {
+          line = line[options.dashColor];
+        }
+        line = Utils.indent(indentation) + line;
+
+        // If the element of the array is a string, bool, number, or null
+        // render it in the same line
+        if (isSerializable(element)) {
+          line += exports.render(element, options);
+          output.push(line);
+
+        // If the element is an array or object, render it in next line
+        } else {
+          output.push(line);
+          output.push(exports.render(
+            element, options, indentation + options.defaultIndentation
+          ));
+        }
+      });
+    }
+  }
+  else if (typeof data === 'object') {
+    // Get the size of the longest index to align all the values
+    var maxIndexLength = Utils.getMaxIndexLength(data);
+    var key;
+    var isError = data instanceof Error;
+
+    Object.getOwnPropertyNames(data).forEach(function(i) {
+      // Prepend the index at the beginning of the line
+      key = (i + ': ');
+      if (!options.noColor) {
+        key = key[options.keysColor];
+      }
+      key = Utils.indent(indentation) + key;
+
+      // Skip `undefined`, it's not a valid JSON value.
+      if (data[i] === undefined) {
+        return;
+      }
+
+      // If the value is serializable, render it in the same line
+      if (isSerializable(data[i]) && (!isError || i !== 'stack')) {
+        key += exports.render(data[i], options, maxIndexLength - i.length);
+        output.push(key);
+
+        // If the index is an array or object, render it in next line
+      } else {
+        output.push(key);
+        output.push(
+          exports.render(
+            isError && i === 'stack' ? data[i].split('\n') : data[i],
+            options,
+            indentation + options.defaultIndentation
+          )
+        );
+      }
+    });
+  }
+  // Return all the lines as a string
+  return output.join('\n');
+};
+
+// ### Render from string function
+// *Parameters:*
+//
+// * **`data`**: Data to render as a string
+// * **`options`**: Hash with different options to configure the parser
+// * **`indentation`**: Base indentation of the parsed output
+//
+// *Example of options hash:*
+//
+//     {
+//       emptyArrayMsg: '(empty)', // Rendered message on empty strings
+//       keysColor: 'blue',        // Color for keys in hashes
+//       dashColor: 'red',         // Color for the dashes in arrays
+//       defaultIndentation: 2     // Indentation on nested objects
+//     }
+exports.renderString = function renderString(data, options, indentation) {
+
+  var output = '';
+  var parsedData;
+  // If the input is not a string or if it's empty, just return an empty string
+  if (typeof data !== 'string' || data === '') {
+    return '';
+  }
+
+  // Remove non-JSON characters from the beginning string
+  if (data[0] !== '{' && data[0] !== '[') {
+    var beginingOfJson;
+    if (data.indexOf('{') === -1) {
+      beginingOfJson = data.indexOf('[');
+    } else if (data.indexOf('[') === -1) {
+      beginingOfJson = data.indexOf('{');
+    } else if (data.indexOf('{') < data.indexOf('[')) {
+      beginingOfJson = data.indexOf('{');
+    } else {
+      beginingOfJson = data.indexOf('[');
+    }
+    output += data.substr(0, beginingOfJson) + '\n';
+    data = data.substr(beginingOfJson);
+  }
+
+  try {
+    parsedData = JSON.parse(data);
+  } catch (e) {
+    // Return an error in case of an invalid JSON
+    return 'Error:'.red + ' Not valid JSON!';
+  }
+
+  // Call the real render() method
+  output += exports.render(parsedData, options, indentation);
+  return output;
+};
+
+},{"../package.json":53,"./utils":51,"colors":52}],51:[function(require,module,exports){
+'use strict';
+
+/**
+ * Creates a string with the same length as `numSpaces` parameter
+ **/
+exports.indent = function indent(numSpaces) {
+  return new Array(numSpaces+1).join(' ');
+};
+
+/**
+ * Gets the string length of the longer index in a hash
+ **/
+exports.getMaxIndexLength = function(input) {
+  var maxWidth = 0;
+
+  Object.getOwnPropertyNames(input).forEach(function(key) {
+    maxWidth = Math.max(maxWidth, key.length);
+  });
+  return maxWidth;
+};
+
+},{}],52:[function(require,module,exports){
+/*
+colors.js
+
+Copyright (c) 2010
+
+Marak Squires
+Alexis Sellier (cloudhead)
+
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in
+all copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
+THE SOFTWARE.
+
+*/
+
+var isHeadless = false;
+
+if (typeof module !== 'undefined') {
+  isHeadless = true;
+}
+
+if (!isHeadless) {
+  var exports = {};
+  var module = {};
+  var colors = exports;
+  exports.mode = "browser";
+} else {
+  exports.mode = "console";
+}
+
+//
+// Prototypes the string object to have additional method calls that add terminal colors
+//
+var addProperty = function (color, func) {
+  exports[color] = function (str) {
+    return func.apply(str);
+  };
+  String.prototype.__defineGetter__(color, func);
+};
+
+function stylize(str, style) {
+
+  var styles;
+
+  if (exports.mode === 'console') {
+    styles = {
+      //styles
+      'bold'      : ['\x1B[1m',  '\x1B[22m'],
+      'italic'    : ['\x1B[3m',  '\x1B[23m'],
+      'underline' : ['\x1B[4m',  '\x1B[24m'],
+      'inverse'   : ['\x1B[7m',  '\x1B[27m'],
+      'strikethrough' : ['\x1B[9m',  '\x1B[29m'],
+      //text colors
+      //grayscale
+      'white'     : ['\x1B[37m', '\x1B[39m'],
+      'grey'      : ['\x1B[90m', '\x1B[39m'],
+      'black'     : ['\x1B[30m', '\x1B[39m'],
+      //colors
+      'blue'      : ['\x1B[34m', '\x1B[39m'],
+      'cyan'      : ['\x1B[36m', '\x1B[39m'],
+      'green'     : ['\x1B[32m', '\x1B[39m'],
+      'magenta'   : ['\x1B[35m', '\x1B[39m'],
+      'red'       : ['\x1B[31m', '\x1B[39m'],
+      'yellow'    : ['\x1B[33m', '\x1B[39m'],
+      //background colors
+      //grayscale
+      'whiteBG'     : ['\x1B[47m', '\x1B[49m'],
+      'greyBG'      : ['\x1B[49;5;8m', '\x1B[49m'],
+      'blackBG'     : ['\x1B[40m', '\x1B[49m'],
+      //colors
+      'blueBG'      : ['\x1B[44m', '\x1B[49m'],
+      'cyanBG'      : ['\x1B[46m', '\x1B[49m'],
+      'greenBG'     : ['\x1B[42m', '\x1B[49m'],
+      'magentaBG'   : ['\x1B[45m', '\x1B[49m'],
+      'redBG'       : ['\x1B[41m', '\x1B[49m'],
+      'yellowBG'    : ['\x1B[43m', '\x1B[49m']
+    };
+  } else if (exports.mode === 'browser') {
+    styles = {
+      //styles
+      'bold'      : ['<b>',  '</b>'],
+      'italic'    : ['<i>',  '</i>'],
+      'underline' : ['<u>',  '</u>'],
+      'inverse'   : ['<span style="background-color:black;color:white;">',  '</span>'],
+      'strikethrough' : ['<del>',  '</del>'],
+      //text colors
+      //grayscale
+      'white'     : ['<span style="color:white;">',   '</span>'],
+      'grey'      : ['<span style="color:gray;">',    '</span>'],
+      'black'     : ['<span style="color:black;">',   '</span>'],
+      //colors
+      'blue'      : ['<span style="color:blue;">',    '</span>'],
+      'cyan'      : ['<span style="color:cyan;">',    '</span>'],
+      'green'     : ['<span style="color:green;">',   '</span>'],
+      'magenta'   : ['<span style="color:magenta;">', '</span>'],
+      'red'       : ['<span style="color:red;">',     '</span>'],
+      'yellow'    : ['<span style="color:yellow;">',  '</span>'],
+      //background colors
+      //grayscale
+      'whiteBG'     : ['<span style="background-color:white;">',   '</span>'],
+      'greyBG'      : ['<span style="background-color:gray;">',    '</span>'],
+      'blackBG'     : ['<span style="background-color:black;">',   '</span>'],
+      //colors
+      'blueBG'      : ['<span style="background-color:blue;">',    '</span>'],
+      'cyanBG'      : ['<span style="background-color:cyan;">',    '</span>'],
+      'greenBG'     : ['<span style="background-color:green;">',   '</span>'],
+      'magentaBG'   : ['<span style="background-color:magenta;">', '</span>'],
+      'redBG'       : ['<span style="background-color:red;">',     '</span>'],
+      'yellowBG'    : ['<span style="background-color:yellow;">',  '</span>']
+    };
+  } else if (exports.mode === 'none') {
+    return str + '';
+  } else {
+    console.log('unsupported mode, try "browser", "console" or "none"');
+  }
+  return styles[style][0] + str + styles[style][1];
+}
+
+function applyTheme(theme) {
+
+  //
+  // Remark: This is a list of methods that exist
+  // on String that you should not overwrite.
+  //
+  var stringPrototypeBlacklist = [
+    '__defineGetter__', '__defineSetter__', '__lookupGetter__', '__lookupSetter__', 'charAt', 'constructor',
+    'hasOwnProperty', 'isPrototypeOf', 'propertyIsEnumerable', 'toLocaleString', 'toString', 'valueOf', 'charCodeAt',
+    'indexOf', 'lastIndexof', 'length', 'localeCompare', 'match', 'replace', 'search', 'slice', 'split', 'substring',
+    'toLocaleLowerCase', 'toLocaleUpperCase', 'toLowerCase', 'toUpperCase', 'trim', 'trimLeft', 'trimRight'
+  ];
+
+  Object.keys(theme).forEach(function (prop) {
+    if (stringPrototypeBlacklist.indexOf(prop) !== -1) {
+      console.log('warn: '.red + ('String.prototype' + prop).magenta + ' is probably something you don\'t want to override. Ignoring style name');
+    }
+    else {
+      if (typeof(theme[prop]) === 'string') {
+        addProperty(prop, function () {
+          return exports[theme[prop]](this);
+        });
+      }
+      else {
+        addProperty(prop, function () {
+          var ret = this;
+          for (var t = 0; t < theme[prop].length; t++) {
+            ret = exports[theme[prop][t]](ret);
+          }
+          return ret;
+        });
+      }
+    }
+  });
+}
+
+
+//
+// Iterate through all default styles and colors
+//
+var x = ['bold', 'underline', 'strikethrough', 'italic', 'inverse', 'grey', 'black', 'yellow', 'red', 'green', 'blue', 'white', 'cyan', 'magenta', 'greyBG', 'blackBG', 'yellowBG', 'redBG', 'greenBG', 'blueBG', 'whiteBG', 'cyanBG', 'magentaBG'];
+x.forEach(function (style) {
+
+  // __defineGetter__ at the least works in more browsers
+  // http://robertnyman.com/javascript/javascript-getters-setters.html
+  // Object.defineProperty only works in Chrome
+  addProperty(style, function () {
+    return stylize(this, style);
+  });
+});
+
+function sequencer(map) {
+  return function () {
+    if (!isHeadless) {
+      return this.replace(/( )/, '$1');
+    }
+    var exploded = this.split(""), i = 0;
+    exploded = exploded.map(map);
+    return exploded.join("");
+  };
+}
+
+var rainbowMap = (function () {
+  var rainbowColors = ['red', 'yellow', 'green', 'blue', 'magenta']; //RoY G BiV
+  return function (letter, i, exploded) {
+    if (letter === " ") {
+      return letter;
+    } else {
+      return stylize(letter, rainbowColors[i++ % rainbowColors.length]);
+    }
+  };
+})();
+
+exports.themes = {};
+
+exports.addSequencer = function (name, map) {
+  addProperty(name, sequencer(map));
+};
+
+exports.addSequencer('rainbow', rainbowMap);
+exports.addSequencer('zebra', function (letter, i, exploded) {
+  return i % 2 === 0 ? letter : letter.inverse;
+});
+
+exports.setTheme = function (theme) {
+  if (typeof theme === 'string') {
+    try {
+      exports.themes[theme] = require(theme);
+      applyTheme(exports.themes[theme]);
+      return exports.themes[theme];
+    } catch (err) {
+      console.log(err);
+      return err;
+    }
+  } else {
+    applyTheme(theme);
+  }
+};
+
+
+addProperty('stripColors', function () {
+  return ("" + this).replace(/\x1B\[\d+m/g, '');
+});
+
+// please no
+function zalgo(text, options) {
+  var soul = {
+    "up" : [
+      '̍', '̎', '̄', '̅',
+      '̿', '̑', '̆', '̐',
+      '͒', '͗', '͑', '̇',
+      '̈', '̊', '͂', '̓',
+      '̈', '͊', '͋', '͌',
+      '̃', '̂', '̌', '͐',
+      '̀', '́', '̋', '̏',
+      '̒', '̓', '̔', '̽',
+      '̉', 'ͣ', 'ͤ', 'ͥ',
+      'ͦ', 'ͧ', 'ͨ', 'ͩ',
+      'ͪ', 'ͫ', 'ͬ', 'ͭ',
+      'ͮ', 'ͯ', '̾', '͛',
+      '͆', '̚'
+    ],
+    "down" : [
+      '̖', '̗', '̘', '̙',
+      '̜', '̝', '̞', '̟',
+      '̠', '̤', '̥', '̦',
+      '̩', '̪', '̫', '̬',
+      '̭', '̮', '̯', '̰',
+      '̱', '̲', '̳', '̹',
+      '̺', '̻', '̼', 'ͅ',
+      '͇', '͈', '͉', '͍',
+      '͎', '͓', '͔', '͕',
+      '͖', '͙', '͚', '̣'
+    ],
+    "mid" : [
+      '̕', '̛', '̀', '́',
+      '͘', '̡', '̢', '̧',
+      '̨', '̴', '̵', '̶',
+      '͜', '͝', '͞',
+      '͟', '͠', '͢', '̸',
+      '̷', '͡', ' ҉'
+    ]
+  },
+  all = [].concat(soul.up, soul.down, soul.mid),
+  zalgo = {};
+
+  function randomNumber(range) {
+    var r = Math.floor(Math.random() * range);
+    return r;
+  }
+
+  function is_char(character) {
+    var bool = false;
+    all.filter(function (i) {
+      bool = (i === character);
+    });
+    return bool;
+  }
+
+  function heComes(text, options) {
+    var result = '', counts, l;
+    options = options || {};
+    options["up"] = options["up"] || true;
+    options["mid"] = options["mid"] || true;
+    options["down"] = options["down"] || true;
+    options["size"] = options["size"] || "maxi";
+    text = text.split('');
+    for (l in text) {
+      if (is_char(l)) {
+        continue;
+      }
+      result = result + text[l];
+      counts = {"up" : 0, "down" : 0, "mid" : 0};
+      switch (options.size) {
+      case 'mini':
+        counts.up = randomNumber(8);
+        counts.min = randomNumber(2);
+        counts.down = randomNumber(8);
+        break;
+      case 'maxi':
+        counts.up = randomNumber(16) + 3;
+        counts.min = randomNumber(4) + 1;
+        counts.down = randomNumber(64) + 3;
+        break;
+      default:
+        counts.up = randomNumber(8) + 1;
+        counts.mid = randomNumber(6) / 2;
+        counts.down = randomNumber(8) + 1;
+        break;
+      }
+
+      var arr = ["up", "mid", "down"];
+      for (var d in arr) {
+        var index = arr[d];
+        for (var i = 0 ; i <= counts[index]; i++) {
+          if (options[index]) {
+            result = result + soul[index][randomNumber(soul[index].length)];
+          }
+        }
+      }
+    }
+    return result;
+  }
+  return heComes(text);
+}
+
+
+// don't summon zalgo
+addProperty('zalgo', function () {
+  return zalgo(this);
+});
+
+},{}],53:[function(require,module,exports){
+module.exports={
+  "author": {
+    "name": "Rafael de Oleza",
+    "email": "rafeca@gmail.com",
+    "url": "https://github.com/rafeca"
+  },
+  "name": "prettyjson",
+  "description": "Package for formatting JSON data in a coloured YAML-style, perfect for CLI output",
+  "version": "1.1.0",
+  "homepage": "http://rafeca.com/prettyjson",
+  "keywords": [
+    "json",
+    "cli",
+    "formatting",
+    "colors"
+  ],
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/rafeca/prettyjson.git"
+  },
+  "bugs": {
+    "url": "https://github.com/rafeca/prettyjson/issues"
+  },
+  "main": "./lib/prettyjson",
+  "scripts": {
+    "test": "npm run jshint && mocha --reporter spec",
+    "testwin": "node ./node_modules/mocha/bin/mocha --reporter spec",
+    "jshint": "jshint lib/*.js",
+    "coverage": "istanbul cover _mocha --report lcovonly -- -R spec",
+    "coveralls": "npm run coverage && cat ./coverage/lcov.info | coveralls && rm -rf ./coverage",
+    "changelog": "git log $(git describe --tags --abbrev=0)..HEAD --pretty='* %s' --first-parent"
+  },
+  "bin": {
+    "prettyjson": "./bin/prettyjson"
+  },
+  "engines": {
+    "node": ">= 0.10.0 < 0.12.0"
+  },
+  "dependencies": {
+    "colors": "0.6.2",
+    "minimist": "0.0.8"
+  },
+  "devDependencies": {
+    "mocha": "^1.18.2",
+    "should": "^3.1.4",
+    "jshint": "^2.4.4",
+    "getversion": "~0.1.1",
+    "istanbul": "~0.2.4",
+    "coveralls": "^2.10.0",
+    "mocha-lcov-reporter": "0.0.1"
+  },
+  "gitHead": "5ab0755baae84985f094d27ad0332d6437f34e86",
+  "_id": "prettyjson@1.1.0",
+  "_shasum": "de1bc2711a5b7b7a944c217849ec65f299bd4751",
+  "_from": "prettyjson@>=1.0.0 <2.0.0",
+  "_npmVersion": "2.4.1",
+  "_nodeVersion": "0.10.32",
+  "_npmUser": {
+    "name": "rafeca",
+    "email": "rafeca@gmail.com"
+  },
+  "maintainers": [
+    {
+      "name": "rafeca",
+      "email": "rafeca@gmail.com"
+    }
+  ],
+  "dist": {
+    "shasum": "de1bc2711a5b7b7a944c217849ec65f299bd4751",
+    "tarball": "http://registry.npmjs.org/prettyjson/-/prettyjson-1.1.0.tgz"
+  },
+  "directories": {},
+  "_resolved": "https://registry.npmjs.org/prettyjson/-/prettyjson-1.1.0.tgz"
+}
+
+},{}],54:[function(require,module,exports){
+var miruken  = require('../lib/miruken.js'),
+    callback = require('../lib/callback.js'),
+    Promise  = require('bluebird'),
+    chai     = require("chai"),
+    expect   = chai.expect;
+
+eval(base2.namespace);
+eval(miruken.namespace);
+eval(callback.namespace);
+
+new function () { // closure
+
+    var callback_test = new base2.Package(this, {
+        name:    "callback_test",
+        exports: "Guest,Dealer,PitBoss,DrinkServer,Game,Security,Level1Security,Level2Security,WireMoney,CountMoney,Accountable,Cashier,Activity,CardTable,Casino"
+    });
+
+    eval(this.imports);
+
+    var Guest = Base.extend({
+        constructor: function (age) {
+            this.extend({
+                getAge: function () { return age; }
+            });
+        }
+    });
+
+    var Dealer = Base.extend({
+        constructor: function () {
+            this.extend({
+                shuffle: function (cards) {
+                    return cards.sort(function () {
+                        return 0.5 - Math.random();
+                    });
+                }
+            });
+        }
+    });
+
+    var PitBoss = Base.extend({
+        constructor: function (name) {
+            this.extend({
+                getName: function () { return name; }
+            });
+        }
+    });
+
+    var DrinkServer = Base.extend({
+    });
+
+    var Game = Protocol.extend({
+        open: function (numPlayers) {}
+    });
+
+    var Security = Protocol.extend({
+        admit: function (guest) {},
+        trackActivity: function (activity) {}
+    });
+
+    var Level1Security = Base.extend(Security, {
+        admit: function (guest) {
+            return guest.getAge() >= 21;
+        }
+    });
+
+    var Level2Security = Base.extend(Security, {
+        trackActivity: function (activity) {
+            console.log(lang.format("Tracking '%1'", activity.getName()));
+        }
+    });
+
+    var WireMoney = Base.extend({
+        constructor: function (requested) {
+            var _received = 0.0;
+            this.extend({
+                getRequested: function () { return requested; },
+                getReceived:  function () { return _received;},
+                setReceived:  function (received) { _received = received; }
+            });
+        }
+    });
+
+    var CountMoney = Base.extend({
+        constructor: function () {
+            var _total = 0.0;
+            this.extend({
+                getTotal: function () { return _total; },
+                record:   function (amount) { _total += amount; }
+            });
+        }
+    });
+
+    var Accountable = Base.extend($expand, {
+        constructor: function (assets, liabilities) {
+            assets      = Number(assets || 0);
+            liabilities = Number(liabilities || 0);
+            this.extend({
+                getAssets:       function () { return assets; },
+                getLiabilities:  function () { return liabilities; },
+                getBalance:      function () { return assets - liabilities; },
+                addAssets:       function (amount) { assets      += amount; },
+                addLiabilities:  function (amount) { liabilities += amount; },
+                transfer:        function (amount, receiver) {
+                    assets -= amount;
+                    if (assets < 0) {
+                        liabilties -= assets;
+                        assets      = 0;
+                    }
+                    receiver.addAssets(amount);
+                    return Promise.delay(100);
+                }
+            });
+        },
+        $handle:[
+            CountMoney, function (countMoney, composer) {
+                countMoney.record(this.getBalance());
+            }]
+    });
+
+    var Cashier = Accountable.extend({
+        toString: function () { return 'Cashier $' + this.getBalance(); },
+        $handle:[
+            WireMoney, function (wireMoney, composer) {
+                wireMoney.setReceived(wireMoney.getRequested());
+                return Promise.resolve(wireMoney);
+            }]
+    });
+
+    var Activity = Accountable.extend({
+        constructor: function (name) {
+            this.base();
+            this.extend({
+                getName: function () { return name; },
+            });
+        },
+        toString: function () { return 'Activity ' + this.getName(); }
+    });
+
+    var CardTable = Activity.extend(Game, {
+        constructor: function (name, minPlayers, maxPlayers) {
+            this.base(name);
+            this.extend({
+                open: function (numPlayers) {
+                    if (minPlayers > numPlayers || numPlayers > maxPlayers)
+                        return $NOT_HANDLED;
+                },
+            });
+        }
+    });
+
+    var Casino = CompositeCallbackHandler.extend({
+        constructor: function (name) {
+            this.base();
+            this.extend({
+                getName: function () { return name; }
+            });
+        },
+        toString: function () { return 'Casino ' + this.getName(); },
+
+        $provide:[
+            PitBoss, function (composer) {
+                return new PitBoss('Freddy');
+            },
+
+            DrinkServer, function (composer) {
+                return Promise.delay(new DrinkServer(), 100);
+            }]
+    });
+
+  eval(this.exports);
+};
+
+eval(base2.callback_test.namespace);
+
+describe("HandleMethod", function () {
+    describe("#getMethodName", function () {
+        it("should get the method name", function () {
+            var method = new HandleMethod(undefined, "deal", [[1,3,8], 2]);
+            expect(method.getMethodName()).to.equal("deal");
+        });
+    });
+
+    describe("#getArguments", function () {
+        it("should get the method arguments", function () {
+            var method = new HandleMethod(undefined, "deal", [[1,3,8], 2]);
+            expect(method.getArguments()).to.eql([[1,3,8], 2]);
+        });
+
+        it("should be able to change arguments", function () {
+            var method = new HandleMethod(undefined, "deal", [[1,3,8], 2]);
+            method.getArguments()[0] = [2,4,8];
+            expect(method.getArguments()).to.eql([[2,4,8], 2]);
+        });
+    });
+
+    describe("#getReturnValue", function () {
+        it("should get the return value", function () {
+            var method = new HandleMethod(undefined, "deal", [[1,3,8], 2]);
+            method.setReturnValue([1,8]);
+            expect(method.getReturnValue()).to.eql([1,8]);
+        });
+    });
+
+    describe("#setReturnValue", function () {
+        it("should set the return value", function () {
+            var method = new HandleMethod(undefined, "deal", [[1,3,8], 2]);
+            method.setReturnValue([1,8]);
+            expect(method.getReturnValue()).to.eql([1,8]);
+        });
+    });
+
+    describe("#invokeOn", function () {
+        it("should invoke method on target", function () {
+            var dealer  = new Dealer(),
+            method  = new HandleMethod(undefined, "shuffle", [[22,19,9,14,29]]),
+            handled = method.invokeOn(dealer);
+            expect(handled).to.be.true;
+            expect(method.getReturnValue()).to.have.members([22,19,9,14,29]);
+        });
+    });
+});
+
+describe("Definitions", function () {
+    describe("$define", function () {
+        it("should require non-empty tag", function () {
+            $define('$foo');
+            expect(function () {
+                $define();
+            }).to.throw(Error, "The tag must be a non-empty string with no whitespace.");
+            expect(function () {
+                $define("");
+            }).to.throw(Error, "The tag must be a non-empty string with no whitespace.");
+            expect(function () {
+                $define("  ");
+            }).to.throw(Error, "The tag must be a non-empty string with no whitespace.");
+        });
+
+        it("should prevent same tag from being registered", function () {
+            $define('$bar');
+            expect(function () {
+                $define('$bar');
+            }).to.throw(Error, "'$bar' is already defined.");
+        });
+
+        it("Should accept variance option", function () {
+            var baz = $define('$baz', Variance.Contravariant);
+        expect(baz).to.be.ok;
+        });
+
+        it("Should reject invalid variance option", function () {
+            expect(function () {
+        $define('$buz', { variance: 1000 });
+            }).to.throw(Error, "Variance must be Covariant, Contravariant or Invariant");
+        });
+    });
+
+    describe("#list", function () {
+        it("should not have $miruken storage by default", function () {
+            var handler    = new CallbackHandler;
+            expect(handler.hasOwnProperty('$miruken')).to.be.false;
+        });
+
+        it("should create $miruken.$handle key when first handler registered", function () {
+            var handler    = new CallbackHandler;
+            $handle(handler, True, True);
+            expect(handler.hasOwnProperty('$miruken')).to.be.true;
+            expect(handler.$miruken.$handle).to.be.ok;
+        });
+
+        it("should maintain linked-list of handlers", function () {
+            var handler     = new CallbackHandler,
+                nothing     = function (callback) {};
+            $handle(handler, Activity, nothing);
+            $handle(handler, Accountable, nothing);
+            $handle(handler, Game, nothing);
+            expect(handler.$miruken.$handle.head.constraint).to.equal(Activity);
+            expect(handler.$miruken.$handle.head.next.constraint).to.equal(Accountable);
+            expect(handler.$miruken.$handle.tail.prev.constraint).to.equal(Accountable);
+            expect(handler.$miruken.$handle.tail.constraint).to.equal(Game);
+        });
+
+        it("should order $handle contravariantly", function () {
+            var handler     = new CallbackHandler,
+                nothing     = function (callback) {};
+            $handle(handler, Accountable, nothing);
+            $handle(handler, Activity, nothing);
+            expect(handler.$miruken.$handle.head.constraint).to.equal(Activity);
+            expect(handler.$miruken.$handle.tail.constraint).to.equal(Accountable);
+        });
+
+        it("should order $handle invariantly", function () {
+            var handler     = new CallbackHandler,
+                nothing     = function (callback) {},
+                something   = function (callback) {};
+            $handle(handler, Activity, nothing);
+            $handle(handler, Activity, something);
+            expect(handler.$miruken.$handle.head.handler).to.equal(nothing);
+            expect(handler.$miruken.$handle.tail.handler).to.equal(something);
+        });
+
+        it("should order $provide covariantly", function () {
+            var handler     = new CallbackHandler,
+                nothing     = function (callback) {};
+            $provide(handler, Activity, nothing);
+            $provide(handler, Accountable, nothing);
+            expect(handler.$miruken.$provide.head.constraint).to.equal(Accountable);
+            expect(handler.$miruken.$provide.tail.constraint).to.equal(Activity);
+        });
+
+        it("should order $provide invariantly", function () {
+            var handler     = new CallbackHandler,
+                nothing     = function (callback) {},
+                something   = function (callback) {};
+            $provide(handler, Activity, nothing);
+            $provide(handler, Activity, something);
+            expect(handler.$miruken.$provide.head.handler).to.equal(nothing);
+            expect(handler.$miruken.$provide.tail.handler).to.equal(something);
+        });
+
+        it("should order $lookup invariantly", function () {
+            var handler     = new CallbackHandler,
+                nothing     = function (callback) {},
+                something   = function (callback) {};
+            $lookup(handler, Activity, nothing);
+            $lookup(handler, Activity, something);
+            expect(handler.$miruken.$lookup.head.handler).to.equal(nothing);
+            expect(handler.$miruken.$lookup.tail.handler).to.equal(something);
+        });
+
+        it("should index first registered handler with head and tail", function () {
+            var handler     = new CallbackHandler,
+                nothing     = function (callback) {},
+                unregister  = $handle(handler, True, nothing);
+            expect(unregister).to.be.a('function');
+            expect(handler.$miruken.$handle.head.handler).to.equal(nothing);
+            expect(handler.$miruken.$handle.tail.handler).to.equal(nothing);
+        });
+
+        it("should call function when handler removed", function () {
+            var handler        = new CallbackHandler,
+                func           = function (callback) {},
+                handlerRemoved = false,
+                unregister     = $handle(handler, True, func, function () {
+                    handlerRemoved = true;
+                });
+            unregister();
+            expect(handlerRemoved).to.be.true;
+            expect(handler.$miruken.$handle).to.be.undefined;
+        });
+
+        it("should suppress handler removed if requested", function () {
+            var handler        = new CallbackHandler,
+                func           = function (callback) {},
+                handlerRemoved = false,
+                unregister     = $handle(handler, True, func, function () {
+                    handlerRemoved = true;
+                });
+            unregister(false);
+            expect(handlerRemoved).to.be.false;
+            expect(handler.$miruken.$handle).to.be.undefined;
+        });
+
+        it("should remove $handle when no handlers remain", function () {
+            var handler     = new CallbackHandler,
+                func        = function (callback) {},
+                unregister  = $handle(handler, True, func);
+            unregister();
+            expect(handler.$miruken.$handle).to.be.undefined;
+        });
+    });
+
+    describe("#index", function () {
+        it("should index class constraints using assignID", function () {
+            var handler     = new CallbackHandler,
+                nothing     = function (callback) {},
+                index       = assignID(Activity);
+            $handle(handler, Activity, nothing);
+            expect(handler.$miruken.$handle.getIndex(index).constraint).to.equal(Activity);
+        });
+
+        it("should index protocol constraints using assignID", function () {
+            var handler     = new CallbackHandler,
+                nothing     = function (callback) {},
+                index       = assignID(Game);
+            $handle(handler, Game, nothing);
+            expect(handler.$miruken.$handle.getIndex(index).constraint).to.equal(Game);
+        });
+
+        it("should index string constraints using string", function () {
+            var handler     = new CallbackHandler,
+                nothing     = function (callback) {};
+            $handle(handler, "something", nothing);
+            expect(handler.$miruken.$handle.getIndex("something").handler).to.equal(nothing);
+        });
+
+        it("should move index to next match", function () {
+            var handler     = new CallbackHandler,
+                nothing     = function (callback) {},
+                something   = function (callback) {},
+                index       = assignID(Activity),
+                unregister  = $handle(handler, Activity, nothing);
+            $handle(handler, Activity, something);
+            expect(handler.$miruken.$handle.getIndex(index).handler).to.equal(nothing);
+            unregister();
+            expect(handler.$miruken.$handle.getIndex(index).handler).to.equal(something);
+        });
+
+        it("should remove index when no more matches", function () {
+            var handler     = new CallbackHandler,
+                nothing     = function (callback) {},
+                index       = assignID(Activity);
+            $handle(handler, Accountable, nothing);
+            var unregister  = $handle(handler, Activity, nothing);
+            unregister();
+            expect(handler.$miruken.$handle.getIndex(index)).to.be.undefined;
+        });
+    });
+
+    describe("#removeAll", function () {
+        it("should remove all $handler definitions", function () {
+            var handler     = new CallbackHandler,
+                nothing     = function (callback) {},
+            removeCount = 0,
+            removed     = function () { ++removeCount; };
+            $handle(handler, Accountable, nothing, removed);
+            $handle(handler, Activity, nothing, removed);
+        $handle.removeAll(handler);
+        expect(removeCount).to.equal(2);
+            expect(handler.$miruken.$handle).to.be.undefined;
+        });
+
+        it("should remove all $provider definitions", function () {
+            var handler     = new CallbackHandler,
+                nothing     = function (callback) {},
+            removeCount = 0,
+            removed     = function () { ++removeCount; };
+            $provide(handler, Activity, nothing, removed);
+            $provide(handler, Accountable, nothing, removed);
+        $provide.removeAll(handler);
+        expect(removeCount).to.equal(2);
+            expect(handler.$miruken.$provide).to.be.undefined;
+        });
+    });
+});
+
+/*
+describe("CallbackHandler", function () {
+    describe("#handle", function () {
+        it("should not handle nothing", function () {
+            var casino     = new Casino();
+            expect(casino.handle()).to.be.false;
+            expect(casino.handle(null)).to.be.false;
+        });
+
+        it("should not handle anonymous objects", function () {
+            var casino     = new Casino();
+            expect(casino.handle({name:'Joe'})).to.be.false;
+        });
+
+        it("should handle callbacks", function () {
+            var cashier    = new Cashier(1000000.00),
+                casino     = new Casino('Belagio').addHandlers(cashier),
+                countMoney = new CountMoney();
+            expect(casino.handle(countMoney)).to.be.true;
+            expect(countMoney.getTotal()).to.equal(1000000.00);
+        });
+
+        it("should handle callbacks per instance", function () {
+            var cashier    = new Cashier(1000000.00),
+                handler    = new CallbackHandler;
+            $handle(handler, Cashier, function (cashier) {
+                this.cashier = cashier;
+            });
+            expect(handler.handle(cashier)).to.be.true;
+            expect(handler.cashier).to.equal(cashier);
+        });
+
+        it("should handle callback hierarchy", function () {
+            var cashier    = new Cashier(1000000.00),
+                inventory  = new (CallbackHandler.extend({
+                    $handle:[
+                        Accountable, function (accountable) {
+                            this.accountable = accountable;
+                        }]
+                }));
+            expect(inventory.handle(cashier)).to.be.true;
+            expect(inventory.accountable).to.equal(cashier);
+        });
+
+        it("should ignore callback if $NOT_HANDLED", function () {
+            var cashier    = new Cashier(1000000.00),
+                inventory  = new (CallbackHandler.extend({
+                    $handle:[
+                        Cashier, function (cashier) {
+                            return $NOT_HANDLED;
+                        }]
+                }));
+            expect(inventory.handle(cashier)).to.be.false;
+        });
+
+        it("should handle callback invariantly", function () {
+            var cashier     = new Cashier(1000000.00),
+                accountable = new Accountable(1.00),
+                inventory   = new (CallbackHandler.extend({
+                    $handle:[
+                        $eq(Accountable), function (accountable) {
+                            this.accountable = accountable;
+                        }]
+                }));
+            expect(inventory.handle(cashier)).to.be.false;
+            expect(inventory.handle(accountable)).to.be.true;
+            expect(inventory.accountable).to.equal(accountable);
+            $handle(inventory, Accountable, function (accountable) {
+                this.accountable = accountable;
+            });
+            expect(inventory.handle(cashier)).to.be.true;
+            expect(inventory.accountable).to.equal(cashier);
+        });
+
+        it("should stop early if handle callback invariantly", function () {
+            var cashier     = new Cashier(1000000.00),
+                accountable = new Accountable(1.00),
+                inventory   = new (CallbackHandler.extend({
+                    $handle:[
+                        Accountable, function (accountable) {
+                        },
+                        null, function (anything) {
+                        }]
+                }));
+            expect(inventory.handle($eq(accountable))).to.be.true;
+            expect(inventory.handle($eq(cashier))).to.be.false;
+        });
+
+        it("should handle callback protocol conformance", function () {
+            var blackjack  = new CardTable('Blackjack'),
+                inventory  = new (CallbackHandler.extend({
+                    $handle:[
+                        Game, function (game) {
+                            this.game = game;
+                        }]
+                }));
+            expect(inventory.handle(blackjack)).to.be.true;
+            expect(inventory.game).to.equal(blackjack);
+        });
+
+        it("should prefer callback hierarchy over protocol conformance", function () {
+            var blackjack  = new CardTable('Blackjack'),
+                inventory  = new (CallbackHandler.extend({
+                    $handle:[
+                        Activity, function (activity) {
+                            this.activity = activity;
+                        },
+                        Game, function (game) {
+                            this.game = game;
+                        }]
+                }));
+            expect(inventory.handle(blackjack)).to.be.true;
+            expect(inventory.activity).to.equal(blackjack);
+            expect(inventory.game).to.be.undefined;
+        });
+
+        it("should prefer callback hierarchy and continue with protocol conformance", function () {
+            var blackjack  = new CardTable('Blackjack'),
+                inventory  = new (CallbackHandler.extend({
+                    $handle:[
+                        Activity, function (activity) {
+                            this.activity = activity;
+                            return false;
+                        },
+                        Game, function (game) {
+                            this.game = game;
+                        }]
+                    }));
+            expect(inventory.handle(blackjack)).to.be.true;
+            expect(inventory.activity).to.equal(blackjack);
+            expect(inventory.game).to.equal(blackjack);
+        });
+
+        it("should handle unknown callback", function () {
+            var blackjack = new CardTable('Blackjack'),
+                inventory = new (CallbackHandler.extend({
+                    $handle:[null, function (callback) {
+                        callback.check = true;
+                    }]
+                }));
+            expect(inventory.handle(blackjack)).to.be.true;
+            expect(blackjack.check).to.be.true;
+        });
+
+        it("should handle unknown callback via delegate", function () {
+            var blackjack = new CardTable('Blackjack'),
+                inventory = new (Base.extend($expand, {
+                    $handle:[null, function (callback) {
+                        callback.check = true;
+                    }]
+                }));
+                casino     = new Casino('Belagio').addHandlers(inventory);
+            expect(casino.handle(blackjack)).to.be.true;
+            expect(blackjack.check).to.be.true;
+        });
+
+        it("should allow handlers to chain to base", function () {
+            var blackjack  = new CardTable('Blackjack'),
+                Tagger     = CallbackHandler.extend({
+                    $handle:[
+                        Activity, function (activity) {
+                            activity.tagged = true;
+                        }]
+                });
+                inventory  = new (Tagger.extend({
+                    $handle:[
+                        Activity, function (activity) {
+                            this.base();
+                        }]
+                }));
+            expect(inventory.handle(blackjack)).to.be.true;
+            expect(blackjack.tagged).to.be.true;
+        });
+
+        it("should handle callbacks with precedence rules", function () {
+            var matched   = -1,
+                Checkers  = Base.extend(Game),
+                inventory = new (CallbackHandler.extend({
+                    $handle:[
+                        function (constraint) {
+                            return constraint === PitBoss;
+                        }, function (callback) {
+                            matched = 0;
+                        },
+                        null,        function (callback) {
+                            matched = 1;
+                        },
+                        Game,        function (callback) {
+                            matched = 2;
+                        },
+                        Security,    function (callback) {
+                            matched = 3;
+                        },
+                        Activity,    function (callback) {
+                            matched = 5;
+                        },
+                        Accountable, function (callback) {
+                            matched = 4;
+                        },
+                        CardTable,   function (callback) {
+                            matched = 6;
+                        }]
+                }));
+            inventory.handle(new CardTable('3 Card Poker'));
+            expect(matched).to.equal(6);
+            inventory.handle(new Activity('Video Poker'));
+            expect(matched).to.equal(5);
+            inventory.handle(new Cashier(100));
+            expect(matched).to.equal(4);
+            inventory.handle(new Level1Security);
+            expect(matched).to.equal(3);
+            inventory.handle(new Checkers);
+            expect(matched).to.equal(2);
+            inventory.handle(new Casino('Paris'));
+            expect(matched).to.equal(1);
+            inventory.handle(new PitBoss('Mike'));
+            expect(matched).to.equal(0);
+        });
+
+        it("should handle callbacks greedy", function () {
+            var cashier    = new Cashier(1000000.00),
+                blackjack  = new Activity('Blackjack'),
+                casino     = new Casino('Belagio')
+                .addHandlers(cashier, blackjack),
+            countMoney = new CountMoney();
+            cashier.transfer(50000, blackjack)
+
+            expect(blackjack.getBalance()).to.equal(50000);
+            expect(cashier.getBalance()).to.equal(950000);
+            expect(casino.handle(countMoney, true)).to.be.true;
+            expect(countMoney.getTotal()).to.equal(1000000.00);
+        });
+
+        it("should handle callbacks anonymously", function () {
+            var countMoney = new CountMoney,
+                handler    = CallbackHandler.accepting(function (countMoney) {
+                    countMoney.record(50);
+                }, CountMoney);
+            expect(handler.handle(countMoney)).to.be.true;
+            expect(countMoney.getTotal()).to.equal(50);
+        });
+
+        it("should handle compound keys", function () {
+            var cashier    = new Cashier(1000000.00),
+                blackjack  = new Activity('Blackjack'),
+                bank       = new (Accountable.extend()),
+                inventory  = new (CallbackHandler.extend({
+                    $handle:[
+                        [Cashier, Activity], function (accountable) {
+                            this.accountable = accountable;
+                        }]
+                }));
+            expect(inventory.handle(cashier)).to.be.true;
+            expect(inventory.accountable).to.equal(cashier);
+            expect(inventory.handle(blackjack)).to.be.true;
+            expect(inventory.accountable).to.equal(blackjack);
+            expect(inventory.handle(bank)).to.be.false;
+        });
+
+        it("should unregister compound keys", function () {
+            var cashier    = new Cashier(1000000.00),
+                blackjack  = new Activity('Blackjack'),
+                bank       = new (Accountable.extend()),
+                inventory  = new CallbackHandler,
+                unregister = $handle(inventory, [Cashier, Activity], function (accountable) {
+                    this.accountable = accountable;
+                });
+            expect(inventory.handle(cashier)).to.be.true;
+            expect(inventory.accountable).to.equal(cashier);
+            expect(inventory.handle(blackjack)).to.be.true;
+            expect(inventory.accountable).to.equal(blackjack);
+            expect(inventory.handle(bank)).to.be.false;
+            unregister();
+            expect(inventory.handle(cashier)).to.be.false;
+            expect(inventory.handle(blackjack)).to.be.false;
+        });
+    })
+
+    describe("#defer", function () {
+        it("should handle objects eventually", function (done) {
+            var cashier    = new Cashier(750000.00),
+                casino     = new Casino('Venetian').addHandlers(cashier),
+                wireMoney  = new WireMoney(250000);
+            Promise.resolve(casino.defer(wireMoney)).then(function (handled) {
+                expect(handled).to.be.true;
+                expect(wireMoney.getReceived()).to.equal(250000);
+                done();
+            });
+        });
+
+        it("should handle objects eventually with promise", function (done) {
+            var bank       = (new (CallbackHandler.extend({
+                    $handle:[
+                        WireMoney, function (wireMoney) {
+                            wireMoney.setReceived(50000);
+                            return Promise.delay(wireMoney, 100);
+                        }]
+                }))),
+                casino     = new Casino('Venetian').addHandlers(bank),
+                wireMoney  = new WireMoney(150000);
+            Promise.resolve(casino.defer(wireMoney)).then(function (handled) {
+                expect(handled).to.be.true;
+                expect(wireMoney.getReceived()).to.equal(50000);
+                done();
+            });
+        });
+
+        it("should handle callbacks anonymously with promise", function (done) {
+            var handler    = CallbackHandler.accepting(function (countMoney) {
+                    countMoney.record(50);
+                }, CountMoney),
+                countMoney = new CountMoney;
+            Promise.resolve(handler.defer(countMoney)).then(function (handled) {
+                expect(handled).to.be.true;
+                expect(countMoney.getTotal()).to.equal(50);
+                done();
+            });
+        });
+    });
+
+    describe("#resolve", function () {
+        it("should resolve explicit objects", function () {
+            var cashier    = new Cashier(1000000.00),
+                inventory  = new (CallbackHandler.extend({
+                    $provide:[Cashier, cashier]
+                }));
+            expect(inventory.resolve(Cashier)).to.equal(cashier);
+        });
+
+        it("should infer constraint from explicit objects", function () {
+            var cashier    = new Cashier(1000000.00),
+                inventory  = new CallbackHandler;
+            $provide(inventory, cashier);
+            expect(inventory.resolve(Cashier)).to.equal(cashier);
+        });
+
+        it("should resolve copy of object with $copy", function () {
+            var Circle     = Base.extend({
+                    constructor: function (radius) {
+                        this.radius = radius;
+                    },
+                    copy: function () {
+                        return new Circle(this.radius);
+                    }
+                }),
+                circle     = new Circle(2),
+                shapes     = new (CallbackHandler.extend({
+                    $provide:[Circle, $copy(circle)]
+                }));
+           var shape = shapes.resolve(Circle);
+           expect(shape).to.not.equal(circle);
+           expect(shape.radius).to.equal(2);
+        });
+
+        it("should resolve objects by class implicitly", function () {
+            var cashier    = new Cashier(1000000.00),
+                casino     = new Casino('Belagio').addHandlers(cashier);
+            expect(casino.resolve(Casino)).to.equal(casino);
+            expect(casino.resolve(Cashier)).to.equal(cashier);
+        });
+
+        it("should resolve objects by protocol implicitly", function () {
+            var blackjack  = new CardTable("BlackJack", 1, 5),
+                casino     = new Casino('Belagio').addHandlers(blackjack);
+            expect(casino.resolve(Game)).to.equal(blackjack);
+        });
+
+        it("should resolve objects by class explicitly", function () {
+            var casino     = new Casino('Belagio'),
+                pitBoss    = casino.resolve(PitBoss);
+            expect(pitBoss).to.be.an.instanceOf(PitBoss);
+        });
+
+        it("should resolve objects by per instance", function () {
+            var cashier    = new Cashier(1000000.00),
+                provider   = new CallbackHandler;
+            $provide(provider, Cashier, function (resolution) {
+                return cashier;
+            });
+            expect(provider.resolve(Cashier)).to.equal(cashier);
+        });
+
+        it("should resolve objects by class invariantly", function () {
+            var cashier    = new Cashier(1000000.00),
+                inventory  = new (CallbackHandler.extend({
+                    $provide:[
+                        $eq(Cashier), function (resolution) {
+                            return cashier;
+                        }]
+                }));
+            expect(inventory.resolve(Accountable)).to.be.undefined;
+            expect(inventory.resolve(Cashier)).to.equal(cashier);
+            $provide(inventory, Cashier, function (resolution) {
+                return cashier;
+            });
+            expect(inventory.resolve(Accountable)).to.equal(cashier);
+        });
+
+        it("should resolve objects by protocol invariantly", function () {
+            var blackjack  = new CardTable("BlackJack", 1, 5),
+                cardGames  = new (CallbackHandler.extend({
+                    $provide:[
+                        $eq(Game), function (resolution) {
+                            return blackjack;
+                        }]
+                }));
+            expect(cardGames.resolve(CardTable)).to.be.undefined;
+            expect(cardGames.resolve(Game)).to.equal(blackjack);
+        });
+
+        it("should resolve objects by class instantly", function () {
+            var cashier    = new Cashier(1000000.00),
+                blackjack  = new CardTable("BlackJack", 1, 5),
+                inventory  = new (CallbackHandler.extend({
+                    $provide:[
+                        Cashier, function (resolution) {
+                            return cashier;
+                        },
+                        CardTable, function (resolution) {
+                            return Promise.resolve(blackjack);
+                        }]
+                }));
+            expect(inventory.resolve($instant(Cashier))).to.equal(cashier);
+            expect($isPromise(inventory.resolve(CardTable))).to.be.true;
+            expect(inventory.resolve($instant(CardTable))).to.be.undefined;
+        });
+
+        it("should resolve objects by protocol instantly", function () {
+            var blackjack  = new CardTable("BlackJack", 1, 5),
+                cardGames  = new (CallbackHandler.extend({
+                    $provide:[
+                        Game, function (resolution) {
+                            return Promise.resolve(blackjack);
+                        }]
+                }));
+            expect($isPromise(cardGames.resolve(Game))).to.be.true;
+            expect(cardGames.resolve($instant(Game))).to.be.undefined;
+        });
+
+        it("should resolve by string literal", function () {
+            var blackjack  = new CardTable("BlackJack", 1, 5),
+                cardGames  = new (CallbackHandler.extend({
+                    $provide:[
+                        'BlackJack', function (resolution) {
+                            return blackjack;
+                        }]
+                }));
+            expect(cardGames.resolve('BlackJack')).to.equal(blackjack);
+        });
+
+        it("should resolve by string instance", function () {
+            var blackjack  = new CardTable("BlackJack", 1, 5),
+                cardGames  = new (CallbackHandler.extend({
+                    $provide:[
+                        'BlackJack', function (resolution) {
+                            return blackjack;
+                        }]
+                }));
+            expect(cardGames.resolve(new String("BlackJack"))).to.equal(blackjack);
+        });
+
+        it("should resolve string by regular expression", function () {
+            var blackjack  = new CardTable("BlackJack", 1, 5),
+                cardGames  = new (CallbackHandler.extend({
+                    $provide:[
+                        /black/i, function (resolution) {
+                            return blackjack;
+                        }]
+                }));
+            expect(cardGames.resolve('BlackJack')).to.equal(blackjack);
+        });
+
+        it("should resolve instances using instance class", function () {
+            var Config  = Base.extend({
+                    constructor: function (key) {
+                        this.extend({
+                                getKey: function () { return key; }
+                            });
+                    }
+                });
+                settings  = new (CallbackHandler.extend({
+                    $provide:[
+                        Config, function (resolution) {
+                            var config = resolution.getKey(),
+                                key    = config.getKey();
+                            if (key == "url") {
+                                return "my.server.com";
+                            } else if (key == "user") {
+                                return "dba";
+                            }
+                        }]
+                }));
+                expect(settings.resolve(new Config("user"))).to.equal("dba");
+                expect(settings.resolve(new Config("name"))).to.be.undefined;
+        });
+
+        it("should resolve objects with compound keys", function () {
+            var blackjack  = new CardTable("BlackJack", 1, 5),
+                cashier    = new Cashier(1000000.00),
+                cardGames  = new (CallbackHandler.extend({
+                    $provide:[
+                        [CardTable, Cashier], function (resolution) {
+                            var key = resolution.getKey();
+                            if (key.conformsTo(Game)) {
+                                return blackjack;
+                            } else if (key === Cashier) {
+                                return cashier;
+                            }
+                        }]
+                }));
+            expect(cardGames.resolve(Game)).to.equal(blackjack);
+            expect(cardGames.resolve(Cashier)).to.equal(cashier);
+        });
+
+        it("should unregister objects with compound keys", function () {
+            var blackjack  = new CardTable("BlackJack", 1, 5),
+                cashier    = new Cashier(1000000.00),
+                cardGames  = new CallbackHandler,
+                unregister = $provide(cardGames, [CardTable, Cashier], function (resolution) {
+                    var key = resolution.getKey();
+                    if (key.conformsTo(Game)) {
+                        return blackjack;
+                    } else if (key === Cashier) {
+                        return cashier;
+               }});
+            expect(cardGames.resolve(Game)).to.equal(blackjack);
+            expect(cardGames.resolve(Cashier)).to.equal(cashier);
+            unregister();
+            expect(cardGames.resolve(Game)).to.be.undefined;
+            expect(cardGames.resolve(Cashier)).to.be.undefined;
+        });
+
+        it("should not resolve objects if not found", function () {
+            var something = new CallbackHandler;
+            expect(something.resolve(Cashier)).to.be.undefined;
+        });
+
+        it("should not resolve objects if $NOT_HANDLED", function () {
+            var inventory  = new (CallbackHandler.extend({
+                    $provide:[
+                        Cashier, function (resolution) {
+                            return $NOT_HANDLED;
+                        }]
+                }));
+            expect(inventory.resolve(Cashier)).to.be.undefined;
+        });
+
+        it("should resolve unknown objects", function () {
+            var blackjack  = new CardTable("BlackJack", 1, 5),
+                cardGames  = new (CallbackHandler.extend({
+                    $provide:[
+                        True, function (resolution) {
+                            if (resolution.getKey() === CardTable) {
+                                return blackjack;
+                            }
+                        }]
+                }));
+            expect(cardGames.resolve(CardTable)).to.equal(blackjack);
+            expect(cardGames.resolve(Game)).to.be.undefined;
+        });
+
+        it("should resolve objects by class eventually", function (done) {
+            var casino = new Casino('Venetian');
+            Promise.resolve(casino.resolve(DrinkServer)).then(function (server) {
+                expect(server).to.be.an.instanceOf(DrinkServer);
+                done();
+            });
+        });
+
+        it("should not resolve by string", function () {
+            var casino = new Casino('Venetian');
+            expect(casino.resolve("slot machine")).to.be.undefined;
+        });
+
+        it("should resolve with precedence rules", function () {
+            var Checkers  = Base.extend(Game),
+                inventory = new (CallbackHandler.extend({
+                    $provide:[
+                        function (constraint) {
+                            return constraint === PitBoss;
+                        }, function (callback) {
+                            return 0;
+                            },
+                        null, function (callback) {
+                            return 1;
+                        },
+                        Checkers, function (callback) {
+                            return 2;
+                        },
+                        Level1Security, function (callback) {
+                            return 3;
+                        },
+                        Activity, function (callback) {
+                            return 5;
+                        },
+                        Accountable, function (callback) {
+                            return 4;
+                        },
+                        CardTable, function (callback) {
+                            return 6;
+                            }]
+                }));
+                      expect(inventory.resolve(CardTable)).to.equal(6);
+            expect(inventory.resolve(Activity)).to.equal(5);
+            expect(inventory.resolve(Cashier)).to.equal(1);
+            expect(inventory.resolve(Security)).to.equal(3);
+            expect(inventory.resolve(Game)).to.equal(2);
+            expect(inventory.resolve(Casino)).to.equal(1);
+            expect(inventory.resolve(PitBoss)).to.equal(0);
+        });
+    });
+
+    describe("#resolveAll", function () {
+        it("should resolve all objects by class explicitly", function (done) {
+            var belagio    = new Casino('Belagio'),
+                venetian   = new Casino('Venetian'),
+                paris      = new Casino('Paris'),
+                strip      = belagio.next(venetian, paris);
+            Promise.resolve(strip.resolveAll(Casino)).then(function (casinos) {
+                expect(casinos).to.eql([belagio, venetian, paris]);
+                done();
+            });
+        });
+
+        it("should resolve all objects by class eventually", function (done) {
+            var stop1      = [ new PitBoss("Craig"),  new PitBoss("Matthew") ],
+                stop2      = [ new PitBoss("Brenda"), new PitBoss("Lauren"), new PitBoss("Kaitlyn") ],
+                stop3      = [ new PitBoss("Phil") ],
+                bus1       = new (CallbackHandler.extend({
+                    $provide:[ PitBoss, function (resolution) {
+                        expect(resolution.isMany()).to.be.true;
+                        return Promise.delay(stop1, 75);
+                    }]
+                })),
+                bus2       = new (CallbackHandler.extend({
+                    $provide:[ PitBoss, function (resolution) {
+                        expect(resolution.isMany()).to.be.true;
+                        return Promise.delay(stop2, 100);
+                    }]
+                })),
+                bus3       = new (CallbackHandler.extend({
+                    $provide:[ PitBoss, function (resolution) {
+                        expect(resolution.isMany()).to.be.true;
+                        return Promise.delay(stop3, 50);
+                    }]
+                })),
+                company    = bus1.next(bus2, bus3);
+            Promise.resolve(company.resolveAll(PitBoss)).then(function (pitBosses) {
+                expect(pitBosses).to.eql(js.Array2.flatten([stop1, stop2, stop3]));
+                done();
+            });
+        });
+
+        it("should resolve all objects by class instantly", function () {
+            var belagio    = new Casino('Belagio'),
+                venetian   = new Casino('Venetian'),
+                paris      = new Casino('Paris'),
+                strip      = new (CallbackHandler.extend({
+                    $provide:[
+                        Casino, function (resolution) {
+                            return venetian;
+                        },
+                        Casino, function (resolution) {
+                            return Promise.resolve(belagio);
+                        },
+                        Casino, function (resolution) {
+                            return paris;
+                        }]
+                }));
+            var casinos = strip.resolveAll($instant(Casino));
+            expect(casinos).to.eql([venetian, paris]);
+        });
+
+        it("should return empty array if none resolved", function (done) {
+            Promise.resolve((new CallbackHandler).resolveAll(Casino)).then(function (casinos) {
+                expect(casinos).to.have.length(0);
+                done();
+            });
+        });
+
+        it("should return empty array instantly if none resolved", function () {
+            var belagio  = new Casino('Belagio'),
+                strip    = new (CallbackHandler.extend({
+                    $provide:[
+                        Casino, function (resolution) {
+                            return Promise.resolve(belagio);
+                        }]
+                }));
+            var casinos = strip.resolveAll($instant(Casino));
+            expect(casinos).to.have.length(0);
+        });
+    });
+
+    describe("#lookup", function () {
+        it("should lookup by class", function () {
+            var blackjack  = new CardTable("BlackJack", 1, 5),
+                cardGames  = new (CallbackHandler.extend({
+                    $lookup:[
+                        CardTable, function (lookup) {
+                            return blackjack;
+                        },
+                        null, function (lookup) {
+                            return blackjack;
+                        }]
+                }));
+            expect(cardGames.lookup(CardTable)).to.equal(blackjack);
+            expect(cardGames.lookup(Game)).to.be.undefined;
+        });
+
+        it("should lookup by protocol", function () {
+            var blackjack  = new CardTable("BlackJack", 1, 5),
+                cardGames  = new (CallbackHandler.extend({
+                    $lookup:[
+                        Game, function (lookup) {
+                            return blackjack;
+                        },
+                        null, function (lookup) {
+                            return blackjack;
+                        }]
+                }));
+            expect(cardGames.lookup(Game)).to.equal(blackjack);
+            expect(cardGames.lookup(CardTable)).to.be.undefined;
+        });
+
+        it("should lookup by string", function () {
+            var blackjack  = new CardTable("BlackJack", 1, 5),
+                cardGames  = new (CallbackHandler.extend({
+                    $lookup:[
+                        'blackjack', function (lookup) {
+                            return blackjack;
+                        },
+                        /game/, function (lookup) {
+                            return blackjack;
+                        }]
+                }));
+            expect(cardGames.lookup('blackjack')).to.equal(blackjack);
+            expect(cardGames.lookup('game')).to.be.undefined;
+        });
+    });
+
+    describe("#next", function () {
+        it("should cascade handlers using short syntax", function () {
+            var guest    = new Guest(17),
+                baccarat = new Activity('Baccarat'),
+                level1   = new Level1Security(),
+                level2   = new Level2Security(),
+                security = CallbackHandler(level1).next(level2);
+            expect(Security(security).admit(guest)).to.be.false;
+            Security(security).trackActivity(baccarat);
+        });
+
+        it("should compose handlers using short syntax", function () {
+            var baccarat = new Activity('Baccarat'),
+                level1   = new Level1Security(),
+                level2   = new Level2Security(),
+                compose  = CallbackHandler(level1).next(level2, baccarat),
+            countMoney = new CountMoney();
+            expect(compose.handle(countMoney)).to.be.true;
+        });
+    });
+
+    describe("#when", function () {
+        it("should restrict handlers using short syntax", function () {
+            var blackjack  = new CardTable("BlackJack", 1, 5),
+                cardGames  = (new (CallbackHandler.extend({
+                    $handle:[
+                        True, function (cardTable) {
+                            cardTable.closed = true;
+                        }]
+                }))).when(CardTable);
+            expect(cardGames.handle(blackjack)).to.be.true;
+            expect(blackjack.closed).to.be.true;
+            expect(cardGames.handle(new Cashier)).to.be.false;
+        });
+
+        it("should restrict handlers invariantly using short syntax", function () {
+            var Blackjack  = CardTable.extend({
+                    constructor: function () {
+                        this.base("BlackJack", 1, 5);
+                    }
+                }),
+                blackjack  = new Blackjack,
+                cardGames  = (new (CallbackHandler.extend({
+                    $handle:[
+                        True, function (cardTable) {
+                            cardTable.closed = true;
+                        }]
+                }))).when($eq(CardTable));
+            expect(cardGames.handle(blackjack)).to.be.false;
+            expect(blackjack.closed).to.be.undefined;
+            expect(cardGames.handle(new Cashier)).to.be.false;
+        });
+
+        it("should restrict providers using short syntax", function () {
+            var blackjack  = new CardTable("BlackJack", 1, 5),
+                cardGames  = (new (CallbackHandler.extend({
+                    $provide:[
+                        True, function (resolution) {
+                            return blackjack;
+                        }]
+                }))).when(CardTable);
+            expect(cardGames.resolve(CardTable)).to.equal(blackjack);
+            expect(cardGames.resolve(Cashier)).to.be.undefined;
+        });
+
+        it("should restrict providers invariantly using short syntax", function () {
+            var blackjack  = new CardTable("BlackJack", 1, 5),
+                cardGames  = (new (CallbackHandler.extend({
+                    $provide:[
+                        True, function (resolution) {
+                            return blackjack;
+                        }]
+                }))).when($eq(Activity));
+            expect(cardGames.resolve(Activity)).to.equal(blackjack);
+            expect(cardGames.resolve(CardTable)).to.be.undefined;
+            expect(cardGames.resolve(Cashier)).to.be.undefined;
+        });
+    });
+});
+
+describe("MethodCallbackHandler", function () {
+    var Calculator = Protocol.extend({
+        add:    function (op1, op2) {},
+        divide: function (dividend, divisor) {},
+        clear:  function () {}
+    });
+
+    describe("#handle", function () {
+        it("should call function", function () {
+            var add = new MethodCallbackHandler("add", function (op1, op2) {
+                return op1 + op2;
+            });
+            expect(Calculator(add).add(5, 10)).to.equal(15);
+        });
+
+        it("should call function using short syntax", function () {
+            var add = function (op1, op2) { return op1 + op2; }.implementing("add");
+            expect(Calculator(add).add(22, 19)).to.equal(41);
+        });
+
+        it("should propgate exception in function", function () {
+            var divide = new MethodCallbackHandler("divide", function (dividend, divisor) {
+                if (divisor === 0)
+                    throw new Error("Division by zero");
+                return dividend / divisor;
+            });
+            expect(function () {
+                Calculator(divide).divide(10,0);
+            }).to.throw(Error, /Division by zero/);
+        });
+
+        it("should bind function", function () {
+            var context = new Object,
+                clear   = new MethodCallbackHandler("clear", (function () {
+                return context;
+            }).bind(context));
+            expect(Calculator(clear).clear()).to.equal(context);
+        });
+
+        it("should require non-empty method name", function () {
+            expect(function () {
+                new MethodCallbackHandler(null, function () {});
+            }).to.throw(Error, /No methodName specified/);
+
+            expect(function () {
+                new MethodCallbackHandler(void 0, function () {});
+            }).to.throw(Error, /No methodName specified/);
+
+            expect(function () {
+                new MethodCallbackHandler(10, function () {});
+            }).to.throw(Error, /No methodName specified/);
+
+            expect(function () {
+                new MethodCallbackHandler("", function () {});
+            }).to.throw(Error, /No methodName specified/);
+
+            expect(function () {
+                new MethodCallbackHandler("   ", function () {});
+            }).to.throw(Error, /No methodName specified/);
+        });
+    });
+});
+
+describe("CascadeCallbackHandler", function () {
+    describe("#handle", function () {
+        it("should cascade handlers", function () {
+            var guest    = new Guest(17),
+                baccarat = new Activity('Baccarat'),
+                level1   = new Level1Security(),
+                level2   = new Level2Security(),
+                security = new CascadeCallbackHandler(level1, level2);
+            expect(Security(security).admit(guest)).to.be.false;
+            Security(security).trackActivity(baccarat);
+        });
+    });
+});
+
+describe("InvocationCallbackHandler", function () {
+    describe("#handle", function () {
+        it("should handle invocations", function () {
+            var guest1 = new Guest(17),
+                guest2 = new Guest(21),
+                level1 = CallbackHandler(new Level1Security());
+            expect(Security(level1).admit(guest1)).to.be.false;
+            expect(Security(level1).admit(guest2)).to.be.true;
+        });
+
+        it("should ignore explicitly unhandled invocations", function () {
+            var texasHoldEm = new CardTable("Texas Hold'em", 2, 7),
+            casino    = new Casino('Caesars Palace')
+                .addHandlers(texasHoldEm);
+            expect(function () {
+                Game(casino).open(5);
+            }).to.not.throw(Error);
+            expect(function () {
+                Game(casino).open(9);
+            }).to.throw(Error, /has no method 'open'/);
+        });
+
+        it("should fail missing methods", function () {
+            var letItRide = new Activity('Let It Ride'),
+                level1    = new Level1Security(),
+                casino    = new Casino('Treasure Island')
+                .addHandlers(level1, letItRide);
+
+            expect(function () {
+                Security(casino).trackActivity(letItRide)
+            }).to.throw(Error, /has no method 'trackActivity'/);
+        });
+
+        it("can ignore missing methods", function () {
+            var letItRide = new Activity('Let It Ride'),
+                level1    = new Level1Security(),
+                casino    = new Casino('Treasure Island')
+                .addHandlers(level1, letItRide);
+            expect(Security(casino.bestEffort()).trackActivity(letItRide)).to.be.undefined;
+        });
+
+        it("should require protocol conformance", function () {
+            var gate  = new (CallbackHandler.extend(Security, {
+                    admit: function (guest) { return true; }
+                }));
+            expect(Security(gate.strict()).admit(new Guest('Me'))).to.be.true;
+        });
+
+        it("should reject if no protocol conformance", function () {
+            var gate  = new (CallbackHandler.extend({
+                    admit: function (guest) { return true; }
+                }));
+            expect(function () {
+                Security(gate.strict()).admit(new Guest('Me'))
+            }).to.throw(Error, /has no method 'admit'/);
+        });
+
+        it("can broadcast invocations", function () {
+            var letItRide = new Activity('Let It Ride'),
+                level1    = new Level1Security(),
+                level2    = new Level2Security(),
+                casino    = new Casino('Treasure Island')
+                .addHandlers(level1, level2, letItRide);
+            Security(casino.broadcast()).trackActivity(letItRide);
+        });
+
+        it("can notify invocations", function () {
+            var letItRide = new Activity('Let It Ride'),
+                level1    = new Level1Security(),
+                casino    = new Casino('Treasure Island')
+                .addHandlers(level1, letItRide);
+            Security(casino.notify()).trackActivity(letItRide);
+        });
+    })
+});
+*/
+},{"../lib/callback.js":2,"../lib/miruken.js":9,"bluebird":12,"chai":13}],55:[function(require,module,exports){
+var miruken = require('../lib/miruken.js'),
+    context = require('../lib/context.js')
+    chai    = require("chai"),
+    expect  = chai.expect;
+
+eval(base2.namespace);
+eval(miruken.namespace);
+eval(context.namespace);
+
+describe("Context", function() {
+    var Dog = Base.extend({});
+    
+    describe("#getState", function() {
+        it("should start in the default state", function() {
+            var context = new Context;
+            expect(context.getState()).to.equal(ContextState.Active);
+            expect(context.getChildren()).to.be.empty;
+        });
+    });
+    
+    describe("#getParent", function() {
+        it("should not have a parent when root", function() {
+            var context = new Context;
+            expect(context.getParent()).to.not.exist;
+        });
+        
+        it("should have a parent when a child", function() {
+            var context = new Context,
+            child   = context.newChild();
+            expect(child.getParent()).to.equal(context);
+        });
+    });
+    
+    describe("#getChildren", function() {
+        it("should have children when created", function() {
+            var context = new Context,
+                child1  = context.newChild(),
+                child2  = context.newChild();
+            expect(context.getChildren()).to.include(child1, child2);
+        });
+    });
+    
+    describe("#hasChildren", function() {
+        it("should not have children by default", function() {
+            var context = new Context;
+            expect(context.hasChildren()).to.be.false;
+        });
+        
+        it("should have children when created", function() {
+            var context = new Context,
+                child   = context.newChild();
+            expect(context.hasChildren()).to.be.true;
+        });
+    });
+    
+    describe("#getRoot", function() {
+        it("should return self if no childern", function() {
+            var context = new Context;
+            expect(context.getRoot()).to.equal(context);
+        });
+        
+        it("should return root context when descendant", function() {
+            var context    = new Context,
+                child      = context.newChild(),
+                grandChild = child.newChild();
+            expect(grandChild.getRoot()).to.equal(context);
+        });
+    });
+
+    describe("#newChild", function() {
+        it("should return new child context", function() {
+            var context      = new Context,
+                childContext = context.newChild();
+            expect(childContext.getParent()).to.equal(context);
+        });
+
+        it("should execute block with new child context and then end it", function() {
+            var context      = new Context,
+                childContext = context.newChild();
+            $using(
+                childContext, function (ctx) {
+                    expect(ctx.getState()).to.equal(ContextState.Active);
+                    expect(ctx.getParent()).to.equal(context); }
+            );
+            expect(childContext.getState()).to.equal(ContextState.Ended);
+        });
+    });
+
+    describe("#resolve", function() {
+        it("should resolve context to self", function() {
+            var context = new Context;
+            expect(context.resolve(Context)).to.equal(context);
+        });
+        
+        it("should return root context when descendant", function() {
+            var context    = new Context,
+                child      = context.newChild(),
+                grandChild = child.newChild();
+            expect(grandChild.getRoot()).to.equal(context);
+        });
+    });
+    
+    describe("#end", function() {
+        it("should end the context", function() {
+            var context = new Context;
+            context.end();
+            expect(context.getState()).to.equal(ContextState.Ended);
+        });
+        
+        it("should end children", function() {
+            var context = new Context,
+                child   = context.newChild();
+            context.end();
+            expect(context.getState()).to.equal(ContextState.Ended);
+            expect(child.getState()).to.equal(ContextState.Ended);
+        });
+    });
+
+    describe("#dispose", function() {
+        it("should end the context", function() {
+            var context = new Context;
+            context.dispose();
+            expect(context.getState()).to.equal(ContextState.Ended);
+        });
+    });
+    
+    describe("#unwind", function() {
+        it("should end children when ended", function() {
+            var context = new Context,
+                child1  = context.newChild(),
+                child2  = context.newChild();
+            context.unwind();
+            expect(context.getState()).to.equal(ContextState.Active);
+            expect(child1.getState()).to.equal(ContextState.Ended);
+            expect(child2.getState()).to.equal(ContextState.Ended);
+        });
+    });
+
+    describe("#unwindToRootContext", function() {
+        it("should end children except and root and return it", function() {
+            var context    = new Context,
+                child1     = context.newChild(),
+                child2     = context.newChild(),
+                grandChild = child1.newChild();
+            var root       = context.unwindToRootContext();
+            expect(root).to.equal(context);
+            expect(context.getState()).to.equal(ContextState.Active);
+            expect(child1.getState()).to.equal(ContextState.Ended);
+            expect(child2.getState()).to.equal(ContextState.Ended);
+            expect(grandChild.getState()).to.equal(ContextState.Ended);
+        });
+    });
+
+    describe("#store", function() {
+        it("should add object to the context", function() {
+            var dog     = new Dog,
+                context = new Context;
+            expect(context.resolve(Dog)).to.be.undefined;
+            context.store(dog);
+            expect(context.resolve(Dog)).to.equal(dog);
+        });
+    });
+
+    describe("#handle", function() {
+        it("should traverse ancestors", function() {
+            var dog        = new Dog,
+                context    = new Context,
+                child1     = context.newChild(),
+                child2     = context.newChild(),
+                grandChild = child1.newChild();
+            context.store(dog);
+            expect(grandChild.resolve(Dog)).to.equal(dog);
+        });
+    });
+
+    describe("#handleAxis", function() {
+        it("should wrap context", function() {
+            var dog       = new Dog,
+                context   = new Context,
+                wrapped   = context.self(),
+                decorated = wrapped.when(function(cb) { return true; });
+            context.store(dog);
+            expect(wrapped).to.not.equal(context);
+            expect(wrapped.constructor).to.equal(Context);
+            expect(wrapped.addHandlers(dog)).to.equal(wrapped);
+            expect(decorated.getDecoratee()).to.equal(wrapped);
+            expect(context.resolve(Dog)).to.equal(dog);
+        });
+
+        it("should traverse self", function() {
+            var dog     = new Dog,
+                context = new Context,
+                child   = context.newChild();
+            context.store(dog);
+            expect(child.self().resolve(Dog)).to.be.undefined;
+            expect(context.self().resolve(Dog)).to.equal(dog);
+        });
+
+        it("should traverse root", function() {
+            var dog   = new Dog,
+                root  = new Context,
+                child = root.newChild();
+            child.store(dog);
+            expect(child.root().resolve(Dog)).to.be.undefined;
+            root.store(dog);
+            expect(child.root().resolve(Dog)).to.equal(dog);
+        });
+
+        it("should traverse children", function() {
+            var dog        = new Dog,
+                root       = new Context,
+                child1     = root.newChild(),
+                child2     = root.newChild(),
+                child3     = root.newChild(),
+                grandChild = child3.newChild();
+            child2.store(dog);
+            expect(child2.child().resolve(Dog)).to.be.undefined;
+            expect(grandChild.child().resolve(Dog)).to.be.undefined;
+            expect(root.child().resolve(Dog)).to.equal(dog);
+        });
+
+        it("should traverse siblings", function() {
+            var dog        = new Dog,
+                root       = new Context,
+                child1     = root.newChild(),
+                child2     = root.newChild(),
+                child3     = root.newChild(),
+                grandChild = child3.newChild();
+            child3.store(dog);
+            expect(root.sibling().resolve(Dog)).to.be.undefined;
+            expect(child3.sibling().resolve(Dog)).to.be.undefined;
+            expect(grandChild.sibling().resolve(Dog)).to.be.undefined;
+            expect(child2.sibling().resolve(Dog)).to.equal(dog);
+        });
+
+        it("should traverse children and self", function() {
+            var dog        = new Dog,
+                root       = new Context,
+                child1     = root.newChild(),
+                child2     = root.newChild(),
+                child3     = root.newChild(),
+                grandChild = child3.newChild();
+            child3.store(dog);
+            expect(child1.childOrSelf().resolve(Dog)).to.be.undefined;
+            expect(grandChild.childOrSelf().resolve(Dog)).to.be.undefined;
+            expect(child3.childOrSelf().resolve(Dog)).to.equal(dog);
+            expect(root.childOrSelf().resolve(Dog)).to.equal(dog);
+        });
+
+        it("should traverse siblings and self", function() {
+            var dog        = new Dog,
+                root       = new Context,
+                child1     = root.newChild(),
+                child2     = root.newChild(),
+                child3     = root.newChild(),
+                grandChild = child3.newChild();
+            child3.store(dog);
+            expect(root.siblingOrSelf().resolve(Dog)).to.be.undefined;
+            expect(grandChild.siblingOrSelf().resolve(Dog)).to.be.undefined;
+            expect(child3.siblingOrSelf().resolve(Dog)).to.equal(dog);
+            expect(child2.siblingOrSelf().resolve(Dog)).to.equal(dog);
+        });
+
+        it("should traverse ancestors", function() {
+            var dog        = new Dog,
+                root       = new Context,
+                child      = root.newChild(),
+                grandChild = child.newChild();
+            root.store(dog);
+            expect(root.ancestor().resolve(Dog)).to.be.undefined;
+            expect(grandChild.ancestor().resolve(Dog)).to.equal(dog);
+        });
+
+        it("should traverse ancestors or self", function() {
+            var dog        = new Dog,
+                root       = new Context,
+                child      = root.newChild(),
+                grandChild = child.newChild();
+            root.store(dog);
+            expect(root.ancestorOrSelf().resolve(Dog)).to.equal(dog);
+            expect(grandChild.ancestorOrSelf().resolve(Dog)).to.equal(dog);
+        });
+
+        it("should traverse descendants", function() {
+            var dog        = new Dog,
+                root       = new Context,
+                child1     = root.newChild(),
+                child2     = root.newChild(),
+                child3     = root.newChild(),
+                grandChild = child3.newChild();
+            grandChild.store(dog);
+            expect(grandChild.descendant().resolve(Dog)).to.be.undefined;
+            expect(child2.descendant().resolve(Dog)).to.be.undefined;
+            expect(child3.descendant().resolve(Dog)).to.equal(dog);
+            expect(root.descendant().resolve(Dog)).to.equal(dog);
+        });
+
+        it("should traverse descendants or self", function() {
+            var dog        = new Dog,
+                root       = new Context,
+                child1     = root.newChild(),
+                child2     = root.newChild(),
+                child3     = root.newChild(),
+                grandChild = child3.newChild();
+            grandChild.store(dog);
+            expect(child2.descendantOrSelf().resolve(Dog)).to.be.undefined;
+            expect(grandChild.descendantOrSelf().resolve(Dog)).to.equal(dog);
+            expect(child3.descendantOrSelf().resolve(Dog)).to.equal(dog);
+            expect(root.descendantOrSelf().resolve(Dog)).to.equal(dog);
+        });
+
+        it("should traverse parent, siblings or |self|", function() {
+            var dog        = new Dog,
+                root       = new Context,
+                child1     = root.newChild(),
+                child2     = root.newChild(),
+                child3     = root.newChild(),
+                grandChild = child3.newChild();
+            root.store(dog);
+            expect(child2.descendantOrSelf().resolve(Dog)).to.be.undefined;
+            expect(root.parentSiblingOrSelf().resolve(Dog)).to.equal(dog);
+        });
+
+        it("should traverse parent, |siblings| or self", function() {
+            var dog        = new Dog,
+                root       = new Context,
+                child1     = root.newChild(),
+                child2     = root.newChild(),
+                child3     = root.newChild(),
+                grandChild = child3.newChild();
+            child2.store(dog);
+            expect(grandChild.descendantOrSelf().resolve(Dog)).to.be.undefined;
+            expect(child3.parentSiblingOrSelf().resolve(Dog)).to.equal(dog);
+        });
+
+        it("should traverse |parent|, siblings or self", function() {
+            var dog        = new Dog,
+                root       = new Context,
+                child1     = root.newChild(),
+                child2     = root.newChild(),
+                child3     = root.newChild(),
+                grandChild = child3.newChild();
+            child3.store(dog);
+            expect(grandChild.parentSiblingOrSelf().resolve(Dog)).to.equal(dog);
+        });
+    });
+
+    describe("#observe", function() {
+        it("should observe context end", function() {
+            var context = new Context,
+                ending  = false, ended = false;
+            context.observe({
+                contextEnding: function(ctx) { 
+                    expect(ctx).to.equal(context);
+                    ending = !ended; 
+                },
+                contextEnded:  function(ctx) {
+                    expect(ctx).to.equal(context);
+                    ended  = true; 
+                }
+            });
+            context.end();
+            expect(ending).to.be.true;
+            expect(ended).to.be.true;
+        });
+    });
+
+    describe("#observe", function() {
+        it("should observe child context end", function() {
+            var context = new Context,
+                child   = context.newChild(),
+                ending  = false, ended = false;
+            context.observe({
+                childContextEnding: function(ctx) {
+                    expect(ctx).to.equal(child);
+                    ending = !ended;
+                },
+                childContextEnded:  function(ctx) {
+                    expect(ctx).to.equal(child);
+                    ended  = true; 
+                }
+            });
+            child.end();
+            expect(ending).to.be.true;
+            expect(ended).to.be.true;
+        });
+    });
+
+    describe("#observe", function() {
+        it("can un-observe context end", function() {
+            var context = new Context,
+                ending  = false, ended = false;
+            var unobserve = context.observe({
+                contextEnding: function(ctx) { 
+                    expect(ctx).to.equal(context);
+                    ending = !ended; 
+                },
+                contextEnded:  function(ctx) {
+                    expect(ctx).to.equal(context);
+                    ended  = true; 
+                }
+            });
+            unobserve();
+            context.end();
+            expect(ending).to.be.false;
+            expect(ended).to.be.false;
+        });
+    });
+});
+
+describe("Contextual", function() {
+    var Shutdown = Base.extend({
+        constructor: function(methodName, args) {
+            var _vetos = [];
+            this.extend({
+                getVetos: function() { 
+                    return _vetos.slice(0); 
+                },
+                veto: function(reason) {
+                    _vetos.puh(reason);
+                }
+            });
+        }
+    });
+    
+    var Controller = Base.extend($contextual, {
+        shutdown: function(shutdown) {}
+    });
+
+    describe("#setContext", function() {
+        it("should be able to set context", function() {
+            var context    = new Context,
+                controller = new Controller;
+            controller.setContext(context);    
+            expect(controller.getContext()).to.equal(context);
+        });
+
+        it("should add handler when context set", function() {
+            var context    = new Context,
+                controller = new Controller;
+            controller.setContext(context);    
+            var resolve    = context.resolve(Controller);
+            expect(resolve).to.equal(controller);
+        });
+
+        it("should remove handler when context cleared", function() {
+            var context    = new Context,
+                controller = new Controller;
+            controller.setContext(context);    
+            var resolve    = context.resolve(Controller);
+            expect(resolve).to.equal(controller);
+            controller.setContext(null);
+            expect(context.resolve(Controller)).to.be.undefined;
+        });
+    });
+
+    describe("#isActiveContext", function() {
+        it("should be able to test if context active", function() {
+            var context    = new Context,
+                controller = new Controller;
+            controller.setContext(context);
+            expect(controller.isActiveContext()).to.be.true;
+        });
+    });
+
+    describe("#endContext", function() {
+        it("should be able to end context", function() {
+            var context    = new Context,
+                controller = new Controller;
+            controller.setContext(context);
+            controller.endContext();
+            expect(context.getState()).to.equal(ContextState.Ended);
+            expect(controller.isActiveContext()).to.be.false;
+        });
+    });
+});
+},{"../lib/context.js":3,"../lib/miruken.js":9,"chai":13}],56:[function(require,module,exports){
+var miruken  = require('../lib/miruken.js'),
+    context  = require('../lib/context.js')
+    error    = require('../lib/error.js'),
+    Promise  = require('bluebird'),
+    chai     = require("chai"),
+    expect   = chai.expect;
+
+eval(base2.namespace);
+eval(miruken.namespace);
+eval(miruken.context.namespace);
+eval(error.namespace);
+
+describe("ErrorCallbackHandler", function () {
+    describe("#handleError", function () {
+        it("should handle errors", function () {
+            var context      = new Context,
+                errorHandler = new ErrorCallbackHandler,
+                error        = new Error('passwords do not match');
+            context.addHandlers(errorHandler);
+            Promise.resolve(Errors(context).handleError(error)).then(function () {
+                done();
+            });
+        });
+
+        it("should be able to customize error handling", function (done) {
+            var context      = new Context,
+                errorHandler = new ErrorCallbackHandler,
+                error        = new Error('Something bad happended');
+            context.addHandlers(errorHandler);
+            var customize    = context.newChild().extend({
+                reportError: function (error, context) {
+                    return Promise.resolve('custom');
+                }
+            });
+            Promise.resolve(Errors(customize).handleError(error)).then(function (result) {
+                expect(result).to.equal('custom');
+                done();
+            });
+        });
+    });
+
+    describe("#handleException", function () {
+        it("should handle exceptions", function (done) {
+            var context      = new Context,
+                errorHandler = new ErrorCallbackHandler,
+                exception    = new TypeError('Expected a string argument');
+            context.addHandlers(errorHandler);
+            Promise.resolve(Errors(context).handleException(exception)).then(function () {
+                done();
+            });
+        });
+    })
+});
+
+describe("CallbackHandler", function () {
+    var Payments = Protocol.extend({
+        validateCard: function (card) {},
+        processPayment: function (payment) {}
+    });
+
+    var Paymentech = Base.extend({
+        validateCard: function (card) {
+            if (card.number.length < 10)
+                throw new Error("Card number must have at least 10 digits");
+        },
+        processPayment: function (payment) {
+            if (payment.amount > 500)
+                return Promise.reject(new Error("Amount exceeded limit"));
+        }
+    });
+
+    describe("#recoverable", function () {
+        it("should implicitly recover from errors synchronously", function () {
+            var context      = new Context,
+                errorHandler = new ErrorCallbackHandler;
+            context.addHandlers(new Paymentech, errorHandler);
+            Payments(context.recoverable()).validateCard({number:'1234'});
+        });
+
+        it("should implicitly recover from errors asynchronously", function (done) {
+            var context      = new Context,
+                errorHandler = new ErrorCallbackHandler;
+            context.addHandlers(new Paymentech, errorHandler); 
+            var pay = Payments(context.recoverable()).processPayment({amount:1000});
+            Promise.resolve(pay).then(function (result) {
+                expect(result).to.be.undefined;
+                done();
+            });
+        });
+
+        it("should be able to customize recovery from errors asynchronously", function (done) {
+            var context      = new Context,
+                errorHandler = new ErrorCallbackHandler;
+            context.addHandlers(new Paymentech, errorHandler);
+            var customize    = context.newChild().extend({
+                reportError: function (error, context) {
+                    return Promise.resolve('custom');
+                }
+            });
+            var pay = Payments(customize.recoverable()).processPayment({amount:1000});
+            Promise.resolve(pay).then(function (result) {
+                expect(result).to.equal('custom');
+                done();
+            });
+        });
+
+        it("should recover explicitly", function (done) {
+            var context      = new Context,
+                errorHandler = new ErrorCallbackHandler;
+            context.addHandlers(new Paymentech, errorHandler);
+            var pay = Payments(context).processPayment({amount:1000})
+                .catch(context.recover());
+            Promise.resolve(pay).then(function (result) {
+                expect(result).to.be.undefined;
+                done();
+            });
+        });
+
+        it("should be able to customize recovery explicitly", function (done) {
+            var context      = new Context,
+                errorHandler = new ErrorCallbackHandler;
+            context.addHandlers(new Paymentech, errorHandler);
+            var customize    = context.newChild().extend({
+                reportError: function (error, context) {
+                    return Promise.resolve('custom');
+                }
+            });
+            var pay = Payments(context).processPayment({amount:1000})
+                .catch(customize.recover());
+            Promise.resolve(pay).then(function (result) {
+                expect(result).to.equal('custom');
+                done();
+            });
+        });
+    });
+});
+
+},{"../lib/context.js":3,"../lib/error.js":4,"../lib/miruken.js":9,"bluebird":12,"chai":13}],57:[function(require,module,exports){
+var miruken = require('../lib'),
+    chai    = require("chai"),
+    expect  = chai.expect;
+
+describe("index", function () {
+    describe("#namespaces", function () {
+        it("should have all namespaces", function () {
+            expect(miruken.namespace).to.be.ok;
+            expect(miruken.callback.namespace).to.be.ok;
+            expect(miruken.context.namespace).to.be.ok;
+            expect(miruken.ioc.namespace).to.be.ok;
+            expect(miruken.ioc.config.namespace).to.be.ok;
+            expect(miruken.validate.namespace).to.be.ok;
+            expect(miruken.error.namespace).to.be.ok;
+        });
+    });
+});
+
+},{"../lib":5,"chai":13}],58:[function(require,module,exports){
+var miruken  = require('../../lib/miruken.js'),
+    config   = require('../../lib/ioc/config.js'),
+    Promise  = require('bluebird'),
+    chai     = require("chai"),
+    expect   = chai.expect;
+              
+eval(base2.namespace);
+eval(miruken.namespace);
+eval(miruken.context.namespace);
+eval(miruken.validate.namespace);
+eval(miruken.ioc.namespace);
+eval(config.namespace);
+
+new function () { // closure
+
+    var ioc_config_test = new base2.Package(this, {
+        name:    "ioc_config_test",
+        exports: "Service,Authentication,Controller,Credentials,LoginController,SomeService,InMemoryAuthenticator,PackageInstaller"
+    });
+
+    eval(this.imports);
+
+    var Controller = Base.extend();
+
+    var Credentials = Base.extend({
+        constructor: function (user, password) {
+            this.extend({
+                getUser: function () { return user; },
+                getPassword: function () { return password; }
+            });
+        }
+    });
+
+    var Service = Protocol.extend();
+
+    var Authentication = Protocol.extend(Service, {
+        authenticate: function (credentials) {}
+    });
+
+    var LoginController = Controller.extend({
+        $inject: Authentication,
+        constructor: function (authenticator) {
+           this.extend({
+               login: function (credentials) {
+                   return authenticator.authenticate(credentials);
+               }
+           });
+        }
+    });
+
+    var SomeService = Base.extend(Service);
+
+    var InMemoryAuthenticator = Base.extend(Authentication, {
+        authenticate: function (credentials) {
+            return false;
+        }
+    });
+
+    var PackageInstaller = Installer.extend({
+        register: function(container, composer) {
+            container.register(
+                $classes.fromPackage(ioc_config_test).basedOn(Service)
+                        .withKeys.mostSpecificService()
+            );
+        }
+    });
+
+    eval(this.exports);
+};
+
+eval(base2.ioc_config_test.namespace);
+
+describe("$classes", function () {
+    var context, container;
+    beforeEach(function() {
+        context   = new Context;
+        container = Container(context);
+        context.addHandlers(new IoContainer, new ValidationCallbackHandler);
+    });
+
+    describe("#fromPackage", function () {
+        it("should select classes from package", function (done) {
+            container.register(
+                $component(Authentication).boundTo(InMemoryAuthenticator),
+                $classes.fromPackage(ioc_config_test).basedOn(Controller)).then(function () {
+                Promise.resolve(container.resolve(LoginController)).then(function (loginController) {
+                    expect(loginController).to.be.instanceOf(LoginController);
+                    done();
+                });
+            });
+        });
+
+        it("should select classes from package using shortcut", function (done) {
+            container.register(
+                $component(Authentication).boundTo(InMemoryAuthenticator),
+                $classes(ioc_config_test).basedOn(Controller)).then(function () {
+                Promise.resolve(container.resolve(LoginController)).then(function (loginController) {
+                    expect(loginController).to.be.instanceOf(LoginController);
+                    done();
+                });
+            });
+        });
+
+        it("should register installers if no based on criteria", function (done) {
+            container.register(
+                $classes.fromPackage(ioc_config_test)).then(function () {
+                    Promise.all([container.resolve($eq(Service)),
+                                container.resolve($eq(Authentication)),
+                           container.resolve($eq(InMemoryAuthenticator))])
+                        .spread(function (service, authenticator, nothing) {
+                        expect(service).to.be.instanceOf(SomeService);
+                        expect(authenticator).to.be.instanceOf(InMemoryAuthenticator);
+                        expect(nothing).to.be.undefined;
+                        done();
+                    });
+                });
+        });
+
+        it("should reject package if not a Package", function () {
+            expect(function () { 
+                container.register($classes.fromPackage(Controller));
+            }).to.throw(TypeError, /[$]classes expected a Package, but received.*Controller.*instead./);
+        });
+    });
+
+    describe("#withKeys", function () {
+        describe("#self", function () {
+            it("should select class as key", function (done) {
+                container.register(
+                    $classes.fromPackage(ioc_config_test).basedOn(Authentication)
+                            .withKeys.self()).then(function () {
+                         Promise.all([container.resolve($eq(InMemoryAuthenticator)),
+                                      container.resolve($eq(Authentication))])
+                             .spread(function (authenticator, nothing) {
+                            expect(authenticator).to.be.instanceOf(InMemoryAuthenticator);
+                            expect(nothing).to.be.undefined;
+                            done();
+                        });
+                });
+            });
+        });
+
+        describe("#basedOn", function () {
+            it("should select basedOn as keys", function (done) {
+                container.register(
+                    $classes.fromPackage(ioc_config_test).basedOn(Authentication)
+                            .withKeys.basedOn()).then(function () {
+                        Promise.all([container.resolve($eq(Authentication)),
+                                     container.resolve($eq(InMemoryAuthenticator))])
+                            .spread(function (authenticator, nothing) {
+                            expect(authenticator).to.be.instanceOf(InMemoryAuthenticator);
+                            expect(nothing).to.be.undefined;
+                            done();
+                        });
+                });
+            });
+        });
+
+        describe("#anyService", function () {
+            it("should select any service as key", function (done) {
+                container.register(
+                    $classes.fromPackage(ioc_config_test).basedOn(Service)
+                            .withKeys.anyService()).then(function () {
+                         Promise.all([container.resolve($eq(Service)),
+                                      container.resolve($eq(SomeService))])
+                             .spread(function (service, nothing) {
+                            expect(service).to.be.instanceOf(SomeService);
+                            expect(nothing).to.be.undefined;
+                            done();
+                        });
+                });
+            });
+        });
+
+        describe("#allServices", function () {
+            it("should select all services as keys", function (done) {
+                container.register(
+                    $classes.fromPackage(ioc_config_test).basedOn(Authentication)
+                            .withKeys.allServices()).then(function () {
+                        Promise.all([container.resolve($eq(Service)),
+                                     container.resolve($eq(Authentication)),
+                                     container.resolve($eq(InMemoryAuthenticator))])
+                            .spread(function (authenticator1, authenticator2, nothing) {
+                            expect(authenticator1).to.be.instanceOf(InMemoryAuthenticator);
+                            expect(authenticator2).to.equal(authenticator1);
+                            expect(nothing).to.be.undefined;
+                            done();
+                        });
+                });
+            });
+        });
+
+        describe("#mostSpecificService", function () {
+            it("should select most specific service as key", function (done) {
+                container.register(
+                    $classes.fromPackage(ioc_config_test).basedOn(Service)
+                            .withKeys.mostSpecificService(Service)).then(function () {
+                        Promise.all([container.resolve($eq(Service)),
+                                     container.resolve($eq(Authentication)),
+                                     container.resolve($eq(InMemoryAuthenticator))])
+                            .spread(function (service, authenticator, nothing) {
+                            expect(service).to.be.instanceOf(SomeService);
+                            expect(authenticator).to.be.instanceOf(InMemoryAuthenticator);
+                            expect(nothing).to.be.undefined;
+                            done();
+                       });
+                });
+            });
+
+            it("should select most specific service form basedOn as key", function (done) {
+                container.register(
+                    $classes.fromPackage(ioc_config_test).basedOn(Service)
+                            .withKeys.mostSpecificService()).then(function () {
+                        Promise.all([container.resolve($eq(Service)),
+                                     container.resolve($eq(Authentication)),
+                                     container.resolve($eq(InMemoryAuthenticator))])
+                            .spread(function (service, authenticator, nothing) {
+                            expect(service).to.be.instanceOf(SomeService);
+                            expect(authenticator).to.be.instanceOf(InMemoryAuthenticator);
+                            expect(nothing).to.be.undefined;
+                            done();
+                       });
+                });
+            });
+
+            it("should select basedOn as key if no services match", function (done) {
+                container.register(
+                    $component(Authentication).boundTo(InMemoryAuthenticator),
+                    $classes.fromPackage(ioc_config_test).basedOn(Controller)
+                            .withKeys.mostSpecificService()).then(function () {
+                        Promise.all([container.resolve($eq(Controller)),
+                                     container.resolve($eq(LoginController))])
+                            .spread(function (controller, nothing) {
+                            expect(controller).to.be.instanceOf(LoginController);
+                            expect(nothing).to.be.undefined;
+                            done();
+                       });
+                });
+            });
+        });
+
+        describe("#name", function () {
+            it("should specify name as key", function (done) {
+                container.register(
+                    $classes.fromPackage(ioc_config_test).basedOn(Controller)
+                            .withKeys.name("Login")).then(function () {
+                        Promise.resolve(container.resolve("Login")).then(function (controller) {
+                            expect(controller).to.be.instanceOf(LoginController);
+                            done();
+                        });
+                });
+            });
+
+            it("should infer name as key", function (done) {
+                container.register(
+                    $classes.fromPackage(ioc_config_test).basedOn(Controller)
+                            .withKeys.name()).then(function () {
+                        Promise.resolve(container.resolve("LoginController")).then(function (controller) {
+                            expect(controller).to.be.instanceOf(LoginController);
+                            done();
+                        });
+                });
+            });
+
+            it("should evaluate name as key", function (done) {
+                container.register(
+                    $classes.fromPackage(ioc_config_test).basedOn(Controller)
+                        .withKeys.name(function (name) { 
+                            return name.replace("Controller", "");
+                            })).then(function () {
+                        Promise.resolve(container.resolve("Login")).then(function (controller) {
+                            expect(controller).to.be.instanceOf(LoginController);
+                            done();
+                        });
+                });
+            });
+        });
+    });
+
+    describe("#configure", function () {
+        it("should customize component configuration", function (done) {
+            container.register(
+                $classes.fromPackage(ioc_config_test).basedOn(Service)
+                        .withKeys.mostSpecificService()
+                        .configure(function (component) {
+                            component.transient();
+                         })).then(function () {
+                   Promise.all([container.resolve($eq(Authentication)),
+                                container.resolve($eq(Authentication))])
+                       .spread(function (authenticator1, authenticator2) {
+                       expect(authenticator1).to.be.instanceOf(InMemoryAuthenticator);
+                       expect(authenticator2).to.not.equal(authenticator1);
+                       done();
+                    });
+                });
+            });
+        });
+
+});
+
+},{"../../lib/ioc/config.js":6,"../../lib/miruken.js":9,"bluebird":12,"chai":13}],59:[function(require,module,exports){
+var miruken  = require('../../lib/miruken.js'),
+    ioc      = require('../../lib/ioc/ioc.js'),
+    Promise  = require('bluebird'),
+    chai     = require("chai"),
+    expect   = chai.expect;
+
+eval(base2.namespace);
+eval(miruken.namespace);
+eval(miruken.callback.namespace);
+eval(miruken.context.namespace);
+eval(miruken.validate.namespace);
+eval(ioc.namespace);
+
+Promise.onPossiblyUnhandledRejection(Undefined);
+
+new function () { // closure
+
+    var ioc_test = new base2.Package(this, {
+        name:    "ioc_test",
+        exports: "Car,Engine,Diagnostics,Junkyard,V12,RebuiltV12,Supercharger,Ferrari,Bugatti,Auction,OBDII,CraigsJunk,LogInterceptor,ToUpperInterceptor,ToLowerInterceptor"
+    });
+
+    eval(this.imports);
+
+    var Engine = Protocol.extend({
+        getNumberOfCylinders: function () {},
+        getHorsepower: function () {},
+        getDisplacement: function () {}
+    });
+
+    var Car = Protocol.extend({
+        getMake: function () {},
+        getModel: function() {},
+        getEngine: function () {}
+    });
+
+    var Diagnostics = Protocol.extend({
+        getMPG: function () {}
+    });
+
+    var Junkyard = Protocol.extend({
+        decomission: function (part) {}
+    });
+
+    var V12 = Base.extend(Engine, {
+        $inject: [,,$optional(Diagnostics)],
+        constructor: function (horsepower, displacement, diagnostics) {
+            this.extend({
+                getHorsepower: function () { return horsepower; },
+                getDisplacement: function () { return displacement; },
+                getDiagnostics: function () { return diagnostics; }
+            });
+        },
+        getNumberOfCylinders: function () { return 12; },
+    });
+ 
+    var RebuiltV12 = V12.extend(Engine, Disposing, {
+        $inject: [,,,Junkyard],
+        constructor: function (horsepower, displacement, diagnostics, junkyard) {
+            this.base(horsepower, displacement, diagnostics, junkyard);
+            this.extend({
+                dispose: function () {
+                    junkyard.decomission(this);
+                }
+            });
+        }
+    });
+
+    var Supercharger = Base.extend(Engine, {
+        $inject: [Engine],
+        constructor: function (engine, boost) {
+            this.extend({
+                getHorsepower: function () {
+                    return engine.getHorsepower() * (1.0 + boost); 
+                },
+                getDisplacement: function () {
+                    return engine.getDisplacement(); 
+                }
+            });
+        }
+    });
+
+    var Ferrari = Base.extend(Car, {
+        $inject: [,Engine],
+        constructor: function (model, engine) {
+            this.extend({
+                getMake: function () { return "Ferrari"; },
+                getModel: function () { return model; },
+                getEngine: function () { return engine; }
+            });
+        }
+    });
+
+    var Bugatti = Base.extend(Car, {
+        $inject: [,Engine],
+        constructor: function (model, engine) {
+            this.extend({
+                getMake: function () { return "Bugatti"; },
+                getModel: function () { return model; },
+                getEngine: function () { return engine; }
+            });
+        }
+    });
+
+    var Auction = Base.extend({
+        $inject: [$every(Car)],
+        constructor: function (cars) {
+            var inventory = {};
+            cars.forEach(function (car) {
+                var make   = car.getMake(),
+                    models = inventory[make];
+                if (!models) {
+                    inventory[make] = models = [];
+                }
+                models.push(car);
+            });
+            this.extend({
+                getCars: function () { return inventory; }
+            });
+        }
+    });
+
+    var OBDII = Base.extend(Diagnostics, {
+        constructor: function () {
+            this.extend({
+                getMPG: function () { return 22.0; }
+            });
+        }
+    });
+
+    var CraigsJunk = Base.extend(Junkyard, {
+        constructor: function () {
+            var _parts = [];
+            this.extend({
+                getParts: function () { return _parts.slice(0); },
+                decomission: function (part) {
+                    _parts.push(part);
+                }
+            });
+        }
+    });
+
+    var LogInterceptor = Interceptor.extend({
+        intercept: function (invocation) {
+            console.log(lang.format("Called %1 with (%2) from %3",
+                        invocation.getMethod(),
+                        invocation.getArgs().join(", "), 
+                        invocation.getSource()));
+            var result = invocation.proceed();
+            console.log(lang.format("    And returned %1", result));
+            return result;
+        }
+    });
+
+    var ToUpperInterceptor = Interceptor.extend({
+        intercept: function (invocation) {
+            var args = invocation.getArgs();
+            for (var i = 0; i < args.length; ++i) {
+                if ($isString(args[i])) {
+                    args[i] = args[i].toUpperCase();
+                }
+            }
+            var result = invocation.proceed();
+            if ($isString(result)) {
+                result = result.toUpperCase();
+            }
+            return result;
+        }
+    });
+
+    var ToLowerInterceptor = Interceptor.extend({
+        intercept: function (invocation) {
+            var args = invocation.getArgs();
+            for (var i = 0; i < args.length; ++i) {
+                if ($isString(args[i])) {
+                    args[i] = args[i].toUpperCase();
+                }
+            }
+            var result = invocation.proceed();
+            if ($isString(result)) {
+                result = result.toLowerCase();
+            }
+            return result;
+        }
+    });
+
+    eval(this.exports);
+};
+
+eval(base2.ioc_test.namespace);
+
+describe("DependencyModel", function () {
+    describe("#getDependency", function () {
+        it("should return actual dependency", function () {
+            var dependency = new DependencyModel(22);
+            expect(dependency.getDependency()).to.equal(22);
+        });
+
+        it("should coerce dependency", function () {
+            var dependency = DependencyModel(Engine);
+            expect(dependency.getDependency()).to.equal(Engine);
+        });
+
+        it("should not ceorce undefined dependency", function () {
+            var dependency = DependencyModel();
+            expect(dependency).to.be.undefined;
+        });
+    });
+
+    describe("#test", function () {
+        it("should test dependency modifier", function () {
+            var dependency = new DependencyModel(22, DependencyModifiers.Use);
+            expect(dependency.test(DependencyModifiers.Use)).to.be.true;
+        });
+    });
+});
+
+describe("ComponentModel", function () {
+    describe("#getKey", function () {
+        it("should return class if no key", function () {
+            var componentModel = new ComponentModel;
+            componentModel.setClass(Ferrari);
+            expect(componentModel.getKey()).to.equal(Ferrari);
+        });
+    });
+
+    describe("#setClass", function () {
+        it("should reject invalid class", function () {
+            var componentModel = new ComponentModel;
+            expect(function () {
+                componentModel.setClass(1);
+            }).to.throw(Error, "1 is not a class.");
+        });
+    });
+
+    describe("#getFactory", function () {
+        it("should return default factory", function () {
+            var componentModel = new ComponentModel;
+            componentModel.setClass(Ferrari);
+            expect(componentModel.getFactory()).to.be.a('function');
+        });
+    });
+
+    describe("#setFactory", function () {
+        it("should reject factory if not a function", function () {
+            var componentModel = new ComponentModel;
+            expect(function () {
+                componentModel.setFactory(true);
+            }).to.throw(Error, "true is not a function.");
+        });
+    });
+
+    describe("#manageDependencies", function () {
+        it("should manage dependencies", function () {
+            var componentModel = new ComponentModel;
+                dependencies   = componentModel.manageDependencies(function (deps) {
+                    deps.append(Car, 22);
+                });
+            expect(dependencies).to.have.length(2);
+            expect(dependencies[0].getDependency()).to.equal(Car);
+            expect(dependencies[1].getDependency()).to.equal(22);
+        });
+    });
+
+    var context, container;
+    beforeEach(function() {
+        context   = new Context;
+        container = Container(context);
+        context.addHandlers(new IoContainer, new ValidationCallbackHandler);
+    });
+
+    describe("#constructor", function () {
+        it("should configure component fluently", function (done) {
+            Promise.resolve(container.register($component(V12))).then(function () {
+                Promise.resolve(container.resolve(V12)).then(function (engine) {
+                    expect(engine).to.be.instanceOf(V12);
+                    done();
+                });
+            });
+        });
+    });
+
+    describe("#instance", function () {
+        it("should use supplied instance", function (done) {
+            var v12 = new V12(333, 4.2);
+            Promise.resolve(container.register($component(V12).instance(v12))).then(function () {
+                Promise.resolve(container.resolve(Engine)).then(function (engine) {
+                    expect(engine).to.equal(v12);
+                    done();
+                });
+            });
+        });
+    });
+
+    describe("#singleton", function () {
+        it("should configure singleton component", function (done) {
+            Promise.resolve(container.register($component(V12).singleton())).then(function () {
+                Promise.all([container.resolve(Engine), container.resolve(Engine)])
+                    .spread(function (engine1, engine2) {
+                    expect(engine1).to.be.instanceOf(V12);
+                    expect(engine2).to.equal(engine1);
+                    done();
+                });
+            });
+        });
+    });
+
+    describe("#transient", function () {
+        it("should configure transient component", function (done) {
+            Promise.resolve(container.register($component(V12).transient())).then(function () {
+                Promise.all([container.resolve(V12), container.resolve(V12)])
+                    .spread(function (engine1, engine2) {
+                    expect(engine1).to.be.instanceOf(V12);
+                    expect(engine2).to.not.equal(engine1);
+                    done();
+                });
+            });
+        });
+    });
+
+    describe("#contextual", function () {
+        it("should configure contextual component", function (done) {
+            Promise.resolve(container.register($component(V12).contextual())).then(function () {
+                Promise.all([container.resolve(Engine), container.resolve(Engine)])
+                    .spread(function (engine1, engine2) {
+                    expect(engine1).to.be.instanceOf(V12);
+                    expect(engine2).to.equal(engine1);
+                    var childContext = context.newChild();
+                    $using(childContext, 
+                           Promise.resolve(Container(childContext).resolve(V12)).then(function (engine3) {
+                               expect(engine3).to.not.equal(engine1);
+                               done();
+                           })
+                    );
+                });
+            });
+        });
+    });
+
+    describe("#boundTo", function () {
+        it("should configure component implementation", function (done) {
+            Promise.resolve(container.register(
+                $component(Engine).boundTo(V12)
+            )).then(function () {
+                Promise.resolve(container.resolve(Engine)).then(function (engine) {
+                    expect(engine).to.be.instanceOf(V12);
+                    done();
+                });
+            });
+        });
+
+        it("should configure component name", function (done) {
+            Promise.resolve(container.register(
+                $component('engine').boundTo(V12)
+            )).then(function () {
+                Promise.resolve(container.resolve('engine')).then(function (engine) {
+                    expect(engine).to.be.instanceOf(V12);
+                    done();
+                });
+            });
+        });
+    });
+
+    describe("#usingFactory", function () {
+        it("should create components with factory", function (done) {
+             Promise.resolve(container.register(
+                 $component(Engine).usingFactory(function () {
+                     return new V12(450, 6.2);
+                 })
+             )).then(function () {
+                Promise.resolve(container.resolve(Engine)).then(function (engine) {
+                    expect(engine).to.be.instanceOf(V12);
+                    expect(engine.getHorsepower()).to.equal(450);
+                    expect(engine.getDisplacement()).to.equal(6.2);
+                    done();
+                });
+            });
+        });
+    });
+
+    describe("#dependsOn", function () {
+        it("should configure component dependencies", function (done) {
+            Promise.resolve(container.register(
+                $component(Engine).boundTo(V12)
+                                  .dependsOn($use(255), $use(5.0))
+            )).then(function () {
+                Promise.resolve(container.resolve(Engine)).then(function (engine) {
+                    expect(engine.getHorsepower()).to.equal(255);
+                    expect(engine.getDisplacement()).to.equal(5.0);
+                    done();
+                });
+            });
+        });
+
+        it("should configure component dependencies with factory", function (done) {
+             Promise.resolve(container.register(
+                 $component(Engine).dependsOn($use(1000), $use(7.7))
+                                   .usingFactory(function (burden) {
+                     return V12.new.apply(V12, burden[PARAMETERS]);
+                 })
+             )).then(function () {
+                Promise.resolve(container.resolve(Engine)).then(function (engine) {
+                    expect(engine).to.be.instanceOf(V12);
+                    expect(engine.getHorsepower()).to.equal(1000);
+                    expect(engine.getDisplacement()).to.equal(7.7);
+                    done();
+                });
+            });
+        });
+    });
+
+    describe("#interceptors", function () {
+        it("should configure component interceptors", function (done) {
+            Promise.resolve(container.register(
+                $component(LogInterceptor),
+                $component(Engine).boundTo(V12)
+                                  .dependsOn($use(255), $use(5.0))
+                                  .interceptors(LogInterceptor)
+            )).then(function () {
+                Promise.resolve(container.resolve(Engine)).then(function (engine) {
+                    expect(engine.getHorsepower()).to.equal(255);
+                    expect(engine.getDisplacement()).to.equal(5.0);
+                    done();
+                });
+            });
+        });
+    });
+});
+
+describe("ComponentBuilder", function () {
+    var context, container;
+    beforeEach(function() {
+        context   = new Context;
+        container = Container(context);
+        context.addHandlers(new IoContainer, new ValidationCallbackHandler);
+    });
+    
+    describe("#constructor", function () {
+        it("should configure component fluently", function (done) {
+            Promise.resolve(container.register($component(V12))).then(function () {
+                Promise.resolve(container.resolve(V12)).then(function (engine) {
+                    expect(engine).to.be.instanceOf(V12);
+                    done();
+                });
+            });
+        });
+    });
+    
+    describe("#boundTo", function () {
+        it("should configure component implementation", function (done) {
+            Promise.resolve(container.register($component(Engine).boundTo(V12))).then(function () {
+                Promise.resolve(container.resolve(Engine)).then(function (engine) {
+                    expect(engine).to.be.instanceOf(V12);
+                    done();
+                });
+            });
+        });
+            
+        it("should configure component name", function (done) {
+            Promise.resolve(container.register($component('engine').boundTo(V12))).then(function () {
+                Promise.resolve(container.resolve('engine')).then(function (engine) {
+                    expect(engine).to.be.instanceOf(V12);
+                    done();
+                });
+            });
+        });
+    });
+    
+    describe("#dependsOn", function () {
+        it("should configure component dependencies", function (done) {
+            Promise.resolve(container.register($component(Engine).boundTo(V12)
+                                     .dependsOn($use(255), $use(5.0)))).then(function () {
+                Promise.resolve(container.resolve(Engine)).then(function (engine) {
+                    expect(engine.getHorsepower()).to.equal(255);
+                    expect(engine.getDisplacement()).to.equal(5.0);
+                    done();
+                });
+            });
+        });
+    });
+
+    describe("#interceptors", function () {
+        it("should configure component interceptors", function (done) {
+            Promise.resolve(container.register($component(LogInterceptor),
+                                 $component(Engine).boundTo(V12)
+                                     .dependsOn($use(255), $use(5.0))
+                                     .interceptors(LogInterceptor))).then(function () {
+                Promise.resolve(container.resolve(Engine)).then(function (engine) {
+                    expect(engine.getHorsepower()).to.equal(255);
+                    expect(engine.getDisplacement()).to.equal(5.0);
+                    done();
+                });
+            });
+        });
+    });
+});
+
+describe("SingletonLifestyle", function () {
+    describe("#resolve", function () {
+        it("should resolve same instance for SingletonLifestyle", function (done) {
+            var context   = new Context,
+                container = Container(context);
+            context.addHandlers(new IoContainer, new ValidationCallbackHandler);
+            Promise.resolve((container).register($component(V12).singleton())).then(function () {
+                Promise.all([container.resolve(Engine), container.resolve(Engine)])
+                    .spread(function (engine1, engine2) {
+                        expect(engine1).to.equal(engine2);
+                        done();
+                    });
+            });
+        });
+    });
+
+    describe("#dispose", function () {
+        it("should dispose instance when unregistered", function (done) {
+            var context   = new Context,
+                container = Container(context);
+            context.addHandlers(new IoContainer, new ValidationCallbackHandler);
+            Promise.all(container.register($component(RebuiltV12).singleton(),
+                                     $component(CraigsJunk))).spread(function (unregister) {
+                Promise.all([container.resolve(Engine), container.resolve(Junkyard)])
+                    .spread(function (engine, junk) {
+                        unregister();
+                        expect(junk.getParts()).to.eql([engine]);
+                        done();
+                    });
+            });
+        });
+
+        it("should not dispose instance when called directly", function (done) {
+            var context   = new Context,
+                container = Container(context);
+            context.addHandlers(new IoContainer, new ValidationCallbackHandler);
+            Promise.all(container.register($component(RebuiltV12),
+                                     $component(CraigsJunk))).then(function () {
+                Promise.all([container.resolve(Engine), container.resolve(Junkyard)])
+                    .spread(function (engine, junk) {
+                        engine.dispose();
+                        expect(junk.getParts()).to.eql([]);
+                        done();
+                    });
+            });
+        });
+    });
+});
+
+describe("TransientLifestyle", function () {
+    describe("#resolve", function () {
+        it("should resolve diferent instance for TransientLifestyle", function (done) {
+            var context   = new Context,
+                container = Container(context);
+            context.addHandlers(new IoContainer, new ValidationCallbackHandler);
+            Promise.resolve(container.register($component(V12).transient())).then(function () {
+                Promise.all([container.resolve(Engine), container.resolve(Engine)])
+                    .spread(function (engine1, engine2) {
+                        expect(engine1).to.not.equal(engine2);
+                        done();
+                    });
+            });
+        });
+    });
+});
+
+describe("ContextualLifestyle", function () {
+    var Controller = Base.extend(Contextual, ContextualMixin, {
+            $inject: [$optional(Context)],
+            constructor: function (context) {
+                this.setContext(context);
+            }
+        });
+    describe("#resolve", function () {
+        it("should resolve diferent instance per context for ContextualLifestyle", function (done) {
+            var context   = new Context,
+                container = Container(context);
+            context.addHandlers(new IoContainer, new ValidationCallbackHandler);
+            Promise.resolve(container.register($component(V12).contextual())).then(function () {
+                Promise.all([container.resolve(Engine), container.resolve(Engine)])
+                    .spread(function (engine1, engine2) {
+                        expect(engine1).to.equal(engine2);
+                        var childContext = context.newChild();
+                        $using(childContext, 
+                               Promise.resolve(Container(childContext).resolve(Engine)).then(function (engine3) {
+                                   expect(engine3).to.not.equal(engine1);
+                                   done();
+                               })
+                        );
+                    });
+            });
+        });
+
+        it("should implicitly satisfy Context dependency", function (done) {
+            var context   = new Context,
+                container = Container(context);
+            context.addHandlers(new IoContainer, new ValidationCallbackHandler);
+            Promise.resolve(container.register($component(Controller))).then(function () {
+                Promise.resolve(container.resolve(Controller)).then(function (controller) {
+                    expect(controller.getContext()).to.equal(context);
+                    done();
+                });
+            });
+        });
+
+        it("should setContext if contextual object", function (done) {
+            var context   = new Context,
+                container = Container(context);
+            context.addHandlers(new IoContainer, new ValidationCallbackHandler);
+            Promise.resolve(container.register(
+                $component(Controller).contextual().dependsOn([]))).then(function () {
+                Promise.resolve(container.resolve(Controller)).then(function (controller) {
+                    expect(controller.getContext()).to.equal(context);
+                    done();
+                });
+            });
+        });
+
+        it("should fulfill child Context dependency", function (done) {
+            var context   = new Context,
+                container = Container(context);
+            context.addHandlers(new IoContainer, new ValidationCallbackHandler);
+            Promise.resolve(container.register(
+                $component(Controller).dependsOn($child(Context)))).then(function () {
+                Promise.resolve(container.resolve(Controller)).then(function (controller) {
+                    expect(controller.getContext().getParent()).to.equal(context);
+                    done();
+                });
+            });
+        });
+
+        it("should resolve nothing if context not available", function (done) {
+            var container = (new ValidationCallbackHandler).next(new IoContainer);
+            Promise.resolve(Container(container).register($component(V12).contextual())).then(function () {
+                Promise.resolve(Container(container).resolve(Engine)).then(function (engine) {
+                    expect(engine).to.be.undefined;
+                    done();
+                });
+            });
+        });
+
+        it("should reject Context dependency if context not available", function (done) {
+            var container = (new ValidationCallbackHandler).next(new IoContainer);
+            Promise.resolve(Container(container).register(
+                $component(Controller).dependsOn(Context))).then(function () {
+                Promise.resolve(Container(container).resolve(Controller)).catch(function (error) {
+                    expect(error).to.be.instanceof(DependencyResolutionError);
+                    expect(error.dependency.getKey()).to.equal(Context);
+                    done();
+                });
+            });
+        });
+
+        it("should not fail if optional child Context and no context available", function (done) {
+            var container = (new ValidationCallbackHandler).next(new IoContainer);
+            Promise.resolve(Container(container).register(
+                $component(Controller).dependsOn($optional($child(Context))))).then(function () {
+                Promise.resolve(Container(container).resolve(Controller)).then(function (controller) {
+                    done();
+                });
+            });
+        });
+    });
+
+    describe("#dispose", function () {
+        it("should dispose unregistered components", function (done) {
+            var context   = new Context,
+                container = Container(context);
+            context.addHandlers(new IoContainer, new ValidationCallbackHandler);
+            Promise.all(container.register($component(RebuiltV12).contextual(),
+                                     $component(CraigsJunk))).spread(function (unregister) {
+                    Promise.all([container.resolve(Engine), container.resolve(Junkyard)])
+                        .spread(function (engine, junk) {
+                            unregister();
+                            expect(junk.getParts()).to.eql([engine]);
+                            done();
+                        });
+                });
+        });
+
+        it("should dispose components when context ended", function (done) {
+            var context   = new Context,
+                container = Container(context);
+            context.addHandlers(new IoContainer, new ValidationCallbackHandler);
+            Promise.all(container.register($component(RebuiltV12).contextual(),
+                                     $component(CraigsJunk))).then(function () {
+                var engine, junk,
+                    childContext = context.newChild();
+                $using(childContext, 
+                       Promise.all([Container(childContext).resolve(Engine),
+                              Container(childContext).resolve(Junkyard)]).spread(function (e, j) {
+                           engine = e, junk = j;
+                      })
+                ).finally(function() {
+                      expect(junk.getParts()).to.eql([engine]);
+                      done();
+                  });
+            });
+        });
+
+        it("should not dispose instance when called directly", function (done) {
+            var context   = new Context,
+                container = Container(context);
+            context.addHandlers(new IoContainer, new ValidationCallbackHandler);
+            Promise.all(container.register($component(RebuiltV12).contextual(),
+                                     $component(CraigsJunk))).then(function () {
+                Promise.all([container.resolve(Engine), container.resolve(Junkyard)])
+                    .spread(function (engine, junk) {
+                        engine.dispose();
+                        expect(junk.getParts()).to.eql([]);
+                        done();
+                });
+            });
+        });
+    })
+});
+
+describe("IoContainer", function () {
+    describe("#register", function () {
+        var context, container;
+        beforeEach(function() {
+            context   = new Context;
+            container = Container(context);
+            context.addHandlers(new IoContainer, new ValidationCallbackHandler);
+        });
+
+        it("should register component from class", function (done) {
+            Promise.resolve(container.register($component(Ferrari))).then(function () {
+                done();
+            });
+        });
+
+        it("should register component from protocol and class", function (done) {
+             Promise.resolve(container.register($component(Car).boundTo(Ferrari))).then(function () {
+                done();
+            });
+        });
+
+        it("should register component from name and class", function (done) {
+            Promise.resolve(container.register($component('car').boundTo(Ferrari))).then(function () {
+                done();
+            });
+        });
+
+        it("should unregister component", function (done) {
+            Promise.resolve(container.register($component(V12))).spread(function (unregister) {
+                Promise.resolve(container.resolve(Engine)).then(function (engine) {
+                    unregister();
+                    expect(engine).to.be.instanceOf(V12);
+                    expect(container.resolve(Engine)).to.be.undefined;
+                    done();
+                });
+            });
+        });
+
+        it("should reject registration if no key", function (done) {
+            Promise.resolve(container.register($component())).catch(function (error) {
+                expect(error.getKeyErrors("Key")).to.eql([
+                    new ValidationError("Key could not be determined for component.", {
+                        key:  "Key",
+                        code: ValidationErrorCode.Required
+                    })
+                ]);
+                done();
+            });
+        });
+
+        it("should reject registration if no factory", function (done) {
+            Promise.resolve(container.register($component('car'))).catch(function (error) {
+                expect(error.getKeyErrors("Factory")).to.eql([
+                    new ValidationError("Factory could not be determined for component.", {
+                        key:  "Factory",
+                        code: ValidationErrorCode.Required
+                    })
+                ]);
+                done();
+            });
+        });
+    });
+
+    describe("#resolve", function () {
+        var context, container;
+        beforeEach(function() {
+            context   = new Context;
+            container = Container(context);
+            context.addHandlers(new IoContainer, new ValidationCallbackHandler);
+        });
+
+        it("should resolve component", function (done) {
+            Promise.all(container.register($component(Ferrari), $component(V12))).then(function () {
+                Promise.resolve(container.resolve(Car)).then(function (car) {
+                    expect(car).to.be.instanceOf(Ferrari);
+                    expect(car.getEngine()).to.be.instanceOf(V12);
+                    done();
+                });
+            });
+        });
+
+        it("should resolve nothing if component not found", function (done) {
+            Promise.resolve(container.resolve(Car)).then(function (car) {
+                expect(car).to.be.undefined;
+                done();
+            });
+        });
+
+        it("should resolve class invariantly", function (done) {
+            Promise.all(container.register($component(Ferrari), $component(V12))).then(function () {
+                Promise.resolve(container.resolve($eq(Car))).then(function (car) {
+                    expect(car).to.be.undefined;
+                    Promise.resolve(container.resolve($eq(Ferrari))).then(function (car) {
+                        expect(car).to.be.instanceOf(Ferrari);
+                        expect(car.getEngine()).to.be.instanceOf(V12);
+                        done();
+                    });
+                });
+            });
+        });
+
+        it("should resolve class instantly", function (done) {
+            Promise.all(container.register($component(Ferrari), $component(V12))).then(function () {
+                var car = container.resolve($instant(Car));
+                expect(car).to.be.instanceOf(Ferrari);
+                expect(car.getEngine()).to.be.instanceOf(V12);
+                done();
+            });
+        });
+
+        it("should resolve instance with supplied dependencies", function (done) {
+            Promise.resolve(container.register(
+                $component(V12).dependsOn($use(917), $use(6.3)))).then(function () {
+                Promise.resolve(container.resolve(Engine)).then(function (engine) {
+                    expect(engine.getHorsepower()).to.equal(917);
+                    expect(engine.getDisplacement()).to.equal(6.3);
+                    done();
+                });
+            });
+        });
+
+        it("should resolve instance using decorator pattern", function (done) {
+            Promise.resolve(container.register(
+                $component(Supercharger).dependsOn([,$use(.5)]),
+                $component(V12).dependsOn($use(175), $use(3.2)))).then(function () {
+                Promise.resolve(container.resolve(Engine)).then(function (engine) {
+                    expect(engine.getHorsepower()).to.equal(262.5);
+                    expect(engine.getDisplacement()).to.equal(3.2);
+                    done();
+                });
+            });
+        });
+
+        it("should resolve instance with dependency promises", function (done) {
+            var Order = Base.extend({
+                    $inject: [$promise(Engine), $promise($use(19))],
+                    constructor: function (engine, count) {
+                        this.extend({
+                            getEngine: function () { return engine; },
+                            getCount: function () { return count; }
+                        });
+                    }
+                });
+            Promise.all(container.register($component(Order), $component(V12))).then(function () {
+                Promise.resolve(container.resolve(Order)).then(function (order) {
+                    expect($isPromise(order.getEngine())).to.be.true;
+                    expect($isPromise(order.getCount())).to.be.true;
+                    Promise.all([order.getEngine(), order.getCount()]).spread(function (engine, count) {
+                        expect(engine).to.be.instanceOf(V12);
+                        expect(count).to.equal(19);
+                        done();
+                    });
+                });
+            });
+        });
+
+        it("should override dependencies", function (done) {
+            Promise.all(container.register(
+                      $component(Ferrari).dependsOn($use('Enzo'), $optional(Engine)),
+                      $component(V12))).then(function () {
+                Promise.resolve(container.resolve(Car)).then(function (car) {
+                    expect(car).to.be.instanceOf(Ferrari);
+                    expect(car.getEngine()).to.be.instanceOf(V12);
+                    done();
+                });
+            });
+        });
+
+        it("should accept null dependnecies", function (done) {
+            Promise.resolve(container.register(
+                $component(Ferrari).dependsOn(null, null))).then(function () {
+                Promise.resolve(container.resolve(Car)).then(function (car) {
+                    expect(car).to.be.instanceOf(Ferrari);
+                    expect(car.getEngine()).to.be.null;
+                    done();
+                });
+            });
+        });
+
+        it("should resolve instance with optional dependencies", function (done) {
+            Promise.all(container.register($component(Ferrari), $component(V12),
+                                     $component(OBDII))).then(function () {
+                Promise.resolve(container.resolve(Car)).then(function (car) {
+                    var diagnostics = car.getEngine().getDiagnostics();
+                    expect(diagnostics).to.be.instanceOf(OBDII);
+                    expect(diagnostics.getMPG()).to.equal(22.0);
+                    done();
+                });
+            });
+        });
+
+        it("should resolve instance with optional missing dependencies", function (done) {
+            Promise.resolve(container.register(
+                  $component(Ferrari).dependsOn($optional(Engine)))).then(function () {
+                Promise.resolve(container.resolve(Car)).then(function (car) {
+                    expect(car).to.be.instanceOf(Ferrari);
+                    expect(car.getEngine()).to.be.undefined;
+                    done();
+                });
+            });
+        });
+
+        it("should resolve instance with lazy dependencies", function (done) {
+            var Order = Base.extend({
+                    $inject: [$lazy(Engine), $lazy($use(9))],
+                    constructor: function (engine, count) {
+                        this.extend({
+                            getEngine: function () { return engine(); },
+                            getCount: function () { return count; }
+                        });
+                    }
+                });
+            Promise.all(container.register($component(Order), $component(V12))).then(function () {
+                Promise.resolve(container.resolve(Order)).then(function (order) {
+                    Promise.all([order.getEngine(), order.getEngine()]).spread(function (engine1, engine2) {
+                        expect(engine1).to.be.instanceOf(V12);
+                        expect(engine1).to.equal(engine2);
+                        expect(order.getCount()).to.equal(9);
+                        done();
+                    });
+                });
+            });
+        });
+
+        it("should not fail resolve when missing lazy dependencies", function (done) {
+            var Order = Base.extend({
+                    $inject: [$lazy(Engine)],
+                    constructor: function (engine) {
+                        this.extend({
+                            getEngine: function () { return engine(); }
+                        });
+                    }
+                });
+            Promise.resolve(container.register($component(Order))).then(function () {
+                Promise.resolve(container.resolve(Order)).then(function (order) {
+                    expect(order).to.be.instanceOf(Order);
+                    expect(order.getEngine()).to.be.undefined;
+                    done();
+                });
+            });
+        });
+
+        it("should delay rejecting lazy dependency failures", function (done) {
+            var Order = Base.extend({
+                    $inject: [$lazy(Car)],
+                    constructor: function (car) {
+                        this.extend({
+                            getCar: function () { return car(); }
+                        });
+                    }
+                });
+            Promise.all(container.register($component(Order), $component(Ferrari))).then(function () {
+                Promise.resolve(container.resolve(Order)).then(function (order) {
+                    expect(order).to.be.instanceOf(Order);
+                    Promise.resolve(order.getCar()).catch(function (error) {
+                        expect(error).to.be.instanceof(DependencyResolutionError);
+                        expect(error.message).to.match(/Dependency.*Engine.*<=.*Car.*could not be resolved./);
+                        done();
+                    });
+                });
+            });
+        });
+
+        it("should resolve instance with invariant dependencies", function (done) {
+                Promise.all(container.register($component(Ferrari).dependsOn($use('Spider'), $eq(V12)),
+                                               $component(Engine).boundTo(V12))).then(function () {
+                Promise.resolve(container.resolve(Car)).catch(function (error) {
+                    expect(error).to.be.instanceof(DependencyResolutionError);
+                    expect(error.message).to.match(/Dependency.*`.*V12.*`.*<=.*Car.*could not be resolved./);
+                    container.register($component(V12)).then(function () {
+                        Promise.resolve(container.resolve(Car)).then(function (car) {
+                            expect(car).to.be.instanceOf(Ferrari);
+                            expect(car.getEngine()).to.be.instanceOf(V12);
+                            done();
+                        });
+                    });
+                });
+            });
+        });
+
+        it("should resolve instance with dynamic dependencies", function (done) {
+            var count   = 0,
+                counter = function () { return ++count; },
+                Order = Base.extend({
+                    $inject: [Engine, $eval(counter)],
+                    constructor: function (engine, count) {
+                        this.extend({
+                            getEngine: function () { return engine; },
+                            getCount: function () { return count; }
+                        });
+                    }
+                });
+                Promise.all(container.register($component(Order).transient(),
+                                               $component(V12))).then(function (reg) {
+                Promise.all([container.resolve(Order), container.resolve(Order)])
+                    .spread(function (order1, order2) {
+                        expect(order1.getCount()).to.equal(1);
+                        expect(order2.getCount()).to.equal(2);
+                        done();
+                    });
+            });
+        });
+
+        it("should behave like $use if no function passed to $eval", function (done) {
+            var  Order = Base.extend({
+                    $inject: [Engine, $eval(5)],
+                    constructor: function (engine, count) {
+                        this.extend({
+                            getEngine: function () { return engine; },
+                            getCount: function () { return count; }
+                        });
+                    }
+                });
+            Promise.all(container.register($component(Order).transient(),
+                                           $component(V12))).then(function (reg) {
+                Promise.all([container.resolve(Order), container.resolve(Order)])
+                    .spread(function (order1, order2) {
+                        expect(order1.getCount()).to.equal(5);
+                        expect(order2.getCount()).to.equal(5);
+                        done();
+                    });
+            });
+        });
+
+        it("should implicitly satisfy container dependency", function (done) {
+            var Registry = Base.extend({
+                    $inject: [Container],
+                    constructor: function (container) {
+                        this.extend({
+                            getContainer: function () { return container; },
+                        });
+                    }
+                });
+            Promise.resolve(container.register($component(Registry))).then(function () {
+                Promise.resolve(container.resolve(Registry)).then(function (registry) {
+                    expect(registry.getContainer()).to.be.instanceOf(Container);
+                    done();
+                });
+            });
+        });
+
+        it("should implicitly satisfy composer dependency", function (done) {
+            var Registry = Base.extend({
+                    $inject: [$$composer],
+                    constructor: function (composer) {
+                        this.extend({
+                            getComposer: function () { return composer; },
+                        });
+                    }
+                });
+            Promise.resolve(container.register($component(Registry))).then(function () {
+                Promise.resolve(container.resolve(Registry)).then(function (registry) {
+                    expect(registry.getComposer()).to.equal(context);
+                    Promise.resolve(Validator(registry.getComposer()).validate(registry))
+                           .then(function (validation) {
+                        expect(validation.isValid()).to.be.true;
+                    });
+                    done();
+                });
+            });
+        });
+
+        it("should have opportunity to resolve missing components", function (done) {
+            var context   = new Context;
+                container = new IoContainer,
+            context.addHandlers(container, new ValidationCallbackHandler);
+            $provide(container, Car, function (resolution, composer) {
+                return new Ferrari('TRS', new V12(917, 6.3));
+            });
+            Promise.resolve(Container(context).resolve(Car)).then(function (car) {
+                expect(car).to.be.instanceOf(Ferrari);
+                expect(car.getModel()).to.equal('TRS');
+                expect(car.getEngine()).to.be.instanceOf(V12);
+                done();
+            });
+        });
+
+        it("should resolve external dependencies", function (done) {
+            var engine = new V12;
+            context.store(engine);
+            Promise.resolve(container.register($component(Ferrari))).then(function () {
+                Promise.resolve(container.resolve(Car)).then(function (car) {
+                    expect(car).to.be.instanceOf(Ferrari);
+                    expect(car.getEngine()).to.equal(engine);
+                    done();
+                });
+            });
+        });
+
+        it("should resolve in new child context", function (done) {
+            var Workflow = Base.extend(ContextualMixin);
+            Promise.all(container.register(
+                    $component(Workflow).newInContext())).then(function () {
+                Promise.resolve(container.resolve(Workflow)).done(function (workflow) {
+                    expect(workflow).to.be.instanceOf(Workflow);
+                    expect(workflow.getContext()).to.equal(context);
+                    done();
+                });
+            });
+        });
+
+        it("should resolve in new child context", function (done) {
+            var AssemblyLine = Base.extend({
+                $inject: [Engine],
+                constructor: function (engine) {
+                    this.extend({
+                        getEngine: function () { return engine; }
+                    });
+                }    
+            });
+            Promise.all(container.register(
+                    $component(V12),
+                    $component(AssemblyLine).newInChildContext())).then(function () {
+                Promise.resolve(container.resolve(AssemblyLine)).done(function (assembleEngine) {
+                    expect(assembleEngine).to.be.instanceOf(AssemblyLine);
+                    expect(assembleEngine.getEngine()).to.be.instanceOf(V12);
+                    expect(assembleEngine.getContext().getParent()).to.equal(context);
+                    done();
+                });
+            });
+        });
+
+        it("should ignore external dependencies for $container", function (done) {
+            context.store(new V12);
+            Promise.resolve(container.register(
+                $component(Ferrari).dependsOn($container(Engine)))).then(function () {
+                Promise.resolve(container.resolve(Car)).catch(function (error) {
+                    expect(error).to.be.instanceof(DependencyResolutionError);
+                    expect(error.message).to.match(/Dependency.*Engine.*<= (.*Car.*<-.*Ferrari.*)could not be resolved./);
+                    expect(error.dependency.getKey()).to.equal(Engine);
+                    done();
+                });
+            });
+        });
+
+        it("should use child contexts to manage child containers", function (done) {
+            var Order = Base.extend({
+                    $inject: [Car],
+                    constructor: function (car) {
+                        this.extend({
+                            getCar: function () { return car; }
+                        });
+                    }
+                }),
+                childContext = context.newChild();
+            $using(childContext, 
+                   Promise.all([Container(childContext).register(
+                               $component(Order), $component(RebuiltV12)),
+                          container.register($component(Ferrari), $component(OBDII),
+                                             $component(CraigsJunk))]).then(function () {
+                    Promise.resolve(container.resolve(Order)).then(function (order) {
+                        var car         = order.getCar(),
+                            engine      = car.getEngine(),
+                            diagnostics = engine.getDiagnostics();
+                        expect(car).to.be.instanceOf(Ferrari);
+                        expect(engine).to.be.instanceOf(RebuiltV12);
+                        expect(diagnostics).to.be.instanceOf(OBDII);
+                        done();
+                    });
+                })
+            );
+        });
+
+        it("should resolve collection dependencies", function (done) {
+            Promise.all(container.register($component(Ferrari).dependsOn($use('LaFerrari')),
+                                           $component(Bugatti).dependsOn($use('Veyron')),
+                                           $component(V12), $component(Auction))).then(function () {
+                Promise.resolve(container.resolve(Auction)).then(function (auction) {
+                    var cars = auction.getCars();
+                    expect(cars['Ferrari']).to.have.length(1);
+                    expect(cars['Bugatti']).to.have.length(1);
+                    done();
+                });
+            });
+        });
+
+        it("should resolve collection dependencies from child containers", function (done) {
+            Promise.all(container.register($component(Ferrari).dependsOn($use('LaFerrari')),
+                                           $component(Bugatti).dependsOn($use('Veyron')),
+                                           $component(V12))).then(function () {
+                var childContext = context.newChild();
+                $using(childContext, 
+                       Promise.resolve(Container(childContext).register(
+                           $component(Ferrari).dependsOn($use('California')),
+                           $component(Auction))).then(function () {
+                               Promise.resolve(Container(childContext).resolve(Auction)).then(function (auction) {
+                                   var cars     = auction.getCars();
+                                   expect(cars['Ferrari']).to.have.length(2);
+                                   var ferraris = js.Array2.map(cars['Ferrari'], function (ferrari) {
+                                       return ferrari.getModel();
+                                   });
+                                   expect(ferraris).to.eql(['LaFerrari', 'California']);
+                                   expect(cars['Bugatti']).to.have.length(1);
+                                   done();
+                               });
+                           })
+                );
+            });
+        });
+
+        it("should fail resolve if missing dependencies", function (done) {
+            Promise.resolve(container.register($component(Ferrari))).then(function (model) {
+                Promise.resolve(container.resolve(Car)).catch(function (error) {
+                    expect(error).to.be.instanceof(DependencyResolutionError);
+                    expect(error.message).to.match(/Dependency.*Engine.*<= (.*Car.*<-.*Ferrari.*)could not be resolved./);
+                    expect(error.dependency.getKey()).to.equal(Engine);
+                    done();
+                });
+            });
+        });
+
+        it("should detect circular dependencies", function (done) {
+            Promise.all(container.register($component(Ferrari),
+                        $component(V12).dependsOn($use(917), $use(6.3), Engine))).then(function () {
+                Promise.resolve(container.resolve(Car)).catch(function (error) {
+                    expect(error).to.be.instanceof(DependencyResolutionError);
+                    expect(error.message).to.match(/Dependency.*Engine.*<= (.*Engine.*<-.*V12.*) <= (.*Car.*<-.*Ferrari.*) could not be resolved./);
+                    expect(error.dependency.getKey()).to.equal(Engine);
+                    done();
+                });
+            });
+        });
+    });
+
+    describe("#resolveAll", function () {
+        var context, container;
+        beforeEach(function() {
+            context   = new Context;
+            container = Container(context);
+            context.addHandlers(new IoContainer, new ValidationCallbackHandler);
+        });
+
+        it("should resolve all components", function (done) {
+            Promise.all(container.register($component(Ferrari).dependsOn($use('LaFerrari')),
+                                     $component(Bugatti).dependsOn($use('Veyron')),
+                                     $component(V12))).then(function () {
+                Promise.resolve(container.resolveAll(Car)).then(function (cars) {
+                    var inventory = js.Array2.combine(  
+                        js.Array2.map(cars, function (car) { return car.getMake(); }),
+                        js.Array2.map(cars, function (car) { return car.getModel(); }));
+                    expect(inventory['Ferrari']).to.equal('LaFerrari');
+                    expect(inventory['Bugatti']).to.equal('Veyron');
+                    done();
+                });
+            });
+        });
+    })
+
+    describe("#dispose", function () {
+        var context, container;
+        beforeEach(function() {
+            context   = new Context;
+            container = Container(context);
+            context.addHandlers(new IoContainer, new ValidationCallbackHandler);
+        });
+
+        it("should dispose all components", function (done) {
+            Promise.all(container.register($component(Ferrari), $component(V12))).then(function () {
+                Promise.resolve(container.resolve(Car)).then(function (car) {
+                    done();
+                    container.dispose();
+                });
+            });
+        });
+    });
+});
+
+},{"../../lib/ioc/ioc.js":8,"../../lib/miruken.js":9,"bluebird":12,"chai":13}],60:[function(require,module,exports){
 (function (global){
 var miruken = require('../lib/miruken.js'),
     Promise = require('bluebird'),
@@ -14205,9 +21545,9 @@ describe("$inferProperties", function () {
     });
 });
 
-describe("$synthesizeProperties", function () {
+describe("$properties", function () {
     var Person = Base.extend(
-        $synthesizeProperties('firstName', {
+        $properties('firstName', {
             age:      { field:    '__age' },
             gender:   { nosetter: true },
             password: { nogetter: true }
@@ -14215,14 +21555,16 @@ describe("$synthesizeProperties", function () {
     );
     
     it("should synthesize instance properties", function () {
-        var person       = new Person;
+        var person       = new Person,
+            friend       = new Person;
         person.firstName = 'John';
         expect(person.firstName).to.equal('John');
         expect(person.getFirstName()).to.equal('John');
-        expect(person).to.not.have.ownProperty('_firstName');
+        expect(person._firstName).to.equal('John');
         person.setFirstName('Sarah');
         expect(person.firstName).to.equal('Sarah');
         expect(person.getFirstName()).to.equal('Sarah');
+        expect(friend.firstName).to.be.undefined;
     });
 
     it("should synthesize custom instance properties", function () {
@@ -14255,54 +21597,54 @@ describe("$synthesizeProperties", function () {
     });
 });
 
-describe("$synthesizePropertiesFromField", function () {
+describe("$propertiesFromField", function () {
     var Person = Base.extend(
-        $synthesizePropertiesFromFields
+        $propertiesFromFields
     );
     
     it("should synthesize properties from fields", function () {
         var person = new Person({_firstName : 'Mike', _age: 12 });
         expect(person.firstName).to.equal('Mike');
         expect(person.getFirstName()).to.equal('Mike');
-        expect(person._firstName).to.be.undefined;
+        expect(person._firstName).to.equal('Mike');
         person.firstName = 'Casey';
         expect(person.getFirstName()).to.equal('Casey');
         expect(person.age).to.equal(12);
         expect(person.getAge()).to.equal(12);
-        expect(person._age).to.be.undefined;
+        expect(person._age).to.equal(12);
     });
 
     it("should synthesize properties and normalize fields", function () {
         var person = new Person({firstName : 'Mike', age: 12 });
         expect(person.firstName).to.equal('Mike');
         expect(person.getFirstName()).to.equal('Mike');
-        expect(person._firstName).to.be.undefined;
+        expect(person._firstName).to.equal('Mike');
         person.firstName = 'Casey';
         expect(person.getFirstName()).to.equal('Casey');
         expect(person.age).to.equal(12);
         expect(person.getAge()).to.equal(12);
-        expect(person._age).to.be.undefined;
+        expect(person._age).to.equal(12);
     });
 
     it("should synthesize properties from fields explicitly", function () {
         var Car = Base.extend(
-            $synthesizeProperties('make', 'model'),
-            $synthesizePropertiesFromFields
+            $properties('make', 'model'),
+            $propertiesFromFields
         ),
         car = new Car({make : 'Audi', model: 'A4' });
         expect(car.make).to.equal('Audi');
         expect(car.getMake()).to.equal('Audi');
-        expect(car._make).to.be.undefined;
+        expect(car._make).to.equal('Audi');
         expect(car.model).to.equal('A4');
         expect(car.getModel()).to.equal('A4');
-        expect(car._model).to.be.undefined;
+        expect(car._model).to.equal('A4');
     });
 
     it("should infer and synthesize properties from fields explicitly", function () {
         var Car = Base.extend(
             $inferProperties,
-            $synthesizeProperties('_make', '_model'),
-            $synthesizePropertiesFromFields, {
+            $properties('_make', '_model'),
+            $propertiesFromFields, {
                 getEngine: function () { return this._engine; },
                 setEngine: function (value) { this._engine = value; }
             }
@@ -14311,10 +21653,10 @@ describe("$synthesizePropertiesFromField", function () {
         car.engine = 'V6';
         expect(car.make).to.equal('Porsche');
         expect(car.getMake()).to.equal('Porsche');
-        expect(car._make).to.be.undefined;
+        expect(car._make).to.equal('Porsche');
         expect(car.model).to.equal('Carrera');
         expect(car.getModel()).to.equal('Carrera');
-        expect(car._model).to.be.undefined;
+        expect(car._model).to.equal('Carrera');
         expect(car.engine).to.equal('V6');
         expect(car.getEngine()).to.equal('V6');
         expect(car._engine).to.equal('V6');
@@ -15116,4 +22458,355 @@ describe("Traversal", function () {
 });
 
 }).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
-},{"../lib/miruken.js":2,"bluebird":3,"chai":4}]},{},[41]);
+},{"../lib/miruken.js":9,"bluebird":12,"chai":13}],61:[function(require,module,exports){
+var miruken  = require('../../lib/miruken.js'),
+    mv       = require('../../lib/mvc/mvc.js'),
+    chai     = require("chai"),
+    expect   = chai.expect;
+              
+eval(base2.namespace);
+eval(miruken.namespace);
+eval(miruken.mvc.namespace);
+
+describe("Model", function () {
+    var Person  = Model.extend(
+        $properties('firstName', 'lastName', 'age'),
+    {
+        getHobbies: function () { return this._hobbies; },
+        setHobbies: function (value) { this._hobbies = value; }
+    });
+
+    describe("#constructor", function () {
+        it("should create properties", function () {
+            var person = new Person;
+            person.firstName = 'Sean';
+            person.lastName  = 'Smith';
+            expect(person.getFirstName()).to.equal('Sean');
+            expect(person.getLastName()).to.equal('Smith');
+        });
+
+        it("should infer properties", function () {
+            var person = new Person;
+            person.setHobbies(['Soccer', 'Tennis']);
+            expect(person.hobbies).to.eql(['Soccer', 'Tennis']);
+        });
+
+        it("should construct model from state", function () {
+            var person = new Person({
+                firstName: 'Carl',
+                lastName:  'Lewis'
+            });
+            expect(person.firstName).to.equal('Carl');
+            expect(person.getFirstName()).to.equal('Carl');
+            expect(person.lastName).to.equal('Lewis');
+            expect(person.getLastName()).to.equal('Lewis');
+        });
+
+        it("should pluck all data from model", function () {
+            var person = new Person({
+                firstName: 'Lionel',
+                lastName:  'Messi',
+                age:       24
+            });
+            var data = person.pluck('firstName');
+            expect(data).to.eql({firstName: 'Lionel'});
+            data     = person.pluck('firstName', 'lastName');
+            expect(data).to.eql({firstName: 'Lionel', lastName: 'Messi'});
+            data = person.pluck('fullName');
+            expect(data).to.eql({fullName: undefined});
+        });
+    });
+
+    describe("#map", function () {
+        var PersonModel = Model.extend(
+            $properties('person')
+        );
+
+        it("should map one-to-one", function () {
+            var state = {
+                firstName: 'Eddie',
+                lastName:  'Money',
+                mother:    {
+                    firstName: 'Leslie',
+                    lastName:  'Money'
+                }
+            }
+            var mother = PersonModel.mapAndDelete(state, 'mother');
+            var person = new Person(state);
+            expect(person.firstName).to.equal('Eddie');
+            expect(person.lastName).to.equal('Money');
+            expect(mother.firstName).to.equal('Leslie');
+            expect(mother.lastName).to.equal('Money');
+            expect(person.mother).to.be.undefined;
+        });
+    });
+});
+},{"../../lib/miruken.js":9,"../../lib/mvc/mvc.js":10,"chai":13}],62:[function(require,module,exports){
+var miruken  = require('../lib/miruken.js'),
+    context  = require('../lib/context.js')
+    validate = require('../lib/validate.js'),
+    Promise  = require('bluebird'),
+    chai     = require("chai"),
+    expect   = chai.expect;
+
+eval(base2.namespace);
+eval(miruken.namespace);
+eval(miruken.callback.namespace);
+eval(miruken.context.namespace);
+eval(validate.namespace);
+
+new function () { // closure
+
+    var validate_test = new base2.Package(this, {
+        name:    "validate_test",
+        exports: "Player,Team,"
+    });
+
+    eval(this.imports);
+
+    var Player = Base.extend({
+        constructor: function (firstName, lastName, dob) {
+            this.extend({
+                getFirstName: function () { return firstName; },
+                setFirstName: function (value) { firstName = value; },
+                getLastName:  function () { return lastName; },
+                setLastName:  function (value) { lastName = value; },
+                getDOB:       function () { return dob; },
+                setDOB:       function (value) { dob = value; }
+            });
+        }});
+    
+    var Team = CallbackHandler.extend({
+        constructor: function (name, division) {
+            this.extend({
+                getName:     function () { return name; },
+                setName:     function (value) { name = value; },
+                getDivision: function () { return division; },
+                setDivision: function (value) { division = value; }
+            });
+        },
+        $validate:[
+            Player, function (validation, composer) {
+                var player = validation.getObject();
+                if (!player.getFirstName() || player.getFirstName().length == 0) {
+                    validation.required("FirstName", "First name required");
+                }
+                if (!player.getLastName()  || player.getLastName().length == 0) {
+                    validation.required("LastName", "Last name required");
+                }
+                if ((player.getDOB() instanceof Date) === false) {
+                    validation.invalid("DOB", player.getDOB(), "Valid Date-of-birth required");
+                }
+            }]
+    });
+    
+  eval(this.exports);
+};
+
+eval(base2.validate_test.namespace);
+
+describe("ValidationResult", function () {
+    describe("#getObject", function () {
+        it("should get the validated object", function () {
+            var team       = new Team("Aspros"),
+                validation = new ValidationResult(team);
+            expect(validation.getObject()).to.equal(team);
+        });
+    });
+
+    describe("#getScope", function () {
+        it("should get the validation scope", function () {
+            var team       = new Team("Aspros"),
+                validation = new ValidationResult(team, "players");
+            expect(validation.getScope()).to.equal("players");
+        });
+    });
+
+    describe("#addKeyError", function () {
+        it("should add validation errors", function () {
+            var team       = new Team,
+                validation = new ValidationResult(team);
+            validation.addKeyError("Name", new ValidationError("Team name required", {
+                key:  "Name",
+                code: ValidationErrorCode.Required
+            }));
+            expect(validation.getKeyErrors("Name")).to.eql([
+                new ValidationError("Team name required", {
+                    key:  "Name",
+                    code: ValidationErrorCode.Required
+                })
+            ]);
+        });
+
+        it("should add invalid child validation results", function () {
+            var team            = new Team,
+                player          = new Player,
+                validation      = new ValidationResult(team),
+   	        childValidation = new ValidationResult(player);
+                childValidation.addKeyError("FirstName", new ValidationError("First name required", {
+                    key:  "FirstName",
+                    code: ValidationErrorCode.Required
+                }));
+	        validation.addKeyError("Player", childValidation);
+	        expect(validation.isValid()).to.be.false;
+            expect(validation.getKeyErrors("Player")[0].getKeyErrors("FirstName")).to.eql([
+                new ValidationError("First name required", {
+                    key:  "FirstName",
+                    code: ValidationErrorCode.Required
+                })
+	        ]);
+	    });
+
+        it("should not add valid child validation results", function () {
+            var team            = new Team,
+                player          = new Player,
+                validation      = new ValidationResult(team),
+                childValidation = new ValidationResult(player);
+            validation.addKeyError("Player", childValidation);
+            expect(validation.isValid()).to.be.true;
+            expect(validation.getKeyErrors("Player")).to.be.undefined;
+        });
+
+        it("should add anonymous invalid child validation results", function () {
+            var team            = new Team,
+                player          = new Player,
+                validation      = new ValidationResult(team),
+                childValidation = new ValidationResult(player);
+            childValidation.addKeyError("FirstName", new ValidationError("First name required", {
+                key:  "FirstName",
+                code: ValidationErrorCode.Required
+            }));
+            validation.addChildResult(childValidation);
+            expect(validation.isValid()).to.be.false;
+            expect(validation.getKeyCulprits()).to.eql([]);
+            expect(validation.getChildResults()[0].getKeyErrors("FirstName")).to.eql([
+                new ValidationError("First name required", {
+                    key:  "FirstName",
+                    code: ValidationErrorCode.Required
+                })
+		    ]);
+	    });
+    });
+});
+
+describe("ValidationCallbackHandler", function () {
+    describe("#validate", function () {
+        it("should invalidate object", function (done) {
+            var team   = new Team("Liverpool", "U8"),
+                league = new Context()
+                    .addHandlers(team, new ValidationCallbackHandler()),
+            player = new Player;
+            Promise.resolve(Validator(league).validate(player)).caught(function (error) {
+                done();
+            });
+        });
+
+        it("should be valid if no validators", function (done) {
+            var league = new Context()
+                    .addHandlers(new ValidationCallbackHandler()),
+            player = new Player;
+            Promise.resolve(Validator(league).validate(player)).then(function (validated) {
+                expect(validated.isValid(player)).to.be.true;
+                done();
+            });
+        });
+
+        it("should provide invalid keys", function (done) {
+            var team       = new Team("Liverpool", "U8"),
+                league     = new Context()
+                    .addHandlers(team, new ValidationCallbackHandler()),
+                player     = new Player("Matthew");
+            Promise.resolve(Validator(league).validate(player)).caught(function (error) {
+		    expect(error.getKeyCulprits()).to.eql(["LastName", "DOB"]);
+            done();
+            });
+        });
+
+        it("should provide key errors", function (done) {
+            var team       = new Team("Liverpool", "U8"),
+                league     = new Context()
+                    .addHandlers(team, new ValidationCallbackHandler()),
+                player     = new Player("Matthew");
+            Promise.resolve(Validator(league).validate(player)).caught(function (error) {
+                expect(error.getKeyErrors("LastName")).to.eql([
+                    new ValidationError("Last name required", {
+                        key:  "LastName",
+                        code: ValidationErrorCode.Required
+                    })
+                ]);
+                expect(error.getKeyErrors("DOB")).to.eql([
+                    new ValidationError("Valid Date-of-birth required", {
+                        key:  "DOB",
+                        code: ValidationErrorCode.Invalid
+                    })
+                ]);
+                done();
+            });
+        });
+
+        it("should dynamically add validation", function (done) {
+            var team   = new Team("Liverpool", "U8"),
+                league = new Context()
+                    .addHandlers(team, new ValidationCallbackHandler()),
+            player = new Player("Diego", "Morales", new Date(2006, 7, 19));
+            $validate(league, Player, function (validation, composer) {
+                var player = validation.getObject(),
+                    start  = new Date(2006, 8, 1),
+                    end    = new Date(2007, 7, 31);
+                if (player.getDOB() < start) {
+                    validation.addKeyError("DOB", new ValidationError(
+                        "Player too old for division " + team.getDivision(), {
+                            key:    "DOB",
+                            code:   ValidationErrorCode.DateTooSoon,
+                            source: player.getDOB()
+			}));
+                } else if (player.getDOB() > end) {
+                    validation.addKeyError("DOB", new ValidationError(
+                        "Player too young for division " + team.getDivision(), {
+                            key:    "DOB",
+                            code:   ValidationErrorCode.DateTooLate,
+                            source: player.getDOB()
+			}));
+		}
+            });
+            Promise.resolve(Validator(league).validate(player)).caught(function (error) {
+                expect(error.getKeyErrors("DOB")).to.eql([
+                    new ValidationError("Player too old for division U8", {
+                        key:    "DOB",
+                        code:   ValidationErrorCode.DateTooSoon,
+                        source: new Date(2006, 7, 19)
+                    })
+                ]);
+                done();
+            });
+        });
+
+        it("should validate unknown sources", function (done) {
+            var league = new Context()
+                    .addHandlers(new ValidationCallbackHandler());
+            $validate(league, null, function (validation, composer) {
+                var source = validation.getObject();
+                if ((source instanceof Team) &&
+                    (!source.getName() || source.getName().length == 0)) {
+                    validation.addKeyError("Name", new ValidationError("Team name required", {
+                        key:    "Name",
+                        code:   ValidationErrorCode.Required,
+                        source: source.getName()
+                    }));
+                }
+            });
+            Promise.resolve(Validator(league).validate(new Team)).caught(function (error) {
+                expect(error.getKeyErrors("Name")).to.eql([
+                    new ValidationError("Team name required", {
+                        key:    "Name",
+                        code:   ValidationErrorCode.Required,
+                        source: undefined
+                    })
+                ]);
+                done();
+            });
+        });
+    });
+});
+
+},{"../lib/context.js":3,"../lib/miruken.js":9,"../lib/validate.js":11,"bluebird":12,"chai":13}]},{},[54,55,56,57,58,59,60,61,62]);

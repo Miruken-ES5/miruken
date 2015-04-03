@@ -240,9 +240,9 @@ describe("$inferProperties", function () {
     });
 });
 
-describe("$synthesizeProperties", function () {
+describe("$properties", function () {
     var Person = Base.extend(
-        $synthesizeProperties('firstName', {
+        $properties('firstName', {
             age:      { field:    '__age' },
             gender:   { nosetter: true },
             password: { nogetter: true }
@@ -255,7 +255,7 @@ describe("$synthesizeProperties", function () {
         person.firstName = 'John';
         expect(person.firstName).to.equal('John');
         expect(person.getFirstName()).to.equal('John');
-        expect(person).to.not.have.ownProperty('_firstName');
+        expect(person._firstName).to.equal('John');
         person.setFirstName('Sarah');
         expect(person.firstName).to.equal('Sarah');
         expect(person.getFirstName()).to.equal('Sarah');
@@ -292,54 +292,54 @@ describe("$synthesizeProperties", function () {
     });
 });
 
-describe("$synthesizePropertiesFromField", function () {
+describe("$propertiesFromField", function () {
     var Person = Base.extend(
-        $synthesizePropertiesFromFields
+        $propertiesFromFields
     );
     
     it("should synthesize properties from fields", function () {
         var person = new Person({_firstName : 'Mike', _age: 12 });
         expect(person.firstName).to.equal('Mike');
         expect(person.getFirstName()).to.equal('Mike');
-        expect(person._firstName).to.be.undefined;
+        expect(person._firstName).to.equal('Mike');
         person.firstName = 'Casey';
         expect(person.getFirstName()).to.equal('Casey');
         expect(person.age).to.equal(12);
         expect(person.getAge()).to.equal(12);
-        expect(person._age).to.be.undefined;
+        expect(person._age).to.equal(12);
     });
 
     it("should synthesize properties and normalize fields", function () {
         var person = new Person({firstName : 'Mike', age: 12 });
         expect(person.firstName).to.equal('Mike');
         expect(person.getFirstName()).to.equal('Mike');
-        expect(person._firstName).to.be.undefined;
+        expect(person._firstName).to.equal('Mike');
         person.firstName = 'Casey';
         expect(person.getFirstName()).to.equal('Casey');
         expect(person.age).to.equal(12);
         expect(person.getAge()).to.equal(12);
-        expect(person._age).to.be.undefined;
+        expect(person._age).to.equal(12);
     });
 
     it("should synthesize properties from fields explicitly", function () {
         var Car = Base.extend(
-            $synthesizeProperties('make', 'model'),
-            $synthesizePropertiesFromFields
+            $properties('make', 'model'),
+            $propertiesFromFields
         ),
         car = new Car({make : 'Audi', model: 'A4' });
         expect(car.make).to.equal('Audi');
         expect(car.getMake()).to.equal('Audi');
-        expect(car._make).to.be.undefined;
+        expect(car._make).to.equal('Audi');
         expect(car.model).to.equal('A4');
         expect(car.getModel()).to.equal('A4');
-        expect(car._model).to.be.undefined;
+        expect(car._model).to.equal('A4');
     });
 
     it("should infer and synthesize properties from fields explicitly", function () {
         var Car = Base.extend(
             $inferProperties,
-            $synthesizeProperties('_make', '_model'),
-            $synthesizePropertiesFromFields, {
+            $properties('_make', '_model'),
+            $propertiesFromFields, {
                 getEngine: function () { return this._engine; },
                 setEngine: function (value) { this._engine = value; }
             }
@@ -348,10 +348,10 @@ describe("$synthesizePropertiesFromField", function () {
         car.engine = 'V6';
         expect(car.make).to.equal('Porsche');
         expect(car.getMake()).to.equal('Porsche');
-        expect(car._make).to.be.undefined;
+        expect(car._make).to.equal('Porsche');
         expect(car.model).to.equal('Carrera');
         expect(car.getModel()).to.equal('Carrera');
-        expect(car._model).to.be.undefined;
+        expect(car._model).to.equal('Carrera');
         expect(car.engine).to.equal('V6');
         expect(car.getEngine()).to.equal('V6');
         expect(car._engine).to.equal('V6');
