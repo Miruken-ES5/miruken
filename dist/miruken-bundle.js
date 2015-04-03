@@ -4643,9 +4643,6 @@ new function () { // closure
 
     var extendInstance = Base.prototype.extend;
     Base.prototype.extend = function (key, value) {
-        if (!this.metaMacros || this.metaMacros.length == 0) {
-            extendInstance.call(this, key, value);
-        }
         var definition = (arguments.length === 1) ? key : {};
         if (arguments.length >= 2) {
             definition[key] = value;

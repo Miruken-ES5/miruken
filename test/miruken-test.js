@@ -169,6 +169,59 @@ describe("$isFunction", function () {
     });
 });
 
+describe("$properties", function () {
+    var Person = Base.extend(
+        $properties('firstName', {
+            age:      { field:    '__age' },
+            gender:   { nosetter: true },
+            password: { nogetter: true }
+        })
+    );
+    
+    it("should synthesize instance properties", function () {
+        var person       = new Person,
+            friend       = new Person;
+        person.firstName = 'John';
+        expect(person.firstName).to.equal('John');
+        expect(person.getFirstName()).to.equal('John');
+        expect(person._firstName).to.equal('John');
+        person.setFirstName('Sarah');
+        expect(person.firstName).to.equal('Sarah');
+        expect(person.getFirstName()).to.equal('Sarah');
+        expect(friend.firstName).to.be.undefined;
+    });
+
+    it("should synthesize custom instance properties", function () {
+        var person = new Person;
+        person.age = 18;
+        expect(person.age).to.equal(18);
+        expect(person.getAge()).to.equal(18);
+        expect(person.__age).to.equal(18);
+        person.setAge(45);
+        expect(person.age).to.equal(45);
+        expect(person.getAge()).to.equal(45);
+        expect(person.__age).to.equal(45);
+    });
+
+    it("should synthesize readonly instance properties", function () {
+        var person    = new Person;
+        person._gender = 'male';
+        expect(person.gender).to.equal('male');
+        expect(person.getGender()).to.equal('male');
+        expect(person._gender).to.equal('male');
+        expect(person.setGender).to.be.undefined;
+    });
+
+    it("should synthesize writeonly instance properties", function () {
+        var person      = new Person;
+        person.password = '%@ks1224';
+        expect(person.password).to.be.undefined;
+        expect(person._password).to.equal('%@ks1224');
+        expect(person.getPassword).to.be.undefined;
+    });
+});
+
+
 describe("$inferProperties", function () {
     var Person = Base.extend( 
         $inferProperties, {
@@ -240,59 +293,7 @@ describe("$inferProperties", function () {
     });
 });
 
-describe("$properties", function () {
-    var Person = Base.extend(
-        $properties('firstName', {
-            age:      { field:    '__age' },
-            gender:   { nosetter: true },
-            password: { nogetter: true }
-        })
-    );
-    
-    it("should synthesize instance properties", function () {
-        var person       = new Person,
-            friend       = new Person;
-        person.firstName = 'John';
-        expect(person.firstName).to.equal('John');
-        expect(person.getFirstName()).to.equal('John');
-        expect(person._firstName).to.equal('John');
-        person.setFirstName('Sarah');
-        expect(person.firstName).to.equal('Sarah');
-        expect(person.getFirstName()).to.equal('Sarah');
-        expect(friend.firstName).to.be.undefined;
-    });
-
-    it("should synthesize custom instance properties", function () {
-        var person = new Person;
-        person.age = 18;
-        expect(person.age).to.equal(18);
-        expect(person.getAge()).to.equal(18);
-        expect(person.__age).to.equal(18);
-        person.setAge(45);
-        expect(person.age).to.equal(45);
-        expect(person.getAge()).to.equal(45);
-        expect(person.__age).to.equal(45);
-    });
-
-    it("should synthesize readonly instance properties", function () {
-        var person    = new Person;
-        person._gender = 'male';
-        expect(person.gender).to.equal('male');
-        expect(person.getGender()).to.equal('male');
-        expect(person._gender).to.equal('male');
-        expect(person.setGender).to.be.undefined;
-    });
-
-    it("should synthesize writeonly instance properties", function () {
-        var person      = new Person;
-        person.password = '%@ks1224';
-        expect(person.password).to.be.undefined;
-        expect(person._password).to.equal('%@ks1224');
-        expect(person.getPassword).to.be.undefined;
-    });
-});
-
-describe("$propertiesFromField", function () {
+describe("$propertiesFromFields", function () {
     var Person = Base.extend(
         $propertiesFromFields
     );
@@ -355,6 +356,26 @@ describe("$propertiesFromField", function () {
         expect(car.engine).to.equal('V6');
         expect(car.getEngine()).to.equal('V6');
         expect(car._engine).to.equal('V6');
+    });
+});
+
+describe("$inheritStatic", function () {
+    var Math = Base.extend(
+        $inheritStatic, null, {
+            PI: 3.14159265359,
+            add: function (a, b) {
+                return a + b;
+            }
+        }), 
+        Geometry = Math.extend(null, {
+            area: function(length, width) {
+                return length * width;
+            }
+        });
+    
+    it("should inherit static members", function () {
+        expect(Geometry.PI).to.equal(Math.PI);
+        expect(Geometry.add).to.equal(Math.add);
     });
 });
 
