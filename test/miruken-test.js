@@ -170,57 +170,53 @@ describe("$isFunction", function () {
 });
 
 describe("$properties", function () {
-    var Person = Base.extend(
-        $properties('firstName', {
-            age:      { field:    '__age' },
-            gender:   { nosetter: true },
-            password: { nogetter: true }
-        })
-    );
-    
+    var Person = Base.extend($properties, {
+        $properties: {
+            firstName: '',
+            age:       undefined,
+            gender:    $readonly('male'),
+            pet:       $type(Animal)
+        }
+    }), Doctor = Person.extend({
+        $properties: {
+            patient:   $type(Person)
+        }
+    });
+
     it("should synthesize instance properties", function () {
         var person       = new Person,
             friend       = new Person;
         person.firstName = 'John';
         expect(person.firstName).to.equal('John');
-        expect(person.getFirstName()).to.equal('John');
-        expect(person._firstName).to.equal('John');
-        person.setFirstName('Sarah');
+        expect(person._firstName).to.be.undefined;
+        person.firstName = 'Sarah';
         expect(person.firstName).to.equal('Sarah');
-        expect(person.getFirstName()).to.equal('Sarah');
-        expect(friend.firstName).to.be.undefined;
+        expect(friend.firstName).to.equal('');
     });
 
     it("should synthesize custom instance properties", function () {
         var person = new Person;
         person.age = 18;
         expect(person.age).to.equal(18);
-        expect(person.getAge()).to.equal(18);
-        expect(person.__age).to.equal(18);
-        person.setAge(45);
+        expect(person.__age).to.be.undefined;
+        person.age = 45;
         expect(person.age).to.equal(45);
-        expect(person.getAge()).to.equal(45);
-        expect(person.__age).to.equal(45);
     });
 
     it("should synthesize readonly instance properties", function () {
         var person    = new Person;
-        person._gender = 'male';
+        person.gender = 'female';
         expect(person.gender).to.equal('male');
-        expect(person.getGender()).to.equal('male');
-        expect(person._gender).to.equal('male');
-        expect(person.setGender).to.be.undefined;
     });
 
-    it("should synthesize writeonly instance properties", function () {
-        var person      = new Person;
-        person.password = '%@ks1224';
-        expect(person.password).to.be.undefined;
-        expect(person._password).to.equal('%@ks1224');
-        expect(person.getPassword).to.be.undefined;
+    it("should retrieve property type", function () {
+        expect(Doctor.meta.getPropertyType('patient')).to.equal(Person);
+    });
+
+    it("should retrieve inherited property type", function () {
+        expect(Doctor.meta.getPropertyType('pet')).to.equal(Animal);
     });
 });
-
 
 describe("$inferProperties", function () {
     var Person = Base.extend( 
@@ -290,72 +286,6 @@ describe("$inferProperties", function () {
         person.age = 23;
         expect(person.age).to.equal(23);
         expect(person.getAge()).to.equal(23);
-    });
-});
-
-describe("$propertiesFromFields", function () {
-    var Person = Base.extend(
-        $propertiesFromFields
-    );
-    
-    it("should synthesize properties from fields", function () {
-        var person = new Person({_firstName : 'Mike', _age: 12 });
-        expect(person.firstName).to.equal('Mike');
-        expect(person.getFirstName()).to.equal('Mike');
-        expect(person._firstName).to.equal('Mike');
-        person.firstName = 'Casey';
-        expect(person.getFirstName()).to.equal('Casey');
-        expect(person.age).to.equal(12);
-        expect(person.getAge()).to.equal(12);
-        expect(person._age).to.equal(12);
-    });
-
-    it("should synthesize properties and normalize fields", function () {
-        var person = new Person({firstName : 'Mike', age: 12 });
-        expect(person.firstName).to.equal('Mike');
-        expect(person.getFirstName()).to.equal('Mike');
-        expect(person._firstName).to.equal('Mike');
-        person.firstName = 'Casey';
-        expect(person.getFirstName()).to.equal('Casey');
-        expect(person.age).to.equal(12);
-        expect(person.getAge()).to.equal(12);
-        expect(person._age).to.equal(12);
-    });
-
-    it("should synthesize properties from fields explicitly", function () {
-        var Car = Base.extend(
-            $properties('make', 'model'),
-            $propertiesFromFields
-        ),
-        car = new Car({make : 'Audi', model: 'A4' });
-        expect(car.make).to.equal('Audi');
-        expect(car.getMake()).to.equal('Audi');
-        expect(car._make).to.equal('Audi');
-        expect(car.model).to.equal('A4');
-        expect(car.getModel()).to.equal('A4');
-        expect(car._model).to.equal('A4');
-    });
-
-    it("should infer and synthesize properties from fields explicitly", function () {
-        var Car = Base.extend(
-            $inferProperties,
-            $properties('_make', '_model'),
-            $propertiesFromFields, {
-                getEngine: function () { return this._engine; },
-                setEngine: function (value) { this._engine = value; }
-            }
-        ),
-        car = new Car({make : 'Porsche', model: 'Carrera' });
-        car.engine = 'V6';
-        expect(car.make).to.equal('Porsche');
-        expect(car.getMake()).to.equal('Porsche');
-        expect(car._make).to.equal('Porsche');
-        expect(car.model).to.equal('Carrera');
-        expect(car.getModel()).to.equal('Carrera');
-        expect(car._model).to.equal('Carrera');
-        expect(car.engine).to.equal('V6');
-        expect(car.getEngine()).to.equal('V6');
-        expect(car._engine).to.equal('V6');
     });
 });
 
@@ -540,7 +470,6 @@ describe("Protocol", function () {
 
     describe("#implement", function () {
         it("should extend protocol", function () {
-                debugger;
             Animal.implement({
                reproduce: function () {}
             }),

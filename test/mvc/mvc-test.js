@@ -8,22 +8,22 @@ eval(miruken.namespace);
 eval(miruken.mvc.namespace);
 
 describe("Model", function () {
-    var Person  = Model.extend(
-        $properties('firstName', 'lastName', 'age'),
-    {
+    var Person  = Model.extend({
+        $properties: {
+            firstName: '',
+            lastName:  '',
+            age:       0
+        },
         getHobbies: function () { return this._hobbies; },
         setHobbies: function (value) { this._hobbies = value; }
+    }),
+        Doctor = Person.extend({
+            $properties: {
+                patient: $type(Person)
+            }
     });
 
     describe("#constructor", function () {
-        it("should create properties", function () {
-            var person = new Person;
-            person.firstName = 'Sean';
-            person.lastName  = 'Smith';
-            expect(person.getFirstName()).to.equal('Sean');
-            expect(person.getLastName()).to.equal('Smith');
-        });
-
         it("should infer properties", function () {
             var person = new Person;
             person.setHobbies(['Soccer', 'Tennis']);
@@ -36,9 +36,7 @@ describe("Model", function () {
                 lastName:  'Lewis'
             });
             expect(person.firstName).to.equal('Carl');
-            expect(person.getFirstName()).to.equal('Carl');
             expect(person.lastName).to.equal('Lewis');
-            expect(person.getLastName()).to.equal('Lewis');
         });
 
         it("should pluck all data from model", function () {
@@ -57,26 +55,56 @@ describe("Model", function () {
     });
 
     describe("#map", function () {
-        var PersonModel = Model.extend(
-            $properties('person')
-        );
-
         it("should map one-to-one", function () {
             var state = {
-                firstName: 'Eddie',
-                lastName:  'Money',
-                mother:    {
-                    firstName: 'Leslie',
-                    lastName:  'Money'
+                firstName: 'Daniel',
+                lastName:  'Worrel',
+                patient:   {
+                    firstName: 'Emitt',
+                    lastName:  'Smith'
                 }
             }
-            var mother = PersonModel.mapAndDelete(state, 'mother');
+            var doctor  = new Doctor(state),
+                patient = doctor.patient; 
+            expect(doctor.firstName).to.equal('Daniel');
+            expect(doctor.lastName).to.equal('Worrel');
+            expect(patient).to.be.instanceOf(Person);
+            expect(patient.firstName).to.equal('Emitt');
+            expect(patient.lastName).to.equal('Smith');
+        });
+
+        it("should map one-to-many", function () {
+            var state = {
+                firstName: 'Daniel',
+                lastName:  'Worrel',
+                patient:   [{
+                    firstName: 'Emitt',
+                    lastName:  'Smith'
+                }, {
+                    firstName: 'Tony',
+                    lastName:  'Romo'
+                }]  
+            }
+            var doctor   = new Doctor(state),
+                patients = doctor.patient; 
+            expect(doctor.firstName).to.equal('Daniel');
+            expect(doctor.lastName).to.equal('Worrel');
+            expect(patients).to.be.instanceOf(Array);
+            expect(patients).to.have.length(2);
+            expect(patients[0].firstName).to.equal('Emitt');
+            expect(patients[0].lastName).to.equal('Smith');
+            expect(patients[1].firstName).to.equal('Tony');
+            expect(patients[1].lastName).to.equal('Romo');
+        });
+
+        it("should ignore case", function () {
+            var state = {
+                fiRstNamE: 'Bruce',
+                LaStNaMe:  'Lee'
+            }
             var person = new Person(state);
-            expect(person.firstName).to.equal('Eddie');
-            expect(person.lastName).to.equal('Money');
-            expect(mother.firstName).to.equal('Leslie');
-            expect(mother.lastName).to.equal('Money');
-            expect(person.mother).to.be.undefined;
+            expect(person.firstName).to.equal('Bruce');
+            expect(person.lastName).to.equal('Lee');
         });
     });
 });

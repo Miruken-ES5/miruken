@@ -1735,10 +1735,11 @@ new function () { // closure
      * Metamacro to expand registered definitions.
      */
     var $expand = MetaMacro.extend({
-        apply: function(clazz, target, definition) {
+        apply: function (step, metadata, target, definition) {
             if ($isNothing(definition)) {
                 return;
             }
+            var clazz = metadata.getClass();
             if (target === clazz.prototype) {
                 target = clazz;
             }
@@ -1766,8 +1767,8 @@ new function () { // closure
                 }
             }
         },
-        shouldInherit: function () { return true; },
-        isActive: function () { return true; }
+        shouldInherit: True,
+        isActive: True
     });
 
     /**
@@ -1896,7 +1897,7 @@ new function () { // closure
     /**
      * @class {CallbackHandler}
      */
-    var CallbackHandler = Base.extend($expand,{
+    var CallbackHandler = Base.extend($expand, {
         constructor: function (delegate) {
             this.extend({
                 getDelegate : function () { return delegate; }
@@ -2910,8 +2911,9 @@ new function () { // closure
      * Metamacro to implement Contextual protocol.
      */
     var $contextual = MetaMacro.extend({
-        apply: function(lifecycle, clazz, target) {
-            if (lifecycle === MetaLifecycle.Subclass) {
+        apply: function (step, metadata, target) {
+            if (step === MetaStep.Subclass) {
+                var clazz = metadata.getClass();
                 clazz.addProtocol(Contextual);
                 clazz.implement(ContextualMixin);
             }
@@ -4415,7 +4417,7 @@ new function () { // closure
     var miruken = new base2.Package(this, {
         name:    "miruken",
         version: "1.0",
-        exports: "Enum,Protocol,Delegate,Miruken,MetaLifecycle,MetaMacro,Disposing,DisposingMixin,Parenting,Starting,Startup,Interceptor,InterceptorSelector,ProxyBuilder,TraversingAxis,Traversing,TraversingMixin,Traversal,Variance,Modifier,ArrayManager,IndexedList,$isProtocol,$isClass,$classOf,$ancestorOf,$isString,$isFunction,$isObject,$isPromise,$isSomething,$isNothing,$using,$lift,$eq,$use,$copy,$lazy,$eval,$every,$child,$optional,$promise,$instant,$createModifier,$properties,$inferProperties,$propertiesFromFields,$inheritStatic,synthesizeProperty,PARAMETERS,INTERCEPTORS,INTERCEPTOR_SELECTORS"
+        exports: "Enum,Protocol,Delegate,Miruken,MetaStep,MetaMacro,Metadata,Disposing,DisposingMixin,Parenting,Starting,Startup,Interceptor,InterceptorSelector,ProxyBuilder,TraversingAxis,Traversing,TraversingMixin,Traversal,Variance,Modifier,ArrayManager,IndexedList,$isProtocol,$isClass,$classOf,$ancestorOf,$metadata,$isString,$isFunction,$isObject,$isPromise,$isSomething,$isNothing,$using,$lift,$eq,$use,$copy,$lazy,$eval,$type,$every,$child,$optional,$readonly,$promise,$instant,$createModifier,$properties,$inferProperties,$inheritStatic,PARAMETERS,INTERCEPTORS,INTERCEPTOR_SELECTORS"
     });
 
     eval(this.imports);
@@ -4425,9 +4427,11 @@ new function () { // closure
         $copy     = $createModifier(),
         $lazy     = $createModifier(),
         $eval     = $createModifier(),
+        $type     = $createModifier(),
         $every    = $createModifier(),
         $child    = $createModifier(),
         $optional = $createModifier(),
+        $readonly = $createModifier(),
         $promise  = $createModifier(),
         $instant  = $createModifier();
 
@@ -4489,10 +4493,10 @@ new function () { // closure
     });
 
     /**
-     * MetaLifecycle enum
+     * MetaStep enum
      * @enum {Number}
      */
-    var MetaLifecycle = Enum({
+    var MetaStep = Enum({
         Subclass:  1,
         Implement: 2,
         Extend:    3
@@ -4502,12 +4506,51 @@ new function () { // closure
      * @class {MetaMacro}
      */
     var MetaMacro = Base.extend({
-        isActive: function () { return false; },
-        shouldInherit: function () { return false; },
-        apply: function(lifecycle, clazz, target, definition) {}
+        apply: function (step, metadata, target, definition) {},
+        shouldInherit: False,
+        isActive: False,
     }, {
         coerce: function () {
             return this.new.apply(this, arguments);
+        }
+    });
+
+    /**
+     * @class {MetaMacro}
+     */
+    var Metadata = MetaMacro.extend({
+        constructor: function(metaClass, macros)  {
+            var ancestor = $ancestorOf(metaClass),
+                baseMeta = ancestor.meta;
+            this.extend({
+                getClass: function () { return metaClass; },
+                getBaseMeta: function () { return baseMeta; },
+                apply: function (step, metadata, target, definition) {
+                    if (baseMeta) {
+                        baseMeta.apply(step, metadata, target, definition);
+                    }
+                    var inherit = (this !== metadata),
+                        active  = (step !== MetaStep.Subclass);
+                    for (var i = 0; i < macros.length; ++i) {
+                        var macro = macros[i];
+                        if ((!active  || macro.isActive()) &&
+                            (!inherit || macro.shouldInherit())) {
+                            macro.apply(step, metadata, target, definition);
+                        }
+                    }
+                },
+                linkBase: function (method) {
+                    if (!this[method]) {
+                        this.extend(method, function () {
+                            var baseMethod = baseMeta && baseMeta[method];
+                            if (baseMethod) {
+                                return baseMethod.apply(baseMeta, arguments);
+                            }
+                        });
+                    }
+                    return this;
+                }        
+            });
         }
     });
 
@@ -4540,7 +4583,7 @@ new function () { // closure
         isProtocol: function (target) {
             return target && (target.prototype instanceof Protocol);
         },
-        conformsTo: function (protocol) { return false; },
+        conformsTo: False,
         adoptedBy:  function (target) {
             return target && $isFunction(target.conformsTo)
                  ? target.conformsTo(this)
@@ -4614,14 +4657,15 @@ new function () { // closure
             }
             var instanceDef = args.shift(),
                 staticDef   = args.shift(),
-                subclass    = extend.call(base, instanceDef, staticDef);
+                subclass    = extend.call(base, instanceDef, staticDef),
+                metadata    = new Metadata(subclass, metaMacros);
             Array2.forEach(protocols, addProtocol, subclass);
             subclass.addProtocol     = addProtocol;
             subclass.getProtocols    = getProtocols;
             subclass.getAllProtocols = getAllProtocols;
             subclass.conformsTo      = _conformsTo.bind(subclass, _protocols);
-            subclass.metaMacros      = metaMacros;
-            _applyMetaMacros(MetaLifecycle.Subclass, subclass, null, false, instanceDef, staticDef);
+            Object.defineProperty(subclass, 'meta', _metaProperty(metadata));
+            metadata.apply(MetaStep.Subclass, metadata, subclass.prototype, instanceDef);
             Array2.forEach(mixins, subclass.implement, subclass);
             return subclass;
             })(this, Array.prototype.slice.call(arguments));
@@ -4630,15 +4674,30 @@ new function () { // closure
     Base.prototype.conformsTo = function (protocol) {
         return $classOf(this).conformsTo(protocol);
     };
+
+    function _metaProperty(metadata) {
+        var d = _metaProperty.d || (
+            _metaProperty.d = {
+                enumerable:   false,
+                configurable: false,
+                writable:     false
+            }
+        );
+        d.value = metadata;
+        return d;
+    }
     
     var implement = Base.implement;
     Base.implement = function (source) {
         if ($isFunction(source)) {
             source = source.prototype; 
         }
-        var implemented = implement.call(this, source);
-        _applyMetaMacros(MetaLifecycle.Implement, implemented, null, true, source);
-        return implemented;
+        var metadata = this.meta;
+        implement.call(this, source);
+        if (metadata) {
+            metadata.apply(MetaStep.Implement, metadata, this.prototype, source);
+        }
+        return this;
     }
 
     var extendInstance = Base.prototype.extend;
@@ -4646,10 +4705,13 @@ new function () { // closure
         var definition = (arguments.length === 1) ? key : {};
         if (arguments.length >= 2) {
             definition[key] = value;
-        }                                
-        var instance = extendInstance.call(this, definition);
-        _applyMetaMacros(MetaLifecycle.Extend, instance.constructor, instance, true, definition);
-        return instance;
+        }
+        var metadata  = $metadata(this);
+        extendInstance.call(this, definition);
+        if (metadata) {
+            metadata.apply(MetaStep.Extend, metadata, this, definition);
+        }
+        return this;
     }
 
     function _conformsTo(protocols, protocol) {
@@ -4669,41 +4731,13 @@ new function () { // closure
              ? ancestor.conformsTo(protocol)
              : false;
     };
-    
-    /**
-     * @function _applyMetaMacros
-     * Applies any meta-macros to the class definition.
-     * @param    {Enum}     lifecycle   - reason for apply
-     * @param    {Function} clazz       - clazz target
-     * @param    {objec}    instance    - instance target
-     * @param    {Boolean}  active      - restrict active
-     * @param    {Object}   instanceDef - instance definition
-     * @param    {Object}   staticDef   - static definition
-     */
-    function _applyMetaMacros(lifecycle, clazz, instance, active, instanceDef, staticDef) {
-        var source = clazz;
-        instance   = instance || clazz.prototype;
-        while (source && source.metaMacros &&
-               (source !== Base) && (source !== Object)) {
-            var metaMacros = source.metaMacros,
-                inherit    = clazz !== source;
-            for (var i = 0; i < metaMacros.length; ++i) {
-                var metaMacro = metaMacros[i];
-                if ((!active  || metaMacro.isActive()) &&
-                    (!inherit || metaMacro.shouldInherit())) {
-                    metaMacro.apply(lifecycle, clazz, instance, instanceDef);
-                }
-            }
-            source = $ancestorOf(source);
-        }
-    }
 
     /**
      * @class {$proxyProtocol}
      * Metamacro to proxy protocol methods through delegate.
      */
     var $proxyProtocol = MetaMacro.extend({
-        apply: function(lifecycle, clazz, target, definition) {
+        apply: function (step, metadata, target, definition) {
             for (var key in definition) {
                 if (key === 'delegate' || (key in Base.prototype)) {
                     continue;
@@ -4718,17 +4752,17 @@ new function () { // closure
                     })(key);
                 }
             }
-            if (lifecycle === MetaLifecycle.Subclass) {
-                clazz.adoptedBy = Protocol.adoptedBy;
+            if (step === MetaStep.Subclass) {
+                metadata.getClass().adoptedBy = Protocol.adoptedBy;
             }
         },
-        shouldInherit: function () { return true; },
-        isActive: function () { return true; }
+        shouldInherit: True,
+        isActive: True
     });
     Protocol.extend     = Base.extend
     Protocol.implement  = Base.implement;;
-    Protocol.metaMacros = [new $proxyProtocol];
-    _applyMetaMacros(MetaLifecycle.Subclass, Protocol);
+    Protocol.meta       = new Metadata(Protocol, [new $proxyProtocol]);
+    Protocol.meta.apply(MetaStep.Subclass, Protocol.meta, Protocol.prototype);
 
     /**
      * @class {$inhertStatic}
@@ -4738,9 +4772,10 @@ new function () { // closure
         constructor: function (/*members*/) {
             var _members = Array.prototype.slice.call(arguments);
             this.extend({
-                apply: function(lifecycle, clazz, target) {
-                    if (lifecycle === MetaLifecycle.Subclass) {
-                        var ancestor = $ancestorOf(clazz);
+                apply: function (step, metadata, target) {
+                    if (step === MetaStep.Subclass) {
+                        var clazz    = metadata.getClass(),
+                            ancestor = $ancestorOf(clazz);
                         if (_members.length > 0) {
                             for (var i = 0; i < _members.length; ++i) {
                                 var member = _members[i];
@@ -4757,140 +4792,91 @@ new function () { // closure
                             }
                         }
                     }
-                },
-                shouldInherit: function () { return true; }
+                }
             });
-        }
+        },
+        shouldInherit: True
     });
 
     /**
      * @class {$properties}
-     * Metamacro to create properties with getters and setters.
+     * Metamacro to create properties.
      */
     var $properties = MetaMacro.extend({
-        constructor: function (/*properties*/) {
-            var _properties = Array.prototype.slice.call(arguments);
-            this.extend({
-                apply: function(lifecycle, clazz, target) {
-                    _synthesizeProperties(target, _properties);
-                }
-            });
-        }
-    });
-
-    function _synthesizeProperties(target, properties) {
-        for (var i = 0; i < properties.length; ++i) {
-            var property = properties[i];
-            if ($isString(property)) {
-                synthesizeProperty(target, property, null);
-            } else {
-                for (name in property) {
-                    var prop  = property[name],
-                        field = prop.field,
-                        get   = prop.nogetter ? Undefined : prop.get,
-                        set   = prop.nosetter ? Undefined : prop.set;
-                    synthesizeProperty(target, name, field, get, set);
-                }
+        apply: function _(step, metadata, target, definition) {
+            if ($isNothing(definition) || !definition.hasOwnProperty('$properties')) {
+                return;
             }
-        }
-    }
-
-    function synthesizeProperty(target, name, field, get, set) {
-        var uname = name.charAt(0).toUpperCase() + name.slice(1);
-        get = (get === Undefined) ? null : (get || 'get' + uname);
-        set = (set === Undefined) ? null : (set || 'set' + uname);
-        if (!(get || set) || (name in target) || 
-            (get && (get in target)) || (set && (set in target))) {
-            return;
-        }
-        field = field || ('_' + name);
-        var getter, setter, methods = {};
-        if (get) {
-            methods[get] = getter = function () { return this[field]; };
-        }
-        if (set) {
-            methods[set] = setter = function (value) { this[field] = value; };
-        }
-        target.extend(methods);  // could trigger $inferProperties
-        if (!(name in target)) {
-            Object.defineProperty(target, name, {
-               get: getter, 
-               set: setter,
-               enumerable: true 
-            });
-        }
-    }
+            var properties = definition['$properties'], types;
+            for (var name in properties) {
+                var spec = _.spec || (_.spec = {
+                    enumerable:   true,
+                    configurable: true
+                    }),
+                    property  = properties[name],
+                    type      = $type.test(property);
+                spec.value    = Modifier.unwrap(property);
+                spec.writable = !$readonly.test(property);
+                if (type) {
+                    (types || (types = {}))[name] = spec.value;
+                    delete spec.value;
+                }
+                Object.defineProperty(target, name, spec);
+            }
+            if (types) {
+                metadata.linkBase('getPropertyType').extend({
+                    getPropertyType: function (name) {
+                        return types[name] || this.base(name);
+                    }
+                });
+            }
+            delete definition['$properties'];
+        },
+        shouldInherit: True,
+        isActive: True
+    });
 
     /**
      * @class {$inferProperties}
      * Metamacro to derive properties from existng methods.
      */
     var $inferProperties = MetaMacro.extend({
-        apply: function(lifecycle, clazz, target, definition) {
-            _inferProperties(target, definition);
-        },
-        shouldInherit: function () { return true; },
-        isActive: function () { return true; }
-    });
-
-    function _inferProperties(target, definition) {
-        for (var key in definition) {
-            var value = definition[key];
-            if (!$isFunction(value)) {
-                continue;
-            }
-            var property = _inferProperty(key, value, definition),
-                name     = property && property.name;
-            if (name && name.length > 0) {
-                var name = name.charAt(0).toLowerCase() + name.slice(1);
-                if (!(name in target)) {
-                    Object.defineProperty(target, name, {
-                        get: property.get,
-                        set: property.set,
-                        enumerable: true
-                    });
+        apply: function _(step, meatadata, target, definition) {
+            for (var key in definition) {
+                var value = definition[key];
+                if (!$isFunction(value)) {
+                    continue;
+                }
+                var spec = _.spec || (_.spec = {
+                    enumerable: true
+                });
+                _inferProperty(key, value, definition, spec);
+                var name = spec.name;
+                if (name && name.length > 0) {
+                    name = name.charAt(0).toLowerCase() + name.slice(1);
+                    if (!(name in target)) {
+                        Object.defineProperty(target, name, spec);
+                    }
                 }
             }
-        }
-    }
-
-    function _inferProperty(key, value, definition) {
-        var property;
-        if (key.lastIndexOf('get', 0) === 0) {
-            property = { name: key.substring(3), get: value };
-        } else if (key.lastIndexOf('is', 0) === 0) {
-            property = { name: key.substring(2), get: value };
-        } else if (key.lastIndexOf('set', 0) === 0) {
-            return { name: key.substring(3), set: value };
-        }
-        if (property) {
-            property.set = definition['set' + property.name];
-        }
-        return property;
-    }
-
-    /**
-     * @class {$propertiesFromFields}
-     * Metamacro to create properties from fields.
-     */
-    var $propertiesFromFields = MetaMacro.extend({
-        apply: function(lifecycle, clazz, target, definition) {
-            _synthesizePropertiesFromFields(target, definition);
         },
-        shouldInherit: function () { return true; },
-        isActive: function () { return true; }
+        shouldInherit: True,
+        isActive: True
     });
 
-    function _synthesizePropertiesFromFields(target, definition) {
-        for (var key in definition) {
-            var value = definition[key];
-            if ($isFunction(value)) {
-                continue;
-            }
-            var name = key.charAt(0) == '_' ? key.substring(1) : key;
-            delete target[key];
-            synthesizeProperty(target, name);
-            target[name] = value;
+    function _inferProperty(key, value, definition, spec) {
+        if (key.lastIndexOf('get', 0) === 0) {
+            spec.name = key.substring(3);
+            spec.get  = value;
+        } else if (key.lastIndexOf('is', 0) === 0) {
+            spec.name = key.substring(2);
+            spec.get  = value;
+        } else if (key.lastIndexOf('set', 0) === 0) {
+            spec.name = key.substring(3);
+            spec.set  = value;
+        }
+        if (spec.get) {
+            spec.set = definition['set' + spec.name];
         }
     }
 
@@ -5403,6 +5389,22 @@ new function () { // closure
     }
 
     /**
+     * @function $metadata
+     * @param    {Object}   source  - class or instance
+     * @returns  {Object} source metadata.
+     */
+    function $metadata(source) {
+        if (source) {
+            var metadata = source.meta;
+            if (!metadata) {
+                var clazz = source.constructor;
+                return clazz && clazz.meta;
+            }
+            return metadata;
+        }
+    }
+
+    /**
      * @function $isString
      * @param    {Any}     str  - string to test
      * @returns  {Boolean} true if a string.
@@ -5693,7 +5695,9 @@ new function () { // closure
 
     function _postOrder(node, visitor, context, visited) {
         checkCircularity(visited, node);
-        if (!node || !$isFunction(visitor)) return true;
+        if (!node || !$isFunction(visitor)) {
+            return true;
+        }
         if ($isFunction(node.traverse))
             node.traverse(function (child) {
                 return Traversal.postOrder(child, visitor, context);
@@ -5810,41 +5814,44 @@ new function () { // closure
      * @class {Model}
      */
     var Model = Base.extend(
-        $inferProperties,
-        $propertiesFromFields,
-        $inheritStatic, {
-            pluck: function (/*values*/) {
-                var data = {};
-                for (var i = 0; i < arguments.length; ++i) {
-                    var key = arguments[i],
-                        value = this[key];
-                    if (!$isFunction(value)) {
-                        data[key] = value;
+         $properties, $inferProperties, $inheritStatic, {
+        constructor: function (data) {
+            var meta    = $metadata(this),
+                model   = meta && meta.getClass(),
+                getType = meta && meta.getPropertyType;
+            for (var key in data) {
+                var value = data[key],
+                    type  = getType && getType(key);
+                if (key in this) {
+                    this[key] = type ? model.map(value) : value;
+                } else {
+                    var lkey = key.toLowerCase();
+                    for (var k in this) {
+                        if (k.toLowerCase() === lkey) {
+                            this[k] = type ? model.map(value) : value;
+                        }
                     }
                 }
-                return data;
             }
-        }, {
-            map: function (data, property, remove) {
-                var mapping;
-                if (property in data) {
-                    var relationship = data[property];
-                    if (typeof relationship.length == "number") {
-                        mapping = Array2.map(relationship, this.new, this);
-                    } else {
-                        mapping = this.new.call(this, relationship);
-                    }
-                    if (remove) {
-                        delete data[property];
-                    }
+        },
+        pluck: function (/*values*/) {
+            var data = {};
+            for (var i = 0; i < arguments.length; ++i) {
+                var key   = arguments[i],
+                    value = this[key];
+                if (!$isFunction(value)) {
+                    data[key] = value;
                 }
-                return mapping;
-            },
-            mapAndDelete: function (data, property) {
-                return this.map(data, property, true);
             }
+            return data;
         }
-    );
+    }, {
+        map: function (value) {
+            return typeof value.length == "number"
+                 ? mapping = Array2.map(value, this.new, this)
+                 : mapping = this.new.call(this, value);
+        }
+    });
 
     /**
      * @class {Controller}
@@ -21472,57 +21479,53 @@ describe("$isFunction", function () {
 });
 
 describe("$properties", function () {
-    var Person = Base.extend(
-        $properties('firstName', {
-            age:      { field:    '__age' },
-            gender:   { nosetter: true },
-            password: { nogetter: true }
-        })
-    );
-    
+    var Person = Base.extend($properties, {
+        $properties: {
+            firstName: '',
+            age:       undefined,
+            gender:    $readonly('male'),
+            pet:       $type(Animal)
+        }
+    }), Doctor = Person.extend({
+        $properties: {
+            patient:   $type(Person)
+        }
+    });
+
     it("should synthesize instance properties", function () {
         var person       = new Person,
             friend       = new Person;
         person.firstName = 'John';
         expect(person.firstName).to.equal('John');
-        expect(person.getFirstName()).to.equal('John');
-        expect(person._firstName).to.equal('John');
-        person.setFirstName('Sarah');
+        expect(person._firstName).to.be.undefined;
+        person.firstName = 'Sarah';
         expect(person.firstName).to.equal('Sarah');
-        expect(person.getFirstName()).to.equal('Sarah');
-        expect(friend.firstName).to.be.undefined;
+        expect(friend.firstName).to.equal('');
     });
 
     it("should synthesize custom instance properties", function () {
         var person = new Person;
         person.age = 18;
         expect(person.age).to.equal(18);
-        expect(person.getAge()).to.equal(18);
-        expect(person.__age).to.equal(18);
-        person.setAge(45);
+        expect(person.__age).to.be.undefined;
+        person.age = 45;
         expect(person.age).to.equal(45);
-        expect(person.getAge()).to.equal(45);
-        expect(person.__age).to.equal(45);
     });
 
     it("should synthesize readonly instance properties", function () {
         var person    = new Person;
-        person._gender = 'male';
+        person.gender = 'female';
         expect(person.gender).to.equal('male');
-        expect(person.getGender()).to.equal('male');
-        expect(person._gender).to.equal('male');
-        expect(person.setGender).to.be.undefined;
     });
 
-    it("should synthesize writeonly instance properties", function () {
-        var person      = new Person;
-        person.password = '%@ks1224';
-        expect(person.password).to.be.undefined;
-        expect(person._password).to.equal('%@ks1224');
-        expect(person.getPassword).to.be.undefined;
+    it("should retrieve property type", function () {
+        expect(Doctor.meta.getPropertyType('patient')).to.equal(Person);
+    });
+
+    it("should retrieve inherited property type", function () {
+        expect(Doctor.meta.getPropertyType('pet')).to.equal(Animal);
     });
 });
-
 
 describe("$inferProperties", function () {
     var Person = Base.extend( 
@@ -21592,72 +21595,6 @@ describe("$inferProperties", function () {
         person.age = 23;
         expect(person.age).to.equal(23);
         expect(person.getAge()).to.equal(23);
-    });
-});
-
-describe("$propertiesFromFields", function () {
-    var Person = Base.extend(
-        $propertiesFromFields
-    );
-    
-    it("should synthesize properties from fields", function () {
-        var person = new Person({_firstName : 'Mike', _age: 12 });
-        expect(person.firstName).to.equal('Mike');
-        expect(person.getFirstName()).to.equal('Mike');
-        expect(person._firstName).to.equal('Mike');
-        person.firstName = 'Casey';
-        expect(person.getFirstName()).to.equal('Casey');
-        expect(person.age).to.equal(12);
-        expect(person.getAge()).to.equal(12);
-        expect(person._age).to.equal(12);
-    });
-
-    it("should synthesize properties and normalize fields", function () {
-        var person = new Person({firstName : 'Mike', age: 12 });
-        expect(person.firstName).to.equal('Mike');
-        expect(person.getFirstName()).to.equal('Mike');
-        expect(person._firstName).to.equal('Mike');
-        person.firstName = 'Casey';
-        expect(person.getFirstName()).to.equal('Casey');
-        expect(person.age).to.equal(12);
-        expect(person.getAge()).to.equal(12);
-        expect(person._age).to.equal(12);
-    });
-
-    it("should synthesize properties from fields explicitly", function () {
-        var Car = Base.extend(
-            $properties('make', 'model'),
-            $propertiesFromFields
-        ),
-        car = new Car({make : 'Audi', model: 'A4' });
-        expect(car.make).to.equal('Audi');
-        expect(car.getMake()).to.equal('Audi');
-        expect(car._make).to.equal('Audi');
-        expect(car.model).to.equal('A4');
-        expect(car.getModel()).to.equal('A4');
-        expect(car._model).to.equal('A4');
-    });
-
-    it("should infer and synthesize properties from fields explicitly", function () {
-        var Car = Base.extend(
-            $inferProperties,
-            $properties('_make', '_model'),
-            $propertiesFromFields, {
-                getEngine: function () { return this._engine; },
-                setEngine: function (value) { this._engine = value; }
-            }
-        ),
-        car = new Car({make : 'Porsche', model: 'Carrera' });
-        car.engine = 'V6';
-        expect(car.make).to.equal('Porsche');
-        expect(car.getMake()).to.equal('Porsche');
-        expect(car._make).to.equal('Porsche');
-        expect(car.model).to.equal('Carrera');
-        expect(car.getModel()).to.equal('Carrera');
-        expect(car._model).to.equal('Carrera');
-        expect(car.engine).to.equal('V6');
-        expect(car.getEngine()).to.equal('V6');
-        expect(car._engine).to.equal('V6');
     });
 });
 
@@ -21842,7 +21779,6 @@ describe("Protocol", function () {
 
     describe("#implement", function () {
         it("should extend protocol", function () {
-                debugger;
             Animal.implement({
                reproduce: function () {}
             }),
@@ -22487,22 +22423,22 @@ eval(miruken.namespace);
 eval(miruken.mvc.namespace);
 
 describe("Model", function () {
-    var Person  = Model.extend(
-        $properties('firstName', 'lastName', 'age'),
-    {
+    var Person  = Model.extend({
+        $properties: {
+            firstName: '',
+            lastName:  '',
+            age:       0
+        },
         getHobbies: function () { return this._hobbies; },
         setHobbies: function (value) { this._hobbies = value; }
+    }),
+        Doctor = Person.extend({
+            $properties: {
+                patient: $type(Person)
+            }
     });
 
     describe("#constructor", function () {
-        it("should create properties", function () {
-            var person = new Person;
-            person.firstName = 'Sean';
-            person.lastName  = 'Smith';
-            expect(person.getFirstName()).to.equal('Sean');
-            expect(person.getLastName()).to.equal('Smith');
-        });
-
         it("should infer properties", function () {
             var person = new Person;
             person.setHobbies(['Soccer', 'Tennis']);
@@ -22515,9 +22451,7 @@ describe("Model", function () {
                 lastName:  'Lewis'
             });
             expect(person.firstName).to.equal('Carl');
-            expect(person.getFirstName()).to.equal('Carl');
             expect(person.lastName).to.equal('Lewis');
-            expect(person.getLastName()).to.equal('Lewis');
         });
 
         it("should pluck all data from model", function () {
@@ -22536,26 +22470,56 @@ describe("Model", function () {
     });
 
     describe("#map", function () {
-        var PersonModel = Model.extend(
-            $properties('person')
-        );
-
         it("should map one-to-one", function () {
             var state = {
-                firstName: 'Eddie',
-                lastName:  'Money',
-                mother:    {
-                    firstName: 'Leslie',
-                    lastName:  'Money'
+                firstName: 'Daniel',
+                lastName:  'Worrel',
+                patient:   {
+                    firstName: 'Emitt',
+                    lastName:  'Smith'
                 }
             }
-            var mother = PersonModel.mapAndDelete(state, 'mother');
+            var doctor  = new Doctor(state),
+                patient = doctor.patient; 
+            expect(doctor.firstName).to.equal('Daniel');
+            expect(doctor.lastName).to.equal('Worrel');
+            expect(patient).to.be.instanceOf(Person);
+            expect(patient.firstName).to.equal('Emitt');
+            expect(patient.lastName).to.equal('Smith');
+        });
+
+        it("should map one-to-many", function () {
+            var state = {
+                firstName: 'Daniel',
+                lastName:  'Worrel',
+                patient:   [{
+                    firstName: 'Emitt',
+                    lastName:  'Smith'
+                }, {
+                    firstName: 'Tony',
+                    lastName:  'Romo'
+                }]  
+            }
+            var doctor   = new Doctor(state),
+                patients = doctor.patient; 
+            expect(doctor.firstName).to.equal('Daniel');
+            expect(doctor.lastName).to.equal('Worrel');
+            expect(patients).to.be.instanceOf(Array);
+            expect(patients).to.have.length(2);
+            expect(patients[0].firstName).to.equal('Emitt');
+            expect(patients[0].lastName).to.equal('Smith');
+            expect(patients[1].firstName).to.equal('Tony');
+            expect(patients[1].lastName).to.equal('Romo');
+        });
+
+        it("should ignore case", function () {
+            var state = {
+                fiRstNamE: 'Bruce',
+                LaStNaMe:  'Lee'
+            }
             var person = new Person(state);
-            expect(person.firstName).to.equal('Eddie');
-            expect(person.lastName).to.equal('Money');
-            expect(mother.firstName).to.equal('Leslie');
-            expect(mother.lastName).to.equal('Money');
-            expect(person.mother).to.be.undefined;
+            expect(person.firstName).to.equal('Bruce');
+            expect(person.lastName).to.equal('Lee');
         });
     });
 });
