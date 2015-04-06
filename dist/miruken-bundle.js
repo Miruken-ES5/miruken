@@ -1714,7 +1714,7 @@ new function () { // closure
         version: miruken.version,
         parent:  miruken,
         imports: "miruken",
-        exports: "CallbackHandler,CallbackHandlerDecorator,CallbackHandlerFilter,CallbackHandlerAspect,CascadeCallbackHandler,CompositeCallbackHandler,ConditionalCallbackHandler,AcceptingCallbackHandler,ProvidingCallbackHandler,MethodCallbackHandler,InvocationOptions,Resolution,HandleMethod,getEffectivePromise,$handle,$expand,$define,$provide,$lookup,$NOT_HANDLED"
+        exports: "CallbackHandler,CallbackHandlerDecorator,CallbackHandlerFilter,CallbackHandlerAspect,CascadeCallbackHandler,CompositeCallbackHandler,ConditionalCallbackHandler,AcceptingCallbackHandler,ProvidingCallbackHandler,MethodCallbackHandler,InvocationOptions,Resolution,HandleMethod,getEffectivePromise,$handle,$callbacks,$define,$provide,$lookup,$NOT_HANDLED"
     });
 
     eval(this.imports);
@@ -1731,10 +1731,10 @@ new function () { // closure
     var InternalCallback = Protocol.extend();
 
     /**
-     * @class $expand
-     * Metamacro to expand registered definitions.
+     * @class $callbacks
+     * Metamacro to register callback definitions.
      */
-    var $expand = MetaMacro.extend({
+    var $callbacks = MetaMacro.extend({
         apply: function (step, metadata, target, definition) {
             if ($isNothing(definition)) {
                 return;
@@ -1897,7 +1897,8 @@ new function () { // closure
     /**
      * @class {CallbackHandler}
      */
-    var CallbackHandler = Base.extend($expand, {
+    var CallbackHandler = Base.extend(
+        $callbacks, {
         constructor: function (delegate) {
             this.extend({
                 getDelegate : function () { return delegate; }
@@ -2911,7 +2912,7 @@ new function () { // closure
      * Metamacro to implement Contextual protocol.
      */
     var $contextual = MetaMacro.extend({
-        apply: function (step, metadata, target) {
+        apply: function (step, metadata) {
             if (step === MetaStep.Subclass) {
                 var clazz = metadata.getClass();
                 clazz.addProtocol(Contextual);
@@ -4595,7 +4596,7 @@ new function () { // closure
     });
 
     var extend  = Base.extend;
-    Base.extend = function () {
+    Base.extend = function _() {
         var _protocols      = [],
             isProtocol      = (this === Protocol) || (this.prototype instanceof Protocol),
             getProtocols    = function () { return _protocols.slice(0); },
@@ -4658,13 +4659,19 @@ new function () { // closure
             var instanceDef = args.shift(),
                 staticDef   = args.shift(),
                 subclass    = extend.call(base, instanceDef, staticDef),
-                metadata    = new Metadata(subclass, metaMacros);
+                metadata    = new Metadata(subclass, metaMacros),
+                spec        = _.spec || (_.spec = {
+                    enumerable:   false,
+                    configurable: false,
+                    writable:     false
+                    });
+            spec.value = metadata;
             Array2.forEach(protocols, addProtocol, subclass);
             subclass.addProtocol     = addProtocol;
             subclass.getProtocols    = getProtocols;
             subclass.getAllProtocols = getAllProtocols;
             subclass.conformsTo      = _conformsTo.bind(subclass, _protocols);
-            Object.defineProperty(subclass, 'meta', _metaProperty(metadata));
+            Object.defineProperty(subclass, 'meta', spec);
             metadata.apply(MetaStep.Subclass, metadata, subclass.prototype, instanceDef);
             Array2.forEach(mixins, subclass.implement, subclass);
             return subclass;
@@ -4674,18 +4681,6 @@ new function () { // closure
     Base.prototype.conformsTo = function (protocol) {
         return $classOf(this).conformsTo(protocol);
     };
-
-    function _metaProperty(metadata) {
-        var d = _metaProperty.d || (
-            _metaProperty.d = {
-                enumerable:   false,
-                configurable: false,
-                writable:     false
-            }
-        );
-        d.value = metadata;
-        return d;
-    }
     
     var implement = Base.implement;
     Base.implement = function (source) {
@@ -4765,6 +4760,117 @@ new function () { // closure
     Protocol.meta.apply(MetaStep.Subclass, Protocol.meta, Protocol.prototype);
 
     /**
+     * @class {$properties}
+     * Metamacro to create properties.
+     */
+    var $properties = MetaMacro.extend({
+        constructor: function (tag) {
+            this._tag = tag || '$properties';
+        },
+        apply: function _(step, metadata, target, definition) {
+            if ($isNothing(definition) || !definition.hasOwnProperty(this._tag)) {
+                return;
+            }
+            var properties = definition[this._tag], types;
+            for (var name in properties) {
+                var spec = _.spec || (_.spec = {
+                    enumerable:   true,
+                    configurable: true
+                    }),
+                    property  = properties[name],
+                    use       = $use.test(property),
+                    type;
+                if (!use && property && (property.get || property.set)) {
+                    spec.get = property.get;
+                    spec.set = property.set;
+                    type     = property.type;
+                    delete spec.writable;
+                } else {
+                    var value = Modifier.unwrap(property);
+                    spec.writable = !$readonly.test(property);
+                    if ($type.test(property)) {
+                        type = value;
+                    } else {
+                        spec.value = value;
+                    }
+                }
+                if (type) {
+                    (types || (types = {}))[name] = type;
+                }
+                this.defineProperty(metadata, target, name, spec);
+                delete spec.value;
+                delete spec.get;
+                delete spec.set;
+            }
+            if (types) {
+                metadata.linkBase('getPropertyType').extend({
+                    getPropertyType: function (name) {
+                        return types[name] || this.base(name);
+                    }
+                });
+            }
+            delete target[this._tag];
+        },
+        defineProperty: function(metadata, target, name, spec) {
+            Object.defineProperty(target, name, spec);
+        },
+        shouldInherit: True,
+        isActive: True
+    });
+
+    /**
+     * @class {$inferProperties}
+     * Metamacro to derive properties from existng methods.
+     */
+    var $inferProperties = MetaMacro.extend({
+        apply: function _(step, metadata, target, definition) {
+            for (var key in definition) {
+                var value = definition[key];
+                if (!$isFunction(value)) {
+                    continue;
+                }
+                var spec = _.spec || (_.spec = {
+                    enumerable: true
+                });
+                if (_inferProperty(key, value, definition, spec)) {
+                    var name = spec.name;
+                    if (name && name.length > 0) {
+                        name = name.charAt(0).toLowerCase() + name.slice(1);
+                        if (!(name in target)) {
+                            this.defineProperty(metadata, target, name, spec);
+                        }
+                    }
+                    delete spec.name;
+                }
+            }
+        },
+        defineProperty: function(metadata, target, name, spec) {
+            Object.defineProperty(target, name, spec);
+        },
+        shouldInherit: True,
+        isActive: True
+    });
+
+    function _inferProperty(key, value, definition, spec) {
+        if (key.lastIndexOf('get', 0) == 0) {
+            spec.name = key.substring(3);
+            spec.get  = value;
+        } else if (key.lastIndexOf('is', 0) == 0) {
+            spec.name = key.substring(2);
+            spec.get  = value;
+        } else if (key.lastIndexOf('set', 0) == 0) {
+            spec.name = key.substring(3);
+            spec.set  = value;
+        } else {
+            return false;
+        }
+        if (spec.get) {
+            spec.set = definition['set' + spec.name];
+        }
+        return true;
+    }
+
+    /**
      * @class {$inhertStatic}
      * Metamacro to inherit static members in subclass.
      */
@@ -4797,88 +4903,6 @@ new function () { // closure
         },
         shouldInherit: True
     });
-
-    /**
-     * @class {$properties}
-     * Metamacro to create properties.
-     */
-    var $properties = MetaMacro.extend({
-        apply: function _(step, metadata, target, definition) {
-            if ($isNothing(definition) || !definition.hasOwnProperty('$properties')) {
-                return;
-            }
-            var properties = definition['$properties'], types;
-            for (var name in properties) {
-                var spec = _.spec || (_.spec = {
-                    enumerable:   true,
-                    configurable: true
-                    }),
-                    property  = properties[name],
-                    type      = $type.test(property);
-                spec.value    = Modifier.unwrap(property);
-                spec.writable = !$readonly.test(property);
-                if (type) {
-                    (types || (types = {}))[name] = spec.value;
-                    delete spec.value;
-                }
-                Object.defineProperty(target, name, spec);
-            }
-            if (types) {
-                metadata.linkBase('getPropertyType').extend({
-                    getPropertyType: function (name) {
-                        return types[name] || this.base(name);
-                    }
-                });
-            }
-            delete definition['$properties'];
-        },
-        shouldInherit: True,
-        isActive: True
-    });
-
-    /**
-     * @class {$inferProperties}
-     * Metamacro to derive properties from existng methods.
-     */
-    var $inferProperties = MetaMacro.extend({
-        apply: function _(step, meatadata, target, definition) {
-            for (var key in definition) {
-                var value = definition[key];
-                if (!$isFunction(value)) {
-                    continue;
-                }
-                var spec = _.spec || (_.spec = {
-                    enumerable: true
-                });
-                _inferProperty(key, value, definition, spec);
-                var name = spec.name;
-                if (name && name.length > 0) {
-                    name = name.charAt(0).toLowerCase() + name.slice(1);
-                    if (!(name in target)) {
-                        Object.defineProperty(target, name, spec);
-                    }
-                }
-            }
-        },
-        shouldInherit: True,
-        isActive: True
-    });
-
-    function _inferProperty(key, value, definition, spec) {
-        if (key.lastIndexOf('get', 0) === 0) {
-            spec.name = key.substring(3);
-            spec.get  = value;
-        } else if (key.lastIndexOf('is', 0) === 0) {
-            spec.name = key.substring(2);
-            spec.get  = value;
-        } else if (key.lastIndexOf('set', 0) === 0) {
-            spec.name = key.substring(3);
-            spec.set  = value;
-        }
-        if (spec.get) {
-            spec.set = definition['set' + spec.name];
-        }
-    }
 
     /**
      * @class {Miruken}

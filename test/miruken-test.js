@@ -173,8 +173,11 @@ describe("$properties", function () {
     var Person = Base.extend($properties, {
         $properties: {
             firstName: '',
-            age:       undefined,
-            gender:    $readonly('male'),
+            lastName:  '',
+            fullName:  {
+                get: function () { return this.firstName + ' ' + this.lastName; }
+            },
+            age:       $readonly(11),
             pet:       $type(Animal)
         }
     }), Doctor = Person.extend({
@@ -183,7 +186,7 @@ describe("$properties", function () {
         }
     });
 
-    it("should synthesize instance properties", function () {
+    it("should synthesize properties", function () {
         var person       = new Person,
             friend       = new Person;
         person.firstName = 'John';
@@ -192,21 +195,20 @@ describe("$properties", function () {
         person.firstName = 'Sarah';
         expect(person.firstName).to.equal('Sarah');
         expect(friend.firstName).to.equal('');
+        expect(person.$properties).to.be.undefined;
     });
 
-    it("should synthesize custom instance properties", function () {
+    it("should synthesize readonly properties", function () {
         var person = new Person;
-        person.age = 18;
-        expect(person.age).to.equal(18);
-        expect(person.__age).to.be.undefined;
-        person.age = 45;
-        expect(person.age).to.equal(45);
+        person.age = 22;
+        expect(person.age).to.equal(11);
     });
 
-    it("should synthesize readonly instance properties", function () {
-        var person    = new Person;
-        person.gender = 'female';
-        expect(person.gender).to.equal('male');
+    it("should synthesize custom properties", function () {
+        var person       = new Person;
+        person.firstName = 'Mickey';
+        person.lastName  = 'Mouse';
+        expect(person.fullName).to.equal('Mickey Mouse');
     });
 
     it("should retrieve property type", function () {
