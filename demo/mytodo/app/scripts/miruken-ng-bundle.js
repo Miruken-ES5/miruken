@@ -4072,7 +4072,7 @@ new function () { // closure
                     var factory = _factory,
                         clazz   = this.getClass();
                     if (!factory) {
-                        var interceptors = _burden[INTERCEPTORS];
+                        var interceptors = _burden[Facet.Interceptors];
                         if (interceptors && interceptors.length > 0) {
                             var types = [];
                             if (clazz) {
@@ -4095,11 +4095,11 @@ new function () { // closure
                     _factory = value;
                 },
                 getDependencies: function (key) { 
-                    return _burden[key || PARAMETERS];
+                    return _burden[key || Facet.Parameters];
                 },
                 setDependencies: function (key, value) {
                     if (arguments.length === 1) {
-                        value = key, key = PARAMETERS;
+                        value = key, key = Facet.Parameters;
                     }
                     if ($isSomething(value) && !(value instanceof Array)) {
                         throw new TypeError(lang.format("%1 is not an array.", value));
@@ -4108,7 +4108,7 @@ new function () { // closure
                 },
                 manageDependencies: function (key, actions) {
                     if (arguments.length === 1) {
-                        actions = key, key = PARAMETERS;
+                        actions = key, key = Facet.Parameters;
                     }
                     if ($isFunction(actions)) {
                         var dependencies = _burden[key],
@@ -4130,7 +4130,7 @@ new function () { // closure
 
     function _makeClassFactory(clazz) {
         return function (burden) {
-            return clazz.new.apply(clazz, burden[PARAMETERS]);
+            return clazz.new.apply(clazz, burden[Facet.Parameters]);
         }
     }
 
@@ -4394,7 +4394,7 @@ new function () { // closure
         constructor: function (component, componentModel, interceptors) {
             this.extend({
                 selectWith: function (selectors) {
-                    componentModel.manageDependencies(INTERCEPTOR_SELECTORS, function (manager) {
+                    componentModel.manageDependencies(Facet.InterceptorSelectors, function (manager) {
                         Array2.forEach(selectors, function (selector) {
                             if (selector instanceof InterceptorSelector) {
                                 selecter = $use(selector);
@@ -4408,7 +4408,7 @@ new function () { // closure
                     return this.atIndex(0);
                 },
                 atIndex: function (index) {
-                    componentModel.manageDependencies(INTERCEPTORS, function (manager) {
+                    componentModel.manageDependencies(Facet.Interceptors, function (manager) {
                         Array2.forEach(interceptors, function (interceptor) {
                             manager.insertIndex(index, interceptor);
                         });
@@ -4416,7 +4416,7 @@ new function () { // closure
                     return componentModel;
                 },
                 register: function(container, composer) {
-                    componentModel.manageDependencies(INTERCEPTORS, function (manager) {
+                    componentModel.manageDependencies(Facet.Interceptors, function (manager) {
                         manager.append(interceptors);
                     });
                     return component.register(container, composer);
@@ -4694,7 +4694,7 @@ new function () { // closure
     var miruken = new base2.Package(this, {
         name:    "miruken",
         version: "1.0",
-        exports: "Enum,Protocol,Delegate,Miruken,MetaStep,MetaMacro,Metadata,Disposing,DisposingMixin,Parenting,Starting,Startup,Interceptor,InterceptorSelector,ProxyBuilder,TraversingAxis,Traversing,TraversingMixin,Traversal,Variance,Modifier,ArrayManager,IndexedList,$isProtocol,$isClass,$classOf,$ancestorOf,$metadata,$isString,$isFunction,$isObject,$isPromise,$isSomething,$isNothing,$using,$lift,$eq,$use,$copy,$lazy,$eval,$type,$every,$child,$optional,$readonly,$promise,$instant,$createModifier,$properties,$inferProperties,$inheritStatic,PARAMETERS,INTERCEPTORS,INTERCEPTOR_SELECTORS"
+        exports: "Enum,Protocol,Delegate,Miruken,MetaStep,MetaMacro,Metadata,Disposing,DisposingMixin,Parenting,Starting,Startup,Facet,Interceptor,InterceptorSelector,ProxyBuilder,TraversingAxis,Traversing,TraversingMixin,Traversal,Variance,Modifier,ArrayManager,IndexedList,$isProtocol,$isClass,$classOf,$ancestorOf,$metadata,$isString,$isFunction,$isObject,$isPromise,$isSomething,$isNothing,$using,$lift,$eq,$use,$copy,$lazy,$eval,$type,$every,$child,$optional,$readonly,$promise,$instant,$createModifier,$properties,$inferProperties,$inheritStatic"
     });
 
     eval(this.imports);
@@ -5053,9 +5053,8 @@ new function () { // closure
                     enumerable:   true,
                     configurable: true
                     }),
-                    property  = properties[name],
-                    use       = $use.test(property),
-                    type;
+                    property  = properties[name], type,
+                    use       = $use.test(property);
                 if (!use && property && (property.get || property.set)) {
                     spec.get = property.get;
                     spec.set = property.set;
@@ -5464,6 +5463,18 @@ new function () { // closure
     });
 
     /**
+     * Facet enum
+     * @enum {Number}
+     */
+    var Facet = Enum({
+        Parameters:           'parameters',
+        Interceptors:         'interceptors',
+        InterceptorSelectors: 'interceptorSelectors',
+        Delegate:             'delegate'
+        });
+
+
+    /**
      * @class {Interceptor}
      */
     var Interceptor = Base.extend({
@@ -5495,21 +5506,16 @@ new function () { // closure
         }
     });
 
-    var PARAMETERS            = 'parameters',
-        INTERCEPTORS          = 'interceptors',
-        INTERCEPTOR_SELECTORS = 'interceptorSelectors',
-        DELEGATE              = 'delegate';
-
     function _buildProxy(classes, protocols, options) {
         var base  = options.baseType || classes.shift() || Base,
             proxy = base.extend(protocols.concat(classes), {
             constructor: function (facets) {
-                this._selectors    = facets[INTERCEPTOR_SELECTORS];
-                this._interceptors = facets[INTERCEPTORS];
-                this._delegate     = facets[DELEGATE];
+                this._selectors    = facets[Facet.InterceptorSelectors];
+                this._interceptors = facets[Facet.Interceptors];
+                this._delegate     = facets[Facet.Delegate];
                 if (base !== Base) {
                     ctor = _proxiedMethod('constructor', this.base, base);
-                    ctor.apply(this, facets[PARAMETERS]);
+                    ctor.apply(this, facets[Facet.Parameters]);
                 }
             },
             extend: _proxyExtender,
@@ -6151,9 +6157,11 @@ new function () { // closure
         }
     }, {
         map: function (value) {
-            return typeof value.length == "number"
-                 ? mapping = Array2.map(value, this.new, this)
-                 : mapping = this.new.call(this, value);
+            if (value) {
+                return typeof value.length == "number"
+                     ? mapping = Array2.map(value, this.new, this)
+                     : mapping = this.new.call(this, value);
+            }
         }
     });
 

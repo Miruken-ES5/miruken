@@ -396,7 +396,7 @@ describe("ComponentModel", function () {
              Promise.resolve(container.register(
                  $component(Engine).dependsOn($use(1000), $use(7.7))
                                    .usingFactory(function (burden) {
-                     return V12.new.apply(V12, burden[PARAMETERS]);
+                     return V12.new.apply(V12, burden[Facet.Parameters]);
                  })
              )).then(function () {
                 Promise.resolve(container.resolve(Engine)).then(function (engine) {
