@@ -4820,6 +4820,9 @@ new function () { // closure
             if (types) {
                 metadata.linkBase('getPropertyAnnotation').extend({
                     getPropertyAnnotation: function (name) {
+                        if ($isNothing(name)) {
+                            return lang.extend(lang.extend({}, this.base()), types);
+                        }
                         return types[name] || this.base(name);
                     }
                 });
@@ -5848,12 +5851,19 @@ new function () { // closure
     var Model = Base.extend(
         $properties, $inferProperties, $inheritStatic, {
         constructor: function (data) {
-            var meta    = this.$meta,
-                getAnno = meta && meta.getPropertyAnnotation;
+            var meta        = this.$meta,
+                annotations = meta && meta.getPropertyAnnotation &&
+                              meta.getPropertyAnnotation();
+            for (var key in annotations) {
+                var annotation = annotations[key];
+                if ($root.test(annotation)) {
+                    var type  = Modifier.unwrap(annotation);
+                    this[key] = type.map(data); 
+                }
+            }
             for (var key in data) {
-                var type  = getAnno && getAnno(key),
-                    root  = $root.test(type),
-                    value = root ? data : data[key];
+                var type  = annotations && annotations[key],
+                    value = data[key];
                 type = Modifier.unwrap(type);
                 if (key in this) {
                     this[key] = type ? type.map(value) : value;
@@ -5882,8 +5892,8 @@ new function () { // closure
         map: function (value) {
             if (value) {
                 return typeof value.length == "number"
-                     ? mapping = Array2.map(value, this.new, this)
-                     : mapping = this.new.call(this, value);
+                     ? Array2.map(value, this.map, this)
+                     : this.new.call(this, value);
             }
         }
     });
@@ -21537,14 +21547,20 @@ describe("$properties", function () {
         expect(person.fullName).to.equal('Mickey Mouse');
     });
 
-    it("should retrieve property type", function () {
+    it("should retrieve property annotation", function () {
         var type = Doctor.$meta.getPropertyAnnotation('patient');
         expect(Modifier.unwrap(type)).to.equal(Person);
     });
 
-    it("should retrieve inherited property type", function () {
+    it("should retrieve inherited property annotation", function () {
         var type = Doctor.$meta.getPropertyAnnotation('pet');
         expect(Modifier.unwrap(type)).to.equal(Animal);
+    });
+
+    it("should retrieve all property annotations", function () {
+        var types = Doctor.$meta.getPropertyAnnotation();
+        expect(Modifier.unwrap(types['pet'])).to.equal(Animal);
+        expect(Modifier.unwrap(types['patient'])).to.equal(Person);
     });
 });
 
@@ -22570,6 +22586,21 @@ describe("Model", function () {
             var person = new Person(state);
             expect(person.firstName).to.equal('Bruce');
             expect(person.lastName).to.equal('Lee');
+        });
+
+        it("should use $root annotation", function () {
+            var PersonModel = Model.extend({
+                $properties: {
+                    person: $root(Person)
+                }
+            }),
+                state = {
+                    firstName: 'Henry',
+                    lastName:  'Ford'
+            }
+            var model = new PersonModel(state);
+            expect(model.person.firstName).to.equal('Henry');
+            expect(model.person.lastName).to.equal('Ford');
         });
     });
 });

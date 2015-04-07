@@ -194,14 +194,20 @@ describe("$properties", function () {
         expect(person.fullName).to.equal('Mickey Mouse');
     });
 
-    it("should retrieve property type", function () {
+    it("should retrieve property annotation", function () {
         var type = Doctor.$meta.getPropertyAnnotation('patient');
         expect(Modifier.unwrap(type)).to.equal(Person);
     });
 
-    it("should retrieve inherited property type", function () {
+    it("should retrieve inherited property annotation", function () {
         var type = Doctor.$meta.getPropertyAnnotation('pet');
         expect(Modifier.unwrap(type)).to.equal(Animal);
+    });
+
+    it("should retrieve all property annotations", function () {
+        var types = Doctor.$meta.getPropertyAnnotation();
+        expect(Modifier.unwrap(types['pet'])).to.equal(Animal);
+        expect(Modifier.unwrap(types['patient'])).to.equal(Person);
     });
 });
 

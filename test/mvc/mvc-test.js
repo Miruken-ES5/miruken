@@ -107,6 +107,26 @@ describe("Model", function () {
             expect(person.lastName).to.equal('Lee');
         });
 
+        it("should preserve grouping", function () {
+            var state = {
+                patient:   [[{
+                    firstName: 'Abbot',
+                    }, {
+                    firstName: 'Costello',
+                    }],
+                    [{
+                    firstName: 'Bill'
+                    }]
+                ]  
+            }
+            var doctor = new Doctor(state),
+                group1 = doctor.patient[0],
+                group2 = doctor.patient[1];
+            expect(group1[0].firstName).to.equal('Abbot');
+            expect(group1[1].firstName).to.equal('Costello');
+            expect(group2[0].firstName).to.equal('Bill');
+        });
+
         it("should use $root annotation", function () {
             var PersonModel = Model.extend({
                 $properties: {

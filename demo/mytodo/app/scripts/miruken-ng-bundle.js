@@ -5096,6 +5096,9 @@ new function () { // closure
             if (types) {
                 metadata.linkBase('getPropertyAnnotation').extend({
                     getPropertyAnnotation: function (name) {
+                        if ($isNothing(name)) {
+                            return lang.extend(lang.extend({}, this.base()), types);
+                        }
                         return types[name] || this.base(name);
                     }
                 });
@@ -6129,12 +6132,19 @@ new function () { // closure
     var Model = Base.extend(
         $properties, $inferProperties, $inheritStatic, {
         constructor: function (data) {
-            var meta    = this.$meta,
-                getAnno = meta && meta.getPropertyAnnotation;
+            var meta        = this.$meta,
+                annotations = meta && meta.getPropertyAnnotation &&
+                              meta.getPropertyAnnotation();
+            for (var key in annotations) {
+                var annotation = annotations[key];
+                if ($root.test(annotation)) {
+                    var type  = Modifier.unwrap(annotation);
+                    this[key] = type.map(data); 
+                }
+            }
             for (var key in data) {
-                var type  = getAnno && getAnno(key),
-                    root  = $root.test(type),
-                    value = root ? data : data[key];
+                var type  = annotations && annotations[key],
+                    value = data[key];
                 type = Modifier.unwrap(type);
                 if (key in this) {
                     this[key] = type ? type.map(value) : value;
@@ -6163,8 +6173,8 @@ new function () { // closure
         map: function (value) {
             if (value) {
                 return typeof value.length == "number"
-                     ? mapping = Array2.map(value, this.new, this)
-                     : mapping = this.new.call(this, value);
+                     ? Array2.map(value, this.map, this)
+                     : this.new.call(this, value);
             }
         }
     });

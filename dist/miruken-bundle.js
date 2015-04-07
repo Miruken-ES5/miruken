@@ -4820,6 +4820,9 @@ new function () { // closure
             if (types) {
                 metadata.linkBase('getPropertyAnnotation').extend({
                     getPropertyAnnotation: function (name) {
+                        if ($isNothing(name)) {
+                            return lang.extend(lang.extend({}, this.base()), types);
+                        }
                         return types[name] || this.base(name);
                     }
                 });
