@@ -4694,7 +4694,7 @@ new function () { // closure
     var miruken = new base2.Package(this, {
         name:    "miruken",
         version: "1.0",
-        exports: "Enum,Protocol,Delegate,Miruken,MetaStep,MetaMacro,Metadata,Disposing,DisposingMixin,Parenting,Starting,Startup,Facet,Interceptor,InterceptorSelector,ProxyBuilder,TraversingAxis,Traversing,TraversingMixin,Traversal,Variance,Modifier,ArrayManager,IndexedList,$isProtocol,$isClass,$classOf,$ancestorOf,$metadata,$isString,$isFunction,$isObject,$isPromise,$isSomething,$isNothing,$using,$lift,$eq,$use,$copy,$lazy,$eval,$type,$every,$child,$optional,$readonly,$promise,$instant,$createModifier,$properties,$inferProperties,$inheritStatic"
+        exports: "Enum,Protocol,Delegate,Miruken,MetaStep,MetaMacro,Metadata,Disposing,DisposingMixin,Parenting,Starting,Startup,Facet,Interceptor,InterceptorSelector,ProxyBuilder,TraversingAxis,Traversing,TraversingMixin,Traversal,Variance,Modifier,ArrayManager,IndexedList,$isProtocol,$isClass,$classOf,$ancestorOf,$isString,$isFunction,$isObject,$isPromise,$isSomething,$isNothing,$using,$lift,$eq,$use,$copy,$lazy,$eval,$type,$every,$child,$optional,$readonly,$promise,$instant,$createModifier,$properties,$inferProperties,$inheritStatic"
     });
 
     eval(this.imports);
@@ -4769,67 +4769,6 @@ new function () { // closure
         }
     });
 
-    /**
-     * MetaStep enum
-     * @enum {Number}
-     */
-    var MetaStep = Enum({
-        Subclass:  1,
-        Implement: 2,
-        Extend:    3
-        });
-
-    /**
-     * @class {MetaMacro}
-     */
-    var MetaMacro = Base.extend({
-        apply: function (step, metadata, target, definition) {},
-        shouldInherit: False,
-        isActive: False,
-    }, {
-        coerce: function () {
-            return this.new.apply(this, arguments);
-        }
-    });
-
-    /**
-     * @class {MetaMacro}
-     */
-    var Metadata = MetaMacro.extend({
-        constructor: function(metaClass, macros)  {
-            var ancestor = $ancestorOf(metaClass),
-                baseMeta = ancestor.meta;
-            this.extend({
-                getClass: function () { return metaClass; },
-                getBaseMeta: function () { return baseMeta; },
-                apply: function (step, metadata, target, definition) {
-                    if (baseMeta) {
-                        baseMeta.apply(step, metadata, target, definition);
-                    }
-                    var inherit = (this !== metadata),
-                        active  = (step !== MetaStep.Subclass);
-                    for (var i = 0; i < macros.length; ++i) {
-                        var macro = macros[i];
-                        if ((!active  || macro.isActive()) &&
-                            (!inherit || macro.shouldInherit())) {
-                            macro.apply(step, metadata, target, definition);
-                        }
-                    }
-                },
-                linkBase: function (method) {
-                    if (!this[method]) {
-                        this.extend(method, function () {
-                            var baseMethod = baseMeta && baseMeta[method];
-                            if (baseMethod) {
-                                return baseMethod.apply(baseMeta, arguments);
-                            }
-                        });
-                    }
-                    return this;
-                }        
-            });
-        }
-    });
 
     /**
      * @class {Protocol}
@@ -4871,45 +4810,136 @@ new function () { // closure
         }
     });
 
+    /**
+     * MetaStep enum
+     * @enum {Number}
+     */
+    var MetaStep = Enum({
+        Subclass:  1,
+        Implement: 2,
+        Extend:    3
+        });
+
+    /**
+     * @class {MetaMacro}
+     */
+    var MetaMacro = Base.extend({
+        apply: function (step, metadata, target, definition) {},
+        shouldInherit: False,
+        isActive: False,
+    }, {
+        coerce: function () {
+            return this.new.apply(this, arguments);
+        }
+    });
+
+    /**
+     * @class {MetaMacro}
+     */
+    var Metadata = MetaMacro.extend({
+        constructor: function(baseClass, subClass, protocols, macros)  {
+            var _baseMeta   = baseClass.$meta,
+                _macros     = macros ? macros.slice(0) : undefined,
+                _isProtocol = (subClass === Protocol) || (subClass.prototype instanceof Protocol),
+                _protocols  = [];
+            this.extend({
+                getBase: function () { return baseClass; },
+                getClass: function () { return subClass; },
+                getBaseMeta: function () { return _baseMeta; },
+                isProtocol: function () { return _isProtocol; },
+                getProtocols: function () { return _protocols.slice(0) },
+                getAllProtocols: function () {
+                    var protocols = this.getProtocols(),
+                        inner     = protocols.slice(0);
+                    if (!_isProtocol && baseClass !== Base) {
+                        inner.push(baseClass);
+                    }
+                    for (var i = 0; i < inner.length; ++i) {
+                        var innerProtocols = inner[i].$meta.getAllProtocols();
+                        for (var ii = 0; ii < innerProtocols.length; ++ii) {
+                            var protocol = innerProtocols[ii];
+                            if (protocols.indexOf(protocol) < 0) {
+                                protocols.push(protocol);
+                            }
+                        } 
+                    }
+                    return protocols;
+                },
+                addProtocol: function (protocols) {
+                    if ($isNothing(protocols)) {
+                        return;
+                    }
+                    if (!(protocols instanceof Array)) {
+                        protocols = Array.prototype.slice.call(arguments);
+                    }
+                    for (var i = 0; i < protocols.length; ++i) {
+                        var protocol      = protocols[i],
+                            metaPrototype = subClass.prototype;
+                        if ((protocol.prototype instanceof Protocol) 
+                        &&  (_protocols.indexOf(protocol) === -1)) {
+                            if (_isProtocol) {
+                                _liftMethods.call(metaPrototype, protocol);
+                            }
+                            _protocols.push(protocol);
+                        }
+                    }
+                },
+                conformsTo: function (protocol) {
+                    if (!(protocol && (protocol.prototype instanceof Protocol))) {
+                        return false;
+                    } else if ((protocol === subClass) || (subClass.prototype instanceof protocol)) {
+                        return true;
+                    }
+                    for (var index = 0; index < _protocols.length; ++index) {
+                        var proto = _protocols[index];
+                        if (protocol === proto || proto.conformsTo(protocol)) {
+                            return true;
+                        }
+                    }
+                    return baseClass && (baseClass !== Base) && (baseClass !== Protocol)
+                         ? baseClass.conformsTo(protocol)
+                         : false;
+                },
+                apply: function (step, metadata, target, definition) {
+                    if (_baseMeta) {
+                        _baseMeta.apply(step, metadata, target, definition);
+                    }
+                    if (!_macros || _macros.length == 0) {
+                        return;
+                    }
+                    var inherit = (this !== metadata),
+                        active  = (step !== MetaStep.Subclass);
+                    for (var i = 0; i < _macros.length; ++i) {
+                        var macro = _macros[i];
+                        if ((!active  || macro.isActive()) &&
+                            (!inherit || macro.shouldInherit())) {
+                            macro.apply(step, metadata, target, definition);
+                        }
+                    }
+                },
+                linkBase: function (method) {
+                    if (!this[method]) {
+                        this.extend(method, function () {
+                            var baseMethod = _baseMeta && _baseMeta[method];
+                            if (baseMethod) {
+                                return baseMethod.apply(_baseMeta, arguments);
+                            }
+                        });
+                    }
+                    return this;
+                }        
+            });
+            this.addProtocol(protocols);
+        }
+    });
+
     var extend  = Base.extend;
     Base.extend = function _() {
-        var _protocols      = [],
-            isProtocol      = (this === Protocol) || (this.prototype instanceof Protocol),
-            getProtocols    = function () { return _protocols.slice(0); },
-            getAllProtocols = function () {
-                var protocols = this.getProtocols(),
-                    inner     = protocols.slice(0);
-                if (!isProtocol) {
-                    var ancestor = $ancestorOf(this);
-                    if (ancestor !== Base) {
-                        inner.push(ancestor);
-                    }
-                }
-                for (var i = 0; i < inner.length; ++i) {
-                    var innerProtocols = inner[i].getAllProtocols();
-                    for (var ii = 0; ii < innerProtocols.length; ++ii) {
-                        var protocol = innerProtocols[ii];
-                        if (protocols.indexOf(protocol) < 0) {
-                            protocols.push(protocol);
-                        }
-                    } 
-                }
-                return protocols;
-            },
-            addProtocol  = function (protocol) {
-                if ((protocol.prototype instanceof Protocol) 
-                    &&  (_protocols.indexOf(protocol) === -1)) {
-                    if (isProtocol) {
-                        _liftMethods.call(this.prototype, protocol);
-                    }
-                    _protocols.push(protocol);
-                }
-            };
         return (function (base, args) {
-            var protocols  = [], mixins      = [],
-                metaMacros = [], constraints = args;
+            var protocols, mixins, macros, 
+                constraints = args;
             if (base.prototype instanceof Protocol) {
-                protocols.push(base);
+                (protocols = []).push(base);
             }
             if (args.length > 0 && (args[0] instanceof Array)) {
                 constraints = args.shift();
@@ -4919,14 +4949,14 @@ new function () { // closure
                 if (!constraint) {
                     break;
                 } else if (constraint.prototype instanceof Protocol) {
-                    protocols.push(constraint);
+                    (protocols || (protocols = [])).push(constraint);
                 } else if (constraint instanceof MetaMacro) {
-                    metaMacros.push(constraint);
+                    (macros || (macros = [])).push(constraint);
                 } else if ($isFunction(constraint) 
                            &&  constraint.prototype instanceof MetaMacro) {
-                    metaMacros.push(new constraint);
+                    (macros || (macros = [])).push(new constraint);
                 } else if (constraint.prototype) {
-                    mixins.push(constraint);
+                    (mixins || (mixins = [])).push(constraint);
                 } else {
                     break;
                 }
@@ -4935,27 +4965,30 @@ new function () { // closure
             var instanceDef = args.shift(),
                 staticDef   = args.shift(),
                 subclass    = extend.call(base, instanceDef, staticDef),
-                metadata    = new Metadata(subclass, metaMacros),
+                metadata    = new Metadata(base, subclass, protocols, macros),
                 spec        = _.spec || (_.spec = {
                     enumerable:   false,
                     configurable: false,
                     writable:     false
                     });
-            spec.value = metadata;
-            Array2.forEach(protocols, addProtocol, subclass);
-            subclass.addProtocol     = addProtocol;
-            subclass.getProtocols    = getProtocols;
-            subclass.getAllProtocols = getAllProtocols;
-            subclass.conformsTo      = _conformsTo.bind(subclass, _protocols);
-            Object.defineProperty(subclass, 'meta', spec);
+            spec.value               = metadata;
+            subclass.$meta           = metadata;
+            subclass.addProtocol     = metadata.addProtocol.bind(metadata);
+            subclass.getProtocols    = metadata.getProtocols.bind(metadata);
+            subclass.getAllProtocols = metadata.getAllProtocols.bind(metadata);
+            subclass.conformsTo      = metadata.conformsTo.bind(metadata);
+            Object.defineProperty(subclass.prototype, '$meta', spec);
             metadata.apply(MetaStep.Subclass, metadata, subclass.prototype, instanceDef);
-            Array2.forEach(mixins, subclass.implement, subclass);
+            if (mixins) {
+                Array2.forEach(mixins, subclass.implement, subclass);
+            }
+            delete spec.value;
             return subclass;
             })(this, Array.prototype.slice.call(arguments));
     };
 
     Base.prototype.conformsTo = function (protocol) {
-        return $classOf(this).conformsTo(protocol);
+        return this.$meta.conformsTo(protocol);
     };
     
     var implement = Base.implement;
@@ -4963,7 +4996,7 @@ new function () { // closure
         if ($isFunction(source)) {
             source = source.prototype; 
         }
-        var metadata = this.meta;
+        var metadata = this.$meta;
         implement.call(this, source);
         if (metadata) {
             metadata.apply(MetaStep.Implement, metadata, this.prototype, source);
@@ -4977,31 +5010,13 @@ new function () { // closure
         if (arguments.length >= 2) {
             definition[key] = value;
         }
-        var metadata  = $metadata(this);
+        var metadata  = this.$meta;
         extendInstance.call(this, definition);
         if (metadata) {
             metadata.apply(MetaStep.Extend, metadata, this, definition);
         }
         return this;
     }
-
-    function _conformsTo(protocols, protocol) {
-        if (!(protocol && (protocol.prototype instanceof Protocol))) {
-            return false;
-        } else if ((protocol === this) || (this.prototype instanceof protocol)) {
-            return true;
-        }
-        for (var index = 0; index < protocols.length; ++index) {
-            var proto = protocols[index];
-            if (protocol === proto || proto.conformsTo(protocol)) {
-                return true;
-            }
-        }
-        var ancestor = this.ancestor;
-        return ancestor && (ancestor !== Base) && (ancestor !== Protocol)
-             ? ancestor.conformsTo(protocol)
-             : false;
-    };
 
     /**
      * @class {$proxyProtocol}
@@ -5032,8 +5047,8 @@ new function () { // closure
     });
     Protocol.extend     = Base.extend
     Protocol.implement  = Base.implement;;
-    Protocol.meta       = new Metadata(Protocol, [new $proxyProtocol]);
-    Protocol.meta.apply(MetaStep.Subclass, Protocol.meta, Protocol.prototype);
+    Protocol.$meta      = new Metadata(Base, Protocol, null, [new $proxyProtocol]);
+    Protocol.$meta.apply(MetaStep.Subclass, Protocol.$meta, Protocol.prototype);
 
     /**
      * @class {$properties}
@@ -5695,22 +5710,6 @@ new function () { // closure
     }
 
     /**
-     * @function $metadata
-     * @param    {Object}   source  - class or instance
-     * @returns  {Object} source metadata.
-     */
-    function $metadata(source) {
-        if (source) {
-            var metadata = source.meta;
-            if (!metadata) {
-                var clazz = source.constructor;
-                return clazz && clazz.meta;
-            }
-            return metadata;
-        }
-    }
-
-    /**
      * @function $isString
      * @param    {Any}     str  - string to test
      * @returns  {Boolean} true if a string.
@@ -6127,7 +6126,7 @@ new function () { // closure
     var Model = Base.extend(
         $properties, $inferProperties, $inheritStatic, {
         constructor: function (data) {
-            var meta    = $metadata(this),
+            var meta    = this.$meta,
                 getType = meta && meta.getPropertyType;
             for (var key in data) {
                 var value = data[key],

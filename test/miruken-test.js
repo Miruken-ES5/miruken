@@ -117,32 +117,15 @@ describe("Enum", function () {
     });
 });
 
-describe("Miruken", function () {
-    it("should be in global namespace", function () {
-        expect(global.Miruken).to.equal(base2.miruken.Miruken);
+describe("$meta", function () {
+    it("should have metadata on class", function () {
+        expect(Dog.$meta).to.be.instanceOf(Metadata);
     });
 
-    it("should pass arguments to base", function () {
-        var Something = Miruken.extend({
-            constructor: function () {
-                this.base({name: 'Larry'});
-            }
-        }),
-        something = new Something;
-        expect(something.name).to.equal('Larry');
-    });
-
-    it("should perform coercion by default", function () {
-        var Pet = Miruken.extend({
-                constructor: function (name) {
-                    this.extend({
-                        getName: function () { return name; }
-                    });
-                }
-            }),
-            pet = Pet('Spike');
-        expect(pet).to.be.instanceOf(Pet);
-        expect(pet.getName()).to.equal('Spike');
+    it("should have metadata on instance", function () {
+        var dog = new Dog;
+        expect(dog.$meta).to.be.instanceOf(Metadata);
+        expect(dog.$meta).to.equal(Dog.$meta);
     });
 });
 
@@ -212,11 +195,11 @@ describe("$properties", function () {
     });
 
     it("should retrieve property type", function () {
-        expect(Doctor.meta.getPropertyType('patient')).to.equal(Person);
+        expect(Doctor.$meta.getPropertyType('patient')).to.equal(Person);
     });
 
     it("should retrieve inherited property type", function () {
-        expect(Doctor.meta.getPropertyType('pet')).to.equal(Animal);
+        expect(Doctor.$meta.getPropertyType('pet')).to.equal(Animal);
     });
 });
 
@@ -308,6 +291,35 @@ describe("$inheritStatic", function () {
     it("should inherit static members", function () {
         expect(Geometry.PI).to.equal(Math.PI);
         expect(Geometry.add).to.equal(Math.add);
+    });
+});
+
+describe("Miruken", function () {
+    it("should be in global namespace", function () {
+        expect(global.Miruken).to.equal(base2.miruken.Miruken);
+    });
+
+    it("should pass arguments to base", function () {
+        var Something = Miruken.extend({
+            constructor: function () {
+                this.base({name: 'Larry'});
+            }
+        }),
+        something = new Something;
+        expect(something.name).to.equal('Larry');
+    });
+
+    it("should perform coercion by default", function () {
+        var Pet = Miruken.extend({
+                constructor: function (name) {
+                    this.extend({
+                        getName: function () { return name; }
+                    });
+                }
+            }),
+            pet = Pet('Spike');
+        expect(pet).to.be.instanceOf(Pet);
+        expect(pet.getName()).to.equal('Spike');
     });
 });
 
