@@ -4800,12 +4800,13 @@ new function () { // closure
                     type     = property.type;
                     delete spec.writable;
                 } else {
-                    var value = Modifier.unwrap(property);
-                    spec.writable = !$readonly.test(property);
-                    if ($type.test(property)) {
-                        type = value;
+                    var readonly = $readonly.test(property),
+                        value    = Modifier.unwrap(property);
+                    if (use || readonly || !(property instanceof Modifier)) {
+                        spec.writable = !readonly;
+                        spec.value    = value;
                     } else {
-                        spec.value = value;
+                        type = property;
                     }
                 }
                 if (type) {
@@ -4817,8 +4818,8 @@ new function () { // closure
                 delete spec.set;
             }
             if (types) {
-                metadata.linkBase('getPropertyType').extend({
-                    getPropertyType: function (name) {
+                metadata.linkBase('getPropertyAnnotation').extend({
+                    getPropertyAnnotation: function (name) {
                         return types[name] || this.base(name);
                     }
                 });
@@ -5834,10 +5835,12 @@ new function () { // closure
         version: miruken.version,
         parent:  miruken,
         imports: "miruken,miruken.callback,miruken.context",
-        exports: "Model,Controller,MasterDetail,MasterDetailAware"
+        exports: "Model,Controller,MasterDetail,MasterDetailAware,$root"
     });
 
     eval(this.imports);
+
+    var $root = $createModifier();
 
     /**
      * @class {Model}
@@ -5846,10 +5849,12 @@ new function () { // closure
         $properties, $inferProperties, $inheritStatic, {
         constructor: function (data) {
             var meta    = this.$meta,
-                getType = meta && meta.getPropertyType;
+                getAnno = meta && meta.getPropertyAnnotation;
             for (var key in data) {
-                var value = data[key],
-                    type  = getType && getType(key);
+                var type  = getAnno && getAnno(key),
+                    root  = $root.test(type),
+                    value = root ? data : data[key];
+                type = Modifier.unwrap(type);
                 if (key in this) {
                     this[key] = type ? type.map(value) : value;
                 } else {
@@ -21533,11 +21538,13 @@ describe("$properties", function () {
     });
 
     it("should retrieve property type", function () {
-        expect(Doctor.$meta.getPropertyType('patient')).to.equal(Person);
+        var type = Doctor.$meta.getPropertyAnnotation('patient');
+        expect(Modifier.unwrap(type)).to.equal(Person);
     });
 
     it("should retrieve inherited property type", function () {
-        expect(Doctor.$meta.getPropertyType('pet')).to.equal(Animal);
+        var type = Doctor.$meta.getPropertyAnnotation('pet');
+        expect(Modifier.unwrap(type)).to.equal(Animal);
     });
 });
 

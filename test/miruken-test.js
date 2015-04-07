@@ -195,11 +195,13 @@ describe("$properties", function () {
     });
 
     it("should retrieve property type", function () {
-        expect(Doctor.$meta.getPropertyType('patient')).to.equal(Person);
+        var type = Doctor.$meta.getPropertyAnnotation('patient');
+        expect(Modifier.unwrap(type)).to.equal(Person);
     });
 
     it("should retrieve inherited property type", function () {
-        expect(Doctor.$meta.getPropertyType('pet')).to.equal(Animal);
+        var type = Doctor.$meta.getPropertyAnnotation('pet');
+        expect(Modifier.unwrap(type)).to.equal(Animal);
     });
 });
 

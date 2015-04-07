@@ -4800,12 +4800,13 @@ new function () { // closure
                     type     = property.type;
                     delete spec.writable;
                 } else {
-                    var value = Modifier.unwrap(property);
-                    spec.writable = !$readonly.test(property);
-                    if ($type.test(property)) {
-                        type = value;
+                    var readonly = $readonly.test(property),
+                        value    = Modifier.unwrap(property);
+                    if (use || readonly || !(property instanceof Modifier)) {
+                        spec.writable = !readonly;
+                        spec.value    = value;
                     } else {
-                        spec.value = value;
+                        type = property;
                     }
                 }
                 if (type) {
@@ -4817,8 +4818,8 @@ new function () { // closure
                 delete spec.set;
             }
             if (types) {
-                metadata.linkBase('getPropertyType').extend({
-                    getPropertyType: function (name) {
+                metadata.linkBase('getPropertyAnnotation').extend({
+                    getPropertyAnnotation: function (name) {
                         return types[name] || this.base(name);
                     }
                 });

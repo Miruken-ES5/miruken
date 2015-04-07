@@ -106,5 +106,20 @@ describe("Model", function () {
             expect(person.firstName).to.equal('Bruce');
             expect(person.lastName).to.equal('Lee');
         });
+
+        it("should use $root annotation", function () {
+            var PersonModel = Model.extend({
+                $properties: {
+                    person: $root(Person)
+                }
+            }),
+                state = {
+                    firstName: 'Henry',
+                    lastName:  'Ford'
+            }
+            var model = new PersonModel(state);
+            expect(model.person.firstName).to.equal('Henry');
+            expect(model.person.lastName).to.equal('Ford');
+        });
     });
 });
