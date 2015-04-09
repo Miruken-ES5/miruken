@@ -3191,7 +3191,7 @@ new function () { // closure
         apply: function (step, metadata) {
             if (step === MetaStep.Subclass) {
                 var clazz = metadata.getClass();
-                clazz.addProtocol(Contextual);
+                clazz.$meta.addProtocol(Contextual);
                 clazz.implement(ContextualMixin);
             }
         }
@@ -3689,7 +3689,7 @@ new function () { // closure
                 },
                 anyService: function () {
                     return selectKeys(function (keys, clazz) {
-                        var services = clazz.getAllProtocols();
+                        var services = clazz.$meta.getAllProtocols();
                         if (services.length > 0) {
                             keys.push(services[0]);
                         }
@@ -3697,7 +3697,7 @@ new function () { // closure
                 },
                 allServices: function () {
                     return selectKeys(function (keys, clazz) {
-                        keys.push.apply(keys, clazz.getAllProtocols());
+                        keys.push.apply(keys, clazz.$meta.getAllProtocols());
                     });
                 },
                 mostSpecificService: function (service) {
@@ -3804,17 +3804,17 @@ new function () { // closure
         var toplevel = _toplevelProtocols(clazz);
         for (var i = 0; i < toplevel.length; ++i) {
             var protocol = toplevel[i];
-            if (protocol.getAllProtocols().indexOf(preference) >= 0) {
+            if (protocol.$meta.getAllProtocols().indexOf(preference) >= 0) {
                 matches.push(protocol);
             }
         }
     }
 
     function _toplevelProtocols(type) {
-        var protocols = type.getAllProtocols(),
+        var protocols = type.$meta.getAllProtocols(),
             toplevel  = protocols.slice(0);
         for (var i = 0; i < protocols.length; ++i) {
-            var parents = protocols[i].getAllProtocols();
+            var parents = protocols[i].$meta.getAllProtocols();
             for (var ii = 0; ii < parents.length; ++ii) {
                 Array2.remove(toplevel, parents[ii]);
             }
@@ -4694,7 +4694,7 @@ new function () { // closure
     var miruken = new base2.Package(this, {
         name:    "miruken",
         version: "1.0",
-        exports: "Enum,Protocol,Delegate,Miruken,MetaStep,MetaMacro,Metadata,Disposing,DisposingMixin,Parenting,Starting,Startup,Facet,Interceptor,InterceptorSelector,ProxyBuilder,TraversingAxis,Traversing,TraversingMixin,Traversal,Variance,Modifier,ArrayManager,IndexedList,$isProtocol,$isClass,$classOf,$ancestorOf,$isString,$isFunction,$isObject,$isPromise,$isSomething,$isNothing,$using,$lift,$eq,$use,$copy,$lazy,$eval,$type,$every,$child,$optional,$readonly,$promise,$instant,$createModifier,$properties,$inferProperties,$inheritStatic"
+        exports: "Enum,Protocol,Delegate,Miruken,MetaStep,MetaMacro,ClassMeta,InstanceMeta,Disposing,DisposingMixin,Parenting,Starting,Startup,Facet,Interceptor,InterceptorSelector,ProxyBuilder,TraversingAxis,Traversing,TraversingMixin,Traversal,Variance,Modifier,ArrayManager,IndexedList,$isProtocol,$isClass,$classOf,$ancestorOf,$isString,$isFunction,$isObject,$isPromise,$isSomething,$isNothing,$using,$lift,$eq,$use,$copy,$lazy,$eval,$every,$child,$optional,$promise,$instant,$createModifier,$properties,$inferProperties,$inheritStatic"
     });
 
     eval(this.imports);
@@ -4704,11 +4704,9 @@ new function () { // closure
         $copy     = $createModifier(),
         $lazy     = $createModifier(),
         $eval     = $createModifier(),
-        $type     = $createModifier(),
         $every    = $createModifier(),
         $child    = $createModifier(),
         $optional = $createModifier(),
-        $readonly = $createModifier(),
         $promise  = $createModifier(),
         $instant  = $createModifier();
 
@@ -4834,26 +4832,17 @@ new function () { // closure
     });
 
     /**
-     * @class {MetaMacro}
+     * @class {MetaBase}
      */
-    var Metadata = MetaMacro.extend({
-        constructor: function(baseClass, subClass, protocols, macros)  {
-            var _baseMeta   = baseClass.$meta,
-                _macros     = macros ? macros.slice(0) : undefined,
-                _isProtocol = (subClass === Protocol) || (subClass.prototype instanceof Protocol),
-                _protocols  = [];
+    var MetaBase = MetaMacro.extend({
+        constructor: function(parent, protocols)  {
+            var _protocols = [];
             this.extend({
-                getBase: function () { return baseClass; },
-                getClass: function () { return subClass; },
-                getBaseMeta: function () { return _baseMeta; },
-                isProtocol: function () { return _isProtocol; },
+                getParent: function () { return parent; },
                 getProtocols: function () { return _protocols.slice(0) },
                 getAllProtocols: function () {
                     var protocols = this.getProtocols(),
                         inner     = protocols.slice(0);
-                    if (!_isProtocol && baseClass !== Base) {
-                        inner.push(baseClass);
-                    }
                     for (var i = 0; i < inner.length; ++i) {
                         var innerProtocols = inner[i].$meta.getAllProtocols();
                         for (var ii = 0; ii < innerProtocols.length; ++ii) {
@@ -4873,15 +4862,81 @@ new function () { // closure
                         protocols = Array.prototype.slice.call(arguments);
                     }
                     for (var i = 0; i < protocols.length; ++i) {
-                        var protocol      = protocols[i],
-                            metaPrototype = subClass.prototype;
+                        var protocol = protocols[i];
                         if ((protocol.prototype instanceof Protocol) 
                         &&  (_protocols.indexOf(protocol) === -1)) {
-                            if (_isProtocol) {
-                                _liftMethods.call(metaPrototype, protocol);
-                            }
                             _protocols.push(protocol);
+                            this.protocolAdded(protocol);
                         }
+                    }
+                },
+                protocolAdded: function (protocol) {
+                },
+                conformsTo: function (protocol) {
+                    if (!(protocol && (protocol.prototype instanceof Protocol))) {
+                        return false;
+                    }
+                    for (var index = 0; index < _protocols.length; ++index) {
+                        var proto = _protocols[index];
+                        if (protocol === proto || proto.conformsTo(protocol)) {
+                            return true;
+                        }
+                    }
+                    return false;
+                },
+                apply: function (step, metadata, target, definition) {
+                    if (parent) {
+                        parent.apply(step, metadata, target, definition);
+                    }
+                },
+                getDescriptor: function (name) {
+                    if (parent) {
+                        return parent.getDescriptor(name);
+                    }
+                },
+                linkBase: function (method) {
+                    if (!this[method]) {
+                        this.extend(method, function () {
+                            var baseMethod = parent && parent[method];
+                            if (baseMethod) {
+                                return baseMethod.apply(parent, arguments);
+                            }
+                        });
+                    }
+                    return this;
+                }        
+            });
+        }
+    });
+
+    /**
+     * @class {ClassMeta}
+     */
+    var ClassMeta = MetaBase.extend({
+        constructor: function(baseClass, subClass, protocols, macros)  {
+            var _isProtocol = (subClass === Protocol) || (subClass.prototype instanceof Protocol),
+                _macros     = macros ? macros.slice(0) : undefined;
+            this.base(baseClass.$meta, protocols);
+            this.extend({
+                getBase: function () { return baseClass; },
+                getClass: function () { return subClass; },
+                isProtocol: function () { return _isProtocol; },
+                getAllProtocols: function () {
+                    var protocols = this.base();
+                    if (!_isProtocol && baseClass !== Base) {
+                        var baseProtocols = baseClass.$meta.getAllProtocols();
+                        for (var i = 0; i < baseProtocols.length; ++i) {
+                            var protocol = baseProtocols[i];
+                            if (protocols.indexOf(protocol) < 0) {
+                                protocols.push(protocol);
+                            }
+                        }
+                    }
+                    return protocols;
+                },
+                protocolAdded: function (protocol) {
+                    if (_isProtocol) {
+                        _liftMethods.call(subClass.prototype, protocol);
                     }
                 },
                 conformsTo: function (protocol) {
@@ -4890,20 +4945,15 @@ new function () { // closure
                     } else if ((protocol === subClass) || (subClass.prototype instanceof protocol)) {
                         return true;
                     }
-                    for (var index = 0; index < _protocols.length; ++index) {
-                        var proto = _protocols[index];
-                        if (protocol === proto || proto.conformsTo(protocol)) {
-                            return true;
-                        }
+                    if (this.base(protocol)) {
+                        return true;
                     }
                     return baseClass && (baseClass !== Base) && (baseClass !== Protocol)
                          ? baseClass.conformsTo(protocol)
                          : false;
                 },
                 apply: function (step, metadata, target, definition) {
-                    if (_baseMeta) {
-                        _baseMeta.apply(step, metadata, target, definition);
-                    }
+                    this.base(step, metadata, target, definition);
                     if (!_macros || _macros.length == 0) {
                         return;
                     }
@@ -4916,25 +4966,23 @@ new function () { // closure
                             macro.apply(step, metadata, target, definition);
                         }
                     }
-                },
-                linkBase: function (method) {
-                    if (!this[method]) {
-                        this.extend(method, function () {
-                            var baseMethod = _baseMeta && _baseMeta[method];
-                            if (baseMethod) {
-                                return baseMethod.apply(_baseMeta, arguments);
-                            }
-                        });
-                    }
-                    return this;
-                }        
+                }
             });
             this.addProtocol(protocols);
         }
     });
 
+    /**
+     * @class {InstanceMeta}
+     */
+    var InstanceMeta = MetaMacro.extend({
+        constructor: function(classMeta) {
+            this.base(classMeta);
+        }
+    });
+
     var extend  = Base.extend;
-    Base.extend = function _() {
+    Base.extend = function () {
         return (function (base, args) {
             var protocols, mixins, macros, 
                 constraints = args;
@@ -4965,30 +5013,43 @@ new function () { // closure
             var instanceDef = args.shift(),
                 staticDef   = args.shift(),
                 subclass    = extend.call(base, instanceDef, staticDef),
-                metadata    = new Metadata(base, subclass, protocols, macros),
-                spec        = _.spec || (_.spec = {
-                    enumerable:   false,
-                    configurable: false,
-                    writable:     false
-                    });
-            spec.value               = metadata;
-            subclass.$meta           = metadata;
-            subclass.addProtocol     = metadata.addProtocol.bind(metadata);
-            subclass.getProtocols    = metadata.getProtocols.bind(metadata);
-            subclass.getAllProtocols = metadata.getAllProtocols.bind(metadata);
-            subclass.conformsTo      = metadata.conformsTo.bind(metadata);
-            Object.defineProperty(subclass.prototype, '$meta', spec);
+                metadata    = new ClassMeta(base, subclass, protocols, macros);
+            Object.defineProperty(subclass, '$meta', {
+                enumerable:   false,
+                configurable: false,
+                writable:     false,
+                value:        metadata
+            });
+            Object.defineProperty(subclass.prototype, '$meta', {
+                enumerable:   false,
+                configurable: false,
+                get:          _createInstanceMeta
+            });
+            subclass.conformsTo = metadata.conformsTo.bind(metadata);
             metadata.apply(MetaStep.Subclass, metadata, subclass.prototype, instanceDef);
             if (mixins) {
                 Array2.forEach(mixins, subclass.implement, subclass);
             }
-            delete spec.value;
             return subclass;
             })(this, Array.prototype.slice.call(arguments));
     };
 
+    function _createInstanceMeta() {
+        var spec = _createInstanceMeta.spec ||
+            (_createInstanceMeta.spec = {
+                enumerable:   false,
+                configurable: false,
+                writable:     false
+            }),
+            metadata = new InstanceMeta(this.constructor.$meta);
+        spec.value = metadata;
+        Object.defineProperty(this, '$meta', spec);
+        delete spec.value;
+        return metadata;
+    }
+
     Base.prototype.conformsTo = function (protocol) {
-        return this.$meta.conformsTo(protocol);
+        return this.constructor.$meta.conformsTo(protocol);
     };
     
     var implement = Base.implement;
@@ -5047,7 +5108,7 @@ new function () { // closure
     });
     Protocol.extend     = Base.extend
     Protocol.implement  = Base.implement;;
-    Protocol.$meta      = new Metadata(Base, Protocol, null, [new $proxyProtocol]);
+    Protocol.$meta      = new ClassMeta(Base, Protocol, null, [new $proxyProtocol]);
     Protocol.$meta.apply(MetaStep.Subclass, Protocol.$meta, Protocol.prototype);
 
     /**
@@ -5062,44 +5123,52 @@ new function () { // closure
             if ($isNothing(definition) || !definition.hasOwnProperty(this._tag)) {
                 return;
             }
-            var properties = definition[this._tag], types;
+            var properties = definition[this._tag],
+                descriptors;
             for (var name in properties) {
-                var spec = _.spec || (_.spec = {
+                var property = properties[name],
+                    spec = _.spec || (_.spec = {
                     enumerable:   true,
                     configurable: true
                     }),
-                    property  = properties[name], type,
-                    use       = $use.test(property);
-                if (!use && property && (property.get || property.set)) {
-                    spec.get = property.get;
-                    spec.set = property.set;
-                    type     = property.type;
-                    delete spec.writable;
+                    descriptor = false;
+                spec.writable = true;
+                if ($isNothing(property) || $isString(property) ||
+                    typeOf(property.length) == "number" || typeOf(property) !== 'object') {
+                    spec.value = property;
                 } else {
-                    var readonly = $readonly.test(property),
-                        value    = Modifier.unwrap(property);
-                    if (use || readonly || !(property instanceof Modifier)) {
-                        spec.writable = !readonly;
-                        spec.value    = value;
-                    } else {
-                        type = property;
+                    descriptor = true;
+                    if (property.get) {
+                        spec.get = property.get;
+                    }
+                    if (property.set) {
+                        spec.set = property.set;
+                    }
+                    if (spec.get || spec.set) {
+                        delete spec.writable;
                     }
                 }
-                if (type) {
-                    (types || (types = {}))[name] = type;
-                }
                 this.defineProperty(metadata, target, name, spec);
+                if (descriptor) {
+                    delete property.writable;
+                    delete property.value;
+                    delete property.get;
+                    delete property.set;
+                    Object.freeze(property);
+                    (descriptors || (descriptors = {}))[name] = property;
+                }
+                delete spec.writable;
                 delete spec.value;
                 delete spec.get;
                 delete spec.set;
             }
-            if (types) {
-                metadata.linkBase('getPropertyAnnotation').extend({
-                    getPropertyAnnotation: function (name) {
+            if (descriptors) {
+                metadata.extend({
+                    getDescriptor: function (name) {
                         if ($isNothing(name)) {
-                            return lang.extend(lang.extend({}, this.base()), types);
+                            return lang.extend(lang.extend({}, this.base()), descriptors);
                         }
-                        return types[name] || this.base(name);
+                        return descriptors[name] || this.base(name);
                     }
                 });
             }
@@ -6130,29 +6199,38 @@ new function () { // closure
      * @class {Model}
      */
     var Model = Base.extend(
-        $properties, $inferProperties, $inheritStatic, {
+        $properties, $inferProperties, {
         constructor: function (data) {
+            this.fromData(data);
+        },
+        fromData: function (data) {
+            if ($isNothing(data)) {
+                return;
+            }
             var meta        = this.$meta,
-                annotations = meta && meta.getPropertyAnnotation &&
-                              meta.getPropertyAnnotation();
-            for (var key in annotations) {
-                var annotation = annotations[key];
-                if ($root.test(annotation)) {
-                    var type  = Modifier.unwrap(annotation);
-                    this[key] = type.map(data); 
+                descriptors = meta && meta.getDescriptor();
+            if (descriptors) {
+                for (var key in descriptors) {
+                    var descriptor = descriptors[key];
+                    if (descriptor && descriptor.root && descriptor.map) {
+                        this[key] = descriptor.map(data); 
+                    }
                 }
             }
             for (var key in data) {
-                var type  = annotations && annotations[key],
-                    value = data[key];
-                type = Modifier.unwrap(type);
+                var descriptor = descriptors && descriptors[key],
+                    mapper     = descriptor && descriptor.map;
+                if (mapper && descriptor.root) {
+                    continue;  // already rooted
+                }
+                var value = data[key];
                 if (key in this) {
-                    this[key] = type ? type.map(value) : value;
+                    this[key] = mapper ? Model.map(value, mapper, descriptor) : value;
                 } else {
                     var lkey = key.toLowerCase();
                     for (var k in this) {
                         if (k.toLowerCase() === lkey) {
-                            this[k] = type ? type.map(value) : value;
+                            this[k] = mapper ? Model.map(value, mapper, descriptor) : value;
                         }
                     }
                 }
@@ -6170,12 +6248,17 @@ new function () { // closure
             return data;
         }
     }, {
-        map: function (value) {
+        map: function (value, mapper, options) {
             if (value) {
                 return typeof value.length == "number"
-                     ? Array2.map(value, this.map, this)
-                     : this.new.call(this, value);
+                     ? Array2.map(value, function (elem) {
+                         return Model.map(elem, mapper, options)
+                       })
+                     : mapper(value, options);
             }
+        },
+        coerce: function () {
+            return this.new.apply(this, arguments);
         }
     });
 

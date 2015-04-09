@@ -19,7 +19,7 @@ describe("Model", function () {
     }),
         Doctor = Person.extend({
             $properties: {
-                patient: $type(Person)
+                patient: { map: Person }
             }
     });
 
@@ -127,10 +127,10 @@ describe("Model", function () {
             expect(group2[0].firstName).to.equal('Bill');
         });
 
-        it("should use $root annotation", function () {
+        it("should use root mapping", function () {
             var PersonModel = Model.extend({
                 $properties: {
-                    person: $root(Person)
+                    person: { map: Person, root: true }
                 }
             }),
                 state = {

@@ -2915,7 +2915,7 @@ new function () { // closure
         apply: function (step, metadata) {
             if (step === MetaStep.Subclass) {
                 var clazz = metadata.getClass();
-                clazz.addProtocol(Contextual);
+                clazz.$meta.addProtocol(Contextual);
                 clazz.implement(ContextualMixin);
             }
         }
@@ -3413,7 +3413,7 @@ new function () { // closure
                 },
                 anyService: function () {
                     return selectKeys(function (keys, clazz) {
-                        var services = clazz.getAllProtocols();
+                        var services = clazz.$meta.getAllProtocols();
                         if (services.length > 0) {
                             keys.push(services[0]);
                         }
@@ -3421,7 +3421,7 @@ new function () { // closure
                 },
                 allServices: function () {
                     return selectKeys(function (keys, clazz) {
-                        keys.push.apply(keys, clazz.getAllProtocols());
+                        keys.push.apply(keys, clazz.$meta.getAllProtocols());
                     });
                 },
                 mostSpecificService: function (service) {
@@ -3528,17 +3528,17 @@ new function () { // closure
         var toplevel = _toplevelProtocols(clazz);
         for (var i = 0; i < toplevel.length; ++i) {
             var protocol = toplevel[i];
-            if (protocol.getAllProtocols().indexOf(preference) >= 0) {
+            if (protocol.$meta.getAllProtocols().indexOf(preference) >= 0) {
                 matches.push(protocol);
             }
         }
     }
 
     function _toplevelProtocols(type) {
-        var protocols = type.getAllProtocols(),
+        var protocols = type.$meta.getAllProtocols(),
             toplevel  = protocols.slice(0);
         for (var i = 0; i < protocols.length; ++i) {
-            var parents = protocols[i].getAllProtocols();
+            var parents = protocols[i].$meta.getAllProtocols();
             for (var ii = 0; ii < parents.length; ++ii) {
                 Array2.remove(toplevel, parents[ii]);
             }
@@ -4418,7 +4418,7 @@ new function () { // closure
     var miruken = new base2.Package(this, {
         name:    "miruken",
         version: "1.0",
-        exports: "Enum,Protocol,Delegate,Miruken,MetaStep,MetaMacro,Metadata,Disposing,DisposingMixin,Parenting,Starting,Startup,Facet,Interceptor,InterceptorSelector,ProxyBuilder,TraversingAxis,Traversing,TraversingMixin,Traversal,Variance,Modifier,ArrayManager,IndexedList,$isProtocol,$isClass,$classOf,$ancestorOf,$isString,$isFunction,$isObject,$isPromise,$isSomething,$isNothing,$using,$lift,$eq,$use,$copy,$lazy,$eval,$type,$every,$child,$optional,$readonly,$promise,$instant,$createModifier,$properties,$inferProperties,$inheritStatic"
+        exports: "Enum,Protocol,Delegate,Miruken,MetaStep,MetaMacro,ClassMeta,InstanceMeta,Disposing,DisposingMixin,Parenting,Starting,Startup,Facet,Interceptor,InterceptorSelector,ProxyBuilder,TraversingAxis,Traversing,TraversingMixin,Traversal,Variance,Modifier,ArrayManager,IndexedList,$isProtocol,$isClass,$classOf,$ancestorOf,$isString,$isFunction,$isObject,$isPromise,$isSomething,$isNothing,$using,$lift,$eq,$use,$copy,$lazy,$eval,$every,$child,$optional,$promise,$instant,$createModifier,$properties,$inferProperties,$inheritStatic"
     });
 
     eval(this.imports);
@@ -4428,11 +4428,9 @@ new function () { // closure
         $copy     = $createModifier(),
         $lazy     = $createModifier(),
         $eval     = $createModifier(),
-        $type     = $createModifier(),
         $every    = $createModifier(),
         $child    = $createModifier(),
         $optional = $createModifier(),
-        $readonly = $createModifier(),
         $promise  = $createModifier(),
         $instant  = $createModifier();
 
@@ -4558,26 +4556,17 @@ new function () { // closure
     });
 
     /**
-     * @class {MetaMacro}
+     * @class {MetaBase}
      */
-    var Metadata = MetaMacro.extend({
-        constructor: function(baseClass, subClass, protocols, macros)  {
-            var _baseMeta   = baseClass.$meta,
-                _macros     = macros ? macros.slice(0) : undefined,
-                _isProtocol = (subClass === Protocol) || (subClass.prototype instanceof Protocol),
-                _protocols  = [];
+    var MetaBase = MetaMacro.extend({
+        constructor: function(parent, protocols)  {
+            var _protocols = [];
             this.extend({
-                getBase: function () { return baseClass; },
-                getClass: function () { return subClass; },
-                getBaseMeta: function () { return _baseMeta; },
-                isProtocol: function () { return _isProtocol; },
+                getParent: function () { return parent; },
                 getProtocols: function () { return _protocols.slice(0) },
                 getAllProtocols: function () {
                     var protocols = this.getProtocols(),
                         inner     = protocols.slice(0);
-                    if (!_isProtocol && baseClass !== Base) {
-                        inner.push(baseClass);
-                    }
                     for (var i = 0; i < inner.length; ++i) {
                         var innerProtocols = inner[i].$meta.getAllProtocols();
                         for (var ii = 0; ii < innerProtocols.length; ++ii) {
@@ -4597,15 +4586,81 @@ new function () { // closure
                         protocols = Array.prototype.slice.call(arguments);
                     }
                     for (var i = 0; i < protocols.length; ++i) {
-                        var protocol      = protocols[i],
-                            metaPrototype = subClass.prototype;
+                        var protocol = protocols[i];
                         if ((protocol.prototype instanceof Protocol) 
                         &&  (_protocols.indexOf(protocol) === -1)) {
-                            if (_isProtocol) {
-                                _liftMethods.call(metaPrototype, protocol);
-                            }
                             _protocols.push(protocol);
+                            this.protocolAdded(protocol);
                         }
+                    }
+                },
+                protocolAdded: function (protocol) {
+                },
+                conformsTo: function (protocol) {
+                    if (!(protocol && (protocol.prototype instanceof Protocol))) {
+                        return false;
+                    }
+                    for (var index = 0; index < _protocols.length; ++index) {
+                        var proto = _protocols[index];
+                        if (protocol === proto || proto.conformsTo(protocol)) {
+                            return true;
+                        }
+                    }
+                    return false;
+                },
+                apply: function (step, metadata, target, definition) {
+                    if (parent) {
+                        parent.apply(step, metadata, target, definition);
+                    }
+                },
+                getDescriptor: function (name) {
+                    if (parent) {
+                        return parent.getDescriptor(name);
+                    }
+                },
+                linkBase: function (method) {
+                    if (!this[method]) {
+                        this.extend(method, function () {
+                            var baseMethod = parent && parent[method];
+                            if (baseMethod) {
+                                return baseMethod.apply(parent, arguments);
+                            }
+                        });
+                    }
+                    return this;
+                }        
+            });
+        }
+    });
+
+    /**
+     * @class {ClassMeta}
+     */
+    var ClassMeta = MetaBase.extend({
+        constructor: function(baseClass, subClass, protocols, macros)  {
+            var _isProtocol = (subClass === Protocol) || (subClass.prototype instanceof Protocol),
+                _macros     = macros ? macros.slice(0) : undefined;
+            this.base(baseClass.$meta, protocols);
+            this.extend({
+                getBase: function () { return baseClass; },
+                getClass: function () { return subClass; },
+                isProtocol: function () { return _isProtocol; },
+                getAllProtocols: function () {
+                    var protocols = this.base();
+                    if (!_isProtocol && baseClass !== Base) {
+                        var baseProtocols = baseClass.$meta.getAllProtocols();
+                        for (var i = 0; i < baseProtocols.length; ++i) {
+                            var protocol = baseProtocols[i];
+                            if (protocols.indexOf(protocol) < 0) {
+                                protocols.push(protocol);
+                            }
+                        }
+                    }
+                    return protocols;
+                },
+                protocolAdded: function (protocol) {
+                    if (_isProtocol) {
+                        _liftMethods.call(subClass.prototype, protocol);
                     }
                 },
                 conformsTo: function (protocol) {
@@ -4614,20 +4669,15 @@ new function () { // closure
                     } else if ((protocol === subClass) || (subClass.prototype instanceof protocol)) {
                         return true;
                     }
-                    for (var index = 0; index < _protocols.length; ++index) {
-                        var proto = _protocols[index];
-                        if (protocol === proto || proto.conformsTo(protocol)) {
-                            return true;
-                        }
+                    if (this.base(protocol)) {
+                        return true;
                     }
                     return baseClass && (baseClass !== Base) && (baseClass !== Protocol)
                          ? baseClass.conformsTo(protocol)
                          : false;
                 },
                 apply: function (step, metadata, target, definition) {
-                    if (_baseMeta) {
-                        _baseMeta.apply(step, metadata, target, definition);
-                    }
+                    this.base(step, metadata, target, definition);
                     if (!_macros || _macros.length == 0) {
                         return;
                     }
@@ -4640,25 +4690,23 @@ new function () { // closure
                             macro.apply(step, metadata, target, definition);
                         }
                     }
-                },
-                linkBase: function (method) {
-                    if (!this[method]) {
-                        this.extend(method, function () {
-                            var baseMethod = _baseMeta && _baseMeta[method];
-                            if (baseMethod) {
-                                return baseMethod.apply(_baseMeta, arguments);
-                            }
-                        });
-                    }
-                    return this;
-                }        
+                }
             });
             this.addProtocol(protocols);
         }
     });
 
+    /**
+     * @class {InstanceMeta}
+     */
+    var InstanceMeta = MetaMacro.extend({
+        constructor: function(classMeta) {
+            this.base(classMeta);
+        }
+    });
+
     var extend  = Base.extend;
-    Base.extend = function _() {
+    Base.extend = function () {
         return (function (base, args) {
             var protocols, mixins, macros, 
                 constraints = args;
@@ -4689,30 +4737,43 @@ new function () { // closure
             var instanceDef = args.shift(),
                 staticDef   = args.shift(),
                 subclass    = extend.call(base, instanceDef, staticDef),
-                metadata    = new Metadata(base, subclass, protocols, macros),
-                spec        = _.spec || (_.spec = {
-                    enumerable:   false,
-                    configurable: false,
-                    writable:     false
-                    });
-            spec.value               = metadata;
-            subclass.$meta           = metadata;
-            subclass.addProtocol     = metadata.addProtocol.bind(metadata);
-            subclass.getProtocols    = metadata.getProtocols.bind(metadata);
-            subclass.getAllProtocols = metadata.getAllProtocols.bind(metadata);
-            subclass.conformsTo      = metadata.conformsTo.bind(metadata);
-            Object.defineProperty(subclass.prototype, '$meta', spec);
+                metadata    = new ClassMeta(base, subclass, protocols, macros);
+            Object.defineProperty(subclass, '$meta', {
+                enumerable:   false,
+                configurable: false,
+                writable:     false,
+                value:        metadata
+            });
+            Object.defineProperty(subclass.prototype, '$meta', {
+                enumerable:   false,
+                configurable: false,
+                get:          _createInstanceMeta
+            });
+            subclass.conformsTo = metadata.conformsTo.bind(metadata);
             metadata.apply(MetaStep.Subclass, metadata, subclass.prototype, instanceDef);
             if (mixins) {
                 Array2.forEach(mixins, subclass.implement, subclass);
             }
-            delete spec.value;
             return subclass;
             })(this, Array.prototype.slice.call(arguments));
     };
 
+    function _createInstanceMeta() {
+        var spec = _createInstanceMeta.spec ||
+            (_createInstanceMeta.spec = {
+                enumerable:   false,
+                configurable: false,
+                writable:     false
+            }),
+            metadata = new InstanceMeta(this.constructor.$meta);
+        spec.value = metadata;
+        Object.defineProperty(this, '$meta', spec);
+        delete spec.value;
+        return metadata;
+    }
+
     Base.prototype.conformsTo = function (protocol) {
-        return this.$meta.conformsTo(protocol);
+        return this.constructor.$meta.conformsTo(protocol);
     };
     
     var implement = Base.implement;
@@ -4771,7 +4832,7 @@ new function () { // closure
     });
     Protocol.extend     = Base.extend
     Protocol.implement  = Base.implement;;
-    Protocol.$meta      = new Metadata(Base, Protocol, null, [new $proxyProtocol]);
+    Protocol.$meta      = new ClassMeta(Base, Protocol, null, [new $proxyProtocol]);
     Protocol.$meta.apply(MetaStep.Subclass, Protocol.$meta, Protocol.prototype);
 
     /**
@@ -4786,44 +4847,52 @@ new function () { // closure
             if ($isNothing(definition) || !definition.hasOwnProperty(this._tag)) {
                 return;
             }
-            var properties = definition[this._tag], types;
+            var properties = definition[this._tag],
+                descriptors;
             for (var name in properties) {
-                var spec = _.spec || (_.spec = {
+                var property = properties[name],
+                    spec = _.spec || (_.spec = {
                     enumerable:   true,
                     configurable: true
                     }),
-                    property  = properties[name], type,
-                    use       = $use.test(property);
-                if (!use && property && (property.get || property.set)) {
-                    spec.get = property.get;
-                    spec.set = property.set;
-                    type     = property.type;
-                    delete spec.writable;
+                    descriptor = false;
+                spec.writable = true;
+                if ($isNothing(property) || $isString(property) ||
+                    typeOf(property.length) == "number" || typeOf(property) !== 'object') {
+                    spec.value = property;
                 } else {
-                    var readonly = $readonly.test(property),
-                        value    = Modifier.unwrap(property);
-                    if (use || readonly || !(property instanceof Modifier)) {
-                        spec.writable = !readonly;
-                        spec.value    = value;
-                    } else {
-                        type = property;
+                    descriptor = true;
+                    if (property.get) {
+                        spec.get = property.get;
+                    }
+                    if (property.set) {
+                        spec.set = property.set;
+                    }
+                    if (spec.get || spec.set) {
+                        delete spec.writable;
                     }
                 }
-                if (type) {
-                    (types || (types = {}))[name] = type;
-                }
                 this.defineProperty(metadata, target, name, spec);
+                if (descriptor) {
+                    delete property.writable;
+                    delete property.value;
+                    delete property.get;
+                    delete property.set;
+                    Object.freeze(property);
+                    (descriptors || (descriptors = {}))[name] = property;
+                }
+                delete spec.writable;
                 delete spec.value;
                 delete spec.get;
                 delete spec.set;
             }
-            if (types) {
-                metadata.linkBase('getPropertyAnnotation').extend({
-                    getPropertyAnnotation: function (name) {
+            if (descriptors) {
+                metadata.extend({
+                    getDescriptor: function (name) {
                         if ($isNothing(name)) {
-                            return lang.extend(lang.extend({}, this.base()), types);
+                            return lang.extend(lang.extend({}, this.base()), descriptors);
                         }
-                        return types[name] || this.base(name);
+                        return descriptors[name] || this.base(name);
                     }
                 });
             }
@@ -5849,29 +5918,38 @@ new function () { // closure
      * @class {Model}
      */
     var Model = Base.extend(
-        $properties, $inferProperties, $inheritStatic, {
+        $properties, $inferProperties, {
         constructor: function (data) {
+            this.fromData(data);
+        },
+        fromData: function (data) {
+            if ($isNothing(data)) {
+                return;
+            }
             var meta        = this.$meta,
-                annotations = meta && meta.getPropertyAnnotation &&
-                              meta.getPropertyAnnotation();
-            for (var key in annotations) {
-                var annotation = annotations[key];
-                if ($root.test(annotation)) {
-                    var type  = Modifier.unwrap(annotation);
-                    this[key] = type.map(data); 
+                descriptors = meta && meta.getDescriptor();
+            if (descriptors) {
+                for (var key in descriptors) {
+                    var descriptor = descriptors[key];
+                    if (descriptor && descriptor.root && descriptor.map) {
+                        this[key] = descriptor.map(data); 
+                    }
                 }
             }
             for (var key in data) {
-                var type  = annotations && annotations[key],
-                    value = data[key];
-                type = Modifier.unwrap(type);
+                var descriptor = descriptors && descriptors[key],
+                    mapper     = descriptor && descriptor.map;
+                if (mapper && descriptor.root) {
+                    continue;  // already rooted
+                }
+                var value = data[key];
                 if (key in this) {
-                    this[key] = type ? type.map(value) : value;
+                    this[key] = mapper ? Model.map(value, mapper, descriptor) : value;
                 } else {
                     var lkey = key.toLowerCase();
                     for (var k in this) {
                         if (k.toLowerCase() === lkey) {
-                            this[k] = type ? type.map(value) : value;
+                            this[k] = mapper ? Model.map(value, mapper, descriptor) : value;
                         }
                     }
                 }
@@ -5889,12 +5967,17 @@ new function () { // closure
             return data;
         }
     }, {
-        map: function (value) {
+        map: function (value, mapper, options) {
             if (value) {
                 return typeof value.length == "number"
-                     ? Array2.map(value, this.map, this)
-                     : this.new.call(this, value);
+                     ? Array2.map(value, function (elem) {
+                         return Model.map(elem, mapper, options)
+                       })
+                     : mapper(value, options);
             }
+        },
+        coerce: function () {
+            return this.new.apply(this, arguments);
         }
     });
 
@@ -21471,15 +21554,29 @@ describe("Enum", function () {
 });
 
 describe("$meta", function () {
-    it("should have metadata on class", function () {
-        expect(Dog.$meta).to.be.instanceOf(Metadata);
+    it("should have class metadata", function () {
+        expect(Dog.$meta).to.be.instanceOf(ClassMeta);
     });
 
-    it("should have metadata on instance", function () {
-        var dog = new Dog;
-        expect(dog.$meta).to.be.instanceOf(Metadata);
-        expect(dog.$meta).to.equal(Dog.$meta);
+    it("should not be able to delete class metadata", function () {
+        expect(Dog.$meta).to.be.instanceOf(ClassMeta);
+        delete Dog.$meta;
+        expect(Dog.$meta).to.be.instanceOf(ClassMeta);
     });
+
+    it("should have instance metadata", function () {
+        var dog = new Dog;
+        expect(dog.$meta).to.be.instanceOf(InstanceMeta);
+        expect(dog.$meta).to.not.equal(Dog.$meta);
+    });
+
+    it("should not be able to delete instance metadata", function () {
+        var dog = new Dog;
+        expect(Dog.$meta).to.be.instanceOf(ClassMeta);
+        delete dog.$meta;
+        expect(Dog.$meta).to.be.instanceOf(ClassMeta);
+    });
+
 });
 
 describe("$isClass", function () {
@@ -21513,18 +21610,21 @@ describe("$properties", function () {
             fullName:  {
                 get: function () { return this.firstName + ' ' + this.lastName; }
             },
-            age:       $readonly(11),
-            pet:       $type(Animal)
+            age:       11,
+            pet:       { map: Animal}
         }
     }), Doctor = Person.extend({
         $properties: {
-            patient:   $type(Person)
+            patient:   { map: Person }
         }
     });
 
     it("should synthesize properties", function () {
         var person       = new Person,
             friend       = new Person;
+        expect(person.firstName).to.equal('');
+        expect(person.lastName).to.equal('');
+        expect(person.age).to.equal(11);
         person.firstName = 'John';
         expect(person.firstName).to.equal('John');
         expect(person._firstName).to.be.undefined;
@@ -21534,12 +21634,6 @@ describe("$properties", function () {
         expect(person.$properties).to.be.undefined;
     });
 
-    it("should synthesize readonly properties", function () {
-        var person = new Person;
-        person.age = 22;
-        expect(person.age).to.equal(11);
-    });
-
     it("should synthesize custom properties", function () {
         var person       = new Person;
         person.firstName = 'Mickey';
@@ -21547,20 +21641,43 @@ describe("$properties", function () {
         expect(person.fullName).to.equal('Mickey Mouse');
     });
 
-    it("should retrieve property annotation", function () {
-        var type = Doctor.$meta.getPropertyAnnotation('patient');
-        expect(Modifier.unwrap(type)).to.equal(Person);
+    it("should retrieve property descriptor", function () {
+        var descriptor = Doctor.$meta.getDescriptor('patient');
+        expect(descriptor.map).to.equal(Person);
     });
 
-    it("should retrieve inherited property annotation", function () {
-        var type = Doctor.$meta.getPropertyAnnotation('pet');
-        expect(Modifier.unwrap(type)).to.equal(Animal);
+    it("should retrieve inherited property descriptor", function () {
+        var descriptor = Doctor.$meta.getDescriptor('pet');
+        expect(descriptor.map).to.equal(Animal);
     });
 
-    it("should retrieve all property annotations", function () {
-        var types = Doctor.$meta.getPropertyAnnotation();
-        expect(Modifier.unwrap(types['pet'])).to.equal(Animal);
-        expect(Modifier.unwrap(types['patient'])).to.equal(Person);
+    it("should retrieve all property descriptors", function () {
+        var descriptors = Doctor.$meta.getDescriptor();
+        expect(descriptors['pet'].map).to.equal(Animal);
+        expect(descriptors['patient'].map).to.equal(Person);
+    });
+
+    it("should synthesize instance properties", function () {
+        var person = (new Person).extend({
+            $properties: {
+                hairColor: 'brown',
+                glasses:    true
+            }
+        });
+        expect(person.hairColor).to.equal('brown');
+        expect(person.glasses).to.equal(true);
+        expect(person.$properties).to.be.undefined;
+    });
+
+    it("should retrieve instance property descriptor", function () {
+        var person = (new Person).extend({
+            $properties: {
+                friend: { map: Person }
+            }
+        });
+        var descriptor = person.$meta.getDescriptor('friend');
+        expect(descriptor.map).to.equal(Person);
+        expect(Person.$meta.getDescriptor('friend')).to.be.undefined;
     });
 });
 
@@ -21828,18 +21945,18 @@ describe("Protocol", function () {
 
     describe("#getProtocols", function () {
         it("should retrieve declaring protocols", function () {
-            expect(Dog.getProtocols()).to.eql([Animal, Tricks]);
-            expect(TreeNode.getProtocols()).to.eql([Traversing]);
+            expect(Dog.$meta.getProtocols()).to.eql([Animal, Tricks]);
+            expect(TreeNode.$meta.getProtocols()).to.eql([Traversing]);
         });
     });
 
     describe("#getAllProtocols", function () {
         it("should retrieve all protocol protocols", function () {
-            expect(CircusAnimal.getAllProtocols()).to.eql([Animal, Tricks]);
+            expect(CircusAnimal.$meta.getAllProtocols()).to.eql([Animal, Tricks]);
         });
 
         it("should retrieve all class protocols", function () {
-            expect(AsianElephant.getAllProtocols()).to.eql([Tracked, CircusAnimal, Animal, Tricks]);
+            expect(AsianElephant.$meta.getAllProtocols()).to.eql([Tracked, CircusAnimal, Animal, Tricks]);
         });
     });
 
@@ -21883,18 +22000,18 @@ describe("Protocol", function () {
         it("should only list protocol once", function () {
             var Cat = Base.extend(Animal, Animal);
             expect(Cat.conformsTo(Animal)).to.be.true;
-            expect(Cat.getProtocols()).to.eql([Animal]);
+            expect(Cat.$meta.getProtocols()).to.eql([Animal]);
         });
 
         it("should only list protocol once if extended", function () {
             var Cat = Animal.extend(Animal);
             expect(Cat.conformsTo(Animal)).to.be.true;
-            expect(Cat.getProtocols()).to.eql([Animal]);
+            expect(Cat.$meta.getProtocols()).to.eql([Animal]);
         });
 
         it("should support protocol inheritance", function () {
             expect(Elephant.conformsTo(Animal)).to.be.true;
-            expect(CircusAnimal.getProtocols()).to.eql([Animal, Tricks]);
+            expect(CircusAnimal.$meta.getProtocols()).to.eql([Animal, Tricks]);
         });
 
         it("should inherit protocol conformance", function () {
@@ -21906,7 +22023,7 @@ describe("Protocol", function () {
             var EndangeredAnimal = Base.extend([Animal, Tracked]);
             expect(EndangeredAnimal.conformsTo(Animal)).to.be.true;
             expect(EndangeredAnimal.conformsTo(Tracked)).to.be.true;
-            expect(EndangeredAnimal.getProtocols()).to.eql([Animal, Tracked]);
+            expect(EndangeredAnimal.$meta.getProtocols()).to.eql([Animal, Tracked]);
         });
 
         it("should allow redefining method", function () {
@@ -21942,6 +22059,7 @@ describe("Protocol", function () {
         });
 
         it("should determine if protocol adopted by protocol", function () {
+                var i = 0;
             expect(Protocol.adoptedBy(Animal)).to.be.false;
             expect(Tricks.adoptedBy(Animal)).to.be.false;
             expect(Animal.adoptedBy(CircusAnimal)).to.be.true;
@@ -21959,7 +22077,7 @@ describe("Protocol", function () {
                 eagle = (new Bird).extend({
                    getTag : function () { return "Eagle"; }
 				});
-            Bird.addProtocol(Tracked);
+            Bird.$meta.addProtocol(Tracked);
             expect(Bird.conformsTo(Tracked)).to.be.true;
 			expect(eagle.getTag()).to.equal("Eagle");
         });
@@ -21969,7 +22087,7 @@ describe("Protocol", function () {
                 polarBear = (new Bear).extend({
                 getTag : function () { return "Polar Bear"; }
             });
-			Animal.addProtocol(Tracked);
+			Animal.$meta.addProtocol(Tracked);
             expect(polarBear.conformsTo(Tracked)).to.be.true;
 			expect(polarBear.getTag()).to.equal("Polar Bear");
 			expect(Animal(polarBear).getTag()).to.equal("Polar Bear");
@@ -22500,7 +22618,7 @@ describe("Model", function () {
     }),
         Doctor = Person.extend({
             $properties: {
-                patient: $type(Person)
+                patient: { map: Person }
             }
     });
 
@@ -22588,10 +22706,30 @@ describe("Model", function () {
             expect(person.lastName).to.equal('Lee');
         });
 
-        it("should use $root annotation", function () {
+        it("should preserve grouping", function () {
+            var state = {
+                patient:   [[{
+                    firstName: 'Abbot',
+                    }, {
+                    firstName: 'Costello',
+                    }],
+                    [{
+                    firstName: 'Bill'
+                    }]
+                ]  
+            }
+            var doctor = new Doctor(state),
+                group1 = doctor.patient[0],
+                group2 = doctor.patient[1];
+            expect(group1[0].firstName).to.equal('Abbot');
+            expect(group1[1].firstName).to.equal('Costello');
+            expect(group2[0].firstName).to.equal('Bill');
+        });
+
+        it("should use root mapping", function () {
             var PersonModel = Model.extend({
                 $properties: {
-                    person: $root(Person)
+                    person: { map: Person, root: true }
                 }
             }),
                 state = {

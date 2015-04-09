@@ -118,15 +118,29 @@ describe("Enum", function () {
 });
 
 describe("$meta", function () {
-    it("should have metadata on class", function () {
-        expect(Dog.$meta).to.be.instanceOf(Metadata);
+    it("should have class metadata", function () {
+        expect(Dog.$meta).to.be.instanceOf(ClassMeta);
     });
 
-    it("should have metadata on instance", function () {
-        var dog = new Dog;
-        expect(dog.$meta).to.be.instanceOf(Metadata);
-        expect(dog.$meta).to.equal(Dog.$meta);
+    it("should not be able to delete class metadata", function () {
+        expect(Dog.$meta).to.be.instanceOf(ClassMeta);
+        delete Dog.$meta;
+        expect(Dog.$meta).to.be.instanceOf(ClassMeta);
     });
+
+    it("should have instance metadata", function () {
+        var dog = new Dog;
+        expect(dog.$meta).to.be.instanceOf(InstanceMeta);
+        expect(dog.$meta).to.not.equal(Dog.$meta);
+    });
+
+    it("should not be able to delete instance metadata", function () {
+        var dog = new Dog;
+        expect(Dog.$meta).to.be.instanceOf(ClassMeta);
+        delete dog.$meta;
+        expect(Dog.$meta).to.be.instanceOf(ClassMeta);
+    });
+
 });
 
 describe("$isClass", function () {
@@ -160,18 +174,21 @@ describe("$properties", function () {
             fullName:  {
                 get: function () { return this.firstName + ' ' + this.lastName; }
             },
-            age:       $readonly(11),
-            pet:       $type(Animal)
+            age:       11,
+            pet:       { map: Animal}
         }
     }), Doctor = Person.extend({
         $properties: {
-            patient:   $type(Person)
+            patient:   { map: Person }
         }
     });
 
     it("should synthesize properties", function () {
         var person       = new Person,
             friend       = new Person;
+        expect(person.firstName).to.equal('');
+        expect(person.lastName).to.equal('');
+        expect(person.age).to.equal(11);
         person.firstName = 'John';
         expect(person.firstName).to.equal('John');
         expect(person._firstName).to.be.undefined;
@@ -181,12 +198,6 @@ describe("$properties", function () {
         expect(person.$properties).to.be.undefined;
     });
 
-    it("should synthesize readonly properties", function () {
-        var person = new Person;
-        person.age = 22;
-        expect(person.age).to.equal(11);
-    });
-
     it("should synthesize custom properties", function () {
         var person       = new Person;
         person.firstName = 'Mickey';
@@ -194,20 +205,43 @@ describe("$properties", function () {
         expect(person.fullName).to.equal('Mickey Mouse');
     });
 
-    it("should retrieve property annotation", function () {
-        var type = Doctor.$meta.getPropertyAnnotation('patient');
-        expect(Modifier.unwrap(type)).to.equal(Person);
+    it("should retrieve property descriptor", function () {
+        var descriptor = Doctor.$meta.getDescriptor('patient');
+        expect(descriptor.map).to.equal(Person);
     });
 
-    it("should retrieve inherited property annotation", function () {
-        var type = Doctor.$meta.getPropertyAnnotation('pet');
-        expect(Modifier.unwrap(type)).to.equal(Animal);
+    it("should retrieve inherited property descriptor", function () {
+        var descriptor = Doctor.$meta.getDescriptor('pet');
+        expect(descriptor.map).to.equal(Animal);
     });
 
-    it("should retrieve all property annotations", function () {
-        var types = Doctor.$meta.getPropertyAnnotation();
-        expect(Modifier.unwrap(types['pet'])).to.equal(Animal);
-        expect(Modifier.unwrap(types['patient'])).to.equal(Person);
+    it("should retrieve all property descriptors", function () {
+        var descriptors = Doctor.$meta.getDescriptor();
+        expect(descriptors['pet'].map).to.equal(Animal);
+        expect(descriptors['patient'].map).to.equal(Person);
+    });
+
+    it("should synthesize instance properties", function () {
+        var person = (new Person).extend({
+            $properties: {
+                hairColor: 'brown',
+                glasses:    true
+            }
+        });
+        expect(person.hairColor).to.equal('brown');
+        expect(person.glasses).to.equal(true);
+        expect(person.$properties).to.be.undefined;
+    });
+
+    it("should retrieve instance property descriptor", function () {
+        var person = (new Person).extend({
+            $properties: {
+                friend: { map: Person }
+            }
+        });
+        var descriptor = person.$meta.getDescriptor('friend');
+        expect(descriptor.map).to.equal(Person);
+        expect(Person.$meta.getDescriptor('friend')).to.be.undefined;
     });
 });
 
@@ -475,18 +509,18 @@ describe("Protocol", function () {
 
     describe("#getProtocols", function () {
         it("should retrieve declaring protocols", function () {
-            expect(Dog.getProtocols()).to.eql([Animal, Tricks]);
-            expect(TreeNode.getProtocols()).to.eql([Traversing]);
+            expect(Dog.$meta.getProtocols()).to.eql([Animal, Tricks]);
+            expect(TreeNode.$meta.getProtocols()).to.eql([Traversing]);
         });
     });
 
     describe("#getAllProtocols", function () {
         it("should retrieve all protocol protocols", function () {
-            expect(CircusAnimal.getAllProtocols()).to.eql([Animal, Tricks]);
+            expect(CircusAnimal.$meta.getAllProtocols()).to.eql([Animal, Tricks]);
         });
 
         it("should retrieve all class protocols", function () {
-            expect(AsianElephant.getAllProtocols()).to.eql([Tracked, CircusAnimal, Animal, Tricks]);
+            expect(AsianElephant.$meta.getAllProtocols()).to.eql([Tracked, CircusAnimal, Animal, Tricks]);
         });
     });
 
@@ -530,18 +564,18 @@ describe("Protocol", function () {
         it("should only list protocol once", function () {
             var Cat = Base.extend(Animal, Animal);
             expect(Cat.conformsTo(Animal)).to.be.true;
-            expect(Cat.getProtocols()).to.eql([Animal]);
+            expect(Cat.$meta.getProtocols()).to.eql([Animal]);
         });
 
         it("should only list protocol once if extended", function () {
             var Cat = Animal.extend(Animal);
             expect(Cat.conformsTo(Animal)).to.be.true;
-            expect(Cat.getProtocols()).to.eql([Animal]);
+            expect(Cat.$meta.getProtocols()).to.eql([Animal]);
         });
 
         it("should support protocol inheritance", function () {
             expect(Elephant.conformsTo(Animal)).to.be.true;
-            expect(CircusAnimal.getProtocols()).to.eql([Animal, Tricks]);
+            expect(CircusAnimal.$meta.getProtocols()).to.eql([Animal, Tricks]);
         });
 
         it("should inherit protocol conformance", function () {
@@ -553,7 +587,7 @@ describe("Protocol", function () {
             var EndangeredAnimal = Base.extend([Animal, Tracked]);
             expect(EndangeredAnimal.conformsTo(Animal)).to.be.true;
             expect(EndangeredAnimal.conformsTo(Tracked)).to.be.true;
-            expect(EndangeredAnimal.getProtocols()).to.eql([Animal, Tracked]);
+            expect(EndangeredAnimal.$meta.getProtocols()).to.eql([Animal, Tracked]);
         });
 
         it("should allow redefining method", function () {
@@ -589,6 +623,7 @@ describe("Protocol", function () {
         });
 
         it("should determine if protocol adopted by protocol", function () {
+                var i = 0;
             expect(Protocol.adoptedBy(Animal)).to.be.false;
             expect(Tricks.adoptedBy(Animal)).to.be.false;
             expect(Animal.adoptedBy(CircusAnimal)).to.be.true;
@@ -606,7 +641,7 @@ describe("Protocol", function () {
                 eagle = (new Bird).extend({
                    getTag : function () { return "Eagle"; }
 				});
-            Bird.addProtocol(Tracked);
+            Bird.$meta.addProtocol(Tracked);
             expect(Bird.conformsTo(Tracked)).to.be.true;
 			expect(eagle.getTag()).to.equal("Eagle");
         });
@@ -616,7 +651,7 @@ describe("Protocol", function () {
                 polarBear = (new Bear).extend({
                 getTag : function () { return "Polar Bear"; }
             });
-			Animal.addProtocol(Tracked);
+			Animal.$meta.addProtocol(Tracked);
             expect(polarBear.conformsTo(Tracked)).to.be.true;
 			expect(polarBear.getTag()).to.equal("Polar Bear");
 			expect(Animal(polarBear).getTag()).to.equal("Polar Bear");
