@@ -2739,17 +2739,15 @@ new function () { // closure
                     handler    = $lift(source);
                 }
             }
-            var definitions = owner.hasOwnProperty('$miruken')
-                            ? owner.$miruken : (owner.$miruken = {}),
-                node        = new _Node(constraint, handler, removed),
-                index       = _createIndex(node.constraint),
-                list        = definitions.hasOwnProperty(tag) ? definitions[tag]
-                            : definitions[tag] = new IndexedList(comparer);
+            var meta  = owner.$meta,
+                node  = new _Node(constraint, handler, removed),
+                index = _createIndex(node.constraint),
+                list  = meta[tag] || (meta[tag] = new IndexedList(comparer));
             list.insert(node, index);
             return function (notifyRemoved) {
                 list.remove(node);
                 if (list.isEmpty()) {
-                    delete definitions[tag];
+                    delete meta[tag];
                 }
                 if (node.removed && (notifyRemoved !== false)) {
                     node.removed(owner);
@@ -2757,18 +2755,16 @@ new function () { // closure
             };
         };
         definition.removeAll = function (owner) {
-            var definitions = owner.$miruken;
-            if (definitions) {
-                var list = definitions[tag],
-                    head = list.head;
-                while (head) {
-                    if (head.removed) {
-                        head.removed(owner);
-                    }
-                    head = head.next;
+            var meta = owner.$meta;
+            var list = meta[tag],
+                head = list.head;
+            while (head) {
+                if (head.removed) {
+                    head.removed(owner);
                 }
-                delete definitions[tag];
+                head = head.next;
             }
+            delete meta[tag];
         };
         definition.dispatch = function (handler, callback, constraint, composer, all, results) {
             var v        = variance,
@@ -2792,10 +2788,10 @@ new function () { // closure
         function _dispatch(target, owner, callback, constraint, v, composer, all, results) {
             var dispatched = false;
             while (owner && (owner !== Base) && (owner !== Object)) {
-                var definitions = owner.$miruken,
-                    index       = _createIndex(constraint),
-                    list        = definitions && definitions[tag],
-                    invariant   = (v === Variance.Invariant);
+                var meta      = owner.$meta,
+                    index     = _createIndex(constraint),
+                    list      = meta && meta[tag],
+                    invariant = (v === Variance.Invariant);
                 owner = (owner === target) ? $classOf(owner) : $ancestorOf(owner);
                 if (list && (!invariant || index)) {
                     var node = list.getIndex(index) || list.head;
@@ -4835,7 +4831,7 @@ new function () { // closure
      * @class {MetaBase}
      */
     var MetaBase = MetaMacro.extend({
-        constructor: function(parent, protocols)  {
+        constructor: function(parent)  {
             var _protocols = [];
             this.extend({
                 getParent: function () { return parent; },
@@ -4975,9 +4971,14 @@ new function () { // closure
     /**
      * @class {InstanceMeta}
      */
-    var InstanceMeta = MetaMacro.extend({
-        constructor: function(classMeta) {
+    var InstanceMeta = MetaBase.extend({
+        constructor: function (classMeta) {
             this.base(classMeta);
+            this.extend({
+                getClass: function () {
+                    return classMeta.getClass();
+                }
+            });
         }
     });
 
@@ -5071,7 +5072,7 @@ new function () { // closure
         if (arguments.length >= 2) {
             definition[key] = value;
         }
-        var metadata  = this.$meta;
+        var metadata = this.$meta;
         extendInstance.call(this, definition);
         if (metadata) {
             metadata.apply(MetaStep.Extend, metadata, this, definition);

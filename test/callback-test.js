@@ -255,16 +255,10 @@ describe("Definitions", function () {
     });
 
     describe("#list", function () {
-        it("should not have $miruken storage by default", function () {
-            var handler    = new CallbackHandler;
-            expect(handler.hasOwnProperty('$miruken')).to.be.false;
-        });
-
-        it("should create $miruken.$handle key when first handler registered", function () {
+        it("should create $meta.$handle key when first handler registered", function () {
             var handler    = new CallbackHandler;
             $handle(handler, True, True);
-            expect(handler.hasOwnProperty('$miruken')).to.be.true;
-            expect(handler.$miruken.$handle).to.be.ok;
+            expect(handler.$meta.$handle).to.be.ok;
         });
 
         it("should maintain linked-list of handlers", function () {
@@ -273,10 +267,10 @@ describe("Definitions", function () {
             $handle(handler, Activity, nothing);
             $handle(handler, Accountable, nothing);
             $handle(handler, Game, nothing);
-            expect(handler.$miruken.$handle.head.constraint).to.equal(Activity);
-            expect(handler.$miruken.$handle.head.next.constraint).to.equal(Accountable);
-            expect(handler.$miruken.$handle.tail.prev.constraint).to.equal(Accountable);
-            expect(handler.$miruken.$handle.tail.constraint).to.equal(Game);
+            expect(handler.$meta.$handle.head.constraint).to.equal(Activity);
+            expect(handler.$meta.$handle.head.next.constraint).to.equal(Accountable);
+            expect(handler.$meta.$handle.tail.prev.constraint).to.equal(Accountable);
+            expect(handler.$meta.$handle.tail.constraint).to.equal(Game);
         });
 
         it("should order $handle contravariantly", function () {
@@ -284,8 +278,8 @@ describe("Definitions", function () {
                 nothing     = function (callback) {};
             $handle(handler, Accountable, nothing);
             $handle(handler, Activity, nothing);
-            expect(handler.$miruken.$handle.head.constraint).to.equal(Activity);
-            expect(handler.$miruken.$handle.tail.constraint).to.equal(Accountable);
+            expect(handler.$meta.$handle.head.constraint).to.equal(Activity);
+            expect(handler.$meta.$handle.tail.constraint).to.equal(Accountable);
         });
 
         it("should order $handle invariantly", function () {
@@ -294,8 +288,8 @@ describe("Definitions", function () {
                 something   = function (callback) {};
             $handle(handler, Activity, nothing);
             $handle(handler, Activity, something);
-            expect(handler.$miruken.$handle.head.handler).to.equal(nothing);
-            expect(handler.$miruken.$handle.tail.handler).to.equal(something);
+            expect(handler.$meta.$handle.head.handler).to.equal(nothing);
+            expect(handler.$meta.$handle.tail.handler).to.equal(something);
         });
 
         it("should order $provide covariantly", function () {
@@ -303,8 +297,8 @@ describe("Definitions", function () {
                 nothing     = function (callback) {};
             $provide(handler, Activity, nothing);
             $provide(handler, Accountable, nothing);
-            expect(handler.$miruken.$provide.head.constraint).to.equal(Accountable);
-            expect(handler.$miruken.$provide.tail.constraint).to.equal(Activity);
+            expect(handler.$meta.$provide.head.constraint).to.equal(Accountable);
+            expect(handler.$meta.$provide.tail.constraint).to.equal(Activity);
         });
 
         it("should order $provide invariantly", function () {
@@ -313,8 +307,8 @@ describe("Definitions", function () {
                 something   = function (callback) {};
             $provide(handler, Activity, nothing);
             $provide(handler, Activity, something);
-            expect(handler.$miruken.$provide.head.handler).to.equal(nothing);
-            expect(handler.$miruken.$provide.tail.handler).to.equal(something);
+            expect(handler.$meta.$provide.head.handler).to.equal(nothing);
+            expect(handler.$meta.$provide.tail.handler).to.equal(something);
         });
 
         it("should order $lookup invariantly", function () {
@@ -323,8 +317,8 @@ describe("Definitions", function () {
                 something   = function (callback) {};
             $lookup(handler, Activity, nothing);
             $lookup(handler, Activity, something);
-            expect(handler.$miruken.$lookup.head.handler).to.equal(nothing);
-            expect(handler.$miruken.$lookup.tail.handler).to.equal(something);
+            expect(handler.$meta.$lookup.head.handler).to.equal(nothing);
+            expect(handler.$meta.$lookup.tail.handler).to.equal(something);
         });
 
         it("should index first registered handler with head and tail", function () {
@@ -332,8 +326,8 @@ describe("Definitions", function () {
                 nothing     = function (callback) {},
                 unregister  = $handle(handler, True, nothing);
             expect(unregister).to.be.a('function');
-            expect(handler.$miruken.$handle.head.handler).to.equal(nothing);
-            expect(handler.$miruken.$handle.tail.handler).to.equal(nothing);
+            expect(handler.$meta.$handle.head.handler).to.equal(nothing);
+            expect(handler.$meta.$handle.tail.handler).to.equal(nothing);
         });
 
         it("should call function when handler removed", function () {
@@ -345,7 +339,7 @@ describe("Definitions", function () {
                 });
             unregister();
             expect(handlerRemoved).to.be.true;
-            expect(handler.$miruken.$handle).to.be.undefined;
+            expect(handler.$meta.$handle).to.be.undefined;
         });
 
         it("should suppress handler removed if requested", function () {
@@ -357,7 +351,7 @@ describe("Definitions", function () {
                 });
             unregister(false);
             expect(handlerRemoved).to.be.false;
-            expect(handler.$miruken.$handle).to.be.undefined;
+            expect(handler.$meta.$handle).to.be.undefined;
         });
 
         it("should remove $handle when no handlers remain", function () {
@@ -365,7 +359,7 @@ describe("Definitions", function () {
                 func        = function (callback) {},
                 unregister  = $handle(handler, True, func);
             unregister();
-            expect(handler.$miruken.$handle).to.be.undefined;
+            expect(handler.$meta.$handle).to.be.undefined;
         });
     });
 
@@ -375,7 +369,7 @@ describe("Definitions", function () {
                 nothing     = function (callback) {},
                 index       = assignID(Activity);
             $handle(handler, Activity, nothing);
-            expect(handler.$miruken.$handle.getIndex(index).constraint).to.equal(Activity);
+            expect(handler.$meta.$handle.getIndex(index).constraint).to.equal(Activity);
         });
 
         it("should index protocol constraints using assignID", function () {
@@ -383,14 +377,14 @@ describe("Definitions", function () {
                 nothing     = function (callback) {},
                 index       = assignID(Game);
             $handle(handler, Game, nothing);
-            expect(handler.$miruken.$handle.getIndex(index).constraint).to.equal(Game);
+            expect(handler.$meta.$handle.getIndex(index).constraint).to.equal(Game);
         });
 
         it("should index string constraints using string", function () {
             var handler     = new CallbackHandler,
                 nothing     = function (callback) {};
             $handle(handler, "something", nothing);
-            expect(handler.$miruken.$handle.getIndex("something").handler).to.equal(nothing);
+            expect(handler.$meta.$handle.getIndex("something").handler).to.equal(nothing);
         });
 
         it("should move index to next match", function () {
@@ -400,9 +394,9 @@ describe("Definitions", function () {
                 index       = assignID(Activity),
                 unregister  = $handle(handler, Activity, nothing);
             $handle(handler, Activity, something);
-            expect(handler.$miruken.$handle.getIndex(index).handler).to.equal(nothing);
+            expect(handler.$meta.$handle.getIndex(index).handler).to.equal(nothing);
             unregister();
-            expect(handler.$miruken.$handle.getIndex(index).handler).to.equal(something);
+            expect(handler.$meta.$handle.getIndex(index).handler).to.equal(something);
         });
 
         it("should remove index when no more matches", function () {
@@ -412,7 +406,7 @@ describe("Definitions", function () {
             $handle(handler, Accountable, nothing);
             var unregister  = $handle(handler, Activity, nothing);
             unregister();
-            expect(handler.$miruken.$handle.getIndex(index)).to.be.undefined;
+            expect(handler.$meta.$handle.getIndex(index)).to.be.undefined;
         });
     });
 
@@ -426,7 +420,7 @@ describe("Definitions", function () {
             $handle(handler, Activity, nothing, removed);
         $handle.removeAll(handler);
         expect(removeCount).to.equal(2);
-            expect(handler.$miruken.$handle).to.be.undefined;
+            expect(handler.$meta.$handle).to.be.undefined;
         });
 
         it("should remove all $provider definitions", function () {
@@ -438,7 +432,7 @@ describe("Definitions", function () {
             $provide(handler, Accountable, nothing, removed);
         $provide.removeAll(handler);
         expect(removeCount).to.equal(2);
-            expect(handler.$miruken.$provide).to.be.undefined;
+            expect(handler.$meta.$provide).to.be.undefined;
         });
     });
 });
