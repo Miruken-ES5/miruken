@@ -751,27 +751,35 @@ describe("IoContainer", function () {
         });
 
         it("should reject registration if no key", function (done) {
-            Promise.resolve(container.register($component())).catch(function (error) {
-                expect(error.getKeyErrors("Key")).to.eql([
+            try {
+                container.register($component());
+            }
+            catch (error) {
+                expect(error).to.be.instanceOf(ComponentModelError);
+                expect(error.validation.getKeyErrors("Key")).to.eql([
                     new ValidationError("Key could not be determined for component.", {
                         key:  "Key",
                         code: ValidationErrorCode.Required
                     })
                 ]);
                 done();
-            });
+            }
         });
 
         it("should reject registration if no factory", function (done) {
-            Promise.resolve(container.register($component('car'))).catch(function (error) {
-                expect(error.getKeyErrors("Factory")).to.eql([
+            try {
+                container.register($component('car'));
+            }
+            catch (error) {
+                expect(error).to.be.instanceOf(ComponentModelError);
+                expect(error.validation.getKeyErrors("Factory")).to.eql([
                     new ValidationError("Factory could not be determined for component.", {
                         key:  "Factory",
                         code: ValidationErrorCode.Required
                     })
                 ]);
                 done();
-            });
+            }
         });
     });
 
@@ -976,18 +984,16 @@ describe("IoContainer", function () {
         });
 
         it("should resolve instance with invariant dependencies", function (done) {
-                Promise.all(container.register($component(Ferrari).dependsOn($use('Spider'), $eq(V12)),
-                                               $component(Engine).boundTo(V12))).then(function () {
-                Promise.resolve(container.resolve(Car)).catch(function (error) {
-                    expect(error).to.be.instanceof(DependencyResolutionError);
-                    expect(error.message).to.match(/Dependency.*`.*V12.*`.*<=.*Car.*could not be resolved./);
-                    container.register($component(V12)).then(function () {
-                        Promise.resolve(container.resolve(Car)).then(function (car) {
-                            expect(car).to.be.instanceOf(Ferrari);
-                            expect(car.getEngine()).to.be.instanceOf(V12);
-                            done();
-                        });
-                    });
+            container.register($component(Ferrari).dependsOn($use('Spider'), $eq(V12)),
+                               $component(Engine).boundTo(V12));
+            Promise.resolve(container.resolve(Car)).catch(function (error) {
+                expect(error).to.be.instanceof(DependencyResolutionError);
+                expect(error.message).to.match(/Dependency.*`.*V12.*`.*<=.*Car.*could not be resolved./);
+                container.register($component(V12));
+                Promise.resolve(container.resolve(Car)).then(function (car) {
+                    expect(car).to.be.instanceOf(Ferrari);
+                    expect(car.getEngine()).to.be.instanceOf(V12);
+                    done();
                 });
             });
         });

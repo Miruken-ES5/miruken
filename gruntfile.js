@@ -42,7 +42,8 @@ module.exports = function(grunt) {
       debug: {
         files: {
            'dist/miruken-bundle.js': ['lib/index.js'],
-           'dist/miruken-tests.js':  ['test/miruken-test.js']
+           'dist/miruken-tests.js':  ['test/ioc/ioc-test.js']
+           //'dist/miruken-tests.js':     ['test/**/*.js']
         }
       }
     },

@@ -1,6 +1,6 @@
-var miruken  = require('../lib/miruken.js'),
-    context  = require('../lib/context.js')
-    validate = require('../lib/validate.js'),
+var miruken  = require('../../lib/miruken.js'),
+    context  = require('../../lib/context.js')
+    validate = require('../../lib/validate'),
     Promise  = require('bluebird'),
     chai     = require("chai"),
     expect   = chai.expect;
@@ -15,7 +15,7 @@ new function () { // closure
 
     var validate_test = new base2.Package(this, {
         name:    "validate_test",
-        exports: "Player,Team,"
+        exports: "Player,Coach,Team"
     });
 
     eval(this.imports);
@@ -29,6 +29,18 @@ new function () { // closure
                 setLastName:  function (value) { lastName = value; },
                 getDOB:       function () { return dob; },
                 setDOB:       function (value) { dob = value; }
+            });
+        }});
+
+    var Coach = Base.extend({
+        constructor: function (firstName, lastName, license) {
+            this.extend({
+                getFirstName: function () { return firstName; },
+                setFirstName: function (value) { firstName = value; },
+                getLastName:  function () { return lastName; },
+                setLastName:  function (value) { lastName = value; },
+                getLicense:   function () { return license; },
+                setLicense:   function (value) { license = value; }
             });
         }});
     
@@ -53,10 +65,24 @@ new function () { // closure
                 if ((player.getDOB() instanceof Date) === false) {
                     validation.invalid("DOB", player.getDOB(), "Valid Date-of-birth required");
                 }
+            },
+            Team, function (validation, composer) {
+                var coach = validation.getObject();
+                if (!coach.getFirstName() || coach.getFirstName().length == 0) {
+                    validation.required("FirstName", "First name required");
+                }
+                if (!coach.getLastName()  || coach.getLastName().length == 0) {
+                    validation.required("LastName", "Last name required");
+                }
+                if (["D", "E", "F"].indexOf(coach.getLicense()) < 0) {
+                    validation.invalid("License", coach.getLicense(), "License must be D, E or F");
+                }
+                return Promise.delay(true, 50);
             }]
     });
     
-  eval(this.exports);
+    eval(this.exports);
+
 };
 
 eval(base2.validate_test.namespace);
@@ -98,7 +124,7 @@ describe("ValidationResult", function () {
             var team            = new Team,
                 player          = new Player,
                 validation      = new ValidationResult(team),
-   	        childValidation = new ValidationResult(player);
+   	            childValidation = new ValidationResult(player);
                 childValidation.addKeyError("FirstName", new ValidationError("First name required", {
                     key:  "FirstName",
                     code: ValidationErrorCode.Required
@@ -147,64 +173,57 @@ describe("ValidationResult", function () {
 
 describe("ValidationCallbackHandler", function () {
     describe("#validate", function () {
-        it("should invalidate object", function (done) {
+        it("should invalidate object", function () {
             var team   = new Team("Liverpool", "U8"),
                 league = new Context()
-                    .addHandlers(team, new ValidationCallbackHandler()),
-            player = new Player;
-            Promise.resolve(Validator(league).validate(player)).caught(function (error) {
-                done();
-            });
+                    .addHandlers(team, new ValidationCallbackHandler),
+                player = new Player;
+            expect(Validator(league).validate(player).isValid()).to.be.false;
         });
 
-        it("should be valid if no validators", function (done) {
+        it("should be valid if no validators", function () {
             var league = new Context()
-                    .addHandlers(new ValidationCallbackHandler()),
-            player = new Player;
-            Promise.resolve(Validator(league).validate(player)).then(function (validated) {
-                expect(validated.isValid(player)).to.be.true;
-                done();
-            });
+                    .addHandlers(new ValidationCallbackHandler),
+                player = new Player;
+            expect(Validator(league).validate(player).isValid()).to.be.true;
         });
 
-        it("should provide invalid keys", function (done) {
+        it("should provide invalid keys", function () {
             var team       = new Team("Liverpool", "U8"),
                 league     = new Context()
-                    .addHandlers(team, new ValidationCallbackHandler()),
+                    .addHandlers(team, new ValidationCallbackHandler),
                 player     = new Player("Matthew");
-            Promise.resolve(Validator(league).validate(player)).caught(function (error) {
-		    expect(error.getKeyCulprits()).to.eql(["LastName", "DOB"]);
-            done();
-            });
+            var results = Validator(league).validate(player);
+            expect(results.isValid()).to.be.false;
+		    expect(results.getKeyCulprits()).to.eql(["LastName", "DOB"]);
         });
 
-        it("should provide key errors", function (done) {
+        it("should provide key errors", function () {
             var team       = new Team("Liverpool", "U8"),
                 league     = new Context()
-                    .addHandlers(team, new ValidationCallbackHandler()),
+                    .addHandlers(team, new ValidationCallbackHandler),
                 player     = new Player("Matthew");
-            Promise.resolve(Validator(league).validate(player)).caught(function (error) {
-                expect(error.getKeyErrors("LastName")).to.eql([
-                    new ValidationError("Last name required", {
-                        key:  "LastName",
-                        code: ValidationErrorCode.Required
-                    })
-                ]);
-                expect(error.getKeyErrors("DOB")).to.eql([
-                    new ValidationError("Valid Date-of-birth required", {
-                        key:  "DOB",
-                        code: ValidationErrorCode.Invalid
-                    })
-                ]);
-                done();
-            });
+            var results = Validator(league).validate(player);
+            expect(results.isValid()).to.be.false;
+            expect(results.getKeyErrors("LastName")).to.eql([
+                new ValidationError("Last name required", {
+                    key:  "LastName",
+                    code: ValidationErrorCode.Required
+                })
+            ]);
+            expect(results.getKeyErrors("DOB")).to.eql([
+                new ValidationError("Valid Date-of-birth required", {
+                    key:  "DOB",
+                    code: ValidationErrorCode.Invalid
+                })
+            ]);
         });
 
-        it("should dynamically add validation", function (done) {
+        it("should dynamically add validation", function () {
             var team   = new Team("Liverpool", "U8"),
                 league = new Context()
-                    .addHandlers(team, new ValidationCallbackHandler()),
-            player = new Player("Diego", "Morales", new Date(2006, 7, 19));
+                    .addHandlers(team, new ValidationCallbackHandler),
+                player = new Player("Diego", "Morales", new Date(2006, 7, 19));
             $validate(league, Player, function (validation, composer) {
                 var player = validation.getObject(),
                     start  = new Date(2006, 8, 1),
@@ -215,31 +234,30 @@ describe("ValidationCallbackHandler", function () {
                             key:    "DOB",
                             code:   ValidationErrorCode.DateTooSoon,
                             source: player.getDOB()
-			}));
+                    }));
                 } else if (player.getDOB() > end) {
                     validation.addKeyError("DOB", new ValidationError(
                         "Player too young for division " + team.getDivision(), {
                             key:    "DOB",
                             code:   ValidationErrorCode.DateTooLate,
                             source: player.getDOB()
-			}));
-		}
+                    }));
+                }
             });
-            Promise.resolve(Validator(league).validate(player)).caught(function (error) {
-                expect(error.getKeyErrors("DOB")).to.eql([
-                    new ValidationError("Player too old for division U8", {
-                        key:    "DOB",
-                        code:   ValidationErrorCode.DateTooSoon,
-                        source: new Date(2006, 7, 19)
-                    })
-                ]);
-                done();
-            });
+            var results = Validator(league).validate(player);
+            expect(results.isValid()).to.be.false;
+            expect(results.getKeyErrors("DOB")).to.eql([
+                new ValidationError("Player too old for division U8", {
+                    key:    "DOB",
+                    code:   ValidationErrorCode.DateTooSoon,
+                    source: new Date(2006, 7, 19)
+                })
+            ]);
         });
 
-        it("should validate unknown sources", function (done) {
+        it("should validate unknown sources", function () {
             var league = new Context()
-                    .addHandlers(new ValidationCallbackHandler());
+                    .addHandlers(new ValidationCallbackHandler);
             $validate(league, null, function (validation, composer) {
                 var source = validation.getObject();
                 if ((source instanceof Team) &&
@@ -251,12 +269,70 @@ describe("ValidationCallbackHandler", function () {
                     }));
                 }
             });
-            Promise.resolve(Validator(league).validate(new Team)).caught(function (error) {
-                expect(error.getKeyErrors("Name")).to.eql([
-                    new ValidationError("Team name required", {
-                        key:    "Name",
-                        code:   ValidationErrorCode.Required,
-                        source: undefined
+            var results = Validator(league).validate(new Team);
+            expect(results.isValid()).to.be.false;
+            expect(results.getKeyErrors("Name")).to.eql([
+                new ValidationError("Team name required", {
+                    key:    "Name",
+                    code:   ValidationErrorCode.Required,
+                    source: undefined
+                })
+            ]);
+        });
+    });
+
+    describe("#validateAsync", function () {
+        it("should invalidate object", function (done) {
+            var team   = new Team("Liverpool", "U8"),
+                league = new Context()
+                    .addHandlers(team, new ValidationCallbackHandler),
+                coach  = new Coach;
+            Promise.resolve(Validator(league).validateAsync(coach)).then(function (results) {
+                expect(results.isValid()).to.be.false;
+                done();
+            });
+        });
+
+        it("should be valid if no validators", function (done) {
+            var league = new Context()
+                    .addHandlers(new ValidationCallbackHandler),
+                coach  = new Coach;
+            Promise.resolve(Validator(league).validateAsync(coach)).then(function (results) {
+                expect(results.isValid()).to.be.true;
+                done();
+            });
+        });
+
+        it("should provide invalid keys", function (done) {
+            var team       = new Team("Liverpool", "U8"),
+                league     = new Context()
+                    .addHandlers(team, new ValidationCallbackHandler),
+                coach      = new Coach("Jonathan")
+            Promise.resolve(Validator(league).validateAsync(coach)).then(function (results) {
+                expect(results.isValid()).to.be.false;
+                expect(results.getKeyCulprits()).to.eql(["LastName", "License"]);
+                done();
+            });
+        });
+
+        it("should provide key errors", function (done) {
+            var team       = new Team("Liverpool", "U8"),
+                league     = new Context()
+                    .addHandlers(team, new ValidationCallbackHandler),
+                coach      = new Coach("Jonathan");
+            Promise.resolve(Validator(league).validateAsync(coach)).then(function (results) {
+                expect(results.isValid()).to.be.false;
+                expect(results.getKeyErrors("LastName")).to.eql([
+                    new ValidationError("Last name required", {
+                        key:  "LastName",
+                        code: ValidationErrorCode.Required
+                    })
+                ]);
+                var i = 0;
+                expect(results.getKeyErrors("License")).to.eql([
+                    new ValidationError("License must be D, E or F", {
+                        key:  "License",
+                        code: ValidationErrorCode.Invalid
                     })
                 ]);
                 done();

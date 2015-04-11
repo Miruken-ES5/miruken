@@ -6,7 +6,8 @@
     "bluebird": "^2.9.13",
     "chai": "^1.10.0",
     "grunt-cli": "latest",
-    "grunt-env": "latest"
+    "grunt-env": "latest",
+    "validate.js": "^0.7.0"
   },
   "devDependencies": {
     "grunt-browserify": "^3.5.0",

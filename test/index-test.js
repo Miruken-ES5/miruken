@@ -9,7 +9,6 @@ describe("index", function () {
             expect(miruken.callback.namespace).to.be.ok;
             expect(miruken.context.namespace).to.be.ok;
             expect(miruken.ioc.namespace).to.be.ok;
-            expect(miruken.ioc.config.namespace).to.be.ok;
             expect(miruken.validate.namespace).to.be.ok;
             expect(miruken.error.namespace).to.be.ok;
         });

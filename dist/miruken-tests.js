@@ -2688,7 +2688,7 @@ new function () { // closure
 }
 
 }).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
-},{"./miruken.js":9,"bluebird":12}],3:[function(require,module,exports){
+},{"./miruken.js":9,"bluebird":14}],3:[function(require,module,exports){
 var miruken = require('./miruken.js');
               require('./callback.js');
 
@@ -3216,15 +3216,15 @@ new function() { // closure
 
 }
 
-},{"./callback.js":2,"./miruken.js":9,"bluebird":12,"prettyjson":50}],5:[function(require,module,exports){
+},{"./callback.js":2,"./miruken.js":9,"bluebird":14,"prettyjson":52}],5:[function(require,module,exports){
 module.exports = require('./miruken.js');
 require('./callback.js');
 require('./context.js');
-require('./validate.js');
 require('./error.js');
+require('./validate');
 require('./ioc');
 
-},{"./callback.js":2,"./context.js":3,"./error.js":4,"./ioc":7,"./miruken.js":9,"./validate.js":11}],6:[function(require,module,exports){
+},{"./callback.js":2,"./context.js":3,"./error.js":4,"./ioc":7,"./miruken.js":9,"./validate":11}],6:[function(require,module,exports){
 var miruken = require('../miruken.js'),
     Promise = require('bluebird');
               require('./ioc.js');
@@ -3232,12 +3232,12 @@ var miruken = require('../miruken.js'),
 new function () { // closure
 
     /**
-     * @namespace miruken.ioc.config
+     * @namespace miruken.ioc.
      */
-    var config = new base2.Package(this, {
-        name:    "config",
-        version: miruken.ioc.version,
-        parent:  miruken.ioc,
+    var ioc = new base2.Package(this, {
+        name:    "ioc",
+        version: miruken.version,
+        parent:  miruken,
         imports: "miruken,miruken.ioc",
         exports: "Installer,$classes"
     });
@@ -3543,12 +3543,12 @@ new function () { // closure
     }
 
     if (typeof module !== 'undefined' && module.exports) {
-        module.exports = exports = config;
+        module.exports = exports = ioc;
     }
 
     eval(this.exports);
 }
-},{"../miruken.js":9,"./ioc.js":8,"bluebird":12}],7:[function(require,module,exports){
+},{"../miruken.js":9,"./ioc.js":8,"bluebird":14}],7:[function(require,module,exports){
 module.exports = require('./ioc.js');
 require('./config.js');
 
@@ -3557,7 +3557,7 @@ require('./config.js');
 var miruken = require('../miruken.js'),
     Promise = require('bluebird');
               require('../context.js'),
-              require('../validate.js');
+              require('../validate');
 
 new function () { // closure
 
@@ -3569,7 +3569,7 @@ new function () { // closure
         version: miruken.version,
         parent:  miruken,
         imports: "miruken,miruken.callback,miruken.context,miruken.validate",
-        exports: "Container,Registration,ComponentPolicy,Lifestyle,TransientLifestyle,SingletonLifestyle,ContextualLifestyle,DependencyModifiers,DependencyModel,DependencyManager,DependencyInspector,ComponentModel,ComponentBuilder,IoContainer,DependencyResolution,DependencyResolutionError,$component,$$composer,$container"
+        exports: "Container,Registration,ComponentPolicy,Lifestyle,TransientLifestyle,SingletonLifestyle,ContextualLifestyle,DependencyModifiers,DependencyModel,DependencyManager,DependencyInspector,ComponentModel,ComponentBuilder,ComponentModelError,IoContainer,DependencyResolution,DependencyResolutionError,$component,$$composer,$container"
     });
 
     eval(this.imports);
@@ -4201,6 +4201,21 @@ new function () { // closure
     DependencyResolutionError.prototype.constructor = DependencyResolutionError;
 
     /**
+     * @class {ValidationError}
+     * @param {ComponentModel}  componentModel  - invaid component model
+     * @param {ValidtionResult} validation      - validation errors
+     * @param {String}          message         - error message
+     */
+    function ComponentModelError(componentModel, validation, message) {
+        this.message        = message || "The component model contains one or more errors";
+        this.componentModel = componentModel;
+        this.validation     = validation;
+        this.stack          = (new Error).stack;
+    }
+    ComponentModelError.prototype             = new Error;
+    ComponentModelError.prototype.constructor = ComponentModelError;
+
+    /**
      * @class {IoContainer}
      */
     var IoContainer = CallbackHandler.extend(Container, {
@@ -4208,13 +4223,11 @@ new function () { // closure
             var _inspectors = [new DependencyInspector];
             this.extend({
                 register: function (/*registrations*/) {
-                    var _this = this;
-                    return Promise.all(Array2.flatten(arguments).map(function (registration) {
-                               return registration.register(_this, $composer);
-                           }));
+                    return Array2.flatten(arguments).map(function (registration) {
+                        return registration.register(this, $composer);
+                    }.bind(this));
                 },
                 addComponent: function (componentModel, policies) {
-                    var _this = this;
                     policies  = policies || [];
                     for (var i = 0; i < _inspectors.length; ++i) {
                         _inspectors[i].inspect(componentModel, policies);
@@ -4225,11 +4238,13 @@ new function () { // closure
                             policy.apply(componentModel);
                         }
                     }
-                    return Validator($composer).validate(componentModel).then(function () {
-                        return _this.registerHandler(componentModel); 
-                    })
+                    var validation = Validator($composer).validate(componentModel);
+                    if (!validation.isValid()) {
+                        throw new ComponentModelError(componentModel, validation);
+                    }
+                    return this.registerHandler(componentModel); 
                 },
-                registerHandler: function(componentModel) {
+                registerHandler: function (componentModel) {
                     var key       = componentModel.getKey(),
                         clazz     = componentModel.getClass(),
                         lifestyle = componentModel.getLifestyle() || new SingletonLifestyle,
@@ -4402,7 +4417,7 @@ new function () { // closure
     eval(this.exports);
 
 }
-},{"../context.js":3,"../miruken.js":9,"../validate.js":11,"bluebird":12}],9:[function(require,module,exports){
+},{"../context.js":3,"../miruken.js":9,"../validate":11,"bluebird":14}],9:[function(require,module,exports){
 (function (global){
 require('./base2.js');
 
@@ -6019,9 +6034,14 @@ new function () { // closure
 }
 
 },{"../callback.js":2,"../context.js":3,"../miruken.js":9}],11:[function(require,module,exports){
-var miruken = require('./miruken.js'),
+module.exports = require('./validate.js');
+require('./validatejs.js');
+
+
+},{"./validate.js":12,"./validatejs.js":13}],12:[function(require,module,exports){
+var miruken = require('../miruken.js'),
     Promise = require('bluebird');
-              require('./callback.js');
+              require('../callback.js');
 
 new function () { // closure
 
@@ -6048,9 +6068,16 @@ new function () { // closure
          * Validates the object in the scope.
          * @param   {Object} object  - object to validate
          * @param   {Object} scope   - scope of validation
+         * @returns {ValidationResult) the validation result
+         */
+        validate: function (object, scope) {},
+        /**
+         * Validates the object in the scope.
+         * @param   {Object} object  - object to validate
+         * @param   {Object} scope   - scope of validation
          * @returns {Promise(ValidationResult)} a promise for the validation result
          */
-        validate: function (object, scope) {}
+        validateAsync: function (object, scope) {}
     });
 
     /**
@@ -6194,9 +6221,12 @@ new function () { // closure
     var ValidationCallbackHandler = CallbackHandler.extend({
         validate: function (object, scope) {
             var validation = new ValidationResult(object, scope);
-            return Promise.resolve($composer.deferAll(validation)).then(function (handled) {
-                return !handled || validation.isValid() ? validation : Promise.reject(validation);
-            });
+            $composer.handle(validation, true);
+            return validation;
+        },
+        validateAsync: function (object, scope) {
+            var validation = new ValidationResult(object, scope);
+            return Promise.resolve($composer.deferAll(validation)).return(validation);
         }
     });
 
@@ -6216,7 +6246,45 @@ new function () { // closure
 
 }
 
-},{"./callback.js":2,"./miruken.js":9,"bluebird":12}],12:[function(require,module,exports){
+},{"../callback.js":2,"../miruken.js":9,"bluebird":14}],13:[function(require,module,exports){
+var miruken    = require('../miruken.js'),
+    validate   = require('./validate.js'),
+    validatejs = require("validate.js"),
+    Promise    = require('bluebird');
+                 require('../callback.js');
+
+new function () { // closure
+
+    /**
+     * @namespace miruken.validate
+     */
+    var validate = new base2.Package(this, {
+        name:    "validate",
+        version: miruken.version,
+        parent:  miruken,
+        imports: "miruken,miruken.callback,miruken.validate",
+        exports: "ValidateJsCallbackHandler"
+    });
+
+    eval(this.imports);
+
+    validatejs.Promise = Promise;
+
+    /**
+     * @class {ValidateJsCallbackHandler}
+     */
+    var ValidateJsCallbackHandler = CallbackHandler.extend({
+        $validate: [
+            null,  function (validation, composer) {
+                console.log("EEE " + validatejs.runValidations);
+            }
+        ]
+    });
+
+    eval(this,exports);
+
+}
+},{"../callback.js":2,"../miruken.js":9,"./validate.js":12,"bluebird":14,"validate.js":56}],14:[function(require,module,exports){
 (function (process,global){
 /* @preserve
  * The MIT License (MIT)
@@ -10884,10 +10952,10 @@ module.exports = ret;
 },{"./es5.js":14}]},{},[4])(4)
 });                    ;if (typeof window !== 'undefined' && window !== null) {                               window.P = window.Promise;                                                     } else if (typeof self !== 'undefined' && self !== null) {                             self.P = self.Promise;                                                         }
 }).call(this,require('_process'),typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
-},{"_process":49}],13:[function(require,module,exports){
+},{"_process":51}],15:[function(require,module,exports){
 module.exports = require('./lib/chai');
 
-},{"./lib/chai":14}],14:[function(require,module,exports){
+},{"./lib/chai":16}],16:[function(require,module,exports){
 /*!
  * chai
  * Copyright(c) 2011-2014 Jake Luer <jake@alogicalparadox.com>
@@ -10976,7 +11044,7 @@ exports.use(should);
 var assert = require('./chai/interface/assert');
 exports.use(assert);
 
-},{"./chai/assertion":15,"./chai/config":16,"./chai/core/assertions":17,"./chai/interface/assert":18,"./chai/interface/expect":19,"./chai/interface/should":20,"./chai/utils":31,"assertion-error":40}],15:[function(require,module,exports){
+},{"./chai/assertion":17,"./chai/config":18,"./chai/core/assertions":19,"./chai/interface/assert":20,"./chai/interface/expect":21,"./chai/interface/should":22,"./chai/utils":33,"assertion-error":42}],17:[function(require,module,exports){
 /*!
  * chai
  * http://chaijs.com
@@ -11113,7 +11181,7 @@ module.exports = function (_chai, util) {
   });
 };
 
-},{"./config":16}],16:[function(require,module,exports){
+},{"./config":18}],18:[function(require,module,exports){
 module.exports = {
 
   /**
@@ -11165,7 +11233,7 @@ module.exports = {
 
 };
 
-},{}],17:[function(require,module,exports){
+},{}],19:[function(require,module,exports){
 /*!
  * chai
  * http://chaijs.com
@@ -12526,7 +12594,7 @@ module.exports = function (chai, _) {
   });
 };
 
-},{}],18:[function(require,module,exports){
+},{}],20:[function(require,module,exports){
 /*!
  * chai
  * Copyright(c) 2011-2014 Jake Luer <jake@alogicalparadox.com>
@@ -13584,7 +13652,7 @@ module.exports = function (chai, util) {
   ('Throw', 'throws');
 };
 
-},{}],19:[function(require,module,exports){
+},{}],21:[function(require,module,exports){
 /*!
  * chai
  * Copyright(c) 2011-2014 Jake Luer <jake@alogicalparadox.com>
@@ -13598,7 +13666,7 @@ module.exports = function (chai, util) {
 };
 
 
-},{}],20:[function(require,module,exports){
+},{}],22:[function(require,module,exports){
 /*!
  * chai
  * Copyright(c) 2011-2014 Jake Luer <jake@alogicalparadox.com>
@@ -13678,7 +13746,7 @@ module.exports = function (chai, util) {
   chai.Should = loadShould;
 };
 
-},{}],21:[function(require,module,exports){
+},{}],23:[function(require,module,exports){
 /*!
  * Chai - addChainingMethod utility
  * Copyright(c) 2012-2014 Jake Luer <jake@alogicalparadox.com>
@@ -13791,7 +13859,7 @@ module.exports = function (ctx, name, method, chainingBehavior) {
   });
 };
 
-},{"../config":16,"./flag":24,"./transferFlags":38}],22:[function(require,module,exports){
+},{"../config":18,"./flag":26,"./transferFlags":40}],24:[function(require,module,exports){
 /*!
  * Chai - addMethod utility
  * Copyright(c) 2012-2014 Jake Luer <jake@alogicalparadox.com>
@@ -13836,7 +13904,7 @@ module.exports = function (ctx, name, method) {
   };
 };
 
-},{"../config":16,"./flag":24}],23:[function(require,module,exports){
+},{"../config":18,"./flag":26}],25:[function(require,module,exports){
 /*!
  * Chai - addProperty utility
  * Copyright(c) 2012-2014 Jake Luer <jake@alogicalparadox.com>
@@ -13878,7 +13946,7 @@ module.exports = function (ctx, name, getter) {
   });
 };
 
-},{}],24:[function(require,module,exports){
+},{}],26:[function(require,module,exports){
 /*!
  * Chai - flag utility
  * Copyright(c) 2012-2014 Jake Luer <jake@alogicalparadox.com>
@@ -13912,7 +13980,7 @@ module.exports = function (obj, key, value) {
   }
 };
 
-},{}],25:[function(require,module,exports){
+},{}],27:[function(require,module,exports){
 /*!
  * Chai - getActual utility
  * Copyright(c) 2012-2014 Jake Luer <jake@alogicalparadox.com>
@@ -13932,7 +14000,7 @@ module.exports = function (obj, args) {
   return args.length > 4 ? args[4] : obj._obj;
 };
 
-},{}],26:[function(require,module,exports){
+},{}],28:[function(require,module,exports){
 /*!
  * Chai - getEnumerableProperties utility
  * Copyright(c) 2012-2014 Jake Luer <jake@alogicalparadox.com>
@@ -13959,7 +14027,7 @@ module.exports = function getEnumerableProperties(object) {
   return result;
 };
 
-},{}],27:[function(require,module,exports){
+},{}],29:[function(require,module,exports){
 /*!
  * Chai - message composition utility
  * Copyright(c) 2012-2014 Jake Luer <jake@alogicalparadox.com>
@@ -14011,7 +14079,7 @@ module.exports = function (obj, args) {
   return flagMsg ? flagMsg + ': ' + msg : msg;
 };
 
-},{"./flag":24,"./getActual":25,"./inspect":32,"./objDisplay":33}],28:[function(require,module,exports){
+},{"./flag":26,"./getActual":27,"./inspect":34,"./objDisplay":35}],30:[function(require,module,exports){
 /*!
  * Chai - getName utility
  * Copyright(c) 2012-2014 Jake Luer <jake@alogicalparadox.com>
@@ -14033,7 +14101,7 @@ module.exports = function (func) {
   return match && match[1] ? match[1] : "";
 };
 
-},{}],29:[function(require,module,exports){
+},{}],31:[function(require,module,exports){
 /*!
  * Chai - getPathValue utility
  * Copyright(c) 2012-2014 Jake Luer <jake@alogicalparadox.com>
@@ -14137,7 +14205,7 @@ function _getPathValue (parsed, obj) {
   return res;
 };
 
-},{}],30:[function(require,module,exports){
+},{}],32:[function(require,module,exports){
 /*!
  * Chai - getProperties utility
  * Copyright(c) 2012-2014 Jake Luer <jake@alogicalparadox.com>
@@ -14174,7 +14242,7 @@ module.exports = function getProperties(object) {
   return result;
 };
 
-},{}],31:[function(require,module,exports){
+},{}],33:[function(require,module,exports){
 /*!
  * chai
  * Copyright(c) 2011 Jake Luer <jake@alogicalparadox.com>
@@ -14290,7 +14358,7 @@ exports.addChainableMethod = require('./addChainableMethod');
 exports.overwriteChainableMethod = require('./overwriteChainableMethod');
 
 
-},{"./addChainableMethod":21,"./addMethod":22,"./addProperty":23,"./flag":24,"./getActual":25,"./getMessage":27,"./getName":28,"./getPathValue":29,"./inspect":32,"./objDisplay":33,"./overwriteChainableMethod":34,"./overwriteMethod":35,"./overwriteProperty":36,"./test":37,"./transferFlags":38,"./type":39,"deep-eql":41}],32:[function(require,module,exports){
+},{"./addChainableMethod":23,"./addMethod":24,"./addProperty":25,"./flag":26,"./getActual":27,"./getMessage":29,"./getName":30,"./getPathValue":31,"./inspect":34,"./objDisplay":35,"./overwriteChainableMethod":36,"./overwriteMethod":37,"./overwriteProperty":38,"./test":39,"./transferFlags":40,"./type":41,"deep-eql":43}],34:[function(require,module,exports){
 // This is (almost) directly from Node.js utils
 // https://github.com/joyent/node/blob/f8c335d0caf47f16d31413f89aa28eda3878e3aa/lib/util.js
 
@@ -14625,7 +14693,7 @@ function objectToString(o) {
   return Object.prototype.toString.call(o);
 }
 
-},{"./getEnumerableProperties":26,"./getName":28,"./getProperties":30}],33:[function(require,module,exports){
+},{"./getEnumerableProperties":28,"./getName":30,"./getProperties":32}],35:[function(require,module,exports){
 /*!
  * Chai - flag utility
  * Copyright(c) 2012-2014 Jake Luer <jake@alogicalparadox.com>
@@ -14676,7 +14744,7 @@ module.exports = function (obj) {
   }
 };
 
-},{"../config":16,"./inspect":32}],34:[function(require,module,exports){
+},{"../config":18,"./inspect":34}],36:[function(require,module,exports){
 /*!
  * Chai - overwriteChainableMethod utility
  * Copyright(c) 2012-2014 Jake Luer <jake@alogicalparadox.com>
@@ -14731,7 +14799,7 @@ module.exports = function (ctx, name, method, chainingBehavior) {
   };
 };
 
-},{}],35:[function(require,module,exports){
+},{}],37:[function(require,module,exports){
 /*!
  * Chai - overwriteMethod utility
  * Copyright(c) 2012-2014 Jake Luer <jake@alogicalparadox.com>
@@ -14784,7 +14852,7 @@ module.exports = function (ctx, name, method) {
   }
 };
 
-},{}],36:[function(require,module,exports){
+},{}],38:[function(require,module,exports){
 /*!
  * Chai - overwriteProperty utility
  * Copyright(c) 2012-2014 Jake Luer <jake@alogicalparadox.com>
@@ -14840,7 +14908,7 @@ module.exports = function (ctx, name, getter) {
   });
 };
 
-},{}],37:[function(require,module,exports){
+},{}],39:[function(require,module,exports){
 /*!
  * Chai - test utility
  * Copyright(c) 2012-2014 Jake Luer <jake@alogicalparadox.com>
@@ -14868,7 +14936,7 @@ module.exports = function (obj, args) {
   return negate ? !expr : expr;
 };
 
-},{"./flag":24}],38:[function(require,module,exports){
+},{"./flag":26}],40:[function(require,module,exports){
 /*!
  * Chai - transferFlags utility
  * Copyright(c) 2012-2014 Jake Luer <jake@alogicalparadox.com>
@@ -14914,7 +14982,7 @@ module.exports = function (assertion, object, includeAll) {
   }
 };
 
-},{}],39:[function(require,module,exports){
+},{}],41:[function(require,module,exports){
 /*!
  * Chai - type utility
  * Copyright(c) 2012-2014 Jake Luer <jake@alogicalparadox.com>
@@ -14961,7 +15029,7 @@ module.exports = function (obj) {
   return typeof obj;
 };
 
-},{}],40:[function(require,module,exports){
+},{}],42:[function(require,module,exports){
 /*!
  * assertion-error
  * Copyright(c) 2013 Jake Luer <jake@qualiancy.com>
@@ -15073,10 +15141,10 @@ AssertionError.prototype.toJSON = function (stack) {
   return props;
 };
 
-},{}],41:[function(require,module,exports){
+},{}],43:[function(require,module,exports){
 module.exports = require('./lib/eql');
 
-},{"./lib/eql":42}],42:[function(require,module,exports){
+},{"./lib/eql":44}],44:[function(require,module,exports){
 /*!
  * deep-eql
  * Copyright(c) 2013 Jake Luer <jake@alogicalparadox.com>
@@ -15335,10 +15403,10 @@ function objectEqual(a, b, m) {
   return true;
 }
 
-},{"buffer":45,"type-detect":43}],43:[function(require,module,exports){
+},{"buffer":47,"type-detect":45}],45:[function(require,module,exports){
 module.exports = require('./lib/type');
 
-},{"./lib/type":44}],44:[function(require,module,exports){
+},{"./lib/type":46}],46:[function(require,module,exports){
 /*!
  * type-detect
  * Copyright(c) 2013 jake luer <jake@alogicalparadox.com>
@@ -15482,7 +15550,7 @@ Library.prototype.test = function (obj, type) {
   }
 };
 
-},{}],45:[function(require,module,exports){
+},{}],47:[function(require,module,exports){
 /*!
  * The buffer module from node.js, for the browser.
  *
@@ -16818,7 +16886,7 @@ function decodeUtf8Char (str) {
   }
 }
 
-},{"base64-js":46,"ieee754":47,"is-array":48}],46:[function(require,module,exports){
+},{"base64-js":48,"ieee754":49,"is-array":50}],48:[function(require,module,exports){
 var lookup = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/';
 
 ;(function (exports) {
@@ -16944,7 +17012,7 @@ var lookup = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/';
 	exports.fromByteArray = uint8ToBase64
 }(typeof exports === 'undefined' ? (this.base64js = {}) : exports))
 
-},{}],47:[function(require,module,exports){
+},{}],49:[function(require,module,exports){
 exports.read = function(buffer, offset, isLE, mLen, nBytes) {
   var e, m,
       eLen = nBytes * 8 - mLen - 1,
@@ -17030,7 +17098,7 @@ exports.write = function(buffer, value, offset, isLE, mLen, nBytes) {
   buffer[offset + i - d] |= s * 128;
 };
 
-},{}],48:[function(require,module,exports){
+},{}],50:[function(require,module,exports){
 
 /**
  * isArray
@@ -17065,7 +17133,7 @@ module.exports = isArray || function (val) {
   return !! val && '[object Array]' == str.call(val);
 };
 
-},{}],49:[function(require,module,exports){
+},{}],51:[function(require,module,exports){
 // shim for using process in browser
 
 var process = module.exports = {};
@@ -17125,7 +17193,7 @@ process.chdir = function (dir) {
 };
 process.umask = function() { return 0; };
 
-},{}],50:[function(require,module,exports){
+},{}],52:[function(require,module,exports){
 'use strict';
 
 // ### Module dependencies
@@ -17356,7 +17424,7 @@ exports.renderString = function renderString(data, options, indentation) {
   return output;
 };
 
-},{"../package.json":53,"./utils":51,"colors":52}],51:[function(require,module,exports){
+},{"../package.json":55,"./utils":53,"colors":54}],53:[function(require,module,exports){
 'use strict';
 
 /**
@@ -17378,7 +17446,7 @@ exports.getMaxIndexLength = function(input) {
   return maxWidth;
 };
 
-},{}],52:[function(require,module,exports){
+},{}],54:[function(require,module,exports){
 /*
 colors.js
 
@@ -17722,7 +17790,7 @@ addProperty('zalgo', function () {
   return zalgo(this);
 });
 
-},{}],53:[function(require,module,exports){
+},{}],55:[function(require,module,exports){
 module.exports={
   "author": {
     "name": "Rafael de Oleza",
@@ -17798,7 +17866,958 @@ module.exports={
   "_resolved": "https://registry.npmjs.org/prettyjson/-/prettyjson-1.1.0.tgz"
 }
 
-},{}],54:[function(require,module,exports){
+},{}],56:[function(require,module,exports){
+//     Validate.js 0.7.0
+
+//     (c) 2013-2015 Nicklas Ansman, 2013 Wrapp
+//     Validate.js may be freely distributed under the MIT license.
+//     For all details and documentation:
+//     http://validatejs.org/
+
+(function(exports, module, define) {
+  "use strict";
+
+  // The main function that calls the validators specified by the constraints.
+  // The options are the following:
+  //   - format (string) - An option that controls how the returned value is formatted
+  //     * flat - Returns a flat array of just the error messages
+  //     * grouped - Returns the messages grouped by attribute (default)
+  //     * detailed - Returns an array of the raw validation data
+  //   - fullMessages (boolean) - If `true` (default) the attribute name is prepended to the error.
+  //
+  // Please note that the options are also passed to each validator.
+  var validate = function(attributes, constraints, options) {
+    options = v.extend({}, v.options, options);
+
+    var results = v.runValidations(attributes, constraints, options)
+      , attr
+      , validator;
+
+    for (attr in results) {
+      for (validator in results[attr]) {
+        if (v.isPromise(results[attr][validator])) {
+          throw new Error("Use validate.async if you want support for promises");
+        }
+      }
+    }
+    return validate.processValidationResults(results, options);
+  };
+
+  var v = validate;
+
+  // Copies over attributes from one or more sources to a single destination.
+  // Very much similar to underscore's extend.
+  // The first argument is the target object and the remaining arguments will be
+  // used as targets.
+  v.extend = function(obj) {
+    [].slice.call(arguments, 1).forEach(function(source) {
+      for (var attr in source) {
+        obj[attr] = source[attr];
+      }
+    });
+    return obj;
+  };
+
+  v.extend(validate, {
+    // This is the version of the library as a semver.
+    // The toString function will allow it to be coerced into a string
+    version: {
+      major: 0,
+      minor: 7,
+      patch: 0,
+      metadata: null,
+      toString: function() {
+        var version = v.format("%{major}.%{minor}.%{patch}", v.version);
+        if (!v.isEmpty(v.version.metadata)) {
+          version += "+" + v.version.metadata;
+        }
+        return version;
+      }
+    },
+
+    // Below is the dependencies that are used in validate.js
+
+    // The constructor of the Promise implementation.
+    // If you are using Q.js, RSVP or any other A+ compatible implementation
+    // override this attribute to be the constructor of that promise.
+    // Since jQuery promises aren't A+ compatible they won't work.
+    Promise: typeof Promise !== "undefined" ? Promise : /* istanbul ignore next */ null,
+
+    // If moment is used in node, browserify etc please set this attribute
+    // like this: `validate.moment = require("moment");
+    moment: typeof moment !== "undefined" ? moment : /* istanbul ignore next */ null,
+
+    XDate: typeof XDate !== "undefined" ? XDate : /* istanbul ignore next */ null,
+
+    EMPTY_STRING_REGEXP: /^\s*$/,
+
+    // Runs the validators specified by the constraints object.
+    // Will return an array of the format:
+    //     [{attribute: "<attribute name>", error: "<validation result>"}, ...]
+    runValidations: function(attributes, constraints, options) {
+      var results = []
+        , attr
+        , validatorName
+        , value
+        , validators
+        , validator
+        , validatorOptions
+        , error;
+
+      if (v.isDomElement(attributes)) {
+        attributes = v.collectFormValues(attributes);
+      }
+
+      // Loops through each constraints, finds the correct validator and run it.
+      for (attr in constraints) {
+        value = v.getDeepObjectValue(attributes, attr);
+        // This allows the constraints for an attribute to be a function.
+        // The function will be called with the value, attribute name, the complete dict of
+        // attributes as well as the options and constraints passed in.
+        // This is useful when you want to have different
+        // validations depending on the attribute value.
+        validators = v.result(constraints[attr], value, attributes, attr, options, constraints);
+
+        for (validatorName in validators) {
+          validator = v.validators[validatorName];
+
+          if (!validator) {
+            error = v.format("Unknown validator %{name}", {name: validatorName});
+            throw new Error(error);
+          }
+
+          validatorOptions = validators[validatorName];
+          // This allows the options to be a function. The function will be
+          // called with the value, attribute name, the complete dict of
+          // attributes as well as the options and constraints passed in.
+          // This is useful when you want to have different
+          // validations depending on the attribute value.
+          validatorOptions = v.result(validatorOptions, value, attributes, attr, options, constraints);
+          if (!validatorOptions) {
+            continue;
+          }
+          results.push({
+            attribute: attr,
+            value: value,
+            validator: validatorName,
+            options: validatorOptions,
+            error: validator.call(validator, value, validatorOptions, attr,
+                                  attributes)
+          });
+        }
+      }
+
+      return results;
+    },
+
+    // Takes the output from runValidations and converts it to the correct
+    // output format.
+    processValidationResults: function(errors, options) {
+      var attr;
+
+      errors = v.pruneEmptyErrors(errors, options);
+      errors = v.expandMultipleErrors(errors, options);
+      errors = v.convertErrorMessages(errors, options);
+
+      switch (options.format || "grouped") {
+        case "detailed":
+          // Do nothing more to the errors
+          break;
+
+        case "flat":
+          errors = v.flattenErrorsToArray(errors);
+          break;
+
+        case "grouped":
+          errors = v.groupErrorsByAttribute(errors);
+          for (attr in errors) {
+            errors[attr] = v.flattenErrorsToArray(errors[attr]);
+          }
+          break;
+
+        default:
+          throw new Error(v.format("Unknown format %{format}", options));
+      }
+
+      return v.isEmpty(errors) ? undefined : errors;
+    },
+
+    // Runs the validations with support for promises.
+    // This function will return a promise that is settled when all the
+    // validation promises have been completed.
+    // It can be called even if no validations returned a promise.
+    async: function(attributes, constraints, options) {
+      options = v.extend({}, v.async.options, options);
+      var results = v.runValidations(attributes, constraints, options);
+
+      return new v.Promise(function(resolve, reject) {
+        v.waitForResults(results).then(function() {
+          var errors = v.processValidationResults(results, options);
+          if (errors) {
+            reject(errors);
+          } else {
+            resolve(attributes);
+          }
+        }, function(err) {
+          reject(err);
+        });
+      });
+    },
+
+    single: function(value, constraints, options) {
+      options = v.extend({}, v.single.options, options, {
+        format: "flat",
+        fullMessages: false
+      });
+      return v({single: value}, {single: constraints}, options);
+    },
+
+    // Returns a promise that is resolved when all promises in the results array
+    // are settled. The promise returned from this function is always resolved,
+    // never rejected.
+    // This function modifies the input argument, it replaces the promises
+    // with the value returned from the promise.
+    waitForResults: function(results) {
+      // Create a sequence of all the results starting with a resolved promise.
+      return results.reduce(function(memo, result) {
+        // If this result isn't a promise skip it in the sequence.
+        if (!v.isPromise(result.error)) {
+          return memo;
+        }
+
+        return memo.then(function() {
+          return result.error.then(
+            function() {
+              result.error = null;
+            },
+            function(error) {
+              // If for some reason the validator promise was rejected but no
+              // error was specified.
+              if (!error) {
+                v.warn("Validator promise was rejected but didn't return an error");
+              } else if (error instanceof Error) {
+                throw error;
+              }
+              result.error = error;
+            }
+          );
+        });
+      }, new v.Promise(function(r) { r(); })); // A resolved promise
+    },
+
+    // If the given argument is a call: function the and: function return the value
+    // otherwise just return the value. Additional arguments will be passed as
+    // arguments to the function.
+    // Example:
+    // ```
+    // result('foo') // 'foo'
+    // result(Math.max, 1, 2) // 2
+    // ```
+    result: function(value) {
+      var args = [].slice.call(arguments, 1);
+      if (typeof value === 'function') {
+        value = value.apply(null, args);
+      }
+      return value;
+    },
+
+    // Checks if the value is a number. This function does not consider NaN a
+    // number like many other `isNumber` functions do.
+    isNumber: function(value) {
+      return typeof value === 'number' && !isNaN(value);
+    },
+
+    // Returns false if the object is not a function
+    isFunction: function(value) {
+      return typeof value === 'function';
+    },
+
+    // A simple check to verify that the value is an integer. Uses `isNumber`
+    // and a simple modulo check.
+    isInteger: function(value) {
+      return v.isNumber(value) && value % 1 === 0;
+    },
+
+    // Uses the `Object` function to check if the given argument is an object.
+    isObject: function(obj) {
+      return obj === Object(obj);
+    },
+
+    // Returns false if the object is `null` of `undefined`
+    isDefined: function(obj) {
+      return obj !== null && obj !== undefined;
+    },
+
+    // Checks if the given argument is a promise. Anything with a `then`
+    // function is considered a promise.
+    isPromise: function(p) {
+      return !!p && v.isFunction(p.then);
+    },
+
+    isDomElement: function(o) {
+      if (!o) {
+        return false;
+      }
+
+      if (!v.isFunction(o.querySelectorAll) || !v.isFunction(o.querySelector)) {
+        return false;
+      }
+
+      if (v.isObject(document) && o === document) {
+        return true;
+      }
+
+      // http://stackoverflow.com/a/384380/699304
+      /* istanbul ignore else */
+      if (typeof HTMLElement === "object") {
+        return o instanceof HTMLElement;
+      } else {
+        return o &&
+          typeof o === "object" &&
+          o !== null &&
+          o.nodeType === 1 &&
+          typeof o.nodeName === "string";
+      }
+    },
+
+    isEmpty: function(value) {
+      var attr;
+
+      // Null and undefined are empty
+      if (!v.isDefined(value)) {
+        return true;
+      }
+
+      // functions are non empty
+      if (v.isFunction(value)) {
+        return false;
+      }
+
+      // Whitespace only strings are empty
+      if (v.isString(value)) {
+        return v.EMPTY_STRING_REGEXP.test(value);
+      }
+
+      // For arrays we use the length property
+      if (v.isArray(value)) {
+        return value.length === 0;
+      }
+
+      // If we find at least one property we consider it non empty
+      if (v.isObject(value)) {
+        for (attr in value) {
+          return false;
+        }
+        return true;
+      }
+
+      return false;
+    },
+
+    // Formats the specified strings with the given values like so:
+    // ```
+    // format("Foo: %{foo}", {foo: "bar"}) // "Foo bar"
+    // ```
+    // If you want to write %{...} without having it replaced simply
+    // prefix it with % like this `Foo: %%{foo}` and it will be returned
+    // as `"Foo: %{foo}"`
+    format: v.extend(function(str, vals) {
+      return str.replace(v.format.FORMAT_REGEXP, function(m0, m1, m2) {
+        if (m1 === '%') {
+          return "%{" + m2 + "}";
+        } else {
+          return String(vals[m2]);
+        }
+      });
+    }, {
+      // Finds %{key} style patterns in the given string
+      FORMAT_REGEXP: /(%?)%\{([^\}]+)\}/g
+    }),
+
+    // "Prettifies" the given string.
+    // Prettifying means replacing [.\_-] with spaces as well as splitting
+    // camel case words.
+    prettify: function(str) {
+      if (v.isNumber(str)) {
+        // If there are more than 2 decimals round it to two
+        if ((str * 100) % 1 === 0) {
+          return "" + str;
+        } else {
+          return parseFloat(Math.round(str * 100) / 100).toFixed(2);
+        }
+      }
+
+      if (v.isArray(str)) {
+        return str.map(function(s) { return v.prettify(s); }).join(", ");
+      }
+
+      if (v.isObject(str)) {
+        return str.toString();
+      }
+
+      // Ensure the string is actually a string
+      str = "" + str;
+
+      return str
+        // Splits keys separated by periods
+        .replace(/([^\s])\.([^\s])/g, '$1 $2')
+        // Removes backslashes
+        .replace(/\\+/g, '')
+        // Replaces - and - with space
+        .replace(/[_-]/g, ' ')
+        // Splits camel cased words
+        .replace(/([a-z])([A-Z])/g, function(m0, m1, m2) {
+          return "" + m1 + " " + m2.toLowerCase();
+        })
+        .toLowerCase();
+    },
+
+    stringifyValue: function(value) {
+      return v.prettify(value);
+    },
+
+    isString: function(value) {
+      return typeof value === 'string';
+    },
+
+    isArray: function(value) {
+      return {}.toString.call(value) === '[object Array]';
+    },
+
+    contains: function(obj, value) {
+      if (!v.isDefined(obj)) {
+        return false;
+      }
+      if (v.isArray(obj)) {
+        return obj.indexOf(value) !== -1;
+      }
+      return value in obj;
+    },
+
+    getDeepObjectValue: function(obj, keypath) {
+      if (!v.isObject(obj) || !v.isString(keypath)) {
+        return undefined;
+      }
+
+      var key = ""
+        , i
+        , escape = false;
+
+      for (i = 0; i < keypath.length; ++i) {
+        switch (keypath[i]) {
+          case '.':
+            if (escape) {
+              escape = false;
+              key += '.';
+            } else if (key in obj) {
+              obj = obj[key];
+              key = "";
+            } else {
+              return undefined;
+            }
+            break;
+
+          case '\\':
+            if (escape) {
+              escape = false;
+              key += '\\';
+            } else {
+              escape = true;
+            }
+            break;
+
+          default:
+            escape = false;
+            key += keypath[i];
+            break;
+        }
+      }
+
+      if (v.isDefined(obj) && key in obj) {
+        return obj[key];
+      } else {
+        return undefined;
+      }
+    },
+
+    // This returns an object with all the values of the form.
+    // It uses the input name as key and the value as value
+    // So for example this:
+    // <input type="text" name="email" value="foo@bar.com" />
+    // would return:
+    // {email: "foo@bar.com"}
+    collectFormValues: function(form, options) {
+      var values = {}
+        , i
+        , input
+        , inputs
+        , value;
+
+      if (!form) {
+        return values;
+      }
+
+      options = options || {};
+
+      inputs = form.querySelectorAll("input[name]");
+      for (i = 0; i < inputs.length; ++i) {
+        input = inputs.item(i);
+
+        if (v.isDefined(input.getAttribute("data-ignored"))) {
+          continue;
+        }
+
+        value = v.sanitizeFormValue(input.value, options);
+        if (input.type === "number") {
+          value = +value;
+        } else if (input.type === "checkbox") {
+          if (input.attributes.value) {
+            if (!input.checked) {
+              value = values[input.name] || null;
+            }
+          } else {
+            value = input.checked;
+          }
+        } else if (input.type === "radio") {
+          if (!input.checked) {
+            value = values[input.name] || null;
+          }
+        }
+        values[input.name] = value;
+      }
+
+      inputs = form.querySelectorAll("select[name]");
+      for (i = 0; i < inputs.length; ++i) {
+        input = inputs.item(i);
+        value = v.sanitizeFormValue(input.options[input.selectedIndex].value, options);
+        values[input.name] = value;
+      }
+
+      return values;
+    },
+
+    sanitizeFormValue: function(value, options) {
+      if (options.trim && v.isString(value)) {
+        value = value.trim();
+      }
+
+      if (options.nullify !== false && value === "") {
+        return null;
+      }
+      return value;
+    },
+
+    capitalize: function(str) {
+      if (!v.isString(str)) {
+        return str;
+      }
+      return str[0].toUpperCase() + str.slice(1);
+    },
+
+    // Remove all errors who's error attribute is empty (null or undefined)
+    pruneEmptyErrors: function(errors) {
+      return errors.filter(function(error) {
+        return !v.isEmpty(error.error);
+      });
+    },
+
+    // In
+    // [{error: ["err1", "err2"], ...}]
+    // Out
+    // [{error: "err1", ...}, {error: "err2", ...}]
+    //
+    // All attributes in an error with multiple messages are duplicated
+    // when expanding the errors.
+    expandMultipleErrors: function(errors) {
+      var ret = [];
+      errors.forEach(function(error) {
+        // Removes errors without a message
+        if (v.isArray(error.error)) {
+          error.error.forEach(function(msg) {
+            ret.push(v.extend({}, error, {error: msg}));
+          });
+        } else {
+          ret.push(error);
+        }
+      });
+      return ret;
+    },
+
+    // Converts the error mesages by prepending the attribute name unless the
+    // message is prefixed by ^
+    convertErrorMessages: function(errors, options) {
+      options = options || {};
+
+      var ret = [];
+      errors.forEach(function(errorInfo) {
+        var error = errorInfo.error;
+
+        if (error[0] === '^') {
+          error = error.slice(1);
+        } else if (options.fullMessages !== false) {
+          error = v.capitalize(v.prettify(errorInfo.attribute)) + " " + error;
+        }
+        error = error.replace(/\\\^/g, "^");
+        error = v.format(error, {value: v.stringifyValue(errorInfo.value)});
+        ret.push(v.extend({}, errorInfo, {error: error}));
+      });
+      return ret;
+    },
+
+    // In:
+    // [{attribute: "<attributeName>", ...}]
+    // Out:
+    // {"<attributeName>": [{attribute: "<attributeName>", ...}]}
+    groupErrorsByAttribute: function(errors) {
+      var ret = {};
+      errors.forEach(function(error) {
+        var list = ret[error.attribute];
+        if (list) {
+          list.push(error);
+        } else {
+          ret[error.attribute] = [error];
+        }
+      });
+      return ret;
+    },
+
+    // In:
+    // [{error: "<message 1>", ...}, {error: "<message 2>", ...}]
+    // Out:
+    // ["<message 1>", "<message 2>"]
+    flattenErrorsToArray: function(errors) {
+      return errors.map(function(error) { return error.error; });
+    },
+
+    exposeModule: function(validate, root, exports, module, define) {
+      if (exports) {
+        if (module && module.exports) {
+          exports = module.exports = validate;
+        }
+        exports.validate = validate;
+      } else {
+        root.validate = validate;
+        if (validate.isFunction(define) && define.amd) {
+          define([], function () { return validate; });
+        }
+      }
+    },
+
+    warn: function(msg) {
+      if (typeof console !== "undefined" && console.warn) {
+        console.warn(msg);
+      }
+    },
+
+    error: function(msg) {
+      if (typeof console !== "undefined" && console.error) {
+        console.error(msg);
+      }
+    }
+  });
+
+  validate.validators = {
+    // Presence validates that the value isn't empty
+    presence: function(value, options) {
+      options = v.extend({}, this.options, options);
+      if (v.isEmpty(value)) {
+        return options.message || this.message || "can't be blank";
+      }
+    },
+    length: function(value, options, attribute) {
+      // Empty values are allowed
+      if (v.isEmpty(value)) {
+        return;
+      }
+
+      options = v.extend({}, this.options, options);
+
+      var is = options.is
+        , maximum = options.maximum
+        , minimum = options.minimum
+        , tokenizer = options.tokenizer || function(val) { return val; }
+        , err
+        , errors = [];
+
+      value = tokenizer(value);
+      var length = value.length;
+      if(!v.isNumber(length)) {
+        v.error(v.format("Attribute %{attr} has a non numeric value for `length`", {attr: attribute}));
+        return options.message || this.notValid || "has an incorrect length";
+      }
+
+      // Is checks
+      if (v.isNumber(is) && length !== is) {
+        err = options.wrongLength ||
+          this.wrongLength ||
+          "is the wrong length (should be %{count} characters)";
+        errors.push(v.format(err, {count: is}));
+      }
+
+      if (v.isNumber(minimum) && length < minimum) {
+        err = options.tooShort ||
+          this.tooShort ||
+          "is too short (minimum is %{count} characters)";
+        errors.push(v.format(err, {count: minimum}));
+      }
+
+      if (v.isNumber(maximum) && length > maximum) {
+        err = options.tooLong ||
+          this.tooLong ||
+          "is too long (maximum is %{count} characters)";
+        errors.push(v.format(err, {count: maximum}));
+      }
+
+      if (errors.length > 0) {
+        return options.message || errors;
+      }
+    },
+    numericality: function(value, options) {
+      // Empty values are fine
+      if (v.isEmpty(value)) {
+        return;
+      }
+
+      options = v.extend({}, this.options, options);
+
+      var errors = []
+        , name
+        , count
+        , checks = {
+            greaterThan:          function(v, c) { return v > c; },
+            greaterThanOrEqualTo: function(v, c) { return v >= c; },
+            equalTo:              function(v, c) { return v === c; },
+            lessThan:             function(v, c) { return v < c; },
+            lessThanOrEqualTo:    function(v, c) { return v <= c; }
+          };
+
+      // Coerce the value to a number unless we're being strict.
+      if (options.noStrings !== true && v.isString(value)) {
+        value = +value;
+      }
+
+      // If it's not a number we shouldn't continue since it will compare it.
+      if (!v.isNumber(value)) {
+        return options.message || this.notValid || "is not a number";
+      }
+
+      // Same logic as above, sort of. Don't bother with comparisons if this
+      // doesn't pass.
+      if (options.onlyInteger && !v.isInteger(value)) {
+        return options.message || this.notInteger  || "must be an integer";
+      }
+
+      for (name in checks) {
+        count = options[name];
+        if (v.isNumber(count) && !checks[name](value, count)) {
+          // This picks the default message if specified
+          // For example the greaterThan check uses the message from
+          // this.notGreaterThan so we capitalize the name and prepend "not"
+          var msg = this["not" + v.capitalize(name)] ||
+            "must be %{type} %{count}";
+
+          errors.push(v.format(msg, {
+            count: count,
+            type: v.prettify(name)
+          }));
+        }
+      }
+
+      if (options.odd && value % 2 !== 1) {
+        errors.push(this.notOdd || "must be odd");
+      }
+      if (options.even && value % 2 !== 0) {
+        errors.push(this.notEven || "must be even");
+      }
+
+      if (errors.length) {
+        return options.message || errors;
+      }
+    },
+    datetime: v.extend(function(value, options) {
+      // Empty values are fine
+      if (v.isEmpty(value)) {
+        return;
+      }
+
+      options = v.extend({}, this.options, options);
+
+      var err
+        , errors = []
+        , earliest = options.earliest ? this.parse(options.earliest, options) : NaN
+        , latest = options.latest ? this.parse(options.latest, options) : NaN;
+
+      value = this.parse(value, options);
+
+      // 86400000 is the number of seconds in a day, this is used to remove
+      // the time from the date
+      if (isNaN(value) || options.dateOnly && value % 86400000 !== 0) {
+        return options.message || this.notValid || "must be a valid date";
+      }
+
+      if (!isNaN(earliest) && value < earliest) {
+        err = this.tooEarly || "must be no earlier than %{date}";
+        err = v.format(err, {date: this.format(earliest, options)});
+        errors.push(err);
+      }
+
+      if (!isNaN(latest) && value > latest) {
+        err = this.tooLate || "must be no later than %{date}";
+        err = v.format(err, {date: this.format(latest, options)});
+        errors.push(err);
+      }
+
+      if (errors.length) {
+        return options.message || errors;
+      }
+    }, {
+      // This is the function that will be used to convert input to the number
+      // of millis since the epoch.
+      // It should return NaN if it's not a valid date.
+      parse: function(value, options) {
+        if (v.isFunction(v.XDate)) {
+          return new v.XDate(value, true).getTime();
+        }
+
+        if (v.isDefined(v.moment)) {
+          return +v.moment.utc(value);
+        }
+
+        throw new Error("Neither XDate or moment.js was found");
+      },
+      // Formats the given timestamp. Uses ISO8601 to format them.
+      // If options.dateOnly is true then only the year, month and day will be
+      // output.
+      format: function(date, options) {
+        var format = options.dateFormat;
+
+        if (v.isFunction(v.XDate)) {
+          format = format || (options.dateOnly ? "yyyy-MM-dd" : "yyyy-MM-dd HH:mm:ss");
+          return new XDate(date, true).toString(format);
+        }
+
+        if (v.isDefined(v.moment)) {
+          format = format || (options.dateOnly ? "YYYY-MM-DD" : "YYYY-MM-DD HH:mm:ss");
+          return v.moment.utc(date).format(format);
+        }
+
+        throw new Error("Neither XDate or moment.js was found");
+      }
+    }),
+    date: function(value, options) {
+      options = v.extend({}, options, {dateOnly: true});
+      return v.validators.datetime.call(v.validators.datetime, value, options);
+    },
+    format: function(value, options) {
+      if (v.isString(options) || (options instanceof RegExp)) {
+        options = {pattern: options};
+      }
+
+      options = v.extend({}, this.options, options);
+
+      var message = options.message || this.message || "is invalid"
+        , pattern = options.pattern
+        , match;
+
+      // Empty values are allowed
+      if (v.isEmpty(value)) {
+        return;
+      }
+      if (!v.isString(value)) {
+        return message;
+      }
+
+      if (v.isString(pattern)) {
+        pattern = new RegExp(options.pattern, options.flags);
+      }
+      match = pattern.exec(value);
+      if (!match || match[0].length != value.length) {
+        return message;
+      }
+    },
+    inclusion: function(value, options) {
+      // Empty values are fine
+      if (v.isEmpty(value)) {
+        return;
+      }
+      if (v.isArray(options)) {
+        options = {within: options};
+      }
+      options = v.extend({}, this.options, options);
+      if (v.contains(options.within, value)) {
+        return;
+      }
+      var message = options.message ||
+        this.message ||
+        "^%{value} is not included in the list";
+      return v.format(message, {value: value});
+    },
+    exclusion: function(value, options) {
+      // Empty values are fine
+      if (v.isEmpty(value)) {
+        return;
+      }
+      if (v.isArray(options)) {
+        options = {within: options};
+      }
+      options = v.extend({}, this.options, options);
+      if (!v.contains(options.within, value)) {
+        return;
+      }
+      var message = options.message || this.message || "^%{value} is restricted";
+      return v.format(message, {value: value});
+    },
+    email: v.extend(function(value, options) {
+      options = v.extend({}, this.options, options);
+      var message = options.message || this.message || "is not a valid email";
+      // Empty values are fine
+      if (v.isEmpty(value)) {
+        return;
+      }
+      if (!v.isString(value)) {
+        return message;
+      }
+      if (!this.PATTERN.exec(value)) {
+        return message;
+      }
+    }, {
+      PATTERN: /^[a-z0-9\u007F-\uffff!#$%&'*+\/=?^_`{|}~-]+(?:\.[a-z0-9\u007F-\uffff!#$%&'*+\/=?^_`{|}~-]+)*@(?:[a-z0-9](?:[a-z0-9-]*[a-z0-9])?\.)+[a-z]{2,}$/i
+    }),
+    equality: function(value, options, attribute, attributes) {
+      if (v.isEmpty(value)) {
+        return;
+      }
+
+      if (v.isString(options)) {
+        options = {attribute: options};
+      }
+      options = v.extend({}, this.options, options);
+      var message = options.message ||
+        this.message ||
+        "is not equal to %{attribute}";
+
+      if (v.isEmpty(options.attribute) || !v.isString(options.attribute)) {
+        throw new Error("The attribute must be a non empty string");
+      }
+
+      var otherValue = v.getDeepObjectValue(attributes, options.attribute)
+        , comparator = options.comparator || function(v1, v2) {
+          return v1 === v2;
+        };
+
+      if (!comparator(value, otherValue, options, attribute, attributes)) {
+        return v.format(message, {attribute: v.prettify(options.attribute)});
+      }
+    }
+  };
+
+  validate.exposeModule(validate, this, exports, module, define);
+}).call(this,
+        typeof exports !== 'undefined' ? /* istanbul ignore next */ exports : null,
+        typeof module !== 'undefined' ? /* istanbul ignore next */ module : null,
+        typeof define !== 'undefined' ? /* istanbul ignore next */ define : null);
+
+},{}],57:[function(require,module,exports){
 var miruken  = require('../lib/miruken.js'),
     callback = require('../lib/callback.js'),
     Promise  = require('bluebird'),
@@ -19210,7 +20229,7 @@ describe("InvocationCallbackHandler", function () {
     })
 });
 
-},{"../lib/callback.js":2,"../lib/miruken.js":9,"bluebird":12,"chai":13}],55:[function(require,module,exports){
+},{"../lib/callback.js":2,"../lib/miruken.js":9,"bluebird":14,"chai":15}],58:[function(require,module,exports){
 var miruken = require('../lib/miruken.js'),
     context = require('../lib/context.js')
     chai    = require("chai"),
@@ -19687,7 +20706,7 @@ describe("Contextual", function() {
         });
     });
 });
-},{"../lib/context.js":3,"../lib/miruken.js":9,"chai":13}],56:[function(require,module,exports){
+},{"../lib/context.js":3,"../lib/miruken.js":9,"chai":15}],59:[function(require,module,exports){
 var miruken  = require('../lib/miruken.js'),
     context  = require('../lib/context.js')
     error    = require('../lib/error.js'),
@@ -19825,7 +20844,7 @@ describe("CallbackHandler", function () {
     });
 });
 
-},{"../lib/context.js":3,"../lib/error.js":4,"../lib/miruken.js":9,"bluebird":12,"chai":13}],57:[function(require,module,exports){
+},{"../lib/context.js":3,"../lib/error.js":4,"../lib/miruken.js":9,"bluebird":14,"chai":15}],60:[function(require,module,exports){
 var miruken = require('../lib'),
     chai    = require("chai"),
     expect  = chai.expect;
@@ -19837,16 +20856,15 @@ describe("index", function () {
             expect(miruken.callback.namespace).to.be.ok;
             expect(miruken.context.namespace).to.be.ok;
             expect(miruken.ioc.namespace).to.be.ok;
-            expect(miruken.ioc.config.namespace).to.be.ok;
             expect(miruken.validate.namespace).to.be.ok;
             expect(miruken.error.namespace).to.be.ok;
         });
     });
 });
 
-},{"../lib":5,"chai":13}],58:[function(require,module,exports){
+},{"../lib":5,"chai":15}],61:[function(require,module,exports){
 var miruken  = require('../../lib/miruken.js'),
-    config   = require('../../lib/ioc/config.js'),
+    config   = require('../../lib/ioc'),
     Promise  = require('bluebird'),
     chai     = require("chai"),
     expect   = chai.expect;
@@ -19929,37 +20947,35 @@ describe("$classes", function () {
         it("should select classes from package", function (done) {
             container.register(
                 $component(Authentication).boundTo(InMemoryAuthenticator),
-                $classes.fromPackage(ioc_config_test).basedOn(Controller)).then(function () {
-                Promise.resolve(container.resolve(LoginController)).then(function (loginController) {
-                    expect(loginController).to.be.instanceOf(LoginController);
-                    done();
-                });
+                $classes.fromPackage(ioc_config_test).basedOn(Controller)
+            );
+            Promise.resolve(container.resolve(LoginController)).then(function (loginController) {
+                expect(loginController).to.be.instanceOf(LoginController);
+                done();
             });
         });
 
         it("should select classes from package using shortcut", function (done) {
             container.register(
                 $component(Authentication).boundTo(InMemoryAuthenticator),
-                $classes(ioc_config_test).basedOn(Controller)).then(function () {
-                Promise.resolve(container.resolve(LoginController)).then(function (loginController) {
-                    expect(loginController).to.be.instanceOf(LoginController);
-                    done();
-                });
+                $classes(ioc_config_test).basedOn(Controller)
+            );
+            Promise.resolve(container.resolve(LoginController)).then(function (loginController) {
+                expect(loginController).to.be.instanceOf(LoginController);
+                done();
             });
         });
 
         it("should register installers if no based on criteria", function (done) {
-            container.register(
-                $classes.fromPackage(ioc_config_test)).then(function () {
-                    Promise.all([container.resolve($eq(Service)),
-                                container.resolve($eq(Authentication)),
-                           container.resolve($eq(InMemoryAuthenticator))])
-                        .spread(function (service, authenticator, nothing) {
-                        expect(service).to.be.instanceOf(SomeService);
-                        expect(authenticator).to.be.instanceOf(InMemoryAuthenticator);
-                        expect(nothing).to.be.undefined;
-                        done();
-                    });
+            container.register($classes.fromPackage(ioc_config_test));
+            Promise.all([container.resolve($eq(Service)),
+                         container.resolve($eq(Authentication)),
+                         container.resolve($eq(InMemoryAuthenticator))])
+                .spread(function (service, authenticator, nothing) {
+                    expect(service).to.be.instanceOf(SomeService);
+                    expect(authenticator).to.be.instanceOf(InMemoryAuthenticator);
+                    expect(nothing).to.be.undefined;
+                    done();
                 });
         });
 
@@ -19973,152 +20989,151 @@ describe("$classes", function () {
     describe("#withKeys", function () {
         describe("#self", function () {
             it("should select class as key", function (done) {
-                container.register(
-                    $classes.fromPackage(ioc_config_test).basedOn(Authentication)
-                            .withKeys.self()).then(function () {
-                         Promise.all([container.resolve($eq(InMemoryAuthenticator)),
-                                      container.resolve($eq(Authentication))])
-                             .spread(function (authenticator, nothing) {
-                            expect(authenticator).to.be.instanceOf(InMemoryAuthenticator);
-                            expect(nothing).to.be.undefined;
-                            done();
-                        });
+                container.register($classes.fromPackage(ioc_config_test)
+                                           .basedOn(Authentication)
+                                           .withKeys.self()
+                );
+                Promise.all([container.resolve($eq(InMemoryAuthenticator)),
+                             container.resolve($eq(Authentication))])
+                    .spread(function (authenticator, nothing) {
+                        expect(authenticator).to.be.instanceOf(InMemoryAuthenticator);
+                        expect(nothing).to.be.undefined;
+                        done();
                 });
             });
         });
 
         describe("#basedOn", function () {
             it("should select basedOn as keys", function (done) {
-                container.register(
-                    $classes.fromPackage(ioc_config_test).basedOn(Authentication)
-                            .withKeys.basedOn()).then(function () {
-                        Promise.all([container.resolve($eq(Authentication)),
-                                     container.resolve($eq(InMemoryAuthenticator))])
-                            .spread(function (authenticator, nothing) {
-                            expect(authenticator).to.be.instanceOf(InMemoryAuthenticator);
-                            expect(nothing).to.be.undefined;
-                            done();
-                        });
+                container.register($classes.fromPackage(ioc_config_test)
+                                           .basedOn(Authentication)
+                                           .withKeys.basedOn()
+                );
+                Promise.all([container.resolve($eq(Authentication)),
+                             container.resolve($eq(InMemoryAuthenticator))])
+                   .spread(function (authenticator, nothing) {
+                        expect(authenticator).to.be.instanceOf(InMemoryAuthenticator);
+                        expect(nothing).to.be.undefined;
+                        done();
                 });
             });
         });
 
         describe("#anyService", function () {
             it("should select any service as key", function (done) {
-                container.register(
-                    $classes.fromPackage(ioc_config_test).basedOn(Service)
-                            .withKeys.anyService()).then(function () {
-                         Promise.all([container.resolve($eq(Service)),
-                                      container.resolve($eq(SomeService))])
-                             .spread(function (service, nothing) {
-                            expect(service).to.be.instanceOf(SomeService);
-                            expect(nothing).to.be.undefined;
-                            done();
-                        });
+                container.register($classes.fromPackage(ioc_config_test)
+                                           .basedOn(Service)
+                                           .withKeys.anyService()
+                );
+                Promise.all([container.resolve($eq(Service)),
+                             container.resolve($eq(SomeService))])
+                    .spread(function (service, nothing) {
+                        expect(service).to.be.instanceOf(SomeService);
+                        expect(nothing).to.be.undefined;
+                        done();
                 });
             });
         });
 
         describe("#allServices", function () {
             it("should select all services as keys", function (done) {
-                container.register(
-                    $classes.fromPackage(ioc_config_test).basedOn(Authentication)
-                            .withKeys.allServices()).then(function () {
-                        Promise.all([container.resolve($eq(Service)),
-                                     container.resolve($eq(Authentication)),
-                                     container.resolve($eq(InMemoryAuthenticator))])
-                            .spread(function (authenticator1, authenticator2, nothing) {
-                            expect(authenticator1).to.be.instanceOf(InMemoryAuthenticator);
-                            expect(authenticator2).to.equal(authenticator1);
-                            expect(nothing).to.be.undefined;
-                            done();
-                        });
+                container.register($classes.fromPackage(ioc_config_test)
+                                           .basedOn(Authentication)
+                                           .withKeys.allServices()
+                );
+                Promise.all([container.resolve($eq(Service)),
+                             container.resolve($eq(Authentication)),
+                             container.resolve($eq(InMemoryAuthenticator))])
+                   .spread(function (authenticator1, authenticator2, nothing) {
+                        expect(authenticator1).to.be.instanceOf(InMemoryAuthenticator);
+                        expect(authenticator2).to.equal(authenticator1);
+                        expect(nothing).to.be.undefined;
+                        done();
                 });
             });
         });
 
         describe("#mostSpecificService", function () {
             it("should select most specific service as key", function (done) {
-                container.register(
-                    $classes.fromPackage(ioc_config_test).basedOn(Service)
-                            .withKeys.mostSpecificService(Service)).then(function () {
-                        Promise.all([container.resolve($eq(Service)),
-                                     container.resolve($eq(Authentication)),
-                                     container.resolve($eq(InMemoryAuthenticator))])
-                            .spread(function (service, authenticator, nothing) {
-                            expect(service).to.be.instanceOf(SomeService);
-                            expect(authenticator).to.be.instanceOf(InMemoryAuthenticator);
-                            expect(nothing).to.be.undefined;
-                            done();
-                       });
+                container.register($classes.fromPackage(ioc_config_test)
+                                           .basedOn(Service)
+                                           .withKeys.mostSpecificService(Service)
+                );
+                Promise.all([container.resolve($eq(Service)),
+                             container.resolve($eq(Authentication)),
+                             container.resolve($eq(InMemoryAuthenticator))])
+                    .spread(function (service, authenticator, nothing) {
+                        expect(service).to.be.instanceOf(SomeService);
+                        expect(authenticator).to.be.instanceOf(InMemoryAuthenticator);
+                        expect(nothing).to.be.undefined;
+                        done();
                 });
             });
 
             it("should select most specific service form basedOn as key", function (done) {
-                container.register(
-                    $classes.fromPackage(ioc_config_test).basedOn(Service)
-                            .withKeys.mostSpecificService()).then(function () {
-                        Promise.all([container.resolve($eq(Service)),
-                                     container.resolve($eq(Authentication)),
-                                     container.resolve($eq(InMemoryAuthenticator))])
-                            .spread(function (service, authenticator, nothing) {
-                            expect(service).to.be.instanceOf(SomeService);
-                            expect(authenticator).to.be.instanceOf(InMemoryAuthenticator);
-                            expect(nothing).to.be.undefined;
-                            done();
-                       });
+                container.register($classes.fromPackage(ioc_config_test)
+                                           .basedOn(Service)
+                                           .withKeys.mostSpecificService()
+                );
+                Promise.all([container.resolve($eq(Service)),
+                             container.resolve($eq(Authentication)),
+                             container.resolve($eq(InMemoryAuthenticator))])
+                   .spread(function (service, authenticator, nothing) {
+                       expect(service).to.be.instanceOf(SomeService);
+                       expect(authenticator).to.be.instanceOf(InMemoryAuthenticator);
+                       expect(nothing).to.be.undefined;
+                       done();
                 });
             });
 
             it("should select basedOn as key if no services match", function (done) {
-                container.register(
-                    $component(Authentication).boundTo(InMemoryAuthenticator),
-                    $classes.fromPackage(ioc_config_test).basedOn(Controller)
-                            .withKeys.mostSpecificService()).then(function () {
-                        Promise.all([container.resolve($eq(Controller)),
-                                     container.resolve($eq(LoginController))])
-                            .spread(function (controller, nothing) {
-                            expect(controller).to.be.instanceOf(LoginController);
-                            expect(nothing).to.be.undefined;
-                            done();
-                       });
+                container.register($component(Authentication).boundTo(InMemoryAuthenticator),
+                                   $classes.fromPackage(ioc_config_test).basedOn(Controller)
+                                           .withKeys.mostSpecificService()
+                );
+                Promise.all([container.resolve($eq(Controller)),
+                             container.resolve($eq(LoginController))])
+                    .spread(function (controller, nothing) {
+                        expect(controller).to.be.instanceOf(LoginController);
+                        expect(nothing).to.be.undefined;
+                        done();
                 });
             });
         });
 
         describe("#name", function () {
             it("should specify name as key", function (done) {
-                container.register(
-                    $classes.fromPackage(ioc_config_test).basedOn(Controller)
-                            .withKeys.name("Login")).then(function () {
-                        Promise.resolve(container.resolve("Login")).then(function (controller) {
-                            expect(controller).to.be.instanceOf(LoginController);
-                            done();
-                        });
+                container.register($classes.fromPackage(ioc_config_test)
+                                           .basedOn(Controller)
+                                           .withKeys.name("Login")
+                );
+                Promise.resolve(container.resolve("Login")).then(function (controller) {
+                    expect(controller).to.be.instanceOf(LoginController);
+                    done();
                 });
             });
 
             it("should infer name as key", function (done) {
-                container.register(
-                    $classes.fromPackage(ioc_config_test).basedOn(Controller)
-                            .withKeys.name()).then(function () {
-                        Promise.resolve(container.resolve("LoginController")).then(function (controller) {
-                            expect(controller).to.be.instanceOf(LoginController);
-                            done();
-                        });
+                container.register($classes.fromPackage(ioc_config_test)
+                                           .basedOn(Controller)
+                                           .withKeys.name()
+                );
+                Promise.resolve(container.resolve("LoginController")).then(function (controller) {
+                    expect(controller).to.be.instanceOf(LoginController);
+                    done();
                 });
             });
 
             it("should evaluate name as key", function (done) {
-                container.register(
-                    $classes.fromPackage(ioc_config_test).basedOn(Controller)
-                        .withKeys.name(function (name) { 
-                            return name.replace("Controller", "");
-                            })).then(function () {
-                        Promise.resolve(container.resolve("Login")).then(function (controller) {
-                            expect(controller).to.be.instanceOf(LoginController);
-                            done();
-                        });
+                container.register($classes.fromPackage(ioc_config_test)
+                                            .basedOn(Controller)
+                                            .withKeys.name(function (name) { 
+                                                return name.replace("Controller", "");
+                                            })
+                );
+                Promise.resolve(container.resolve("Login")).then(function (controller) {
+                    expect(controller).to.be.instanceOf(LoginController);
+                    done();
                 });
             });
         });
@@ -20126,26 +21141,25 @@ describe("$classes", function () {
 
     describe("#configure", function () {
         it("should customize component configuration", function (done) {
-            container.register(
-                $classes.fromPackage(ioc_config_test).basedOn(Service)
-                        .withKeys.mostSpecificService()
-                        .configure(function (component) {
-                            component.transient();
-                         })).then(function () {
-                   Promise.all([container.resolve($eq(Authentication)),
-                                container.resolve($eq(Authentication))])
-                       .spread(function (authenticator1, authenticator2) {
-                       expect(authenticator1).to.be.instanceOf(InMemoryAuthenticator);
-                       expect(authenticator2).to.not.equal(authenticator1);
-                       done();
-                    });
+            container.register($classes.fromPackage(ioc_config_test)
+                                       .basedOn(Service)
+                                       .withKeys.mostSpecificService()
+                                       .configure(function (component) {
+                                           component.transient();
+                                       })
+            );
+            Promise.all([container.resolve($eq(Authentication)),
+                         container.resolve($eq(Authentication))])
+                .spread(function (authenticator1, authenticator2) {
+                    expect(authenticator1).to.be.instanceOf(InMemoryAuthenticator);
+                    expect(authenticator2).to.not.equal(authenticator1);
+                    done();
                 });
             });
         });
-
 });
 
-},{"../../lib/ioc/config.js":6,"../../lib/miruken.js":9,"bluebird":12,"chai":13}],59:[function(require,module,exports){
+},{"../../lib/ioc":7,"../../lib/miruken.js":9,"bluebird":14,"chai":15}],62:[function(require,module,exports){
 var miruken  = require('../../lib/miruken.js'),
     ioc      = require('../../lib/ioc/ioc.js'),
     Promise  = require('bluebird'),
@@ -20899,27 +21913,35 @@ describe("IoContainer", function () {
         });
 
         it("should reject registration if no key", function (done) {
-            Promise.resolve(container.register($component())).catch(function (error) {
-                expect(error.getKeyErrors("Key")).to.eql([
+            try {
+                container.register($component());
+            }
+            catch (error) {
+                expect(error).to.be.instanceOf(ComponentModelError);
+                expect(error.validation.getKeyErrors("Key")).to.eql([
                     new ValidationError("Key could not be determined for component.", {
                         key:  "Key",
                         code: ValidationErrorCode.Required
                     })
                 ]);
                 done();
-            });
+            }
         });
 
         it("should reject registration if no factory", function (done) {
-            Promise.resolve(container.register($component('car'))).catch(function (error) {
-                expect(error.getKeyErrors("Factory")).to.eql([
+            try {
+                container.register($component('car'));
+            }
+            catch (error) {
+                expect(error).to.be.instanceOf(ComponentModelError);
+                expect(error.validation.getKeyErrors("Factory")).to.eql([
                     new ValidationError("Factory could not be determined for component.", {
                         key:  "Factory",
                         code: ValidationErrorCode.Required
                     })
                 ]);
                 done();
-            });
+            }
         });
     });
 
@@ -21124,18 +22146,16 @@ describe("IoContainer", function () {
         });
 
         it("should resolve instance with invariant dependencies", function (done) {
-                Promise.all(container.register($component(Ferrari).dependsOn($use('Spider'), $eq(V12)),
-                                               $component(Engine).boundTo(V12))).then(function () {
-                Promise.resolve(container.resolve(Car)).catch(function (error) {
-                    expect(error).to.be.instanceof(DependencyResolutionError);
-                    expect(error.message).to.match(/Dependency.*`.*V12.*`.*<=.*Car.*could not be resolved./);
-                    container.register($component(V12)).then(function () {
-                        Promise.resolve(container.resolve(Car)).then(function (car) {
-                            expect(car).to.be.instanceOf(Ferrari);
-                            expect(car.getEngine()).to.be.instanceOf(V12);
-                            done();
-                        });
-                    });
+            container.register($component(Ferrari).dependsOn($use('Spider'), $eq(V12)),
+                               $component(Engine).boundTo(V12));
+            Promise.resolve(container.resolve(Car)).catch(function (error) {
+                expect(error).to.be.instanceof(DependencyResolutionError);
+                expect(error.message).to.match(/Dependency.*`.*V12.*`.*<=.*Car.*could not be resolved./);
+                container.register($component(V12));
+                Promise.resolve(container.resolve(Car)).then(function (car) {
+                    expect(car).to.be.instanceOf(Ferrari);
+                    expect(car.getEngine()).to.be.instanceOf(V12);
+                    done();
                 });
             });
         });
@@ -21427,7 +22447,7 @@ describe("IoContainer", function () {
     });
 });
 
-},{"../../lib/ioc/ioc.js":8,"../../lib/miruken.js":9,"bluebird":12,"chai":13}],60:[function(require,module,exports){
+},{"../../lib/ioc/ioc.js":8,"../../lib/miruken.js":9,"bluebird":14,"chai":15}],63:[function(require,module,exports){
 (function (global){
 var miruken = require('../lib/miruken.js'),
     Promise = require('bluebird'),
@@ -22591,7 +23611,7 @@ describe("Traversal", function () {
 });
 
 }).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
-},{"../lib/miruken.js":9,"bluebird":12,"chai":13}],61:[function(require,module,exports){
+},{"../lib/miruken.js":9,"bluebird":14,"chai":15}],64:[function(require,module,exports){
 var miruken  = require('../../lib/miruken.js'),
     mv       = require('../../lib/mvc/mvc.js'),
     chai     = require("chai"),
@@ -22737,10 +23757,10 @@ describe("Model", function () {
         });
     });
 });
-},{"../../lib/miruken.js":9,"../../lib/mvc/mvc.js":10,"chai":13}],62:[function(require,module,exports){
-var miruken  = require('../lib/miruken.js'),
-    context  = require('../lib/context.js')
-    validate = require('../lib/validate.js'),
+},{"../../lib/miruken.js":9,"../../lib/mvc/mvc.js":10,"chai":15}],65:[function(require,module,exports){
+var miruken  = require('../../lib/miruken.js'),
+    context  = require('../../lib/context.js')
+    validate = require('../../lib/validate'),
     Promise  = require('bluebird'),
     chai     = require("chai"),
     expect   = chai.expect;
@@ -22755,7 +23775,7 @@ new function () { // closure
 
     var validate_test = new base2.Package(this, {
         name:    "validate_test",
-        exports: "Player,Team,"
+        exports: "Player,Coach,Team"
     });
 
     eval(this.imports);
@@ -22769,6 +23789,18 @@ new function () { // closure
                 setLastName:  function (value) { lastName = value; },
                 getDOB:       function () { return dob; },
                 setDOB:       function (value) { dob = value; }
+            });
+        }});
+
+    var Coach = Base.extend({
+        constructor: function (firstName, lastName, license) {
+            this.extend({
+                getFirstName: function () { return firstName; },
+                setFirstName: function (value) { firstName = value; },
+                getLastName:  function () { return lastName; },
+                setLastName:  function (value) { lastName = value; },
+                getLicense:   function () { return license; },
+                setLicense:   function (value) { license = value; }
             });
         }});
     
@@ -22793,10 +23825,24 @@ new function () { // closure
                 if ((player.getDOB() instanceof Date) === false) {
                     validation.invalid("DOB", player.getDOB(), "Valid Date-of-birth required");
                 }
+            },
+            Team, function (validation, composer) {
+                var coach = validation.getObject();
+                if (!coach.getFirstName() || coach.getFirstName().length == 0) {
+                    validation.required("FirstName", "First name required");
+                }
+                if (!coach.getLastName()  || coach.getLastName().length == 0) {
+                    validation.required("LastName", "Last name required");
+                }
+                if (["D", "E", "F"].indexOf(coach.getLicense()) < 0) {
+                    validation.invalid("License", coach.getLicense(), "License must be D, E or F");
+                }
+                return Promise.delay(true, 50);
             }]
     });
     
-  eval(this.exports);
+    eval(this.exports);
+
 };
 
 eval(base2.validate_test.namespace);
@@ -22838,7 +23884,7 @@ describe("ValidationResult", function () {
             var team            = new Team,
                 player          = new Player,
                 validation      = new ValidationResult(team),
-   	        childValidation = new ValidationResult(player);
+   	            childValidation = new ValidationResult(player);
                 childValidation.addKeyError("FirstName", new ValidationError("First name required", {
                     key:  "FirstName",
                     code: ValidationErrorCode.Required
@@ -22887,64 +23933,57 @@ describe("ValidationResult", function () {
 
 describe("ValidationCallbackHandler", function () {
     describe("#validate", function () {
-        it("should invalidate object", function (done) {
+        it("should invalidate object", function () {
             var team   = new Team("Liverpool", "U8"),
                 league = new Context()
-                    .addHandlers(team, new ValidationCallbackHandler()),
-            player = new Player;
-            Promise.resolve(Validator(league).validate(player)).caught(function (error) {
-                done();
-            });
+                    .addHandlers(team, new ValidationCallbackHandler),
+                player = new Player;
+            expect(Validator(league).validate(player).isValid()).to.be.false;
         });
 
-        it("should be valid if no validators", function (done) {
+        it("should be valid if no validators", function () {
             var league = new Context()
-                    .addHandlers(new ValidationCallbackHandler()),
-            player = new Player;
-            Promise.resolve(Validator(league).validate(player)).then(function (validated) {
-                expect(validated.isValid(player)).to.be.true;
-                done();
-            });
+                    .addHandlers(new ValidationCallbackHandler),
+                player = new Player;
+            expect(Validator(league).validate(player).isValid()).to.be.true;
         });
 
-        it("should provide invalid keys", function (done) {
+        it("should provide invalid keys", function () {
             var team       = new Team("Liverpool", "U8"),
                 league     = new Context()
-                    .addHandlers(team, new ValidationCallbackHandler()),
+                    .addHandlers(team, new ValidationCallbackHandler),
                 player     = new Player("Matthew");
-            Promise.resolve(Validator(league).validate(player)).caught(function (error) {
-		    expect(error.getKeyCulprits()).to.eql(["LastName", "DOB"]);
-            done();
-            });
+            var results = Validator(league).validate(player);
+            expect(results.isValid()).to.be.false;
+		    expect(results.getKeyCulprits()).to.eql(["LastName", "DOB"]);
         });
 
-        it("should provide key errors", function (done) {
+        it("should provide key errors", function () {
             var team       = new Team("Liverpool", "U8"),
                 league     = new Context()
-                    .addHandlers(team, new ValidationCallbackHandler()),
+                    .addHandlers(team, new ValidationCallbackHandler),
                 player     = new Player("Matthew");
-            Promise.resolve(Validator(league).validate(player)).caught(function (error) {
-                expect(error.getKeyErrors("LastName")).to.eql([
-                    new ValidationError("Last name required", {
-                        key:  "LastName",
-                        code: ValidationErrorCode.Required
-                    })
-                ]);
-                expect(error.getKeyErrors("DOB")).to.eql([
-                    new ValidationError("Valid Date-of-birth required", {
-                        key:  "DOB",
-                        code: ValidationErrorCode.Invalid
-                    })
-                ]);
-                done();
-            });
+            var results = Validator(league).validate(player);
+            expect(results.isValid()).to.be.false;
+            expect(results.getKeyErrors("LastName")).to.eql([
+                new ValidationError("Last name required", {
+                    key:  "LastName",
+                    code: ValidationErrorCode.Required
+                })
+            ]);
+            expect(results.getKeyErrors("DOB")).to.eql([
+                new ValidationError("Valid Date-of-birth required", {
+                    key:  "DOB",
+                    code: ValidationErrorCode.Invalid
+                })
+            ]);
         });
 
-        it("should dynamically add validation", function (done) {
+        it("should dynamically add validation", function () {
             var team   = new Team("Liverpool", "U8"),
                 league = new Context()
-                    .addHandlers(team, new ValidationCallbackHandler()),
-            player = new Player("Diego", "Morales", new Date(2006, 7, 19));
+                    .addHandlers(team, new ValidationCallbackHandler),
+                player = new Player("Diego", "Morales", new Date(2006, 7, 19));
             $validate(league, Player, function (validation, composer) {
                 var player = validation.getObject(),
                     start  = new Date(2006, 8, 1),
@@ -22955,31 +23994,30 @@ describe("ValidationCallbackHandler", function () {
                             key:    "DOB",
                             code:   ValidationErrorCode.DateTooSoon,
                             source: player.getDOB()
-			}));
+                    }));
                 } else if (player.getDOB() > end) {
                     validation.addKeyError("DOB", new ValidationError(
                         "Player too young for division " + team.getDivision(), {
                             key:    "DOB",
                             code:   ValidationErrorCode.DateTooLate,
                             source: player.getDOB()
-			}));
-		}
+                    }));
+                }
             });
-            Promise.resolve(Validator(league).validate(player)).caught(function (error) {
-                expect(error.getKeyErrors("DOB")).to.eql([
-                    new ValidationError("Player too old for division U8", {
-                        key:    "DOB",
-                        code:   ValidationErrorCode.DateTooSoon,
-                        source: new Date(2006, 7, 19)
-                    })
-                ]);
-                done();
-            });
+            var results = Validator(league).validate(player);
+            expect(results.isValid()).to.be.false;
+            expect(results.getKeyErrors("DOB")).to.eql([
+                new ValidationError("Player too old for division U8", {
+                    key:    "DOB",
+                    code:   ValidationErrorCode.DateTooSoon,
+                    source: new Date(2006, 7, 19)
+                })
+            ]);
         });
 
-        it("should validate unknown sources", function (done) {
+        it("should validate unknown sources", function () {
             var league = new Context()
-                    .addHandlers(new ValidationCallbackHandler());
+                    .addHandlers(new ValidationCallbackHandler);
             $validate(league, null, function (validation, composer) {
                 var source = validation.getObject();
                 if ((source instanceof Team) &&
@@ -22991,12 +24029,70 @@ describe("ValidationCallbackHandler", function () {
                     }));
                 }
             });
-            Promise.resolve(Validator(league).validate(new Team)).caught(function (error) {
-                expect(error.getKeyErrors("Name")).to.eql([
-                    new ValidationError("Team name required", {
-                        key:    "Name",
-                        code:   ValidationErrorCode.Required,
-                        source: undefined
+            var results = Validator(league).validate(new Team);
+            expect(results.isValid()).to.be.false;
+            expect(results.getKeyErrors("Name")).to.eql([
+                new ValidationError("Team name required", {
+                    key:    "Name",
+                    code:   ValidationErrorCode.Required,
+                    source: undefined
+                })
+            ]);
+        });
+    });
+
+    describe("#validateAsync", function () {
+        it("should invalidate object", function (done) {
+            var team   = new Team("Liverpool", "U8"),
+                league = new Context()
+                    .addHandlers(team, new ValidationCallbackHandler),
+                coach  = new Coach;
+            Promise.resolve(Validator(league).validateAsync(coach)).then(function (results) {
+                expect(results.isValid()).to.be.false;
+                done();
+            });
+        });
+
+        it("should be valid if no validators", function (done) {
+            var league = new Context()
+                    .addHandlers(new ValidationCallbackHandler),
+                coach  = new Coach;
+            Promise.resolve(Validator(league).validateAsync(coach)).then(function (results) {
+                expect(results.isValid()).to.be.true;
+                done();
+            });
+        });
+
+        it("should provide invalid keys", function (done) {
+            var team       = new Team("Liverpool", "U8"),
+                league     = new Context()
+                    .addHandlers(team, new ValidationCallbackHandler),
+                coach      = new Coach("Jonathan")
+            Promise.resolve(Validator(league).validateAsync(coach)).then(function (results) {
+                expect(results.isValid()).to.be.false;
+                expect(results.getKeyCulprits()).to.eql(["LastName", "License"]);
+                done();
+            });
+        });
+
+        it("should provide key errors", function (done) {
+            var team       = new Team("Liverpool", "U8"),
+                league     = new Context()
+                    .addHandlers(team, new ValidationCallbackHandler),
+                coach      = new Coach("Jonathan");
+            Promise.resolve(Validator(league).validateAsync(coach)).then(function (results) {
+                expect(results.isValid()).to.be.false;
+                expect(results.getKeyErrors("LastName")).to.eql([
+                    new ValidationError("Last name required", {
+                        key:  "LastName",
+                        code: ValidationErrorCode.Required
+                    })
+                ]);
+                var i = 0;
+                expect(results.getKeyErrors("License")).to.eql([
+                    new ValidationError("License must be D, E or F", {
+                        key:  "License",
+                        code: ValidationErrorCode.Invalid
                     })
                 ]);
                 done();
@@ -23005,4 +24101,52 @@ describe("ValidationCallbackHandler", function () {
     });
 });
 
-},{"../lib/context.js":3,"../lib/miruken.js":9,"../lib/validate.js":11,"bluebird":12,"chai":13}]},{},[54,55,56,57,58,59,60,61,62]);
+},{"../../lib/context.js":3,"../../lib/miruken.js":9,"../../lib/validate":11,"bluebird":14,"chai":15}],66:[function(require,module,exports){
+var miruken  = require('../../lib/miruken.js'),
+    context  = require('../../lib/context.js')
+    validate = require('../../lib/validate'),
+    Promise  = require('bluebird'),
+    chai     = require("chai"),
+    expect   = chai.expect;
+
+eval(base2.namespace);
+eval(miruken.namespace);
+eval(miruken.callback.namespace);
+eval(miruken.context.namespace);
+eval(validate.namespace);
+
+new function () { // closure
+
+    var validatejs_test = new base2.Package(this, {
+        name:    "validatejs_test",
+        exports: ""
+    });
+
+    eval(this.imports);
+
+    var Player = Base.extend({
+        constructor: function (firstName, lastName, dob) {
+            this.extend({
+                getFirstName: function () { return firstName; },
+                setFirstName: function (value) { firstName = value; },
+                getLastName:  function () { return lastName; },
+                setLastName:  function (value) { lastName = value; },
+                getDOB:       function () { return dob; },
+                setDOB:       function (value) { dob = value; }
+            });
+        }});
+    
+  eval(this.exports);
+};
+
+eval(base2.validatejs_test.namespace);
+
+describe("ValidationJsCallbackHandler", function () {
+    describe("#validate", function () {
+        it("should get the validated object", function () {
+
+        });
+    });
+});
+
+},{"../../lib/context.js":3,"../../lib/miruken.js":9,"../../lib/validate":11,"bluebird":14,"chai":15}]},{},[57,58,59,60,61,62,63,64,65,66]);

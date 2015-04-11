@@ -1,5 +1,5 @@
 var miruken  = require('../../lib/miruken.js'),
-    config   = require('../../lib/ioc/config.js'),
+    config   = require('../../lib/ioc'),
     Promise  = require('bluebird'),
     chai     = require("chai"),
     expect   = chai.expect;
@@ -82,37 +82,35 @@ describe("$classes", function () {
         it("should select classes from package", function (done) {
             container.register(
                 $component(Authentication).boundTo(InMemoryAuthenticator),
-                $classes.fromPackage(ioc_config_test).basedOn(Controller)).then(function () {
-                Promise.resolve(container.resolve(LoginController)).then(function (loginController) {
-                    expect(loginController).to.be.instanceOf(LoginController);
-                    done();
-                });
+                $classes.fromPackage(ioc_config_test).basedOn(Controller)
+            );
+            Promise.resolve(container.resolve(LoginController)).then(function (loginController) {
+                expect(loginController).to.be.instanceOf(LoginController);
+                done();
             });
         });
 
         it("should select classes from package using shortcut", function (done) {
             container.register(
                 $component(Authentication).boundTo(InMemoryAuthenticator),
-                $classes(ioc_config_test).basedOn(Controller)).then(function () {
-                Promise.resolve(container.resolve(LoginController)).then(function (loginController) {
-                    expect(loginController).to.be.instanceOf(LoginController);
-                    done();
-                });
+                $classes(ioc_config_test).basedOn(Controller)
+            );
+            Promise.resolve(container.resolve(LoginController)).then(function (loginController) {
+                expect(loginController).to.be.instanceOf(LoginController);
+                done();
             });
         });
 
         it("should register installers if no based on criteria", function (done) {
-            container.register(
-                $classes.fromPackage(ioc_config_test)).then(function () {
-                    Promise.all([container.resolve($eq(Service)),
-                                container.resolve($eq(Authentication)),
-                           container.resolve($eq(InMemoryAuthenticator))])
-                        .spread(function (service, authenticator, nothing) {
-                        expect(service).to.be.instanceOf(SomeService);
-                        expect(authenticator).to.be.instanceOf(InMemoryAuthenticator);
-                        expect(nothing).to.be.undefined;
-                        done();
-                    });
+            container.register($classes.fromPackage(ioc_config_test));
+            Promise.all([container.resolve($eq(Service)),
+                         container.resolve($eq(Authentication)),
+                         container.resolve($eq(InMemoryAuthenticator))])
+                .spread(function (service, authenticator, nothing) {
+                    expect(service).to.be.instanceOf(SomeService);
+                    expect(authenticator).to.be.instanceOf(InMemoryAuthenticator);
+                    expect(nothing).to.be.undefined;
+                    done();
                 });
         });
 
@@ -126,152 +124,151 @@ describe("$classes", function () {
     describe("#withKeys", function () {
         describe("#self", function () {
             it("should select class as key", function (done) {
-                container.register(
-                    $classes.fromPackage(ioc_config_test).basedOn(Authentication)
-                            .withKeys.self()).then(function () {
-                         Promise.all([container.resolve($eq(InMemoryAuthenticator)),
-                                      container.resolve($eq(Authentication))])
-                             .spread(function (authenticator, nothing) {
-                            expect(authenticator).to.be.instanceOf(InMemoryAuthenticator);
-                            expect(nothing).to.be.undefined;
-                            done();
-                        });
+                container.register($classes.fromPackage(ioc_config_test)
+                                           .basedOn(Authentication)
+                                           .withKeys.self()
+                );
+                Promise.all([container.resolve($eq(InMemoryAuthenticator)),
+                             container.resolve($eq(Authentication))])
+                    .spread(function (authenticator, nothing) {
+                        expect(authenticator).to.be.instanceOf(InMemoryAuthenticator);
+                        expect(nothing).to.be.undefined;
+                        done();
                 });
             });
         });
 
         describe("#basedOn", function () {
             it("should select basedOn as keys", function (done) {
-                container.register(
-                    $classes.fromPackage(ioc_config_test).basedOn(Authentication)
-                            .withKeys.basedOn()).then(function () {
-                        Promise.all([container.resolve($eq(Authentication)),
-                                     container.resolve($eq(InMemoryAuthenticator))])
-                            .spread(function (authenticator, nothing) {
-                            expect(authenticator).to.be.instanceOf(InMemoryAuthenticator);
-                            expect(nothing).to.be.undefined;
-                            done();
-                        });
+                container.register($classes.fromPackage(ioc_config_test)
+                                           .basedOn(Authentication)
+                                           .withKeys.basedOn()
+                );
+                Promise.all([container.resolve($eq(Authentication)),
+                             container.resolve($eq(InMemoryAuthenticator))])
+                   .spread(function (authenticator, nothing) {
+                        expect(authenticator).to.be.instanceOf(InMemoryAuthenticator);
+                        expect(nothing).to.be.undefined;
+                        done();
                 });
             });
         });
 
         describe("#anyService", function () {
             it("should select any service as key", function (done) {
-                container.register(
-                    $classes.fromPackage(ioc_config_test).basedOn(Service)
-                            .withKeys.anyService()).then(function () {
-                         Promise.all([container.resolve($eq(Service)),
-                                      container.resolve($eq(SomeService))])
-                             .spread(function (service, nothing) {
-                            expect(service).to.be.instanceOf(SomeService);
-                            expect(nothing).to.be.undefined;
-                            done();
-                        });
+                container.register($classes.fromPackage(ioc_config_test)
+                                           .basedOn(Service)
+                                           .withKeys.anyService()
+                );
+                Promise.all([container.resolve($eq(Service)),
+                             container.resolve($eq(SomeService))])
+                    .spread(function (service, nothing) {
+                        expect(service).to.be.instanceOf(SomeService);
+                        expect(nothing).to.be.undefined;
+                        done();
                 });
             });
         });
 
         describe("#allServices", function () {
             it("should select all services as keys", function (done) {
-                container.register(
-                    $classes.fromPackage(ioc_config_test).basedOn(Authentication)
-                            .withKeys.allServices()).then(function () {
-                        Promise.all([container.resolve($eq(Service)),
-                                     container.resolve($eq(Authentication)),
-                                     container.resolve($eq(InMemoryAuthenticator))])
-                            .spread(function (authenticator1, authenticator2, nothing) {
-                            expect(authenticator1).to.be.instanceOf(InMemoryAuthenticator);
-                            expect(authenticator2).to.equal(authenticator1);
-                            expect(nothing).to.be.undefined;
-                            done();
-                        });
+                container.register($classes.fromPackage(ioc_config_test)
+                                           .basedOn(Authentication)
+                                           .withKeys.allServices()
+                );
+                Promise.all([container.resolve($eq(Service)),
+                             container.resolve($eq(Authentication)),
+                             container.resolve($eq(InMemoryAuthenticator))])
+                   .spread(function (authenticator1, authenticator2, nothing) {
+                        expect(authenticator1).to.be.instanceOf(InMemoryAuthenticator);
+                        expect(authenticator2).to.equal(authenticator1);
+                        expect(nothing).to.be.undefined;
+                        done();
                 });
             });
         });
 
         describe("#mostSpecificService", function () {
             it("should select most specific service as key", function (done) {
-                container.register(
-                    $classes.fromPackage(ioc_config_test).basedOn(Service)
-                            .withKeys.mostSpecificService(Service)).then(function () {
-                        Promise.all([container.resolve($eq(Service)),
-                                     container.resolve($eq(Authentication)),
-                                     container.resolve($eq(InMemoryAuthenticator))])
-                            .spread(function (service, authenticator, nothing) {
-                            expect(service).to.be.instanceOf(SomeService);
-                            expect(authenticator).to.be.instanceOf(InMemoryAuthenticator);
-                            expect(nothing).to.be.undefined;
-                            done();
-                       });
+                container.register($classes.fromPackage(ioc_config_test)
+                                           .basedOn(Service)
+                                           .withKeys.mostSpecificService(Service)
+                );
+                Promise.all([container.resolve($eq(Service)),
+                             container.resolve($eq(Authentication)),
+                             container.resolve($eq(InMemoryAuthenticator))])
+                    .spread(function (service, authenticator, nothing) {
+                        expect(service).to.be.instanceOf(SomeService);
+                        expect(authenticator).to.be.instanceOf(InMemoryAuthenticator);
+                        expect(nothing).to.be.undefined;
+                        done();
                 });
             });
 
             it("should select most specific service form basedOn as key", function (done) {
-                container.register(
-                    $classes.fromPackage(ioc_config_test).basedOn(Service)
-                            .withKeys.mostSpecificService()).then(function () {
-                        Promise.all([container.resolve($eq(Service)),
-                                     container.resolve($eq(Authentication)),
-                                     container.resolve($eq(InMemoryAuthenticator))])
-                            .spread(function (service, authenticator, nothing) {
-                            expect(service).to.be.instanceOf(SomeService);
-                            expect(authenticator).to.be.instanceOf(InMemoryAuthenticator);
-                            expect(nothing).to.be.undefined;
-                            done();
-                       });
+                container.register($classes.fromPackage(ioc_config_test)
+                                           .basedOn(Service)
+                                           .withKeys.mostSpecificService()
+                );
+                Promise.all([container.resolve($eq(Service)),
+                             container.resolve($eq(Authentication)),
+                             container.resolve($eq(InMemoryAuthenticator))])
+                   .spread(function (service, authenticator, nothing) {
+                       expect(service).to.be.instanceOf(SomeService);
+                       expect(authenticator).to.be.instanceOf(InMemoryAuthenticator);
+                       expect(nothing).to.be.undefined;
+                       done();
                 });
             });
 
             it("should select basedOn as key if no services match", function (done) {
-                container.register(
-                    $component(Authentication).boundTo(InMemoryAuthenticator),
-                    $classes.fromPackage(ioc_config_test).basedOn(Controller)
-                            .withKeys.mostSpecificService()).then(function () {
-                        Promise.all([container.resolve($eq(Controller)),
-                                     container.resolve($eq(LoginController))])
-                            .spread(function (controller, nothing) {
-                            expect(controller).to.be.instanceOf(LoginController);
-                            expect(nothing).to.be.undefined;
-                            done();
-                       });
+                container.register($component(Authentication).boundTo(InMemoryAuthenticator),
+                                   $classes.fromPackage(ioc_config_test).basedOn(Controller)
+                                           .withKeys.mostSpecificService()
+                );
+                Promise.all([container.resolve($eq(Controller)),
+                             container.resolve($eq(LoginController))])
+                    .spread(function (controller, nothing) {
+                        expect(controller).to.be.instanceOf(LoginController);
+                        expect(nothing).to.be.undefined;
+                        done();
                 });
             });
         });
 
         describe("#name", function () {
             it("should specify name as key", function (done) {
-                container.register(
-                    $classes.fromPackage(ioc_config_test).basedOn(Controller)
-                            .withKeys.name("Login")).then(function () {
-                        Promise.resolve(container.resolve("Login")).then(function (controller) {
-                            expect(controller).to.be.instanceOf(LoginController);
-                            done();
-                        });
+                container.register($classes.fromPackage(ioc_config_test)
+                                           .basedOn(Controller)
+                                           .withKeys.name("Login")
+                );
+                Promise.resolve(container.resolve("Login")).then(function (controller) {
+                    expect(controller).to.be.instanceOf(LoginController);
+                    done();
                 });
             });
 
             it("should infer name as key", function (done) {
-                container.register(
-                    $classes.fromPackage(ioc_config_test).basedOn(Controller)
-                            .withKeys.name()).then(function () {
-                        Promise.resolve(container.resolve("LoginController")).then(function (controller) {
-                            expect(controller).to.be.instanceOf(LoginController);
-                            done();
-                        });
+                container.register($classes.fromPackage(ioc_config_test)
+                                           .basedOn(Controller)
+                                           .withKeys.name()
+                );
+                Promise.resolve(container.resolve("LoginController")).then(function (controller) {
+                    expect(controller).to.be.instanceOf(LoginController);
+                    done();
                 });
             });
 
             it("should evaluate name as key", function (done) {
-                container.register(
-                    $classes.fromPackage(ioc_config_test).basedOn(Controller)
-                        .withKeys.name(function (name) { 
-                            return name.replace("Controller", "");
-                            })).then(function () {
-                        Promise.resolve(container.resolve("Login")).then(function (controller) {
-                            expect(controller).to.be.instanceOf(LoginController);
-                            done();
-                        });
+                container.register($classes.fromPackage(ioc_config_test)
+                                            .basedOn(Controller)
+                                            .withKeys.name(function (name) { 
+                                                return name.replace("Controller", "");
+                                            })
+                );
+                Promise.resolve(container.resolve("Login")).then(function (controller) {
+                    expect(controller).to.be.instanceOf(LoginController);
+                    done();
                 });
             });
         });
@@ -279,21 +276,20 @@ describe("$classes", function () {
 
     describe("#configure", function () {
         it("should customize component configuration", function (done) {
-            container.register(
-                $classes.fromPackage(ioc_config_test).basedOn(Service)
-                        .withKeys.mostSpecificService()
-                        .configure(function (component) {
-                            component.transient();
-                         })).then(function () {
-                   Promise.all([container.resolve($eq(Authentication)),
-                                container.resolve($eq(Authentication))])
-                       .spread(function (authenticator1, authenticator2) {
-                       expect(authenticator1).to.be.instanceOf(InMemoryAuthenticator);
-                       expect(authenticator2).to.not.equal(authenticator1);
-                       done();
-                    });
+            container.register($classes.fromPackage(ioc_config_test)
+                                       .basedOn(Service)
+                                       .withKeys.mostSpecificService()
+                                       .configure(function (component) {
+                                           component.transient();
+                                       })
+            );
+            Promise.all([container.resolve($eq(Authentication)),
+                         container.resolve($eq(Authentication))])
+                .spread(function (authenticator1, authenticator2) {
+                    expect(authenticator1).to.be.instanceOf(InMemoryAuthenticator);
+                    expect(authenticator2).to.not.equal(authenticator1);
+                    done();
                 });
             });
         });
-
 });

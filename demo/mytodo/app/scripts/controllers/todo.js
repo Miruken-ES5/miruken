@@ -3,7 +3,7 @@ new function () {
     var todo = new base2.Package(this, {
         name:    "todo",
         parent:  mytodoApp,
-        imports: "miruken,miruken.mvc,miruken.ioc,miruken.ioc.config",
+        imports: "miruken,miruken.mvc,miruken.ioc",
         exports: "TodoController,TodoInstaller,TodoRunner,TodoStartup"
     });
 
