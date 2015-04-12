@@ -15,32 +15,64 @@ new function () { // closure
 
     var validatejs_test = new base2.Package(this, {
         name:    "validatejs_test",
-        exports: ""
+        exports: "Address,LineItem,Order"
     });
 
     eval(this.imports);
 
-    var Player = Base.extend({
-        constructor: function (firstName, lastName, dob) {
-            this.extend({
-                getFirstName: function () { return firstName; },
-                setFirstName: function (value) { firstName = value; },
-                getLastName:  function () { return lastName; },
-                setLastName:  function (value) { lastName = value; },
-                getDOB:       function () { return dob; },
-                setDOB:       function (value) { dob = value; }
-            });
-        }});
-    
+    var Address = Base.extend({
+        $properties: {
+            line:    { validate: { presence: true } },
+            city:    { validate: { presence: true } },
+            state:   { validate: { presence: true } },
+            zipcode: { validate: { presence: true } },
+        }
+    });
+
+    var LineItem = Base.extend({
+        $properties: {
+           plu: { 
+               validate: {
+                   presence: true,
+                   length: { is: 5 }
+               }
+           },
+           quanity: {
+               validate: {
+                   numericality: {
+                       onlyInteger: true,
+                       greaterThan: 0
+                   }
+               }
+           }
+        }
+    });
+
+    var Order = Base.extend({
+        $properties: {
+            address:   { map: Address },
+            lineItems: { map: LineItem }
+        }
+    });
+
+
   eval(this.exports);
+
 };
 
 eval(base2.validatejs_test.namespace);
 
-describe("ValidationJsCallbackHandler", function () {
-    describe("#validate", function () {
-        it("should get the validated object", function () {
+describe("ValidateJsCallbackHandler", function () {
+    var context;
+    beforeEach(function() {
+        context = new Context;
+        context.addHandlers(new ValidationCallbackHandler, new ValidateJsCallbackHandler);
+    });
 
+    describe("#validate", function () {
+        it("should validate simple object", function () {
+            var address = new Address;
+            Validator(context).validate(address);
         });
     });
 });

@@ -119,26 +119,26 @@ describe("Enum", function () {
 
 describe("$meta", function () {
     it("should have class metadata", function () {
-        expect(Dog.$meta).to.be.instanceOf(ClassMeta);
+        expect(Dog.$meta).to.be.ok;
     });
 
     it("should not be able to delete class metadata", function () {
-        expect(Dog.$meta).to.be.instanceOf(ClassMeta);
+        expect(Dog.$meta).to.be.ok;
         delete Dog.$meta;
-        expect(Dog.$meta).to.be.instanceOf(ClassMeta);
+        expect(Dog.$meta).to.be.ok;
     });
 
     it("should have instance metadata", function () {
         var dog = new Dog;
-        expect(dog.$meta).to.be.instanceOf(InstanceMeta);
+        expect(dog.$meta).to.be.ok;
         expect(dog.$meta).to.not.equal(Dog.$meta);
     });
 
     it("should not be able to delete instance metadata", function () {
         var dog = new Dog;
-        expect(Dog.$meta).to.be.instanceOf(ClassMeta);
+        expect(Dog.$meta).to.be.ok;
         delete dog.$meta;
-        expect(Dog.$meta).to.be.instanceOf(ClassMeta);
+        expect(Dog.$meta).to.be.ok;
     });
 
 });
@@ -167,7 +167,7 @@ describe("$isFunction", function () {
 });
 
 describe("$properties", function () {
-    var Person = Base.extend($properties, {
+    var Person = Base.extend({
         $properties: {
             firstName: '',
             lastName:  '',
@@ -252,13 +252,18 @@ describe("$inferProperties", function () {
             this.firstName = firstName;
         },
         getFirstName: function () { return this._name; },
-        setFirstName: function (value) { this._name = value; }
+        setFirstName: function (value) { this._name = value; },
+        getInfo: function (key) { return ""; }
     });
     
     it("should infer instance properties", function () {
         var person = new Person('Sean');
         expect(person.firstName).to.equal('Sean');
         expect(person.getFirstName()).to.equal('Sean');
+    });
+
+    it("should not infer getters with arguments", function () {
+        expect(Person.prototype).to.not.have.key('info');
     });
 
     it("should infer extended properties", function () {

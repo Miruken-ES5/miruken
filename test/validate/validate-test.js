@@ -57,25 +57,31 @@ new function () { // closure
             Player, function (validation, composer) {
                 var player = validation.getObject();
                 if (!player.getFirstName() || player.getFirstName().length == 0) {
-                    validation.required("FirstName", "First name required");
+                    validation.getResults().addKey('firstName')
+                        .addError('required', { message: 'First name required' });
                 }
                 if (!player.getLastName()  || player.getLastName().length == 0) {
-                    validation.required("LastName", "Last name required");
+                    validation.getResults().addKey('lastName')
+                        .addError('required', { message: 'Last name required' });
                 }
                 if ((player.getDOB() instanceof Date) === false) {
-                    validation.invalid("DOB", player.getDOB(), "Valid Date-of-birth required");
+                    validation.getResults().addKey('dob')
+                        .addError('required', { message: 'DOB required' });
                 }
             },
-            Team, function (validation, composer) {
+            Coach, function (validation, composer) {
                 var coach = validation.getObject();
                 if (!coach.getFirstName() || coach.getFirstName().length == 0) {
-                    validation.required("FirstName", "First name required");
+                    validation.getResults().addKey('firstName')
+                        .addError('required', { message: 'First name required' });
                 }
                 if (!coach.getLastName()  || coach.getLastName().length == 0) {
-                    validation.required("LastName", "Last name required");
+                    validation.getResults().addKey('lastName')
+                        .addError('required', { message: 'Last name required' });
                 }
                 if (["D", "E", "F"].indexOf(coach.getLicense()) < 0) {
-                    validation.invalid("License", coach.getLicense(), "License must be D, E or F");
+                    validation.getResults().addKey('license')
+                        .addError('license', { message: 'License must be D, E or F' });
                 }
                 return Promise.delay(true, 50);
             }]
@@ -87,11 +93,11 @@ new function () { // closure
 
 eval(base2.validate_test.namespace);
 
-describe("ValidationResult", function () {
+describe("Validation", function () {
     describe("#getObject", function () {
         it("should get the validated object", function () {
             var team       = new Team("Aspros"),
-                validation = new ValidationResult(team);
+                validation = new Validation(team);
             expect(validation.getObject()).to.equal(team);
         });
     });
@@ -99,75 +105,21 @@ describe("ValidationResult", function () {
     describe("#getScope", function () {
         it("should get the validation scope", function () {
             var team       = new Team("Aspros"),
-                validation = new ValidationResult(team, "players");
+                validation = new Validation(team, false, "players");
             expect(validation.getScope()).to.equal("players");
         });
     });
+});
 
-    describe("#addKeyError", function () {
-        it("should add validation errors", function () {
-            var team       = new Team,
-                validation = new ValidationResult(team);
-            validation.addKeyError("Name", new ValidationError("Team name required", {
-                key:  "Name",
-                code: ValidationErrorCode.Required
-            }));
-            expect(validation.getKeyErrors("Name")).to.eql([
-                new ValidationError("Team name required", {
-                    key:  "Name",
-                    code: ValidationErrorCode.Required
-                })
-            ]);
+describe("ValidationResult", function () {
+    describe("#addKey", function () {
+        it("should add key errors", function () {
+            var validation = new ValidationResult();
+            validation.addKey("name").addError("required", { message: "Team name required" });
+            expect(validation["name"].errors["required"][0]).to.eql({
+                message: "Team name required"
+            });
         });
-
-        it("should add invalid child validation results", function () {
-            var team            = new Team,
-                player          = new Player,
-                validation      = new ValidationResult(team),
-   	            childValidation = new ValidationResult(player);
-                childValidation.addKeyError("FirstName", new ValidationError("First name required", {
-                    key:  "FirstName",
-                    code: ValidationErrorCode.Required
-                }));
-	        validation.addKeyError("Player", childValidation);
-	        expect(validation.isValid()).to.be.false;
-            expect(validation.getKeyErrors("Player")[0].getKeyErrors("FirstName")).to.eql([
-                new ValidationError("First name required", {
-                    key:  "FirstName",
-                    code: ValidationErrorCode.Required
-                })
-	        ]);
-	    });
-
-        it("should not add valid child validation results", function () {
-            var team            = new Team,
-                player          = new Player,
-                validation      = new ValidationResult(team),
-                childValidation = new ValidationResult(player);
-            validation.addKeyError("Player", childValidation);
-            expect(validation.isValid()).to.be.true;
-            expect(validation.getKeyErrors("Player")).to.be.undefined;
-        });
-
-        it("should add anonymous invalid child validation results", function () {
-            var team            = new Team,
-                player          = new Player,
-                validation      = new ValidationResult(team),
-                childValidation = new ValidationResult(player);
-            childValidation.addKeyError("FirstName", new ValidationError("First name required", {
-                key:  "FirstName",
-                code: ValidationErrorCode.Required
-            }));
-            validation.addChildResult(childValidation);
-            expect(validation.isValid()).to.be.false;
-            expect(validation.getKeyCulprits()).to.eql([]);
-            expect(validation.getChildResults()[0].getKeyErrors("FirstName")).to.eql([
-                new ValidationError("First name required", {
-                    key:  "FirstName",
-                    code: ValidationErrorCode.Required
-                })
-		    ]);
-	    });
     });
 });
 
@@ -195,7 +147,8 @@ describe("ValidationCallbackHandler", function () {
                 player     = new Player("Matthew");
             var results = Validator(league).validate(player);
             expect(results.isValid()).to.be.false;
-		    expect(results.getKeyCulprits()).to.eql(["LastName", "DOB"]);
+            expect(results).to.have.ownProperty('lastName');
+            expect(results).to.have.ownProperty('dob');
         });
 
         it("should provide key errors", function () {
@@ -205,18 +158,12 @@ describe("ValidationCallbackHandler", function () {
                 player     = new Player("Matthew");
             var results = Validator(league).validate(player);
             expect(results.isValid()).to.be.false;
-            expect(results.getKeyErrors("LastName")).to.eql([
-                new ValidationError("Last name required", {
-                    key:  "LastName",
-                    code: ValidationErrorCode.Required
-                })
-            ]);
-            expect(results.getKeyErrors("DOB")).to.eql([
-                new ValidationError("Valid Date-of-birth required", {
-                    key:  "DOB",
-                    code: ValidationErrorCode.Invalid
-                })
-            ]);
+            expect(results["lastName"].errors["required"][0]).to.eql({
+                message: "Last name required"
+            });
+            expect(results["dob"].errors["required"][0]).to.eql({
+                message: "DOB required"
+            });
         });
 
         it("should dynamically add validation", function () {
@@ -229,30 +176,25 @@ describe("ValidationCallbackHandler", function () {
                     start  = new Date(2006, 8, 1),
                     end    = new Date(2007, 7, 31);
                 if (player.getDOB() < start) {
-                    validation.addKeyError("DOB", new ValidationError(
-                        "Player too old for division " + team.getDivision(), {
-                            key:    "DOB",
-                            code:   ValidationErrorCode.DateTooSoon,
-                            source: player.getDOB()
-                    }));
+                    validation.getResults().addKey('dob')
+                        .addError('playerAge', { 
+                            message: "Player too old for division " + team.getDivision(),
+                            value:   player.getDOB()
+                         });
                 } else if (player.getDOB() > end) {
-                    validation.addKeyError("DOB", new ValidationError(
-                        "Player too young for division " + team.getDivision(), {
-                            key:    "DOB",
-                            code:   ValidationErrorCode.DateTooLate,
-                            source: player.getDOB()
-                    }));
+                    validation.getResults().addKey('dob')
+                        .addError('playerAge', { 
+                            message: "Player too young for division " + team.getDivision(),
+                            value:   player.getDOB()
+                         });
                 }
             });
             var results = Validator(league).validate(player);
             expect(results.isValid()).to.be.false;
-            expect(results.getKeyErrors("DOB")).to.eql([
-                new ValidationError("Player too old for division U8", {
-                    key:    "DOB",
-                    code:   ValidationErrorCode.DateTooSoon,
-                    source: new Date(2006, 7, 19)
-                })
-            ]);
+            expect(results["dob"].errors["playerAge"][0]).to.eql({
+                message: "Player too old for division U8",
+                value:   new Date(2006, 7, 19)
+            });
         });
 
         it("should validate unknown sources", function () {
@@ -262,22 +204,15 @@ describe("ValidationCallbackHandler", function () {
                 var source = validation.getObject();
                 if ((source instanceof Team) &&
                     (!source.getName() || source.getName().length == 0)) {
-                    validation.addKeyError("Name", new ValidationError("Team name required", {
-                        key:    "Name",
-                        code:   ValidationErrorCode.Required,
-                        source: source.getName()
-                    }));
+                    validation.getResults().addKey('name')
+                        .addError('required', { message: "Team name required" });
                 }
             });
             var results = Validator(league).validate(new Team);
             expect(results.isValid()).to.be.false;
-            expect(results.getKeyErrors("Name")).to.eql([
-                new ValidationError("Team name required", {
-                    key:    "Name",
-                    code:   ValidationErrorCode.Required,
-                    source: undefined
-                })
-            ]);
+            expect(results["name"].errors["required"][0]).to.eql({
+                message: "Team name required"
+            });
         });
     });
 
@@ -287,7 +222,7 @@ describe("ValidationCallbackHandler", function () {
                 league = new Context()
                     .addHandlers(team, new ValidationCallbackHandler),
                 coach  = new Coach;
-            Promise.resolve(Validator(league).validateAsync(coach)).then(function (results) {
+            Validator(league).validateAsync(coach).then(function (results) {
                 expect(results.isValid()).to.be.false;
                 done();
             });
@@ -297,7 +232,7 @@ describe("ValidationCallbackHandler", function () {
             var league = new Context()
                     .addHandlers(new ValidationCallbackHandler),
                 coach  = new Coach;
-            Promise.resolve(Validator(league).validateAsync(coach)).then(function (results) {
+            Validator(league).validateAsync(coach).then(function (results) {
                 expect(results.isValid()).to.be.true;
                 done();
             });
@@ -308,33 +243,11 @@ describe("ValidationCallbackHandler", function () {
                 league     = new Context()
                     .addHandlers(team, new ValidationCallbackHandler),
                 coach      = new Coach("Jonathan")
-            Promise.resolve(Validator(league).validateAsync(coach)).then(function (results) {
+            Validator(league).validateAsync(coach).then(function (results) {
                 expect(results.isValid()).to.be.false;
-                expect(results.getKeyCulprits()).to.eql(["LastName", "License"]);
-                done();
-            });
-        });
-
-        it("should provide key errors", function (done) {
-            var team       = new Team("Liverpool", "U8"),
-                league     = new Context()
-                    .addHandlers(team, new ValidationCallbackHandler),
-                coach      = new Coach("Jonathan");
-            Promise.resolve(Validator(league).validateAsync(coach)).then(function (results) {
-                expect(results.isValid()).to.be.false;
-                expect(results.getKeyErrors("LastName")).to.eql([
-                    new ValidationError("Last name required", {
-                        key:  "LastName",
-                        code: ValidationErrorCode.Required
-                    })
-                ]);
-                var i = 0;
-                expect(results.getKeyErrors("License")).to.eql([
-                    new ValidationError("License must be D, E or F", {
-                        key:  "License",
-                        code: ValidationErrorCode.Invalid
-                    })
-                ]);
+                expect(results["license"].errors["license"][0]).to.eql({
+                    message: "License must be D, E or F"
+                });
                 done();
             });
         });

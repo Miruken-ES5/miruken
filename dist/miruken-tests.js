@@ -1748,6 +1748,7 @@ new function () { // closure
                 if (definition.hasOwnProperty(tag)) {
                     list = definition[tag];
                     delete definition[tag];
+                    delete target[tag];
                 }
                 if ($isFunction(list)) {
                     list = list();
@@ -4273,10 +4274,16 @@ new function () { // closure
                     key            = componentModel.getKey(),
                     factory        = componentModel.getFactory();
                 if (!key) {
-                    validation.required('Key', 'Key could not be determined for component.');
+                    validation.getResults().addKey('key')
+                        .addError('required', { 
+                            message: 'Key could not be determined for component.' 
+                         });
                 }
                 if (!factory) {
-                    validation.required('Factory', 'Factory could not be determined for component.');
+                    validation.getResults().addKey('factory')
+                        .addError('required', { 
+                            message: 'Factory could not be determined for component.' 
+                         });
                 }
             }]
     });
@@ -4429,7 +4436,7 @@ new function () { // closure
     var miruken = new base2.Package(this, {
         name:    "miruken",
         version: "1.0",
-        exports: "Enum,Protocol,Delegate,Miruken,MetaStep,MetaMacro,ClassMeta,InstanceMeta,Disposing,DisposingMixin,Parenting,Starting,Startup,Facet,Interceptor,InterceptorSelector,ProxyBuilder,TraversingAxis,Traversing,TraversingMixin,Traversal,Variance,Modifier,ArrayManager,IndexedList,$isProtocol,$isClass,$classOf,$ancestorOf,$isString,$isFunction,$isObject,$isPromise,$isSomething,$isNothing,$using,$lift,$eq,$use,$copy,$lazy,$eval,$every,$child,$optional,$promise,$instant,$createModifier,$properties,$inferProperties,$inheritStatic"
+        exports: "Enum,Protocol,Delegate,Miruken,MetaStep,MetaMacro,Disposing,DisposingMixin,Parenting,Starting,Startup,Facet,Interceptor,InterceptorSelector,ProxyBuilder,TraversingAxis,Traversing,TraversingMixin,Traversal,Variance,Modifier,ArrayManager,IndexedList,$isProtocol,$isClass,$classOf,$ancestorOf,$isString,$isFunction,$isObject,$isPromise,$isSomething,$isNothing,$using,$lift,$eq,$use,$copy,$lazy,$eval,$every,$child,$optional,$promise,$instant,$createModifier,$inferProperties,$inheritStatic"
     });
 
     eval(this.imports);
@@ -4619,14 +4626,16 @@ new function () { // closure
                     }
                     return false;
                 },
-                apply: function (step, metadata, target, definition) {
+                apply: function _(step, metadata, target, definition) {
                     if (parent) {
                         parent.apply(step, metadata, target, definition);
+                    } else if ($properties) {
+                        (_.p || (_.p = new $properties)).apply(step, metadata, target, definition);
                     }
                 },
-                getDescriptor: function (name) {
+                getDescriptor: function (filter) {
                     if (parent) {
-                        return parent.getDescriptor(name);
+                        return parent.getDescriptor(filter);
                     }
                 },
                 linkBase: function (method) {
@@ -4886,32 +4895,31 @@ new function () { // closure
                     }
                     if (spec.get || spec.set) {
                         delete spec.writable;
+                    } else {
+                        spec.value = property.value;
                     }
                 }
                 this.defineProperty(metadata, target, name, spec);
                 if (descriptor) {
-                    delete property.writable;
-                    delete property.value;
-                    delete property.get;
-                    delete property.set;
+                    _cleanPropertyDescriptor(property);
                     Object.freeze(property);
                     (descriptors || (descriptors = {}))[name] = property;
                 }
-                delete spec.writable;
-                delete spec.value;
-                delete spec.get;
-                delete spec.set;
+                _cleanPropertyDescriptor(spec);
             }
             if (descriptors) {
                 metadata.extend({
-                    getDescriptor: function (name) {
-                        if ($isNothing(name)) {
+                    getDescriptor: function (filter) {
+                        if ($isNothing(filter)) {
                             return lang.extend(lang.extend({}, this.base()), descriptors);
                         }
-                        return descriptors[name] || this.base(name);
+                        if ($isString(filter)) {
+                            return descriptors[filter] || this.base(filter);
+                        }
                     }
                 });
             }
+            delete definition[this._tag];
             delete target[this._tag];
         },
         defineProperty: function(metadata, target, name, spec) {
@@ -4920,6 +4928,13 @@ new function () { // closure
         shouldInherit: True,
         isActive: True
     });
+
+    function _cleanPropertyDescriptor(property) {
+        delete property.writable;
+        delete property.value;
+        delete property.get;
+        delete property.set;
+    }
 
     /**
      * @class {$inferProperties}
@@ -4944,6 +4959,8 @@ new function () { // closure
                         }
                     }
                     delete spec.name;
+                    delete spec.get;
+                    delete spec.set;
                 }
             }
         },
@@ -4954,23 +4971,26 @@ new function () { // closure
         isActive: True
     });
 
+    var DEFAULT_GETTERS = ['get', 'is', 'has', 'can'];
+
     function _inferProperty(key, value, definition, spec) {
-        if (key.lastIndexOf('get', 0) == 0) {
-            spec.name = key.substring(3);
-            spec.get  = value;
-        } else if (key.lastIndexOf('is', 0) == 0) {
-            spec.name = key.substring(2);
-            spec.get  = value;
-        } else if (key.lastIndexOf('set', 0) == 0) {
-            spec.name = key.substring(3);
-            spec.set  = value;
-        } else {
-            return false;
+        for (var i = 0; i < DEFAULT_GETTERS.length; ++i) {
+            var prefix = DEFAULT_GETTERS[i];
+            if (key.lastIndexOf(prefix, 0) == 0) {
+                if (value.length === 0) { // no arguments
+                    spec.name = key.substring(prefix.length);
+                    spec.get  = value;
+                    break;
+                }
+            }
         }
         if (spec.get) {
             spec.set = definition['set' + spec.name];
+        } else if (key.lastIndexOf('set', 0) == 0) {
+            spec.name = key.substring(3);
+            spec.set  = value;
         }
-        return true;
+        return !!spec.name;
     }
 
     /**
@@ -5934,7 +5954,7 @@ new function () { // closure
      * @class {Model}
      */
     var Model = Base.extend(
-        $properties, $inferProperties, {
+        $inferProperties, {
         constructor: function (data) {
             this.fromData(data);
         },
@@ -6000,8 +6020,7 @@ new function () { // closure
     /**
      * @class {Controller}
      */
-    var Controller = CallbackHandler.extend(
-        $properties, $inferProperties, $contextual);
+    var Controller = CallbackHandler.extend($inferProperties, $contextual);
 
     /**
      * @protocol {MasterDetail}
@@ -6053,7 +6072,7 @@ new function () { // closure
         version: miruken.version,
         parent:  miruken,
         imports: "miruken,miruken.callback",
-        exports: "Validator,ValidationErrorCode,ValidationError,ValidationResult,ValidationCallbackHandler,$validate"
+        exports: "Validator,Validation,ValidationResult,ValidationCallbackHandler,$validate"
     });
 
     eval(this.imports);
@@ -6068,169 +6087,84 @@ new function () { // closure
          * Validates the object in the scope.
          * @param   {Object} object  - object to validate
          * @param   {Object} scope   - scope of validation
-         * @returns {ValidationResult) the validation result
          */
         validate: function (object, scope) {},
         /**
          * Validates the object in the scope.
          * @param   {Object} object  - object to validate
          * @param   {Object} scope   - scope of validation
-         * @returns {Promise(ValidationResult)} a promise for the validation result
+         * @returns {Promise} a promise for the validation
          */
         validateAsync: function (object, scope) {}
     });
 
     /**
-     * ValidationErrorCode enum
-     * @enum {Number}
+     * @class {Validation}
      */
-    var ValidationErrorCode = Enum({
-        Invalid:           100,
-        Required:          101,
-        TypeMismatch:      102,
-        MutuallyExclusive: 103,
-        NumberTooLarge:    104,
-        NumberTooSmall:    105,
-        DateTooLate:       106,
-        DateTooSoon:       107
-        });
-
-    /**
-     * @class {ValidationError}
-     * @param {String} message   - validation error message
-     * @param {Object} userInfo  - additional error info
-     *   Standard userInfo keys:
-     *   key    => identifies invald key
-     *   domain => identifies category of error
-     *   code   => identifies type of error
-     *   source => captures invalid value
-     */
-    function ValidationError(message, userInfo) {
-        this.message  = message;
-        this.userInfo = userInfo;
-        this.stack    = (new Error).stack;
-    }
-    ValidationError.prototype             = new Error;
-    ValidationError.prototype.constructor = ValidationError;
+    var Validation = Base.extend({
+        constructor: function (object, async, scope) {
+            async = !!async;
+            delete object.$validation;
+            this.extend({
+                getObject: function () { return object; },
+                isAsync: function () { return async; },
+                getScope: function () { return scope; },
+                getResults: function () {
+                    return object.$validation || (object.$validation = new ValidationResult);
+                }
+            });
+        }
+    });
 
     // =========================================================================
     // ValidationResult
     // =========================================================================
     
-    var $childResultsKey = '__childResults';
-
     /**
      * @class {ValidationResult}
      */
     var ValidationResult = Base.extend({
-        constructor: function (object, scope) {
-            var _errors = {};
-            this.extend({
-                getObject: function () { return object; },
-                getScope: function () { return scope; },
-                isValid: function () {
-                    for (var k in _errors) {
-                        return false;
-                    }
-                    return true;
-                },
-                getKeyCulprits: function () {
-                    var keys = [];
-                    for (var k in _errors) {
-                        if (k !== $childResultsKey) {
-                            keys.push(k);
-                        }
-                    }
-                    return keys;
-                },
-                getKeyErrors: function (key) { return _errors[key]; },
-                addKeyError: function (key, error) {
-                    if (!((error instanceof ValidationResult) && error.isValid())) {
-                        var keyErrors = _errors[key];
-                        if (!keyErrors) {
-                            keyErrors = _errors[key] = [];
-                        }
-                        keyErrors.push(error);
-                    }
-                    return this;
-                },
-                getChildResults: function () { 
-                    return this.getKeyErrors($childResultsKey);
-                },
-                addChildResult: function (childResult) {
-                    this.addKeyError($childResultsKey, childResult);
+        isValid: function () {
+            for (var name in this) {
+                if (!(name in ValidationResult.prototype)) {
+                    return false;
                 }
-            });
-        },
-        toString: function () {
-            var str = "",
-                keys = this.getKeyCulprits();
-            for (var ki = 0; ki < keys.length; ++ki) {
-                var key    = keys[ki],
-                    errors = this.getKeyErrors(key);
-                str += key;
-                for (var ei = 0; ei < errors.length; ++ei) {
-                    var error = errors[ei];
-                    str += '\n    - ';
-                    str += error.message;
-                }
-                str += '\n';
             }
-            return str;
+            return true;
+        },
+        addKey: function (key) {
+            return this[key] || (this[key] = new ValidationResult);
+        },
+        addError: function (name, error) {
+            var errors = (this.errors || (this.errors = {})),
+                named  = errors[name];
+            if (named) {
+                named.push(error);
+            } else {
+                errors[name] = [error];
+            }
+            return this;
         }
     });
-
-    ValidationResult.implement({
-        invalid: function(key, source, message) {
-            _addValidationError(this, key, ValidationErrorCode.Invalid, message, source);
-        },
-        required: function(key, message) {
-            _addValidationError(this, key, ValidationErrorCode.Required, message);
-        },
-        typeMismatch: function(key, source, message) {
-            _addValidationError(this, key, ValidationErrorCode.TypeMismatch, message);
-        },
-        mutuallyExclusive: function(key, source, message) {
-            _addValidationError(this, key, ValidationErrorCode.MutuallyExclusive, message);
-        },
-        numberToLarge: function(key, source, message) {
-            _addValidationError(this, key, ValidationErrorCode.NumberToLarge, message);
-        },
-        numberToSmall: function(key, source, message) {
-            _addValidationError(this, key, ValidationErrorCode.NumberToSmall, message);
-        },
-        dateToLate: function(key, source, message) {
-            _addValidationError(this, key, ValidationErrorCode.DateToLate, message);
-        },
-        dateToSoon: function(key, source, message) {
-            _addValidationError(this, key, ValidationErrorCode.DateToSoon, message);
-        }
-    });
-
-    function _addValidationError(result, key, code, message, source) {
-        var userInfo = { key: key, code: code };
-        if (source) {
-            userInfo.source = source;
-        }
-        result.addKeyError(key, new ValidationError(message, userInfo));
-    }
 
     /**
      * @class {ValidationCallbackHandler}
      */
     var ValidationCallbackHandler = CallbackHandler.extend({
         validate: function (object, scope) {
-            var validation = new ValidationResult(object, scope);
+            var validation = new Validation(object, false, scope);
             $composer.handle(validation, true);
-            return validation;
+            return validation.getResults();
         },
         validateAsync: function (object, scope) {
-            var validation = new ValidationResult(object, scope);
-            return Promise.resolve($composer.deferAll(validation)).return(validation);
+            var validation = new Validation(object, true, scope);
+            return $composer.deferAll(validation).then(function () {
+                return validation.getResults();
+            });
         }
     });
 
-    $handle(CallbackHandler, ValidationResult, function (validation, composer) {
+    $handle(CallbackHandler, Validation, function (validation, composer) {
         var target = validation.getObject(),
             source = target && target.constructor;
         if (source) {
@@ -6270,18 +6204,49 @@ new function () { // closure
 
     validatejs.Promise = Promise;
 
+    var detailed = { format: "detailed" };
+
     /**
      * @class {ValidateJsCallbackHandler}
      */
     var ValidateJsCallbackHandler = CallbackHandler.extend({
         $validate: [
             null,  function (validation, composer) {
-                console.log("EEE " + validatejs.runValidations);
+                var target      = validation.getObject(),
+                    constraints = _buildConstraints(target);
+                if (constraints) {
+                    if (validation.isAsync()) {
+                        return validatejs.async(target, constraints, detailed)
+                            .then(function (valid) {
+                                return true;
+                            }, function (invalid) {
+                        }); 
+                    } else {
+                        var errors = validatejs(target, constraints, detailed);
+                        if (errors) {
+                        }
+                    }
+                }
             }
         ]
     });
 
-    eval(this,exports);
+    function _buildConstraints(target) {
+        var constraints,
+            meta        = target.$meta,
+            descriptors = meta && meta.getDescriptor();
+        if (descriptors) {
+            for (var key in descriptors) {
+                var descriptor = descriptors[key], validate;
+                if (descriptor && (validate = descriptor.validate)) {
+                    (constraints || (constraints = {}))[key] = validate;
+                }
+            }
+            return constraints;
+        }
+    }
+
+    eval(this.exports);
 
 }
 },{"../callback.js":2,"../miruken.js":9,"./validate.js":12,"bluebird":14,"validate.js":56}],14:[function(require,module,exports){
@@ -21918,12 +21883,9 @@ describe("IoContainer", function () {
             }
             catch (error) {
                 expect(error).to.be.instanceOf(ComponentModelError);
-                expect(error.validation.getKeyErrors("Key")).to.eql([
-                    new ValidationError("Key could not be determined for component.", {
-                        key:  "Key",
-                        code: ValidationErrorCode.Required
-                    })
-                ]);
+                expect(error.validation["key"].errors["required"][0]).to.eql({
+                    message: "Key could not be determined for component."
+                });
                 done();
             }
         });
@@ -21934,12 +21896,9 @@ describe("IoContainer", function () {
             }
             catch (error) {
                 expect(error).to.be.instanceOf(ComponentModelError);
-                expect(error.validation.getKeyErrors("Factory")).to.eql([
-                    new ValidationError("Factory could not be determined for component.", {
-                        key:  "Factory",
-                        code: ValidationErrorCode.Required
-                    })
-                ]);
+                expect(error.validation["factory"].errors["required"][0]).to.eql({
+                    message: "Factory could not be determined for component."
+                });
                 done();
             }
         });
@@ -22570,26 +22529,26 @@ describe("Enum", function () {
 
 describe("$meta", function () {
     it("should have class metadata", function () {
-        expect(Dog.$meta).to.be.instanceOf(ClassMeta);
+        expect(Dog.$meta).to.be.ok;
     });
 
     it("should not be able to delete class metadata", function () {
-        expect(Dog.$meta).to.be.instanceOf(ClassMeta);
+        expect(Dog.$meta).to.be.ok;
         delete Dog.$meta;
-        expect(Dog.$meta).to.be.instanceOf(ClassMeta);
+        expect(Dog.$meta).to.be.ok;
     });
 
     it("should have instance metadata", function () {
         var dog = new Dog;
-        expect(dog.$meta).to.be.instanceOf(InstanceMeta);
+        expect(dog.$meta).to.be.ok;
         expect(dog.$meta).to.not.equal(Dog.$meta);
     });
 
     it("should not be able to delete instance metadata", function () {
         var dog = new Dog;
-        expect(Dog.$meta).to.be.instanceOf(ClassMeta);
+        expect(Dog.$meta).to.be.ok;
         delete dog.$meta;
-        expect(Dog.$meta).to.be.instanceOf(ClassMeta);
+        expect(Dog.$meta).to.be.ok;
     });
 
 });
@@ -22618,7 +22577,7 @@ describe("$isFunction", function () {
 });
 
 describe("$properties", function () {
-    var Person = Base.extend($properties, {
+    var Person = Base.extend({
         $properties: {
             firstName: '',
             lastName:  '',
@@ -22703,13 +22662,18 @@ describe("$inferProperties", function () {
             this.firstName = firstName;
         },
         getFirstName: function () { return this._name; },
-        setFirstName: function (value) { this._name = value; }
+        setFirstName: function (value) { this._name = value; },
+        getInfo: function (key) { return ""; }
     });
     
     it("should infer instance properties", function () {
         var person = new Person('Sean');
         expect(person.firstName).to.equal('Sean');
         expect(person.getFirstName()).to.equal('Sean');
+    });
+
+    it("should not infer getters with arguments", function () {
+        expect(Person.prototype).to.not.have.key('info');
     });
 
     it("should infer extended properties", function () {
@@ -23817,25 +23781,31 @@ new function () { // closure
             Player, function (validation, composer) {
                 var player = validation.getObject();
                 if (!player.getFirstName() || player.getFirstName().length == 0) {
-                    validation.required("FirstName", "First name required");
+                    validation.getResults().addKey('firstName')
+                        .addError('required', { message: 'First name required' });
                 }
                 if (!player.getLastName()  || player.getLastName().length == 0) {
-                    validation.required("LastName", "Last name required");
+                    validation.getResults().addKey('lastName')
+                        .addError('required', { message: 'Last name required' });
                 }
                 if ((player.getDOB() instanceof Date) === false) {
-                    validation.invalid("DOB", player.getDOB(), "Valid Date-of-birth required");
+                    validation.getResults().addKey('dob')
+                        .addError('required', { message: 'DOB required' });
                 }
             },
-            Team, function (validation, composer) {
+            Coach, function (validation, composer) {
                 var coach = validation.getObject();
                 if (!coach.getFirstName() || coach.getFirstName().length == 0) {
-                    validation.required("FirstName", "First name required");
+                    validation.getResults().addKey('firstName')
+                        .addError('required', { message: 'First name required' });
                 }
                 if (!coach.getLastName()  || coach.getLastName().length == 0) {
-                    validation.required("LastName", "Last name required");
+                    validation.getResults().addKey('lastName')
+                        .addError('required', { message: 'Last name required' });
                 }
                 if (["D", "E", "F"].indexOf(coach.getLicense()) < 0) {
-                    validation.invalid("License", coach.getLicense(), "License must be D, E or F");
+                    validation.getResults().addKey('license')
+                        .addError('license', { message: 'License must be D, E or F' });
                 }
                 return Promise.delay(true, 50);
             }]
@@ -23847,11 +23817,11 @@ new function () { // closure
 
 eval(base2.validate_test.namespace);
 
-describe("ValidationResult", function () {
+describe("Validation", function () {
     describe("#getObject", function () {
         it("should get the validated object", function () {
             var team       = new Team("Aspros"),
-                validation = new ValidationResult(team);
+                validation = new Validation(team);
             expect(validation.getObject()).to.equal(team);
         });
     });
@@ -23859,75 +23829,21 @@ describe("ValidationResult", function () {
     describe("#getScope", function () {
         it("should get the validation scope", function () {
             var team       = new Team("Aspros"),
-                validation = new ValidationResult(team, "players");
+                validation = new Validation(team, false, "players");
             expect(validation.getScope()).to.equal("players");
         });
     });
+});
 
-    describe("#addKeyError", function () {
-        it("should add validation errors", function () {
-            var team       = new Team,
-                validation = new ValidationResult(team);
-            validation.addKeyError("Name", new ValidationError("Team name required", {
-                key:  "Name",
-                code: ValidationErrorCode.Required
-            }));
-            expect(validation.getKeyErrors("Name")).to.eql([
-                new ValidationError("Team name required", {
-                    key:  "Name",
-                    code: ValidationErrorCode.Required
-                })
-            ]);
+describe("ValidationResult", function () {
+    describe("#addKey", function () {
+        it("should add key errors", function () {
+            var validation = new ValidationResult();
+            validation.addKey("name").addError("required", { message: "Team name required" });
+            expect(validation["name"].errors["required"][0]).to.eql({
+                message: "Team name required"
+            });
         });
-
-        it("should add invalid child validation results", function () {
-            var team            = new Team,
-                player          = new Player,
-                validation      = new ValidationResult(team),
-   	            childValidation = new ValidationResult(player);
-                childValidation.addKeyError("FirstName", new ValidationError("First name required", {
-                    key:  "FirstName",
-                    code: ValidationErrorCode.Required
-                }));
-	        validation.addKeyError("Player", childValidation);
-	        expect(validation.isValid()).to.be.false;
-            expect(validation.getKeyErrors("Player")[0].getKeyErrors("FirstName")).to.eql([
-                new ValidationError("First name required", {
-                    key:  "FirstName",
-                    code: ValidationErrorCode.Required
-                })
-	        ]);
-	    });
-
-        it("should not add valid child validation results", function () {
-            var team            = new Team,
-                player          = new Player,
-                validation      = new ValidationResult(team),
-                childValidation = new ValidationResult(player);
-            validation.addKeyError("Player", childValidation);
-            expect(validation.isValid()).to.be.true;
-            expect(validation.getKeyErrors("Player")).to.be.undefined;
-        });
-
-        it("should add anonymous invalid child validation results", function () {
-            var team            = new Team,
-                player          = new Player,
-                validation      = new ValidationResult(team),
-                childValidation = new ValidationResult(player);
-            childValidation.addKeyError("FirstName", new ValidationError("First name required", {
-                key:  "FirstName",
-                code: ValidationErrorCode.Required
-            }));
-            validation.addChildResult(childValidation);
-            expect(validation.isValid()).to.be.false;
-            expect(validation.getKeyCulprits()).to.eql([]);
-            expect(validation.getChildResults()[0].getKeyErrors("FirstName")).to.eql([
-                new ValidationError("First name required", {
-                    key:  "FirstName",
-                    code: ValidationErrorCode.Required
-                })
-		    ]);
-	    });
     });
 });
 
@@ -23955,7 +23871,8 @@ describe("ValidationCallbackHandler", function () {
                 player     = new Player("Matthew");
             var results = Validator(league).validate(player);
             expect(results.isValid()).to.be.false;
-		    expect(results.getKeyCulprits()).to.eql(["LastName", "DOB"]);
+            expect(results).to.have.ownProperty('lastName');
+            expect(results).to.have.ownProperty('dob');
         });
 
         it("should provide key errors", function () {
@@ -23965,18 +23882,12 @@ describe("ValidationCallbackHandler", function () {
                 player     = new Player("Matthew");
             var results = Validator(league).validate(player);
             expect(results.isValid()).to.be.false;
-            expect(results.getKeyErrors("LastName")).to.eql([
-                new ValidationError("Last name required", {
-                    key:  "LastName",
-                    code: ValidationErrorCode.Required
-                })
-            ]);
-            expect(results.getKeyErrors("DOB")).to.eql([
-                new ValidationError("Valid Date-of-birth required", {
-                    key:  "DOB",
-                    code: ValidationErrorCode.Invalid
-                })
-            ]);
+            expect(results["lastName"].errors["required"][0]).to.eql({
+                message: "Last name required"
+            });
+            expect(results["dob"].errors["required"][0]).to.eql({
+                message: "DOB required"
+            });
         });
 
         it("should dynamically add validation", function () {
@@ -23989,30 +23900,25 @@ describe("ValidationCallbackHandler", function () {
                     start  = new Date(2006, 8, 1),
                     end    = new Date(2007, 7, 31);
                 if (player.getDOB() < start) {
-                    validation.addKeyError("DOB", new ValidationError(
-                        "Player too old for division " + team.getDivision(), {
-                            key:    "DOB",
-                            code:   ValidationErrorCode.DateTooSoon,
-                            source: player.getDOB()
-                    }));
+                    validation.getResults().addKey('dob')
+                        .addError('playerAge', { 
+                            message: "Player too old for division " + team.getDivision(),
+                            value:   player.getDOB()
+                         });
                 } else if (player.getDOB() > end) {
-                    validation.addKeyError("DOB", new ValidationError(
-                        "Player too young for division " + team.getDivision(), {
-                            key:    "DOB",
-                            code:   ValidationErrorCode.DateTooLate,
-                            source: player.getDOB()
-                    }));
+                    validation.getResults().addKey('dob')
+                        .addError('playerAge', { 
+                            message: "Player too young for division " + team.getDivision(),
+                            value:   player.getDOB()
+                         });
                 }
             });
             var results = Validator(league).validate(player);
             expect(results.isValid()).to.be.false;
-            expect(results.getKeyErrors("DOB")).to.eql([
-                new ValidationError("Player too old for division U8", {
-                    key:    "DOB",
-                    code:   ValidationErrorCode.DateTooSoon,
-                    source: new Date(2006, 7, 19)
-                })
-            ]);
+            expect(results["dob"].errors["playerAge"][0]).to.eql({
+                message: "Player too old for division U8",
+                value:   new Date(2006, 7, 19)
+            });
         });
 
         it("should validate unknown sources", function () {
@@ -24022,22 +23928,15 @@ describe("ValidationCallbackHandler", function () {
                 var source = validation.getObject();
                 if ((source instanceof Team) &&
                     (!source.getName() || source.getName().length == 0)) {
-                    validation.addKeyError("Name", new ValidationError("Team name required", {
-                        key:    "Name",
-                        code:   ValidationErrorCode.Required,
-                        source: source.getName()
-                    }));
+                    validation.getResults().addKey('name')
+                        .addError('required', { message: "Team name required" });
                 }
             });
             var results = Validator(league).validate(new Team);
             expect(results.isValid()).to.be.false;
-            expect(results.getKeyErrors("Name")).to.eql([
-                new ValidationError("Team name required", {
-                    key:    "Name",
-                    code:   ValidationErrorCode.Required,
-                    source: undefined
-                })
-            ]);
+            expect(results["name"].errors["required"][0]).to.eql({
+                message: "Team name required"
+            });
         });
     });
 
@@ -24047,7 +23946,7 @@ describe("ValidationCallbackHandler", function () {
                 league = new Context()
                     .addHandlers(team, new ValidationCallbackHandler),
                 coach  = new Coach;
-            Promise.resolve(Validator(league).validateAsync(coach)).then(function (results) {
+            Validator(league).validateAsync(coach).then(function (results) {
                 expect(results.isValid()).to.be.false;
                 done();
             });
@@ -24057,7 +23956,7 @@ describe("ValidationCallbackHandler", function () {
             var league = new Context()
                     .addHandlers(new ValidationCallbackHandler),
                 coach  = new Coach;
-            Promise.resolve(Validator(league).validateAsync(coach)).then(function (results) {
+            Validator(league).validateAsync(coach).then(function (results) {
                 expect(results.isValid()).to.be.true;
                 done();
             });
@@ -24068,33 +23967,11 @@ describe("ValidationCallbackHandler", function () {
                 league     = new Context()
                     .addHandlers(team, new ValidationCallbackHandler),
                 coach      = new Coach("Jonathan")
-            Promise.resolve(Validator(league).validateAsync(coach)).then(function (results) {
+            Validator(league).validateAsync(coach).then(function (results) {
                 expect(results.isValid()).to.be.false;
-                expect(results.getKeyCulprits()).to.eql(["LastName", "License"]);
-                done();
-            });
-        });
-
-        it("should provide key errors", function (done) {
-            var team       = new Team("Liverpool", "U8"),
-                league     = new Context()
-                    .addHandlers(team, new ValidationCallbackHandler),
-                coach      = new Coach("Jonathan");
-            Promise.resolve(Validator(league).validateAsync(coach)).then(function (results) {
-                expect(results.isValid()).to.be.false;
-                expect(results.getKeyErrors("LastName")).to.eql([
-                    new ValidationError("Last name required", {
-                        key:  "LastName",
-                        code: ValidationErrorCode.Required
-                    })
-                ]);
-                var i = 0;
-                expect(results.getKeyErrors("License")).to.eql([
-                    new ValidationError("License must be D, E or F", {
-                        key:  "License",
-                        code: ValidationErrorCode.Invalid
-                    })
-                ]);
+                expect(results["license"].errors["license"][0]).to.eql({
+                    message: "License must be D, E or F"
+                });
                 done();
             });
         });
@@ -24119,32 +23996,64 @@ new function () { // closure
 
     var validatejs_test = new base2.Package(this, {
         name:    "validatejs_test",
-        exports: ""
+        exports: "Address,LineItem,Order"
     });
 
     eval(this.imports);
 
-    var Player = Base.extend({
-        constructor: function (firstName, lastName, dob) {
-            this.extend({
-                getFirstName: function () { return firstName; },
-                setFirstName: function (value) { firstName = value; },
-                getLastName:  function () { return lastName; },
-                setLastName:  function (value) { lastName = value; },
-                getDOB:       function () { return dob; },
-                setDOB:       function (value) { dob = value; }
-            });
-        }});
-    
+    var Address = Base.extend({
+        $properties: {
+            line:    { validate: { presence: true } },
+            city:    { validate: { presence: true } },
+            state:   { validate: { presence: true } },
+            zipcode: { validate: { presence: true } },
+        }
+    });
+
+    var LineItem = Base.extend({
+        $properties: {
+           plu: { 
+               validate: {
+                   presence: true,
+                   length: { is: 5 }
+               }
+           },
+           quanity: {
+               validate: {
+                   numericality: {
+                       onlyInteger: true,
+                       greaterThan: 0
+                   }
+               }
+           }
+        }
+    });
+
+    var Order = Base.extend({
+        $properties: {
+            address:   { map: Address },
+            lineItems: { map: LineItem }
+        }
+    });
+
+
   eval(this.exports);
+
 };
 
 eval(base2.validatejs_test.namespace);
 
-describe("ValidationJsCallbackHandler", function () {
-    describe("#validate", function () {
-        it("should get the validated object", function () {
+describe("ValidateJsCallbackHandler", function () {
+    var context;
+    beforeEach(function() {
+        context = new Context;
+        context.addHandlers(new ValidationCallbackHandler, new ValidateJsCallbackHandler);
+    });
 
+    describe("#validate", function () {
+        it("should validate simple object", function () {
+            var address = new Address;
+            Validator(context).validate(address);
         });
     });
 });

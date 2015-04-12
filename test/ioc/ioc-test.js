@@ -756,12 +756,9 @@ describe("IoContainer", function () {
             }
             catch (error) {
                 expect(error).to.be.instanceOf(ComponentModelError);
-                expect(error.validation.getKeyErrors("Key")).to.eql([
-                    new ValidationError("Key could not be determined for component.", {
-                        key:  "Key",
-                        code: ValidationErrorCode.Required
-                    })
-                ]);
+                expect(error.validation["key"].errors["required"][0]).to.eql({
+                    message: "Key could not be determined for component."
+                });
                 done();
             }
         });
@@ -772,12 +769,9 @@ describe("IoContainer", function () {
             }
             catch (error) {
                 expect(error).to.be.instanceOf(ComponentModelError);
-                expect(error.validation.getKeyErrors("Factory")).to.eql([
-                    new ValidationError("Factory could not be determined for component.", {
-                        key:  "Factory",
-                        code: ValidationErrorCode.Required
-                    })
-                ]);
+                expect(error.validation["factory"].errors["required"][0]).to.eql({
+                    message: "Factory could not be determined for component."
+                });
                 done();
             }
         });
