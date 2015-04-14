@@ -221,6 +221,55 @@ describe("$properties", function () {
         expect(descriptors['patient'].map).to.equal(Person);
     });
 
+    it("should filter property descriptors", function () {
+        var Something = Base.extend({
+            $properties: {
+                matchBool:   { val: true },
+                matchNumber: { val: 22 },
+                matchString: { val: "Hello" },
+                matchArray:  { val: ["a", "b", "c"] },
+                matchNested: {
+                    nestedBool: { val: false },
+                    nestedNumber: { val: 19 },
+                    nestedString: { val: "Goodbye" },
+                    nestedArray:  { val: ["x", "y", "z"] }
+                }
+            }
+        });
+
+        var descriptors = Something.$meta.getDescriptor({ val: false });
+        expect(descriptors).to.be.undefined;
+        descriptors = Something.$meta.getDescriptor({ val: true });
+        expect(descriptors).to.eql({ matchBool: { val: true } });
+        descriptors = Something.$meta.getDescriptor({ val: 22 });
+        expect(descriptors).to.eql({ matchNumber: { val: 22 } });
+        descriptors = Something.$meta.getDescriptor({ val: 22 });
+        expect(descriptors).to.eql({ matchNumber: { val: 22 } });
+        descriptors = Something.$meta.getDescriptor({ val: "Hello" });
+        expect(descriptors).to.eql({ matchString: { val: "Hello" } });
+        descriptors = Something.$meta.getDescriptor({ val: ["z"] });
+        expect(descriptors).to.be.undefined;
+        descriptors = Something.$meta.getDescriptor({ val: ["b"] });
+        expect(descriptors).to.eql({ matchArray: { val: ["a", "b", "c" ] } });
+        descriptors = Something.$meta.getDescriptor({ nestedBool: { val: false } });
+        expect(descriptors).to.eql({  
+              matchNested: {
+                    nestedBool: { val: false },
+                    nestedNumber: { val: 19 },
+                    nestedString: { val: "Goodbye" },
+                    nestedArray:  { val: ["x", "y", "z"] }
+                }});
+        descriptors = Something.$meta.getDescriptor({ nestedBool: undefined });
+        expect(descriptors).to.eql({  
+              matchNested: {
+                    nestedBool: { val: false },
+                    nestedNumber: { val: 19 },
+                    nestedString: { val: "Goodbye" },
+                    nestedArray:  { val: ["x", "y", "z"] }
+                }});
+
+    });
+
     it("should synthesize instance properties", function () {
         var person = (new Person).extend({
             $properties: {

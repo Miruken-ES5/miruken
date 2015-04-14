@@ -3,7 +3,7 @@
   "version": "0.1.0",
   "description": "",
   "dependencies": {
-    "bluebird": "^2.9.13",
+    "bluebird": "^2.9.24",
     "chai": "^1.10.0",
     "grunt-cli": "latest",
     "grunt-env": "latest",
@@ -14,7 +14,7 @@
     "grunt-concurrent": "latest",
     "grunt-contrib-copy": "^0.8.0",
     "grunt-contrib-jshint": "latest",
-    "grunt-contrib-uglify": "latest",
+    "grunt-contrib-uglify": "^0.9.1",
     "grunt-contrib-watch": "latest",
     "grunt-karma": "^0.10.1",
     "grunt-mocha-test": "latest",

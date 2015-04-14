@@ -2,5 +2,6 @@
 bin/
 gen/
 build/
+debug/
 *~
 node_modules

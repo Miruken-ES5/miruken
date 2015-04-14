@@ -41,11 +41,18 @@ module.exports = function(grunt) {
       },
       debug: {
         files: {
-           'dist/miruken-bundle.js': ['lib/index.js'],
-           'dist/miruken-tests.js':  ['test/validate/validate-test.js']
-           //'dist/miruken-tests.js':     ['test/**/*.js']
+           'debug/miruken-tests.js':  ['test/validate/validatejs-test.js']
+           //'debug/miruken-tests.js':     ['test/**/*.js']
         }
       }
+    },
+    uglify: {
+        dist: {
+          files: {
+              'dist/miruken-bundle.min.js': ['dist/miruken-bundle.js'],
+              'dist/miruken-ng-bundle.min.js': ['dist/miruken-ng-bundle.js'],
+          }
+        }
     },
     copy: {
        main:{
@@ -62,7 +69,7 @@ module.exports = function(grunt) {
         debug: {
           configFile: 'karma.conf.js',
           options: {
-              files: ['dist/miruken-tests.js']
+              files: ['debug/miruken-tests.js']
           },
           singleRun: false
         }
@@ -72,6 +79,7 @@ module.exports = function(grunt) {
   grunt.loadNpmTasks('grunt-contrib-watch');
   grunt.loadNpmTasks('grunt-contrib-uglify');
   grunt.loadNpmTasks('grunt-contrib-jshint');
+  grunt.loadNpmTasks('grunt-contrib-uglify');
   grunt.loadNpmTasks('grunt-concurrent');
   grunt.loadNpmTasks('grunt-mocha-test');
   grunt.loadNpmTasks('grunt-env');
