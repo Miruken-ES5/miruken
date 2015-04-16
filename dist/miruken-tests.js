@@ -6151,6 +6151,9 @@ new function () { // closure
      * @protocol {Validator}
      */
     var Validator = Protocol.extend({
+        constructor: function (proxy, strict) {
+            this.base(proxy, (strict === undefined) || strict);
+        },
         /**
          * Validates the object in the scope.
          * @param   {Object} object   - object to validate
