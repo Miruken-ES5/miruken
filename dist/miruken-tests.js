@@ -6066,44 +6066,89 @@ new function () { // closure
      */
     var Controller = CallbackHandler.extend(
         $inferProperties, $contextual, {
-        validate: function (target) {
-            if (!this.context) {
-                throw new TypeError("Validation requires a context.");
-            }
-            if ($isNothing(target)) {
-                return Validator(this.context).validate(this);
-            } else if ($isString(target)) {
-                return Validator(this.context).validate(this, target);
-            }
-            return Validator(this.context).validate(target);
+        validate: function (target, scope) {
+            return _validateController(this, target, 'validate', scope);
         },
-        validateAsync: function (target) {
-            if (!this.context) {
-                throw new TypeError("Validation requires a context.");
-            }
-            if ($isNothing(target)) {
-                return Validator(this.context).validateAsync(this);
-            } else if ($isString(target)) {
-                return Validator(this.context).validateAsync(this, target);
-            }
-            return Validator(this.context).validateAsync(target);
+        validateAsync: function (target, scope) {
+            return _validateController(this, target, 'validateAsync', scope);
         }
     });
 
+    function _validateController(controller, target, method, scope) {
+        var context = controller.context;
+        if (!context) {
+            throw new Error("Validation requires a context to be available.");
+        }
+        var validator = Validator(context);
+        return validator[method].call(validator, target || controller, scope);
+    }
+
     /**
      * @protocol {MasterDetail}
+     * Manages master-detail relationships.
      */
     var MasterDetail = Protocol.extend({
+        /**
+         * Gets the selected detail.
+         * @param   {Function} detailClass  - type of detail
+         * @returns {Promise} for the selected detail.
+         */
         getSelectedDetail: function (detailClass) {},
+        /**
+         * Gets the selected details.
+         * @param   {Function} detailClass  - type of detail
+         * @returns {Promise} for the selected details.
+         */
         getSelectedDetails: function (detailClass) {},
-        selectDetail: function (selectedDetail) {},
-        deselectDetail: function (selectedDetail) {},
+        /**
+         * Selects the detail.
+         * @param   {Object} detail - selected detail
+         */
+        selectDetail: function (detail) {},
+        /**
+         * Unselects the detail.
+         * @param   {Object} detail - unselected detail
+         */
+        deselectDetail: function (detail) {},
+        /**
+         * Determines if a previous detail exists.
+         * @param   {Function} detailClass  - type of detail
+         * @returns {Boolean} true if a previous detail exists.
+         */
         hasPreviousDetail: function (detailClass) {},
+        /**
+         * Determines if a next detail exists.
+         * @param   {Function} detailClass  - type of detail
+         * @returns {Boolean} true if a next detail exists.
+         */
         hasNextDetail: function (detailClass) {},
+        /**
+         * Gets the previous detail.
+         * @param   {Function} detailClass  - type of detail
+         * @returns {Object} the previous detail or undefined..
+         */
         getPreviousDetail: function (detailClass) {},
+        /**
+         * Gets the next detail.
+         * @param   {Function} detailClass  - type of detail
+         * @returns {Object} the next detail or undefined.
+         */
         getNextDetail: function (detailClass) {},
+        /**
+         * Adds the detail.
+         * @param   {Object} detail - added detail
+         */
         addDetail: function (detail) {},
+        /**
+         * Updates the detail.
+         * @param   {Object} detail - updated detail
+         */
         updateDetail: function (detail) {},
+        /**
+         * Removes the detail.
+         * @param   {Object}  detail   - updated detail
+         * @param   {Boolean} deleteIt - true to delete it
+         */
         removeDetail: function (detail, deleteIt) {}
     });
     
@@ -6111,9 +6156,40 @@ new function () { // closure
      * @protocol {MasterDetailAware}
      */
     var MasterDetailAware = Protocol.extend({
+        /**
+         * Indicates the master has changed.
+         * @param   {Object} master - master
+         */
         masterChanged: function (master) {},
+        /**
+         * Indicates the detail was selected.
+         * @param   {Object} detail - selected detail
+         * @param   {Object} master - master
+         */
         didSelectDetail: function (detail, master) {},
+        /**
+         * Indicates the detail was unselected.
+         * @param   {Object} detail - unselected detail
+         * @param   {Object} master - master
+         */
         didDeselectDetail: function (detail, master) {},
+        /**
+         * Indicates the detail was added.
+         * @param   {Object} detail - added detail
+         * @param   {Object} master - master
+         */
+        didAddDetail: function (detail, master) {},
+        /**
+         * Indicates the detail was updated.
+         * @param   {Object} detail - updated detail
+         * @param   {Object} master - master
+         */
+        didUpdateDetail: function (detail, master) {},
+        /**
+         * Indicates the detail was removed.
+         * @param   {Object} detail - removed detail
+         * @param   {Object} master - master
+         */
         didRemoveDetail: function (detail, master) {}
     });
 
@@ -24317,16 +24393,20 @@ new function () { // closure
 
     var Person = Model.extend({
         $properties: {
-            firstName: { validate: $required },
-            lastName:  { validate: $required },
+            firstName: { 
+                validate: $required 
+            },
+            lastName:  {
+                validate: $required
+            },
             age: {
-               value: 0,
-               validate: {
-                   numericality: {
-                       onlyInteger: true,
-                       greaterThan: 11
-                   }
-               }
+                value: 0,
+                validate: {
+                    numericality: {
+                        onlyInteger: true,
+                        greaterThan: 11
+                    }
+                }
             }
         },
         getHobbies: function () { return this._hobbies; },
@@ -24341,10 +24421,12 @@ new function () { // closure
 
     var PersonController = Controller.extend({
         $properties: {
-            person: { map: Person, validate: {
-                      presence: true,
-                      nested:   true
-                    }
+            person: {
+                map: Person,
+                validate: {
+                    presence: true,
+                    nested:   true
+                }
             }
         }
     });
@@ -24489,7 +24571,7 @@ describe("Controller", function () {
             var controller = new PersonController;
             expect(function () {
                 controller.validate();
-            }).to.throw(Error, "Validation requires a context.");
+            }).to.throw(Error, "Validation requires a context to be available.");
         });
 
         it("should validate the controller", function () {
@@ -24551,7 +24633,7 @@ describe("Controller", function () {
             var controller = new PersonController;
             expect(function () {
                 controller.validateAsync();
-            }).to.throw(Error, "Validation requires a context.");
+            }).to.throw(Error, "Validation requires a context to be available.");
         });
 
         it("should validate the controller", function () {

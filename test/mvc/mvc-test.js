@@ -20,16 +20,20 @@ new function () { // closure
 
     var Person = Model.extend({
         $properties: {
-            firstName: { validate: $required },
-            lastName:  { validate: $required },
+            firstName: { 
+                validate: $required 
+            },
+            lastName:  {
+                validate: $required
+            },
             age: {
-               value: 0,
-               validate: {
-                   numericality: {
-                       onlyInteger: true,
-                       greaterThan: 11
-                   }
-               }
+                value: 0,
+                validate: {
+                    numericality: {
+                        onlyInteger: true,
+                        greaterThan: 11
+                    }
+                }
             }
         },
         getHobbies: function () { return this._hobbies; },
@@ -44,10 +48,12 @@ new function () { // closure
 
     var PersonController = Controller.extend({
         $properties: {
-            person: { map: Person, validate: {
-                      presence: true,
-                      nested:   true
-                    }
+            person: {
+                map: Person,
+                validate: {
+                    presence: true,
+                    nested:   true
+                }
             }
         }
     });
@@ -192,7 +198,7 @@ describe("Controller", function () {
             var controller = new PersonController;
             expect(function () {
                 controller.validate();
-            }).to.throw(Error, "Validation requires a context.");
+            }).to.throw(Error, "Validation requires a context to be available.");
         });
 
         it("should validate the controller", function () {
@@ -254,7 +260,7 @@ describe("Controller", function () {
             var controller = new PersonController;
             expect(function () {
                 controller.validateAsync();
-            }).to.throw(Error, "Validation requires a context.");
+            }).to.throw(Error, "Validation requires a context to be available.");
         });
 
         it("should validate the controller", function () {
