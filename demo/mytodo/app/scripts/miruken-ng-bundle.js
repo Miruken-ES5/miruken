@@ -6251,6 +6251,7 @@ module.exports = require('./mvc.js');
 var miruken = require('../miruken.js');
               require('../callback.js');
               require('../context.js');
+              require('../validate');
 
 new function () { // closure
 
@@ -6261,7 +6262,7 @@ new function () { // closure
         name:    "mvc",
         version: miruken.version,
         parent:  miruken,
-        imports: "miruken,miruken.callback,miruken.context",
+        imports: "miruken,miruken.callback,miruken.context,miruken.validate",
         exports: "Model,Controller,MasterDetail,MasterDetailAware,$root"
     });
 
@@ -6339,7 +6340,31 @@ new function () { // closure
     /**
      * @class {Controller}
      */
-    var Controller = CallbackHandler.extend($inferProperties, $contextual);
+    var Controller = CallbackHandler.extend(
+        $inferProperties, $contextual, {
+        validate: function (target) {
+            if (!this.context) {
+                throw new TypeError("Validation requires a context.");
+            }
+            if ($isNothing(target)) {
+                return Validator(this.context).validate(this);
+            } else if ($isString(target)) {
+                return Validator(this.context).validate(this, target);
+            }
+            return Validator(this.context).validate(target);
+        },
+        validateAsync: function (target) {
+            if (!this.context) {
+                throw new TypeError("Validation requires a context.");
+            }
+            if ($isNothing(target)) {
+                return Validator(this.context).validateAsync(this);
+            } else if ($isString(target)) {
+                return Validator(this.context).validateAsync(this, target);
+            }
+            return Validator(this.context).validateAsync(target);
+        }
+    });
 
     /**
      * @protocol {MasterDetail}
@@ -6371,7 +6396,7 @@ new function () { // closure
     eval(this.exports);
 }
 
-},{"../callback.js":4,"../context.js":5,"../miruken.js":11}],14:[function(require,module,exports){
+},{"../callback.js":4,"../context.js":5,"../miruken.js":11,"../validate":14}],14:[function(require,module,exports){
 module.exports = require('./validate.js');
 require('./validatejs.js');
 

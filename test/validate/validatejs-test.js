@@ -102,6 +102,18 @@ describe("ValidateJsCallbackHandler", function () {
 
         it("should validate complex objects", function () {
             var order       = new Order;
+            order.address   = new Address({
+                line:    "100 Tulip Ln",
+                city:    "Wantaugh",
+                state:   "NY",
+                zipcode: 11580
+            });
+            var results = Validator(context).validate(order);
+            expect(results.isValid()).to.be.true;
+        });
+
+        it("should invalidate complex objects", function () {
+            var order       = new Order;
             order.address   = new Address;
             order.lineItems = [new LineItem];
             var results = Validator(context).validate(order);
@@ -210,7 +222,7 @@ describe("ValidateJsCallbackHandler", function () {
             });
         });
 
-        it("should validate complex objects", function (done) {
+        it("should invalidate complex objects", function (done) {
             var order       = new Order;
             order.address   = new Address;
             order.lineItems = [new LineItem];
