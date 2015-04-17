@@ -4762,9 +4762,26 @@ new function () { // closure
          * @param   {Protocol} protocol    - receiving protocol
          * @param   {String}   methodName  - name of the method
          * @param   {Array}    args        - method arguments
+         * @param   {Boolean}  strict      - true if target must adopt protocol
          * @returns {Any}      the result of the proxied invocation.
          */
-        delegate: function (protocol, methodName, args) {}
+         delegate: function (protocol, methodName, args, strict) {},
+        /**
+         * Delegates the property get on the protocol.
+         * @param   {Protocol} protocol      - receiving protocol
+         * @param   {String}   propertyName  - name of the property
+         * @param   {Boolean}  strict        - true if target must adopt protocol
+         * @returns {Any}      the result of the proxied get.
+         */
+        delegateGet: function (protocol, propertyName, strict) {},
+        /**
+         * Delegates the property set on the protocol.
+         * @param   {Protocol} protocol      - receiving protocol
+         * @param   {String}   propertyName  - name of the property
+         * @param   {Object}   propertyValue - value of the property
+         * @param   {Boolean}  strict        - true if target must adopt protocol
+         */
+        delegateSet: function (protocol, propertyName, propertyValue, strict) {},
     });
 
     /**
@@ -4780,6 +4797,16 @@ new function () { // closure
                     var method = object[methodName];
                     if (method && (!strict || protocol.adoptedBy(object))) {
                         return method.apply(object, args);
+                    }
+                },
+                delegateGet: function (protocol, propertyName, strict) {
+                    if (!strict || protocol.adoptedBy(object)) {
+                        return object[propertyName];
+                    }
+                },
+                delegateSet: function (protocol, propertyName, propertyValue, strict) {
+                    if (!strict || protocol.adoptedBy(object)) {
+                        object[propertyName] = propertyValue;
                     }
                 }
             });
@@ -4806,8 +4833,17 @@ new function () { // closure
             }
             this.extend({ 
                 delegate: function (methodName, args) {
-                    return delegate && delegate.delegate(
-                        $classOf(this), methodName, args, strict);
+                    return delegate && delegate.delegate &&
+                           delegate.delegate($classOf(this), methodName, args, strict);
+                },
+                delegateGet: function (propertyName) {
+                    return delegate && delegate.delegateGet &&
+                           delegate.delegateGet($classOf(this), propertyName, strict);
+                },
+                delegateSet: function (propertyName, propertyValue) {
+                    if (delegate && delegate.delegateSet) {
+                        delegate.delegateSet($classOf(this), propertyName, propertyValue, strict);
+                    }
                 }
             });
         }
@@ -5001,6 +5037,9 @@ new function () { // closure
             this.extend({
                 getClass: function () {
                     return classMeta.getClass();
+                },
+                isProtocol: function () {
+                    return classMeta.isProtocol();
                 }
             });
         }
@@ -5111,7 +5150,7 @@ new function () { // closure
     var $proxyProtocol = MetaMacro.extend({
         apply: function (step, metadata, target, definition) {
             for (var key in definition) {
-                if (key === 'delegate' || (key in Base.prototype)) {
+                if (key.lastIndexOf('delegate', 0) == 0 || (key in Base.prototype)) {
                     continue;
                 }
                 var member = target[key];
@@ -5157,22 +5196,31 @@ new function () { // closure
                     configurable: true
                     }),
                     descriptor = false;
-                spec.writable = true;
-                if ($isNothing(property) || $isString(property) ||
-                    typeOf(property.length) == "number" || typeOf(property) !== 'object') {
-                    spec.value = property;
+                if (target instanceof Protocol) {
+                    spec.get = function () {
+                        return this.delegateGet(name);
+                    };
+                    spec.set = function (value) {
+                        return this.delegateSet(name, value);
+                    };
                 } else {
-                    descriptor = true;
-                    if (property.get) {
-                        spec.get = property.get;
-                    }
-                    if (property.set) {
-                        spec.set = property.set;
-                    }
-                    if (spec.get || spec.set) {
-                        delete spec.writable;
+                    spec.writable = true;
+                    if ($isNothing(property) || $isString(property) ||
+                        typeOf(property.length) == "number" || typeOf(property) !== 'object') {
+                        spec.value = property;
                     } else {
-                        spec.value = property.value;
+                        descriptor = true;
+                        if (property.get) {
+                            spec.get = property.get;
+                        }
+                        if (property.set) {
+                            spec.set = property.set;
+                        }
+                        if (spec.get || spec.set) {
+                            delete spec.writable;
+                        } else {
+                            spec.value = property.value;
+                        }
                     }
                 }
                 this.defineProperty(metadata, target, name, spec);
@@ -5302,8 +5350,10 @@ new function () { // closure
         if (spec.get) {
             spec.set = definition['set' + spec.name];
         } else if (key.lastIndexOf('set', 0) == 0) {
-            spec.name = key.substring(3);
-            spec.set  = value;
+            if (value.length === 1) { // 1 argument
+                spec.name = key.substring(3);
+                spec.set  = value;
+            }
         }
         return !!spec.name;
     }

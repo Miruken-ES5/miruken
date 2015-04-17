@@ -19,6 +19,9 @@ new function () { // closure
     eval(this.imports);
 
     var Animal = Protocol.extend({
+        $properties: {
+            name: undefined
+        },
         talk: function () {},
         eat:  function (food) {}
     });
@@ -30,10 +33,12 @@ new function () { // closure
     var CircusAnimal = Animal.extend(Tricks, {
     });
     
-    var Dog = Base.extend(Animal, Tricks, {
+    var Dog = Base.extend(Animal, Tricks,
+        $inferProperties, {
         constructor: function (name) {
            this.extend({
-               getName: function () { return name; }
+               getName: function () { return name; },
+               setName: function (value) { name = value; }
            });
         },
         talk: function () { return 'Ruff Ruff'; },
@@ -302,7 +307,8 @@ describe("$inferProperties", function () {
         },
         getFirstName: function () { return this._name; },
         setFirstName: function (value) { this._name = value; },
-        getInfo: function (key) { return ""; }
+        getInfo: function (key) { return ""; },
+        setKeyValue: function (key, value) {}
     });
     
     it("should infer instance properties", function () {
@@ -313,6 +319,10 @@ describe("$inferProperties", function () {
 
     it("should not infer getters with arguments", function () {
         expect(Person.prototype).to.not.have.key('info');
+    });
+
+    it("should not infer setters unless 1 argument", function () {
+        expect(Person.prototype).to.not.have.key('keyValue');
     });
 
     it("should infer extended properties", function () {
@@ -711,6 +721,28 @@ describe("Protocol", function () {
 			expect(Animal(polarBear).getTag()).to.equal("Polar Bear");
         });
     })
+
+    describe("#delegate", function () {
+        it("should delegate invocations", function () {
+            var dog = new Dog('Fluffy');
+            expect(Animal(dog).talk()).to.equal('Ruff Ruff');
+        });
+    });
+
+    describe("#delegateGet", function () {
+        it("should delegate property gets", function () {
+            var dog  = new Dog('Franky');
+            expect(Animal(dog).name).to.equal('Franky');
+        });
+    });
+
+    describe("#delegateSet", function () {
+        it("should delegate property sets", function () {
+            var dog  = new Dog('Franky');
+            dog.name = 'Ralphy'
+            expect(Animal(dog).name).to.equal('Ralphy');
+        });
+    });
 });
 
 describe("Proxy", function () {
