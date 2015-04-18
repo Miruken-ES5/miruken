@@ -2286,7 +2286,7 @@ new function () { // closure
     var InvocationDelegate = Delegate.extend({
         constructor: function (handler) {
             this.extend({
-                delegate: function (protocol, methodName, args, strict) {
+                method: function (protocol, methodName, args, strict) {
                     var semantics  = new InvocationSemantics();
                     handler.handle(semantics, true);
                     var broadcast    = semantics.getOption(InvocationOptions.Broadcast),
@@ -4482,22 +4482,13 @@ new function () { // closure
      */
     var Delegate = Base.extend({
         /**
-         * Delegates the method invocation on the protocol.
-         * @param   {Protocol} protocol    - receiving protocol
-         * @param   {String}   methodName  - name of the method
-         * @param   {Array}    args        - method arguments
-         * @param   {Boolean}  strict      - true if target must adopt protocol
-         * @returns {Any}      the result of the proxied invocation.
-         */
-         delegate: function (protocol, methodName, args, strict) {},
-        /**
          * Delegates the property get on the protocol.
          * @param   {Protocol} protocol      - receiving protocol
          * @param   {String}   propertyName  - name of the property
          * @param   {Boolean}  strict        - true if target must adopt protocol
          * @returns {Any}      the result of the proxied get.
          */
-        delegateGet: function (protocol, propertyName, strict) {},
+        get: function (protocol, propertyName, strict) {},
         /**
          * Delegates the property set on the protocol.
          * @param   {Protocol} protocol      - receiving protocol
@@ -4505,7 +4496,16 @@ new function () { // closure
          * @param   {Object}   propertyValue - value of the property
          * @param   {Boolean}  strict        - true if target must adopt protocol
          */
-        delegateSet: function (protocol, propertyName, propertyValue, strict) {},
+        set: function (protocol, propertyName, propertyValue, strict) {},
+        /**
+         * Delegates the method invocation on the protocol.
+         * @param   {Protocol} protocol    - receiving protocol
+         * @param   {String}   methodName  - name of the method
+         * @param   {Array}    args        - method arguments
+         * @param   {Boolean}  strict      - true if target must adopt protocol
+         * @returns {Any}      the result of the proxied invocation.
+         */
+         method: function (protocol, methodName, args, strict) {}
     });
 
     /**
@@ -4516,24 +4516,26 @@ new function () { // closure
             if ($isNothing(object)) {
                 throw new TypeError("No object specified.");
             }
-            this.extend({
-                delegate: function (protocol, methodName, args, strict) {
-                    var method = object[methodName];
-                    if (method && (!strict || protocol.adoptedBy(object))) {
-                        return method.apply(object, args);
-                    }
-                },
-                delegateGet: function (protocol, propertyName, strict) {
-                    if (!strict || protocol.adoptedBy(object)) {
-                        return object[propertyName];
-                    }
-                },
-                delegateSet: function (protocol, propertyName, propertyValue, strict) {
-                    if (!strict || protocol.adoptedBy(object)) {
-                        object[propertyName] = propertyValue;
-                    }
-                }
-            });
+            Object.defineProperty(this, 'object', { value: object });
+        },
+        get: function (protocol, propertyName, strict) {
+            var object = this.object;
+            if (!strict || protocol.adoptedBy(object)) {
+                return object[propertyName];
+            }
+        },
+        set: function (protocol, propertyName, propertyValue, strict) {
+            var object = this.object;
+            if (!strict || protocol.adoptedBy(object)) {
+                object[propertyName] = propertyValue;
+            }
+        },
+        method: function (protocol, methodName, args, strict) {
+            var object = this.object,
+                method = object[methodName];
+            if (method && (!strict || protocol.adoptedBy(object))) {
+                return method.apply(object, args);
+            }
         }
     });
 
@@ -4555,21 +4557,17 @@ new function () { // closure
                     delegate = new ObjectDelegate(delegate);
                 }
             }
-            this.extend({ 
-                delegate: function (methodName, args) {
-                    return delegate && delegate.delegate &&
-                           delegate.delegate($classOf(this), methodName, args, strict);
-                },
-                delegateGet: function (propertyName) {
-                    return delegate && delegate.delegateGet &&
-                           delegate.delegateGet($classOf(this), propertyName, strict);
-                },
-                delegateSet: function (propertyName, propertyValue) {
-                    if (delegate && delegate.delegateSet) {
-                        delegate.delegateSet($classOf(this), propertyName, propertyValue, strict);
-                    }
-                }
-            });
+            Object.defineProperty(this, 'delegate', { value: delegate });
+            Object.defineProperty(this, 'strict', { value: !!strict });
+        },
+        delegateGet: function (propertyName) {
+            return this.delegate.get($classOf(this), propertyName, this.strict);
+        },
+        delegateSet: function (propertyName, propertyValue) {                
+            this.delegste.set($classOf(this), propertyName, propertyValue, this.strict);
+        },
+        delegateMethod: function (methodName, args) {
+            return this.delegate.method($classOf(this), methodName, args, this.strict);
         }
     }, {
         isProtocol: function (target) {
@@ -4581,9 +4579,7 @@ new function () { // closure
                  ? target.conformsTo(this)
                  : false;
         },
-        coerce: function (object, strict) {
-            return new this(object, strict);
-        }
+        coerce: function (object, strict) { return new this(object, strict); }
     });
 
     /**
@@ -4604,9 +4600,7 @@ new function () { // closure
         shouldInherit: False,
         isActive: False,
     }, {
-        coerce: function () {
-            return this.new.apply(this, arguments);
-        }
+        coerce: function () { return this.new.apply(this, arguments); }
     });
 
     /**
@@ -4759,12 +4753,9 @@ new function () { // closure
         constructor: function (classMeta) {
             this.base(classMeta);
             this.extend({
-                getClass: function () {
-                    return classMeta.getClass();
-                },
-                isProtocol: function () {
-                    return classMeta.isProtocol();
-                }
+                getBase: function () { return classMeta.getBase(); },
+                getClass: function () { return classMeta.getClass(); },
+                isProtocol: function () { return classMeta.isProtocol(); }
             });
         }
     });
@@ -4873,8 +4864,13 @@ new function () { // closure
      */
     var $proxyProtocol = MetaMacro.extend({
         apply: function (step, metadata, target, definition) {
+            var clazz = metadata.getClass();
+            if (clazz === Protocol) {
+                return;
+            }    
+            var protocolProto = Protocol.prototype;
             for (var key in definition) {
-                if (key.lastIndexOf('delegate', 0) == 0 || (key in Base.prototype)) {
+                if (key in protocolProto) {
                     continue;
                 }
                 var member = target[key];
@@ -4882,13 +4878,13 @@ new function () { // closure
                     (function (methodName) {
                         target[methodName] = function () {
                             var args = Array.prototype.slice.call(arguments);
-                            return this.delegate(methodName, args);
+                            return this.delegateMethod(methodName, args);
                         }
                     })(key);
                 }
             }
             if (step === MetaStep.Subclass) {
-                metadata.getClass().adoptedBy = Protocol.adoptedBy;
+                clazz.adoptedBy = Protocol.adoptedBy;
             }
         },
         shouldInherit: True,
@@ -5120,13 +5116,9 @@ new function () { // closure
      * Base class to prefer coercion over casting.
      */
     var Miruken = Base.extend({
-        constructor: function () {
-            this.base.apply(this, arguments);
-        }
+        constructor: function () { this.base.apply(this, arguments); }
     }, {
-        coerce: function () {
-            return this.new.apply(this, arguments);
-        }
+        coerce: function () { return this.new.apply(this, arguments); }
     });
 
     /**
@@ -23798,8 +23790,8 @@ describe("Protocol", function () {
         it("should extend protocol", function () {
             Animal.implement({
                reproduce: function () {}
-            }),
-            dog = new Dog;
+            });
+            var dog = new Dog;
             expect(Animal(dog).reproduce()).to.be.undefined;
             dog.extend({
                 reproduce: function () {
@@ -23947,6 +23939,22 @@ describe("Protocol", function () {
             var dog  = new Dog('Franky');
             dog.name = 'Ralphy'
             expect(Animal(dog).name).to.equal('Ralphy');
+        });
+
+        it("should delegate extended property sets", function () {
+            var dog  = new Dog('Franky');
+            Animal.implement({
+                $properties: {
+                    nickname: undefined
+                }
+            });
+            dog.extend({
+                $properties: {
+                    nickname: ''
+                }
+            });
+            dog.nickname = 'HotDog';
+            expect(Animal(dog).nickname).to.equal('HotDog');
         });
     });
 });

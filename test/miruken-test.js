@@ -592,8 +592,8 @@ describe("Protocol", function () {
         it("should extend protocol", function () {
             Animal.implement({
                reproduce: function () {}
-            }),
-            dog = new Dog;
+            });
+            var dog = new Dog;
             expect(Animal(dog).reproduce()).to.be.undefined;
             dog.extend({
                 reproduce: function () {
@@ -741,6 +741,22 @@ describe("Protocol", function () {
             var dog  = new Dog('Franky');
             dog.name = 'Ralphy'
             expect(Animal(dog).name).to.equal('Ralphy');
+        });
+
+        it("should delegate extended property sets", function () {
+            var dog  = new Dog('Franky');
+            Animal.implement({
+                $properties: {
+                    nickname: undefined
+                }
+            });
+            dog.extend({
+                $properties: {
+                    nickname: ''
+                }
+            });
+            dog.nickname = 'HotDog';
+            expect(Animal(dog).nickname).to.equal('HotDog');
         });
     });
 });
