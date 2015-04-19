@@ -2053,12 +2053,13 @@ new function () { // closure
      * @class {HandleMethod}
      */
     var HandleMethod = Base.extend({
-        constructor: function (protocol, methodName, args, strict) {
+        constructor: function (type, protocol, methodName, args, strict) {
             if (protocol && !$isProtocol(protocol)) {
                 throw new TypeError("Invalid protocol supplied.");
             }
             var _returnValue, _exception;
             this.extend({
+                getType:        function () { return type; },
                 getProtocol:    function () { return protocol; },
                 getMethodName:  function () { return methodName; },
                 getArguments:   function () { return args; },
@@ -2069,14 +2070,27 @@ new function () { // closure
                     if (!target || (strict && protocol && !protocol.adoptedBy(target))) {
                         return false;
                     }
-                    var method = target[methodName];
-                    if (!$isFunction(method)) {
-                        return false;
+                    var method, result;
+                    if (type === HandleMethod.Invoke) {
+                        method = target[methodName];
+                        if (!$isFunction(method)) {
+                            return false;
+                        }                    
                     }
                     try {
-                        var oldComposer  = global.$composer;
+                        var oldComposer = global.$composer;
                         global.$composer = composer;
-                        var result = method.apply(target, args.slice(0));
+                        switch (type) {
+                            case HandleMethod.Get:
+                                result = target[methodName];
+                                break;
+                            case HandleMethod.Set:
+                                result = target[methodName] = args;
+                                break;
+                            case HandleMethod.Invoke:
+                                result = method.apply(target, args);
+                                break;
+                        }
                         if (result === $NOT_HANDLED) {
                             return false;
                         }
@@ -2099,6 +2113,10 @@ new function () { // closure
                 }
             });
         }
+    }, {
+        Get:    1,  // Getter
+        Set:    2,  // Setter
+        Invoke: 3   // Method
     });
 
     /**
@@ -2578,21 +2596,31 @@ new function () { // closure
             Object.defineProperty(this, 'handler', spec);
             delete spec.value;
         },
+        get: function (protocol, propertyName, strict) {
+            return _delegateInvocation(this, HandleMethod.Get, protocol, propertyName, null, strict);
+        },
+        set: function (protocol, propertyName, propertyValue, strict) {
+            return _delegateInvocation(this, HandleMethod.Set, protocol, propertyName, propertyValue, strict);
+        },
         invoke: function (protocol, methodName, args, strict) {
-            var handler   = this.handler, 
-                semantics = new InvocationSemantics;
-            handler.handle(semantics, true);
-            var broadcast    = semantics.getOption(InvocationOptions.Broadcast),
-                bestEffort   = semantics.getOption(InvocationOptions.BestEffort),
-                strict       = !!(strict | semantics.getOption(InvocationOptions.Strict)),
-                handleMethod = new HandleMethod(protocol, methodName, args, strict);
-            if (handler.handle(handleMethod, !!broadcast) === false && !bestEffort) {
-                throw new TypeError(lang.format(
-                   "Object %1 has no method '%2'", handler, methodName));
-            }
-            return handleMethod.getReturnValue();
+            return _delegateInvocation(this, HandleMethod.Invoke, protocol, methodName, args, strict);
         }
     });
+
+    function _delegateInvocation(delegate, type, protocol, methodName, args, strict) {
+        var handler   = delegate.handler, 
+            semantics = new InvocationSemantics;
+        handler.handle(semantics, true);
+        strict  = !!(strict | semantics.getOption(InvocationOptions.Strict));
+        var broadcast    = semantics.getOption(InvocationOptions.Broadcast),
+            bestEffort   = semantics.getOption(InvocationOptions.BestEffort),
+            handleMethod = new HandleMethod(type, protocol, methodName, args, strict);
+        if (handler.handle(handleMethod, !!broadcast) === false && !bestEffort) {
+            throw new TypeError(lang.format(
+                "Object %1 has no method '%2'", handler, methodName));
+        }
+        return handleMethod.getReturnValue();
+    }
 
     CallbackHandler.implement({
         strict: function () { return this.callOptions(InvocationOptions.Strict); },
@@ -4817,7 +4845,7 @@ new function () { // closure
         set: function (protocol, propertyName, propertyValue, strict) {
             var object = this.object;
             if (!strict || protocol.adoptedBy(object)) {
-                object[propertyName] = propertyValue;
+                return object[propertyName] = propertyValue;
             }
         },
         invoke: function (protocol, methodName, args, strict) {
@@ -4854,7 +4882,7 @@ new function () { // closure
             return this.delegate.get(this.constructor, propertyName, this.strict);
         },
         set: function (propertyName, propertyValue) {                
-            this.delegste.set(this.constructor, propertyName, propertyValue, this.strict);
+            return this.delegste.set(this.constructor, propertyName, propertyValue, this.strict);
         },
         invoke: function (methodName, args) {
             return this.delegate.invoke(this.constructor, methodName, args, this.strict);

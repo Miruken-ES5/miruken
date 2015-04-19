@@ -1777,12 +1777,13 @@ new function () { // closure
      * @class {HandleMethod}
      */
     var HandleMethod = Base.extend({
-        constructor: function (protocol, methodName, args, strict) {
+        constructor: function (type, protocol, methodName, args, strict) {
             if (protocol && !$isProtocol(protocol)) {
                 throw new TypeError("Invalid protocol supplied.");
             }
             var _returnValue, _exception;
             this.extend({
+                getType:        function () { return type; },
                 getProtocol:    function () { return protocol; },
                 getMethodName:  function () { return methodName; },
                 getArguments:   function () { return args; },
@@ -1793,14 +1794,27 @@ new function () { // closure
                     if (!target || (strict && protocol && !protocol.adoptedBy(target))) {
                         return false;
                     }
-                    var method = target[methodName];
-                    if (!$isFunction(method)) {
-                        return false;
+                    var method, result;
+                    if (type === HandleMethod.Invoke) {
+                        method = target[methodName];
+                        if (!$isFunction(method)) {
+                            return false;
+                        }                    
                     }
                     try {
-                        var oldComposer  = global.$composer;
+                        var oldComposer = global.$composer;
                         global.$composer = composer;
-                        var result = method.apply(target, args.slice(0));
+                        switch (type) {
+                            case HandleMethod.Get:
+                                result = target[methodName];
+                                break;
+                            case HandleMethod.Set:
+                                result = target[methodName] = args;
+                                break;
+                            case HandleMethod.Invoke:
+                                result = method.apply(target, args);
+                                break;
+                        }
                         if (result === $NOT_HANDLED) {
                             return false;
                         }
@@ -1823,6 +1837,10 @@ new function () { // closure
                 }
             });
         }
+    }, {
+        Get:    1,  // Getter
+        Set:    2,  // Setter
+        Invoke: 3   // Method
     });
 
     /**
@@ -2302,21 +2320,31 @@ new function () { // closure
             Object.defineProperty(this, 'handler', spec);
             delete spec.value;
         },
+        get: function (protocol, propertyName, strict) {
+            return _delegateInvocation(this, HandleMethod.Get, protocol, propertyName, null, strict);
+        },
+        set: function (protocol, propertyName, propertyValue, strict) {
+            return _delegateInvocation(this, HandleMethod.Set, protocol, propertyName, propertyValue, strict);
+        },
         invoke: function (protocol, methodName, args, strict) {
-            var handler   = this.handler, 
-                semantics = new InvocationSemantics;
-            handler.handle(semantics, true);
-            var broadcast    = semantics.getOption(InvocationOptions.Broadcast),
-                bestEffort   = semantics.getOption(InvocationOptions.BestEffort),
-                strict       = !!(strict | semantics.getOption(InvocationOptions.Strict)),
-                handleMethod = new HandleMethod(protocol, methodName, args, strict);
-            if (handler.handle(handleMethod, !!broadcast) === false && !bestEffort) {
-                throw new TypeError(lang.format(
-                   "Object %1 has no method '%2'", handler, methodName));
-            }
-            return handleMethod.getReturnValue();
+            return _delegateInvocation(this, HandleMethod.Invoke, protocol, methodName, args, strict);
         }
     });
+
+    function _delegateInvocation(delegate, type, protocol, methodName, args, strict) {
+        var handler   = delegate.handler, 
+            semantics = new InvocationSemantics;
+        handler.handle(semantics, true);
+        strict  = !!(strict | semantics.getOption(InvocationOptions.Strict));
+        var broadcast    = semantics.getOption(InvocationOptions.Broadcast),
+            bestEffort   = semantics.getOption(InvocationOptions.BestEffort),
+            handleMethod = new HandleMethod(type, protocol, methodName, args, strict);
+        if (handler.handle(handleMethod, !!broadcast) === false && !bestEffort) {
+            throw new TypeError(lang.format(
+                "Object %1 has no method '%2'", handler, methodName));
+        }
+        return handleMethod.getReturnValue();
+    }
 
     CallbackHandler.implement({
         strict: function () { return this.callOptions(InvocationOptions.Strict); },
@@ -4541,7 +4569,7 @@ new function () { // closure
         set: function (protocol, propertyName, propertyValue, strict) {
             var object = this.object;
             if (!strict || protocol.adoptedBy(object)) {
-                object[propertyName] = propertyValue;
+                return object[propertyName] = propertyValue;
             }
         },
         invoke: function (protocol, methodName, args, strict) {
@@ -4578,7 +4606,7 @@ new function () { // closure
             return this.delegate.get(this.constructor, propertyName, this.strict);
         },
         set: function (propertyName, propertyValue) {                
-            this.delegste.set(this.constructor, propertyName, propertyValue, this.strict);
+            return this.delegste.set(this.constructor, propertyName, propertyValue, this.strict);
         },
         invoke: function (methodName, args) {
             return this.delegate.invoke(this.constructor, methodName, args, this.strict);
@@ -19609,30 +19637,28 @@ new function () { // closure
     eval(this.imports);
 
     var Guest = Base.extend({
+        $properties: {
+            age: 0
+        },
         constructor: function (age) {
-            this.extend({
-                getAge: function () { return age; }
-            });
+            this.age = age;
         }
     });
 
     var Dealer = Base.extend({
-        constructor: function () {
-            this.extend({
-                shuffle: function (cards) {
-                    return cards.sort(function () {
-                        return 0.5 - Math.random();
-                    });
-                }
-            });
+        shuffle: function (cards) {
+            return cards.sort(function () {
+                    return 0.5 - Math.random();
+                });
         }
     });
 
     var PitBoss = Base.extend({
+        $properties: {
+            name: ''
+        },
         constructor: function (name) {
-            this.extend({
-                getName: function () { return name; }
-            });
+            this.name = name;
         }
     });
 
@@ -19650,24 +19676,23 @@ new function () { // closure
 
     var Level1Security = Base.extend(Security, {
         admit: function (guest) {
-            return guest.getAge() >= 21;
+            return guest.age >= 21;
         }
     });
 
     var Level2Security = Base.extend(Security, {
         trackActivity: function (activity) {
-            console.log(lang.format("Tracking '%1'", activity.getName()));
+            console.log(lang.format("Tracking '%1'", activity.name));
         }
     });
 
     var WireMoney = Base.extend({
+        $properties: {
+            requested: 0.0,
+            received:  0.0
+        },
         constructor: function (requested) {
-            var _received = 0.0;
-            this.extend({
-                getRequested: function () { return requested; },
-                getReceived:  function () { return _received;},
-                setReceived:  function (received) { _received = received; }
-            });
+            this.requested = requested;
         }
     });
 
@@ -19712,19 +19737,20 @@ new function () { // closure
         toString: function () { return 'Cashier $' + this.getBalance(); },
         $handle:[
             WireMoney, function (wireMoney, composer) {
-                wireMoney.setReceived(wireMoney.getRequested());
+                wireMoney.received = wireMoney.requested;
                 return Promise.resolve(wireMoney);
             }]
     });
 
     var Activity = Accountable.extend({
+        $properties: {
+            name: ''
+        },
         constructor: function (name) {
             this.base();
-            this.extend({
-                getName: function () { return name; },
-            });
+            this.name = name;
         },
-        toString: function () { return 'Activity ' + this.getName(); }
+        toString: function () { return 'Activity ' + this.name; }
     });
 
     var CardTable = Activity.extend(Game, {
@@ -19740,13 +19766,14 @@ new function () { // closure
     });
 
     var Casino = CompositeCallbackHandler.extend({
+        $properties: {
+            name: ''
+        },
         constructor: function (name) {
             this.base();
-            this.extend({
-                getName: function () { return name; }
-            });
+            this.name = name;
         },
-        toString: function () { return 'Casino ' + this.getName(); },
+        toString: function () { return 'Casino ' + this.name; },
 
         $provide:[
             PitBoss, function (composer) {
@@ -19764,21 +19791,28 @@ new function () { // closure
 eval(base2.callback_test.namespace);
 
 describe("HandleMethod", function () {
+    describe("#getType", function () {
+        it("should get the method type", function () {
+            var method = new HandleMethod(HandleMethod.Invoke, undefined, "deal", [[1,3,8], 2]);
+            expect(method.getType()).to.equal(HandleMethod.Invoke);
+        });
+    });
+
     describe("#getMethodName", function () {
         it("should get the method name", function () {
-            var method = new HandleMethod(undefined, "deal", [[1,3,8], 2]);
+            var method = new HandleMethod(HandleMethod.Invoke, undefined, "deal", [[1,3,8], 2]);
             expect(method.getMethodName()).to.equal("deal");
         });
     });
 
     describe("#getArguments", function () {
         it("should get the method arguments", function () {
-            var method = new HandleMethod(undefined, "deal", [[1,3,8], 2]);
+            var method = new HandleMethod(HandleMethod.Invoke, undefined, "deal", [[1,3,8], 2]);
             expect(method.getArguments()).to.eql([[1,3,8], 2]);
         });
 
         it("should be able to change arguments", function () {
-            var method = new HandleMethod(undefined, "deal", [[1,3,8], 2]);
+            var method = new HandleMethod(HandleMethod.Invoke, undefined, "deal", [[1,3,8], 2]);
             method.getArguments()[0] = [2,4,8];
             expect(method.getArguments()).to.eql([[2,4,8], 2]);
         });
@@ -19786,7 +19820,7 @@ describe("HandleMethod", function () {
 
     describe("#getReturnValue", function () {
         it("should get the return value", function () {
-            var method = new HandleMethod(undefined, "deal", [[1,3,8], 2]);
+            var method = new HandleMethod(HandleMethod.Invoke, undefined, "deal", [[1,3,8], 2]);
             method.setReturnValue([1,8]);
             expect(method.getReturnValue()).to.eql([1,8]);
         });
@@ -19794,7 +19828,7 @@ describe("HandleMethod", function () {
 
     describe("#setReturnValue", function () {
         it("should set the return value", function () {
-            var method = new HandleMethod(undefined, "deal", [[1,3,8], 2]);
+            var method = new HandleMethod(HandleMethod.Invoke, undefined, "deal", [[1,3,8], 2]);
             method.setReturnValue([1,8]);
             expect(method.getReturnValue()).to.eql([1,8]);
         });
@@ -19802,11 +19836,28 @@ describe("HandleMethod", function () {
 
     describe("#invokeOn", function () {
         it("should invoke method on target", function () {
-            var dealer  = new Dealer(),
-            method  = new HandleMethod(undefined, "shuffle", [[22,19,9,14,29]]),
-            handled = method.invokeOn(dealer);
+            var dealer  = new Dealer,
+                method  = new HandleMethod(HandleMethod.Invoke, undefined, "shuffle", [[22,19,9,14,29]]),
+                handled = method.invokeOn(dealer);
             expect(handled).to.be.true;
             expect(method.getReturnValue()).to.have.members([22,19,9,14,29]);
+        });
+
+        it("should call getter on target", function () {
+            var guest   = new Guest(12),
+                method  = new HandleMethod(HandleMethod.Get, undefined, "age"),
+                handled = method.invokeOn(guest);
+            expect(handled).to.be.true;
+            expect(method.getReturnValue()).to.equal(12);
+        });
+
+        it("should call setter on target", function () {
+            var guest   = new Guest(12),
+                method  = new HandleMethod(HandleMethod.Set, undefined, "age", 18),
+                handled = method.invokeOn(guest);
+            expect(handled).to.be.true;
+            expect(method.getReturnValue()).to.equal(18);
+            expect(guest.age).to.equal(18);
         });
     });
 });
@@ -20312,7 +20363,7 @@ describe("CallbackHandler", function () {
                 wireMoney  = new WireMoney(250000);
             Promise.resolve(casino.defer(wireMoney)).then(function (handled) {
                 expect(handled).to.be.true;
-                expect(wireMoney.getReceived()).to.equal(250000);
+                expect(wireMoney.received).to.equal(250000);
                 done();
             });
         });
@@ -20321,7 +20372,7 @@ describe("CallbackHandler", function () {
             var bank       = (new (CallbackHandler.extend({
                     $handle:[
                         WireMoney, function (wireMoney) {
-                            wireMoney.setReceived(50000);
+                            wireMoney.received = 50000;
                             return Promise.delay(wireMoney, 100);
                         }]
                 }))),
@@ -20329,7 +20380,7 @@ describe("CallbackHandler", function () {
                 wireMoney  = new WireMoney(150000);
             Promise.resolve(casino.defer(wireMoney)).then(function (handled) {
                 expect(handled).to.be.true;
-                expect(wireMoney.getReceived()).to.equal(50000);
+                expect(wireMoney.received).to.equal(50000);
                 done();
             });
         });
