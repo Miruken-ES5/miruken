@@ -190,15 +190,15 @@ new function () { // closure
 eval(base2.ioc_test.namespace);
 
 describe("DependencyModel", function () {
-    describe("#getDependency", function () {
+    describe("#dependency", function () {
         it("should return actual dependency", function () {
             var dependency = new DependencyModel(22);
-            expect(dependency.getDependency()).to.equal(22);
+            expect(dependency.dependency).to.equal(22);
         });
 
         it("should coerce dependency", function () {
             var dependency = DependencyModel(Engine);
-            expect(dependency.getDependency()).to.equal(Engine);
+            expect(dependency.dependency).to.equal(Engine);
         });
 
         it("should not ceorce undefined dependency", function () {
@@ -257,8 +257,8 @@ describe("ComponentModel", function () {
                     deps.append(Car, 22);
                 });
             expect(dependencies).to.have.length(2);
-            expect(dependencies[0].getDependency()).to.equal(Car);
-            expect(dependencies[1].getDependency()).to.equal(22);
+            expect(dependencies[0].dependency).to.equal(Car);
+            expect(dependencies[1].dependency).to.equal(22);
         });
     });
 

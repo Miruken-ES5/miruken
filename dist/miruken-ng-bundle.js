@@ -265,7 +265,7 @@ new function () { // closure
     function _angularDependencies(componentModel) {
         var deps = componentModel.getDependencies();
         return deps ? Array2.filter(Array2.map(deps,
-                          function (dep) { return dep.getDependency(); }),
+                          function (dep) { return dep.dependency; }),
                           function (dep) { return $isString(dep); })
                     : [];
     }
@@ -2177,12 +2177,12 @@ new function () { // closure
      */
     var CallbackHandler = Base.extend(
         $callbacks, {
-        constructor: function (delegate) {
-            this.extend({
-                getDelegate : function () { return delegate; }
-            });
+        constructor: function _(delegate) {
+            var spec = _.spec || (_.spec = {});
+            spec.value = delegate;
+            Object.defineProperty(this, 'delegate', spec);
+            delete spec.value;
         },
-        getDelegate: function () { return null; },
         /**
          * Handles the callback.
          * @param   {Object}          callback    - any callback
@@ -2212,7 +2212,7 @@ new function () { // closure
                     resolved = $provide.dispatch(this, resolution, key, composer, many, resolution.resolve);
                 if (!resolved) { // check if delegate or handler implicitly satisfy key
                     var implied  = new _Node(key),
-                        delegate = this.getDelegate();
+                        delegate = this.delegate;
                     if (delegate && implied.match($classOf(delegate), Variance.Contravariant)) {
                         resolution.resolve(delegate);
                         resolved = true;
@@ -2225,7 +2225,7 @@ new function () { // closure
                 return resolved;
             },
             HandleMethod, function (method, composer) {
-                return method.invokeOn(this.getDelegate(), composer) || method.invokeOn(this, composer);
+                return method.invokeOn(this.delegate, composer) || method.invokeOn(this, composer);
             }
         ],
         toDelegate: function () { return new InvocationDelegate(this); }
@@ -2241,21 +2241,19 @@ new function () { // closure
      * @class {CallbackHandlerDecorator}
      */
     var CallbackHandlerDecorator = CallbackHandler.extend({
-        constructor: function (decoratee) {
+        constructor: function _(decoratee) {
             if ($isNothing(decoratee)) {
                 throw new TypeError("No decoratee specified.");
             }
-            this.extend({
-                getDecoratee: function () { return decoratee; },
-                setDecoratee: function (value) {
-                    decoratee = value.toCallbackHandler();
-                },
-                handleCallback: function (callback, greedy, composer) {
-                    return this.getDecoratee().handle(callback, greedy, composer)
-                        || this.base(callback, greedy, composer);
-                }
+            Object.defineProperty(this, 'decoratee', {
+                get: function () { return decoratee; },
+                set: function (value) { decoratee = value.toCallbackHandler() }
             });
-            this.setDecoratee(decoratee);
+            this.decoratee = decoratee;
+        },
+        handleCallback: function (callback, greedy, composer) {
+            return this.decoratee.handle(callback, greedy, composer)
+                || this.base(callback, greedy, composer);
         }
     });
 
@@ -2263,26 +2261,29 @@ new function () { // closure
      * @class {CallbackHandlerFilter}
      */
     var CallbackHandlerFilter = CallbackHandlerDecorator.extend({
-        constructor: function (decoratee, filter) {
+        constructor: function _(decoratee, filter) {
             this.base(decoratee);
             if ($isNothing(filter)) {
                 throw new TypeError("No filter specified.");
             } else if (!$isFunction(filter)) {
                 throw new TypeError(lang.format("Invalid filter: %1 is not a function.", filter));
             }
-            this.extend({
-                handleCallback: function (callback, greedy, composer) {
-                    var decoratee = this.getDecoratee();
-                    if (InternalCallback.adoptedBy(callback)) {
-                        return decoratee.handle(callback, greedy);
-                    }
-                    if (composer == this) {
-                        composer = decoratee;
-                    }
-                    return filter(callback, composer, function () {
-                        return decoratee.handle(callback, greedy);
-                    })
-                }});
+            var spec = _.spec || (_.spec = {});
+            spec.value = filter;
+            Object.defineProperty(this, 'filter', spec);
+            delete spec.value;
+        },
+        handleCallback: function (callback, greedy, composer) {
+            var decoratee = this.decoratee;
+            if (InternalCallback.adoptedBy(callback)) {
+                return decoratee.handle(callback, greedy);
+            }
+            if (composer == this) {
+                composer = decoratee;
+            }
+            return this.filter(callback, composer, function () {
+                    return decoratee.handle(callback, greedy);
+            })
         }
     });
 
@@ -2323,27 +2324,29 @@ new function () { // closure
      * @class {CascadeCallbackHandler}
      */
     var CascadeCallbackHandler = CallbackHandler.extend({
-        constructor: function (handler, cascadeToHandler) {
+        constructor: function _(handler, cascadeToHandler) {
             if ($isNothing(handler)) {
                 throw new TypeError("No handler specified.");
             } else if ($isNothing(cascadeToHandler)) {
                 throw new TypeError("No cascadeToHandler specified.");
             }
-            handler          = handler.toCallbackHandler();
-            cascadeToHandler = cascadeToHandler.toCallbackHandler();
-            this.extend({
-                handleCallback: function (callback, greedy, composer) {
-                    var handled = greedy
-                        ? (handler.handle(callback, true, composer)
-                           | cascadeToHandler.handle(callback, true, composer))
-                        : (handler.handle(callback, false, composer)
-                           || cascadeToHandler.handle(callback, false, composer));
-                    if (!handled || greedy) {
-                        handled = this.base(callback, greedy, composer) || handled;
-                    }
-                    return !!handled;
-                }
-            });
+            var spec = _.spec || (_.spec = {});
+            spec.value = handler.toCallbackHandler();
+            Object.defineProperty(this, 'handler', spec);
+            spec.value = cascadeToHandler.toCallbackHandler();
+            Object.defineProperty(this, 'cascadeToHandler', spec);
+            delete spec.value;
+        },
+        handleCallback: function (callback, greedy, composer) {
+            var handled = greedy
+                ? (this.handler.handle(callback, true, composer)
+                   | this.cascadeToHandler.handle(callback, true, composer))
+                : (this.handler.handle(callback, false, composer)
+                   || this.cascadeToHandler.handle(callback, false, composer));
+            if (!handled || greedy) {
+                handled = this.base(callback, greedy, composer) || handled;
+            }
+            return !!handled;
         }
     });
 
@@ -2371,7 +2374,7 @@ new function () { // closure
                         var count = _handlers.length;
                         for (var idx = 0; idx < count; ++idx) {
                             var testHandler = _handlers[idx];
-                            if (testHandler == handler || testHandler.getDelegate() == handler) {
+                            if (testHandler == handler || testHandler.delegate == handler) {
                                 _handlers.removeAt(idx);
                                 return;
                             }
@@ -2405,7 +2408,7 @@ new function () { // closure
      * @class {ConditionalCallbackHandler}
      */
     var ConditionalCallbackHandler = CallbackHandlerDecorator.extend({
-        constructor: function (decoratee, condition) {
+        constructor: function _(decoratee, condition) {
             this.base(decoratee);
             if ($isNothing(condition)) {
                 throw new TypeError("No condition specified.");
@@ -2413,13 +2416,15 @@ new function () { // closure
                 throw new TypeError(lang.format(
                     "Invalid condition: %1 is not a function.", condition));
             }
-            this.extend({
-                handleCallback: function (callback, greedy, composer) {
-                    return condition(callback)
-                         ? this.base(callback, greedy, composer)
-                         : false;
-                }
-            });
+            var spec = _.spec || (_.spec = {});
+            spec.value = condition;
+            Object.defineProperty(this, 'condition', spec);
+            delete spec.value;
+        },
+        handleCallback: function (callback, greedy, composer) {
+            return this.condition(callback)
+                 ? this.base(callback, greedy, composer)
+                 : false;
         }
     });
 
@@ -2463,22 +2468,26 @@ new function () { // closure
      * @class {MethodCallbackHandler}
      */
     var MethodCallbackHandler = CallbackHandler.extend({
-        constructor: function (methodName, method) {
+        constructor: function _(methodName, method) {
             if (!$isString(methodName) || methodName.length === 0 || !methodName.trim()) {
                 throw new TypeError("No methodName specified.");
             } else if (!$isFunction(method)) {
                 throw new TypeError(lang.format("Invalid method: %1 is not a function.", method));
             }
-            this.extend({
-                handleCallback: function (callback, greedy, composer) {
-                    if (callback instanceof HandleMethod) {
-                        var target         = new Object;
-                        target[methodName] = method;
-                        return callback.invokeOn(target);
-                    }
-                    return false;
-                }
-            });
+            var spec = _.spec || (_.spec = {});
+            spec.value = methodName;
+            Object.defineProperty(this, 'methodName', spec);
+            spec.value = method;
+            Object.defineProperty(this, 'method', spec);
+            delete spec.value;
+        },
+        handleCallback: function (callback, greedy, composer) {
+            if (callback instanceof HandleMethod) {
+                var target = new Object;
+                target[this.methodName] = this.method;
+                return callback.invokeOn(target);
+            }
+            return false;
         }
     });
 
@@ -2525,16 +2534,16 @@ new function () { // closure
                 },
                 isSpecified: function (option) {
                     return (_specified & option) === option;
-                },
-                mergeInto: function (constraints) {
-                    for (var index = 0; index <= 2; ++index) {
-                        var option = (1 << index);
-                        if (this.isSpecified(option) && !constraints.isSpecified(option)) {
-                            constraints.setOption(option, this.getOption(option));
-                        }
-                    }
                 }
             });
+        },
+        mergeInto: function (constraints) {
+            for (var index = 0; index <= 2; ++index) {
+                var option = (1 << index);
+                if (this.isSpecified(option) && !constraints.isSpecified(option)) {
+                    constraints.setOption(option, this.getOption(option));
+                }
+            }
         }
     });
 
@@ -2542,17 +2551,20 @@ new function () { // closure
      * @class {InvocationOptionsHandler}
      */
     var InvocationOptionsHandler = CallbackHandler.extend({
-        constructor: function (handler, options) {
-            var semantics = new InvocationSemantics(options);
-            this.extend({
-                handleCallback: function (callback, greedy, composer) {
-                    if (callback instanceof InvocationSemantics) {
-                        semantics.mergeInto(callback);
-                        return true;
-                    }
-                    return handler.handle(callback, greedy, composer);
-                }
-            });
+        constructor: function _(handler, options) {
+            var spec = _.spec || (_.spec = {});
+            spec.value = handler;
+            Object.defineProperty(this, 'handler', spec);
+            spec.value = new InvocationSemantics(options);
+            Object.defineProperty(this, 'semantics', spec);
+            delete spec.value;
+        },
+        handleCallback: function (callback, greedy, composer) {
+            if (callback instanceof InvocationSemantics) {
+                this.semantics.mergeInto(callback);
+                return true;
+            }
+            return this.handler.handle(callback, greedy, composer);
         }
     });
 
@@ -2560,22 +2572,25 @@ new function () { // closure
      * @class {InvocationDelegate}
      */
     var InvocationDelegate = Delegate.extend({
-        constructor: function (handler) {
-            this.extend({
-                method: function (protocol, methodName, args, strict) {
-                    var semantics  = new InvocationSemantics();
-                    handler.handle(semantics, true);
-                    var broadcast    = semantics.getOption(InvocationOptions.Broadcast),
-                        bestEffort   = semantics.getOption(InvocationOptions.BestEffort),
-                        strict       = !!(strict | semantics.getOption(InvocationOptions.Strict)),
-                        handleMethod = new HandleMethod(protocol, methodName, args, strict);
-                    if (handler.handle(handleMethod, !!broadcast) === false && !bestEffort) {
-                        throw new TypeError(lang.format(
-                            "Object %1 has no method '%2'", handler, methodName));
-                    }
-                    return handleMethod.getReturnValue();
-                }
-            });
+        constructor: function _(handler) {
+            var spec = _.spec || (_.spec = {});
+            spec.value = handler;
+            Object.defineProperty(this, 'handler', spec);
+            delete spec.value;
+        },
+        invoke: function (protocol, methodName, args, strict) {
+            var handler   = this.handler, 
+                semantics = new InvocationSemantics;
+            handler.handle(semantics, true);
+            var broadcast    = semantics.getOption(InvocationOptions.Broadcast),
+                bestEffort   = semantics.getOption(InvocationOptions.BestEffort),
+                strict       = !!(strict | semantics.getOption(InvocationOptions.Strict)),
+                handleMethod = new HandleMethod(protocol, methodName, args, strict);
+            if (handler.handle(handleMethod, !!broadcast) === false && !bestEffort) {
+                throw new TypeError(lang.format(
+                   "Object %1 has no method '%2'", handler, methodName));
+            }
+            return handleMethod.getReturnValue();
         }
     });
 
@@ -2770,7 +2785,7 @@ new function () { // closure
         };
         definition.dispatch = function (handler, callback, constraint, composer, all, results) {
             var v        = variance,
-                delegate = handler.getDelegate();
+                delegate = handler.delegate;
             constraint = constraint || callback;
             if (constraint) {
                 if ($eq.test(constraint)) {
@@ -3318,11 +3333,8 @@ new function () { // closure
                             if (returnValue === context) {
                                 returnValue = this;
                             }
-                            else if (returnValue &&
-                                     $isFunction(returnValue.getDecoratee) &&
-                                     $isFunction(returnValue.setDecoratee) &&
-                                     returnValue.getDecoratee() == context) {
-                                returnValue.setDecoratee(this);
+                            else if (returnValue && returnValue.decoratee == context) {
+                                returnValue.decoratee = this;
                             }
                             return returnValue;
                         }
@@ -3937,7 +3949,7 @@ new function () { // closure
      * @class {DependencyModel}
      */
     var DependencyModel = Base.extend({
-        constructor: function (dependency, modifiers) {
+        constructor: function _(dependency, modifiers) {
             modifiers = modifiers || DependencyModifiers.None;
             if (dependency instanceof Modifier) {
                 if ($use.test(dependency)) {
@@ -3969,13 +3981,15 @@ new function () { // closure
                 }
                 dependency = Modifier.unwrap(dependency);
             }
-            this.extend({
-                getDependency: function () { return dependency; },
-                getModifiers: function () { return modifiers; },
-                test: function (modifier) {
-                    return (modifiers & modifier) === modifier;
-                }
-            });
+            var spec = _.spec || (_.spec = {});
+            spec.value = dependency;
+            Object.defineProperty(this, 'dependency', spec);
+            spec.value = modifiers;
+            Object.defineProperty(this, 'modifiers', spec);
+            delete spec.value;
+        },
+        test: function (modifier) {
+            return (this.modifiers & modifier) === modifier;
         }
     }, {
         coerce: function (object) {
@@ -4598,7 +4612,7 @@ new function () { // closure
                     promise    = dep.test(DependencyModifiers.Promise),
                     child      = dep.test(DependencyModifiers.Child),
                     dynamic    = dep.test(DependencyModifiers.Dynamic),
-                    dependency = dep.getDependency();
+                    dependency = dep.dependency;
                 if (use || dynamic || $isNothing(dependency)) {
                     if (dynamic && $isFunction(dependency)) {
                         dependency = dependency(containerDep);
@@ -4781,7 +4795,7 @@ new function () { // closure
          * @param   {Boolean}  strict      - true if target must adopt protocol
          * @returns {Any}      the result of the proxied invocation.
          */
-         method: function (protocol, methodName, args, strict) {}
+         invoke: function (protocol, methodName, args, strict) {}
     });
 
     /**
@@ -4806,7 +4820,7 @@ new function () { // closure
                 object[propertyName] = propertyValue;
             }
         },
-        method: function (protocol, methodName, args, strict) {
+        invoke: function (protocol, methodName, args, strict) {
             var object = this.object,
                 method = object[methodName];
             if (method && (!strict || protocol.adoptedBy(object))) {
@@ -4818,7 +4832,7 @@ new function () { // closure
     /**
      * @class {Protocol}
      */
-    var Protocol = Base.extend({
+    var Protocol = Delegate.extend({
         constructor: function (delegate, strict) {
             if ($isNothing(delegate)) {
                 delegate = new Delegate;
@@ -4827,7 +4841,7 @@ new function () { // closure
                     delegate = delegate.toDelegate();
                     if ((delegate instanceof Delegate) === false) {
                         throw new TypeError(lang.format(
-                            "Invalid delegate: %1 is not a Delegate nor does it have a 'toDelegate' method that returned one."));
+                            "Invalid delegate: %1 is not a Delegate nor does it have a 'toDelegate' method that returned one.", delegate));
                     }
                 } else {
                     delegate = new ObjectDelegate(delegate);
@@ -4836,14 +4850,14 @@ new function () { // closure
             Object.defineProperty(this, 'delegate', { value: delegate });
             Object.defineProperty(this, 'strict', { value: !!strict });
         },
-        delegateGet: function (propertyName) {
-            return this.delegate.get($classOf(this), propertyName, this.strict);
+        get: function (propertyName) {
+            return this.delegate.get(this.constructor, propertyName, this.strict);
         },
-        delegateSet: function (propertyName, propertyValue) {                
-            this.delegste.set($classOf(this), propertyName, propertyValue, this.strict);
+        set: function (propertyName, propertyValue) {                
+            this.delegste.set(this.constructor, propertyName, propertyValue, this.strict);
         },
-        delegateMethod: function (methodName, args) {
-            return this.delegate.method($classOf(this), methodName, args, this.strict);
+        invoke: function (methodName, args) {
+            return this.delegate.invoke(this.constructor, methodName, args, this.strict);
         }
     }, {
         isProtocol: function (target) {
@@ -5154,7 +5168,7 @@ new function () { // closure
                     (function (methodName) {
                         target[methodName] = function () {
                             var args = Array.prototype.slice.call(arguments);
-                            return this.delegateMethod(methodName, args);
+                            return this.invoke(methodName, args);
                         }
                     })(key);
                 }
@@ -5176,14 +5190,16 @@ new function () { // closure
      * Metamacro to create properties.
      */
     var $properties = MetaMacro.extend({
-        constructor: function (tag) {
-            this._tag = tag || '$properties';
+        constructor: function _(tag) {
+            var spec = _.spec || (_.spec = {});
+            spec.value = tag || '$properties';
+            Object.defineProperty(this, 'tag', spec);
         },
         apply: function _(step, metadata, target, definition) {
-            if ($isNothing(definition) || !definition.hasOwnProperty(this._tag)) {
+            if ($isNothing(definition) || !definition.hasOwnProperty(this.tag)) {
                 return;
             }
-            var properties = definition[this._tag],
+            var properties = definition[this.tag],
                 descriptors;
             for (var name in properties) {
                 var property = properties[name],
@@ -5194,10 +5210,10 @@ new function () { // closure
                     descriptor = false;
                 if (target instanceof Protocol) {
                     spec.get = function () {
-                        return this.delegateGet(name);
+                        return this.get(name);
                     };
                     spec.set = function (value) {
-                        return this.delegateSet(name, value);
+                        return this.set(name, value);
                     };
                 } else {
                     spec.writable = true;
@@ -5249,8 +5265,8 @@ new function () { // closure
                     }
                 });
             }
-            delete definition[this._tag];
-            delete target[this._tag];
+            delete definition[this.tag];
+            delete target[this.tag];
         },
         defineProperty: function(metadata, target, name, spec) {
             Object.defineProperty(target, name, spec);
@@ -5359,30 +5375,32 @@ new function () { // closure
      * Metamacro to inherit static members in subclass.
      */
     var $inheritStatic = MetaMacro.extend({
-        constructor: function (/*members*/) {
-            var _members = Array.prototype.slice.call(arguments);
-            this.extend({
-                apply: function (step, metadata, target) {
-                    if (step === MetaStep.Subclass) {
-                        var clazz    = metadata.getClass(),
-                            ancestor = $ancestorOf(clazz);
-                        if (_members.length > 0) {
-                            for (var i = 0; i < _members.length; ++i) {
-                                var member = _members[i];
-                                if (!(member in clazz)) {
-                                    clazz[member] = ancestor[member];
-                                }
-                            }
-                        } else if (ancestor !== Base && ancestor !== Object) {
-                            for (var key in ancestor) {
-                                if (ancestor.hasOwnProperty(key) && !(key in clazz)) {
-                                    clazz[key] = ancestor[key];
-                                }
-                            }
+        constructor: function _(/*members*/) {
+            var spec = _.spec || (_.spec = {});
+            spec.value = Array.prototype.slice.call(arguments);
+            Object.defineProperty(this, 'members', spec);
+            delete spec.value;
+        },
+        apply: function (step, metadata, target) {
+            if (step === MetaStep.Subclass) {
+                var members  = this.members,
+                    clazz    = metadata.getClass(),
+                    ancestor = $ancestorOf(clazz);
+                if (members.length > 0) {
+                    for (var i = 0; i < members.length; ++i) {
+                        var member = members[i];
+                        if (!(member in clazz)) {
+                            clazz[member] = ancestor[member];
+                        }
+                    }
+                } else if (ancestor !== Base && ancestor !== Object) {
+                    for (var key in ancestor) {
+                        if (ancestor.hasOwnProperty(key) && !(key in clazz)) {
+                            clazz[key] = ancestor[key];
                         }
                     }
                 }
-            });
+            }
         },
         shouldInherit: True
     });

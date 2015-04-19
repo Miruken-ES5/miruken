@@ -183,7 +183,7 @@ describe("Context", function() {
             expect(wrapped).to.not.equal(context);
             expect(wrapped.constructor).to.equal(Context);
             expect(wrapped.addHandlers(dog)).to.equal(wrapped);
-            expect(decorated.getDecoratee()).to.equal(wrapped);
+            expect(decorated.decoratee).to.equal(wrapped);
             expect(context.resolve(Dog)).to.equal(dog);
         });
 
