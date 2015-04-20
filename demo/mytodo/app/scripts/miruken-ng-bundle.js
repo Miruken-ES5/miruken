@@ -2288,7 +2288,7 @@ new function () { // closure
             }
             var spec = _.spec || (_.spec = {});
             spec.value = filter;
-            Object.defineProperty(this, 'filter', spec);
+            Object.defineProperty(this, '_filter', spec);
             delete spec.value;
         },
         handleCallback: function (callback, greedy, composer) {
@@ -2299,7 +2299,7 @@ new function () { // closure
             if (composer == this) {
                 composer = decoratee;
             }
-            return this.filter(callback, composer, function () {
+            return this._filter(callback, composer, function () {
                     return decoratee.handle(callback, greedy);
             })
         }
@@ -5759,24 +5759,36 @@ new function () { // closure
     function _buildProxy(classes, protocols, options) {
         var base  = options.baseType || classes.shift() || Base,
             proxy = base.extend(protocols.concat(classes), {
-            constructor: function (facets) {
-                this._selectors    = facets[Facet.InterceptorSelectors];
-                this._interceptors = facets[Facet.Interceptors];
-                this._delegate     = facets[Facet.Delegate];
+            constructor: function _(facets) {
+                var spec = _.spec || (_.spec = {});
+                spec.value = facets[Facet.InterceptorSelectors]
+                if (spec.value && spec.value.length > 0) {
+                    Object.defineProperty(this, 'selectors', spec);
+                }
+                spec.value = facets[Facet.Interceptors];
+                if (spec.value && spec.value.length > 0) {
+                    Object.defineProperty(this, 'interceptors', spec);
+                }
+                spec.value = facets[Facet.Delegate];
+                if (spec.value) {
+                    spec.writable = true;
+                    Object.defineProperty(this, 'delegate', spec);
+                }
+                delete spec.writable;
+                delete spec.value;
                 if (base !== Base) {
                     ctor = _proxiedMethod('constructor', this.base, base);
                     ctor.apply(this, facets[Facet.Parameters]);
                 }
             },
             extend: _proxyExtender,
-            getDelegate: function () { return this._delegate; },
-            setDelegate: function (value) { this._delegate = value; },
             getInterceptors: function (source, method) {
-                return (this._selectors && this._selectors.length > 0)
-                     ? Array2.reduce(this._selectors, function (interceptors, selector) {
+                var selectors = this.selectors;
+                return selectors 
+                     ? Array2.reduce(selectors, function (interceptors, selector) {
                            return selector.selectInterceptors(source, method, interceptors);
-                       }, this._interceptors)
-                     : this._interceptors;
+                       }, this.interceptors)
+                     : this.interceptors;
             }
         }, {
             shouldProxy: options.shouldProxy
@@ -5824,10 +5836,11 @@ new function () { // closure
     }
 
     function _proxiedMethod(key, method, source) {
-        var interceptors;
+        var interceptors,
+            spec = _proxiedMethod.spec || (_proxiedMethod.spec = {});
         function proxyMethod () {
             var _this    = this, idx = -1,
-                delegate = this.getDelegate(),
+                delegate = this.delegate,
                 args     = Array.prototype.slice.call(arguments);
             if (!interceptors) {
                 interceptors = this.getInterceptors(source, key);
@@ -5839,7 +5852,7 @@ new function () { // closure
                 setArgs: function (value) { args = value; },
                 useDelegate: function (value) { delegate = value; },
                 replaceDelegate: function (value) {
-                    _this.setDelegate(value);
+                    _this.delegate = value;
                     delegate = value;
                 },
                 proceed: function () {
