@@ -1,18 +1,21 @@
 new function () {
 
-    miruken.ng.$bootstrap();
+    var mytodoApp = new base2.Package(this, {
+        name:     'mytodoApp',
+        ngModule: [ 'ngAnimate',
+                    'ngCookies',
+                    'ngResource',
+                    'ui.router',
+                    'ngRoute',
+                    'ngSanitize',
+                    'ngTouch',
+                    'ui.sortable'
+        ]
+    });
 
-    angular
-        .module('mytodoApp', [
-            'ngAnimate',
-            'ngCookies',
-            'ngResource',
-            'ui.router',
-            'ngRoute',
-            'ngSanitize',
-            'ngTouch',
-            'ui.sortable'
-        ])
+    eval(this.imports);
+
+    mytodoApp.ngModule
         .config(function ($routeProvider) {
             $routeProvider
                 .when('/', {

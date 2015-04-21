@@ -22,7 +22,7 @@ new function () { // closure
         version: miruken.version,
         parent:  miruken,
         imports: "miruken,miruken.callback,miruken.context,miruken.ioc,miruken.mvc",
-        exports: "$bootstrap,$rootContext,Runner"
+        exports: "$rootContext,Runner,Directive"
     });
 
     eval(this.imports);
@@ -30,14 +30,13 @@ new function () { // closure
     var $rootContext  = new Context,
         rootContainer = new IoContainer;
 
-    /**
-     * PackageLifecycle enum
-     * @enum {Number}
-     */
-    var PackageLifecycle = Enum({
-        Created:   1,
-        Installed: 2
-        });
+    $rootContext.addHandlers(rootContainer, 
+                             new miruken.validate.ValidationCallbackHandler,
+                             new miruken.validate.ValidateJsCallbackHandler,
+                             new miruken.error.ErrorCallbackHandler);
+    
+    angular.module('ng').run(['$rootScope', '$injector', _instrumentScopes]);
+
 
     /**
      * @class {Runner}
@@ -47,54 +46,53 @@ new function () { // closure
     });
 
     /**
-     * @function $bootstrap
-     * Bootstraps angular with Miruekn.
-     * @param  {Object}  options  - bootstrap options
+     * @class {Directive}
      */
-    function $bootstrap(options) {
-        _configureRootContext();
-        var ngModule = angular.module;
-        ngModule('ng').run(['$rootScope', '$injector', _instrumentScopes]);
-        angular.module = function (name, requires, configFn) {
-            var module = ngModule.call(this, name, requires, configFn);
-            if (requires) {
-                var runners   = [], starters  = [],
-                    container = Container($rootContext),
-                    package   = _synthesizeModulePackage(name);
-                module.constant('$rootContext', $rootContext)
-                      .config(['$injector', '$controllerProvider',
-                           function ($injector, $controllerProvider) {
-                               _installPackage(package, module, $injector, $controllerProvider, 
-                                               runners, starters);
-                           }])
-                      .run(['$injector', '$q', '$log', function ($injector, $q, $log) {
-                           _provideInjector(rootContainer, $injector);
-                           Array2.forEach(runners, function (runner) {
-                               $injector.invoke(runner);
-                           });
-                           container.register(starters);
-                           $q.when(container.resolveAll(Starting)).then(function (starters) {
-                               Array2.invoke(starters, "start");
-                           }, function (error) {
-                               $log.error(lang.format("Startup for package %1 failed: %2", 
-                                                       package, error.message));
-                           });
-                       }]);
-            }
-            return module;
-        };
-    }
+    var Directive = Base.extend();
 
-    /**
-     * @function _configureRootContext
-     * Configures the root context and installs root container.
-     */
-    function _configureRootContext() {
-        $rootContext.addHandlers(rootContainer, 
-                                 new miruken.validate.ValidationCallbackHandler,
-                                 new miruken.validate.ValidateJsCallbackHandler,
-                                 new miruken.error.ErrorCallbackHandler);
-    }
+    Package.implement({
+        init: function () {
+            this.base();
+            var parent = this.parent,
+                module = this.ngModule;
+            if (module instanceof Array) {
+                var name = String2.slice(this, 7, -1); // [base2.xyz]
+                module = angular.module(name, module);
+                module.constant('$rootContext', $rootContext);
+            } else if (parent) {
+                module = parent.ngModule;
+            }
+            Object.defineProperty(this, 'ngModule', { value: module });
+            if (parent === base2) {
+                global[this.name] = this;
+            }
+        },
+        exported: function (exports) {
+            this.base(exports);
+            var module = this.ngModule;
+            if (module && $isFunction(module.config)) {
+                var package   = this,
+                    container = Container($rootContext),
+                    runners   = [], starters = [];
+                _registerControllersAndDirectives(this, module, exports);
+                module.config(['$injector', function ($injector) {
+                            _installPackage(package, module, exports, $injector, runners, starters);
+                }]);
+                module.run(['$injector', '$q', '$log', function ($injector, $q, $log) {
+                   _provideInjector(rootContainer, $injector);
+                   Array2.forEach(runners, function (runner) {
+                       $injector.invoke(runner);
+                   });
+                   container.register(starters);
+                   $q.when(container.resolveAll(Starting)).then(function (starters) {
+                       Array2.invoke(starters, "start");
+                   }, function (error) {
+                       $log.error(lang.format("Startup for package %1 failed: %2", package, error.message));
+                   });
+              }]);
+            }
+        }
+    });
 
     /**
      * @function _instrumentScopes
@@ -128,102 +126,102 @@ new function () { // closure
     }
 
     /**
-     * @function _synthesizeModulePackage
-     * Synthesizes Miruken packages from angular modules.
-     * @param    {String}   moduleName  - module name
-     * @returns  {Package}  the corresponding package.
+     * @function _registerControllersAndDirectives
+     * Registers the package controllers and directives.
+     * @param  {Package}   package  - module package
+     * @param  {Module}    module   - angular module
+     * @param  {Array}     exports  - exported members
      */
-    function _synthesizeModulePackage(moduleName) {
-        var parent = base2,
-            names  = moduleName.split(".");
-        for (var i = 0; i < names.length; ++i) {
-            var packageName = names[i],
-                package     = parent[packageName];
-            if (!package) {
-                package = parent.addPackage(packageName);
-                package.lifecycle = PackageLifecycle.Created;
-                if (parent === base2) {
-                    global[packageName] = package;
-                }
+    function _registerControllersAndDirectives(package, module, exports) {
+        var container = Container($rootContext);
+        Array2.forEach(exports, function (name) {
+            var member = package[name];
+            if (!member) {
+                return;
             }
-            parent = package;
-        }
-        return package;
-    }
-
-    /**
-     * @function _installPackage
-     * Install the package Installers, Runners, Starters and Controllers.
-     * @param  {Package}   package              - module package
-     * @param  {Module}    module               - angular module
-     * @param  {Injector}  injector             - module injector
-     * @param  {Provider}  $controllerProvider  - controller provider
-     * @param  {Array}     runners              - collects runners
-     * @param  {Array}     starters             - collects starters
-     */
-    function _installPackage(package, module, injector, $controllerProvider, runners, starters) {
-        var container = Container($rootContext),
-            lifecycle = package.lifecycle || PackageLifecycle.Created;
-        if (lifecycle === PackageLifecycle.Created) {
-            package.getClasses(function (member) {
-                var clazz = member.member;
-                if (clazz.prototype instanceof Controller) {
-                    var controller = new ComponentModel;
-                    controller.setKey(clazz);
-                    controller.setLifestyle(new ContextualLifestyle);
-                    container.addComponent(controller);
-                    var deps = _angularDependencies(controller);
-                    deps.unshift('$scope', '$injector');
-                    deps.push(_componentShim(clazz, deps.slice()));
-                    $controllerProvider.register(member.name, deps);
-                } else if (clazz.prototype instanceof Installer ||
-                           clazz.prototype instanceof Runner) {
-                    var deps      = (clazz.prototype.$inject || clazz.$inject || []).slice(),
-                        moduleIdx = deps.indexOf('$module');
-                    if (moduleIdx >= 0) {
-                        deps.splice(moduleIdx, 1);
-                    }
-                    deps.push(function () {
-                        var args = arguments;
-                        if (moduleIdx >= 0) {
-                            args = Array.prototype.slice.call(arguments, 0);
-                            args.splice(moduleIdx, 0, module);
-                        }
-                       var component = clazz.new.apply(clazz, args);
-                       if (component instanceof Installer) {
-                           container.register(component);
-                       } else {
-                           component.run();
-                       }
-                    });
-                    if (clazz.prototype instanceof Installer) {
-                        injector.invoke(deps);
-                    } else {
-                        runners.push(deps);
-                    }
-                }
-            });
-            starters.push($classes.fromPackage(package).basedOn(Starting).withKeys.self());
-            package.lifecycle = PackageLifecycle.Installed;
-        }
-        package.getPackages(function (member) {
-            _installPackage(member.member, module, injector, $controllerProvider, runners, starters);
+            if (member.prototype instanceof Directive) {
+                var directive = new ComponentModel;
+                directive.setKey(member);
+                container.addComponent(directive);
+                var deps = _angularDependencies(directive);
+                deps.unshift('$rootScope');
+                deps.push(Shim(member, deps.slice()));
+                name = name.charAt(0).toLowerCase() + name.slice(1);
+                module.directive(name, deps);
+            } else if (member.prototype instanceof Controller) {
+                var controller = new ComponentModel;
+                controller.setKey(member);
+                controller.setLifestyle(new ContextualLifestyle);
+                container.addComponent(controller);
+                var deps = _angularDependencies(controller);
+                deps.unshift('$scope', '$injector');
+                deps.push(Shim(member, deps.slice()));
+                module.controller(name, deps);
+            }
         });
     }
 
     /**
-     * @function _componentShim
+     * @function _installPackage
+     * Registers the package Installers, Runners and Starters.
+     * @param  {Package}   package   - module package
+     * @param  {Module}    module    - angular module
+     * @param  {Array}     exports  - exported members
+     * @param  {Injector}  injector  - module injector
+     * @param  {Array}     runners   - collects runners
+     * @param  {Array}     starters  - collects starters
+     */
+    function _installPackage(package, module, exports, injector, runners, starters) {
+        var container = Container($rootContext);
+        Array2.forEach(exports, function (name) {
+            var member = package[name];
+            if (!member) {
+                return;
+            }
+            if (member.prototype instanceof Installer || member.prototype instanceof Runner) {
+                var deps      = (member.prototype.$inject || member.$inject || []).slice(),
+                    moduleIdx = deps.indexOf('$module');
+                if (moduleIdx >= 0) {
+                    deps.splice(moduleIdx, 1);
+                }
+                deps.push(function () {
+                    var args = arguments;
+                    if (moduleIdx >= 0) {
+                        args = Array.prototype.slice.call(arguments, 0);
+                        args.splice(moduleIdx, 0, module);
+                    }
+                    var component = member.new.apply(member, args);
+                    if (component instanceof Installer) {
+                        container.register(component);
+                    } else {
+                        component.run();
+                    }
+                });
+                if (member.prototype instanceof Installer) {
+                    injector.invoke(deps);
+                } else {
+                    runners.push(deps);
+                }
+            }
+        });
+        starters.push($classes.fromPackage(package).basedOn(Starting).withKeys.self());
+    }
+
+    /**
+     * @function Shim
      * Resolves the component from the container.
      * @param    {Function}  component   - component key
      * @param    {Array}     deps        - angular dependency keys
      * @returns  {Function}  component constructor shim.  
      */
-    function _componentShim(component, deps) {
+    function Shim(component, deps) {
         return function($scope, $injector) {
             var context    = $scope.context,
                 parameters = Array2.combine(deps, arguments);
             _provideLiteral(context, parameters);
-            _provideInjector(context, $injector);
+            if ($injector) {
+                _provideInjector(context, $injector);
+            }
             return context.resolve($instant(component));
         };
     }
@@ -480,7 +478,10 @@ var Package = Base.extend({
         nsPkg.namespace += "var " + name + "=" + fullName + ";";
         namespace += "if(!" + fullName + ")" + fullName + "=" + name + ";";
       }
-      _private.exports = namespace + "this._label_" + pkg.name + "();";
+      _private.exported = function() {
+        if (nsPkg.exported) nsPkg.exported(exports);
+      };
+      _private.exports = namespace + "this._label_" + pkg.name + "();this.exported();";
       
       // give objects and classes pretty toString methods
       var packageName = String2.slice(pkg, 1, -1);
@@ -4864,6 +4865,7 @@ new function () { // closure
         constructor: function (delegate, strict) {
             if ($isNothing(delegate)) {
                 delegate = new Delegate;
+                //throw new TypeError("No delegate specified.");
             } else if ((delegate instanceof Delegate) === false) {
                 if ($isFunction(delegate.toDelegate)) {
                     delegate = delegate.toDelegate();
@@ -5437,9 +5439,7 @@ new function () { // closure
      * @class {Miruken}
      * Base class to prefer coercion over casting.
      */
-    var Miruken = Base.extend({
-        constructor: function () { this.base.apply(this, arguments); }
-    }, {
+    var Miruken = Base.extend(null, {
         coerce: function () { return this.new.apply(this, arguments); }
     });
 
@@ -5836,21 +5836,19 @@ new function () { // closure
     }
 
     function _proxiedMethod(key, method, source) {
-        var interceptors,
-            spec = _proxiedMethod.spec || (_proxiedMethod.spec = {});
+        var spec = _proxiedMethod.spec || (_proxiedMethod.spec = {}),
+            interceptors;
         function proxyMethod () {
             var _this    = this, idx = -1,
-                delegate = this.delegate,
-                args     = Array.prototype.slice.call(arguments);
+                delegate = this.delegate;
             if (!interceptors) {
                 interceptors = this.getInterceptors(source, key);
             }
             var invocation = {
-                getMethod: function () { return key; },
-                getSource: function () { return source; },
-                getArgs: function () { return args; },
-                setArgs: function (value) { args = value; },
-                useDelegate: function (value) { delegate = value; },
+                args: Array.prototype.slice.call(arguments),
+                useDelegate: function (value) {
+                    delegate = value; 
+                },
                 replaceDelegate: function (value) {
                     _this.delegate = value;
                     delegate = value;
@@ -5864,16 +5862,21 @@ new function () { // closure
                     if (delegate) {
                         var delegateMethod = delegate[key];
                         if ($isFunction(delegateMethod)) {
-                            return delegateMethod.apply(delegate, args);
+                            return delegateMethod.apply(delegate, this.args);
                         }
                     } else if (method) {
-                        return method.apply(_this, args);
+                        return method.apply(_this, this.args);
                     }
                     throw new Error(lang.format(
                         "Interceptor cannot proceed without a class or delegate method '%1'.",
                         key));
                 }
             };
+            spec.value = key;
+            Object.defineProperty(invocation, 'method', spec);
+            spec.value = source;
+            Object.defineProperty(invocation, 'source', spec);
+            delete spec.value;
             return invocation.proceed();
         }
         proxyMethod.baseMethod = method;
@@ -6442,7 +6445,7 @@ new function () { // closure
      * @class {Controller}
      */
     var Controller = CallbackHandler.extend(
-        $inferProperties, $contextual, {
+        $inferProperties, $contextual, Validating, {
         validate: function (target, scope) {
             return _validateController(this, target, 'validate', scope);
         },
@@ -6593,7 +6596,7 @@ new function () { // closure
         version: miruken.version,
         parent:  miruken,
         imports: "miruken,miruken.callback",
-        exports: "Validator,Validation,ValidationResult,ValidationCallbackHandler,$validate"
+        exports: "Validating,Validator,Validation,ValidationResult,ValidationCallbackHandler,$validate"
     });
 
     eval(this.imports);
@@ -6601,12 +6604,9 @@ new function () { // closure
     var $validate = $define('$validate');
 
     /**
-     * @protocol {Validator}
+     * @protocol {Validating}
      */
-    var Validator = Protocol.extend({
-        constructor: function (proxy, strict) {
-            this.base(proxy, (strict === undefined) || strict);
-        },
+    var Validating = Protocol.extend({
         /**
          * Validates the object in the scope.
          * @param   {Object} object   - object to validate
@@ -6622,6 +6622,15 @@ new function () { // closure
          * @returns {Promise} a promise for the validation results.
          */
         validateAsync: function (object, scope, results) {}
+    });
+
+    /**
+     * @protocol {Validator}
+     */
+    var Validator = Protocol.extend(Validating, {
+        constructor: function (proxy, strict) {
+            this.base(proxy, (strict === undefined) || strict);
+        }
     });
 
     /**

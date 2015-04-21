@@ -86,9 +86,9 @@ new function () { // closure
     var LogInterceptor = Interceptor.extend({
         intercept: function (invocation) {
             console.log(lang.format("Called %1 with (%2) from %3",
-                        invocation.getMethod(),
-                        invocation.getArgs().join(", "), 
-                        invocation.getSource()));
+                        invocation.method,
+                        invocation.args.join(", "), 
+                        invocation.source));
             var result = invocation.proceed();
             console.log(lang.format("    And returned %1", result));
             return result;
@@ -795,7 +795,7 @@ describe("Proxy", function () {
 describe("ProxyBuilder", function () {
     var ToUpperInterceptor = Interceptor.extend({
         intercept: function (invocation) {
-            var args = invocation.getArgs();
+            var args = invocation.args;
             for (var i = 0; i < args.length; ++i) {
                 if ($isString(args[i])) {
                     args[i] = args[i].toUpperCase();
@@ -827,8 +827,8 @@ describe("ProxyBuilder", function () {
                 AnimalProxy  = proxyBuilder.buildProxy([Animal]),
                 AnimalInterceptor = Interceptor.extend({
                     intercept: function (invocation) {
-                            var method = invocation.getMethod(),
-                                args = invocation.getArgs();
+                            var method = invocation.method,
+                                args   = invocation.args;
                         if (method === 'talk') {
                             return "I don't know what to say.";
                         } else if (method === 'eat') {
@@ -849,7 +849,7 @@ describe("ProxyBuilder", function () {
                 Flying         = Protocol.extend({ fly: function () {} }),
                 FlyingInterceptor = Interceptor.extend({
                     intercept: function (invocation) {
-                        if (invocation.getMethod() !== 'fly') {
+                        if (invocation.method !== 'fly') {
                             return invocation.proceed();
                         }
                     }

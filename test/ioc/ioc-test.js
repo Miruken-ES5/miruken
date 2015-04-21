@@ -143,9 +143,9 @@ new function () { // closure
     var LogInterceptor = Interceptor.extend({
         intercept: function (invocation) {
             console.log(lang.format("Called %1 with (%2) from %3",
-                        invocation.getMethod(),
-                        invocation.getArgs().join(", "), 
-                        invocation.getSource()));
+                        invocation.method,
+                        invocation.args.join(", "), 
+                        invocation.source));
             var result = invocation.proceed();
             console.log(lang.format("    And returned %1", result));
             return result;

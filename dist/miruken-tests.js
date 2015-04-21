@@ -204,7 +204,10 @@ var Package = Base.extend({
         nsPkg.namespace += "var " + name + "=" + fullName + ";";
         namespace += "if(!" + fullName + ")" + fullName + "=" + name + ";";
       }
-      _private.exports = namespace + "this._label_" + pkg.name + "();";
+      _private.exported = function() {
+        if (nsPkg.exported) nsPkg.exported(exports);
+      };
+      _private.exports = namespace + "this._label_" + pkg.name + "();this.exported();";
       
       // give objects and classes pretty toString methods
       var packageName = String2.slice(pkg, 1, -1);
@@ -4588,6 +4591,7 @@ new function () { // closure
         constructor: function (delegate, strict) {
             if ($isNothing(delegate)) {
                 delegate = new Delegate;
+                //throw new TypeError("No delegate specified.");
             } else if ((delegate instanceof Delegate) === false) {
                 if ($isFunction(delegate.toDelegate)) {
                     delegate = delegate.toDelegate();
@@ -5161,9 +5165,7 @@ new function () { // closure
      * @class {Miruken}
      * Base class to prefer coercion over casting.
      */
-    var Miruken = Base.extend({
-        constructor: function () { this.base.apply(this, arguments); }
-    }, {
+    var Miruken = Base.extend(null, {
         coerce: function () { return this.new.apply(this, arguments); }
     });
 
@@ -5560,21 +5562,19 @@ new function () { // closure
     }
 
     function _proxiedMethod(key, method, source) {
-        var interceptors,
-            spec = _proxiedMethod.spec || (_proxiedMethod.spec = {});
+        var spec = _proxiedMethod.spec || (_proxiedMethod.spec = {}),
+            interceptors;
         function proxyMethod () {
             var _this    = this, idx = -1,
-                delegate = this.delegate,
-                args     = Array.prototype.slice.call(arguments);
+                delegate = this.delegate;
             if (!interceptors) {
                 interceptors = this.getInterceptors(source, key);
             }
             var invocation = {
-                getMethod: function () { return key; },
-                getSource: function () { return source; },
-                getArgs: function () { return args; },
-                setArgs: function (value) { args = value; },
-                useDelegate: function (value) { delegate = value; },
+                args: Array.prototype.slice.call(arguments),
+                useDelegate: function (value) {
+                    delegate = value; 
+                },
                 replaceDelegate: function (value) {
                     _this.delegate = value;
                     delegate = value;
@@ -5588,16 +5588,21 @@ new function () { // closure
                     if (delegate) {
                         var delegateMethod = delegate[key];
                         if ($isFunction(delegateMethod)) {
-                            return delegateMethod.apply(delegate, args);
+                            return delegateMethod.apply(delegate, this.args);
                         }
                     } else if (method) {
-                        return method.apply(_this, args);
+                        return method.apply(_this, this.args);
                     }
                     throw new Error(lang.format(
                         "Interceptor cannot proceed without a class or delegate method '%1'.",
                         key));
                 }
             };
+            spec.value = key;
+            Object.defineProperty(invocation, 'method', spec);
+            spec.value = source;
+            Object.defineProperty(invocation, 'source', spec);
+            delete spec.value;
             return invocation.proceed();
         }
         proxyMethod.baseMethod = method;
@@ -6166,7 +6171,7 @@ new function () { // closure
      * @class {Controller}
      */
     var Controller = CallbackHandler.extend(
-        $inferProperties, $contextual, {
+        $inferProperties, $contextual, Validating, {
         validate: function (target, scope) {
             return _validateController(this, target, 'validate', scope);
         },
@@ -6317,7 +6322,7 @@ new function () { // closure
         version: miruken.version,
         parent:  miruken,
         imports: "miruken,miruken.callback",
-        exports: "Validator,Validation,ValidationResult,ValidationCallbackHandler,$validate"
+        exports: "Validating,Validator,Validation,ValidationResult,ValidationCallbackHandler,$validate"
     });
 
     eval(this.imports);
@@ -6325,12 +6330,9 @@ new function () { // closure
     var $validate = $define('$validate');
 
     /**
-     * @protocol {Validator}
+     * @protocol {Validating}
      */
-    var Validator = Protocol.extend({
-        constructor: function (proxy, strict) {
-            this.base(proxy, (strict === undefined) || strict);
-        },
+    var Validating = Protocol.extend({
         /**
          * Validates the object in the scope.
          * @param   {Object} object   - object to validate
@@ -6346,6 +6348,15 @@ new function () { // closure
          * @returns {Promise} a promise for the validation results.
          */
         validateAsync: function (object, scope, results) {}
+    });
+
+    /**
+     * @protocol {Validator}
+     */
+    var Validator = Protocol.extend(Validating, {
+        constructor: function (proxy, strict) {
+            this.base(proxy, (strict === undefined) || strict);
+        }
     });
 
     /**
@@ -22140,9 +22151,9 @@ new function () { // closure
     var LogInterceptor = Interceptor.extend({
         intercept: function (invocation) {
             console.log(lang.format("Called %1 with (%2) from %3",
-                        invocation.getMethod(),
-                        invocation.getArgs().join(", "), 
-                        invocation.getSource()));
+                        invocation.method,
+                        invocation.args.join(", "), 
+                        invocation.source));
             var result = invocation.proceed();
             console.log(lang.format("    And returned %1", result));
             return result;
@@ -23366,9 +23377,9 @@ new function () { // closure
     var LogInterceptor = Interceptor.extend({
         intercept: function (invocation) {
             console.log(lang.format("Called %1 with (%2) from %3",
-                        invocation.getMethod(),
-                        invocation.getArgs().join(", "), 
-                        invocation.getSource()));
+                        invocation.method,
+                        invocation.args.join(", "), 
+                        invocation.source));
             var result = invocation.proceed();
             console.log(lang.format("    And returned %1", result));
             return result;
@@ -24075,7 +24086,7 @@ describe("Proxy", function () {
 describe("ProxyBuilder", function () {
     var ToUpperInterceptor = Interceptor.extend({
         intercept: function (invocation) {
-            var args = invocation.getArgs();
+            var args = invocation.args;
             for (var i = 0; i < args.length; ++i) {
                 if ($isString(args[i])) {
                     args[i] = args[i].toUpperCase();
@@ -24107,8 +24118,8 @@ describe("ProxyBuilder", function () {
                 AnimalProxy  = proxyBuilder.buildProxy([Animal]),
                 AnimalInterceptor = Interceptor.extend({
                     intercept: function (invocation) {
-                            var method = invocation.getMethod(),
-                                args = invocation.getArgs();
+                            var method = invocation.method,
+                                args   = invocation.args;
                         if (method === 'talk') {
                             return "I don't know what to say.";
                         } else if (method === 'eat') {
@@ -24129,7 +24140,7 @@ describe("ProxyBuilder", function () {
                 Flying         = Protocol.extend({ fly: function () {} }),
                 FlyingInterceptor = Interceptor.extend({
                     intercept: function (invocation) {
-                        if (invocation.getMethod() !== 'fly') {
+                        if (invocation.method !== 'fly') {
                             return invocation.proceed();
                         }
                     }
