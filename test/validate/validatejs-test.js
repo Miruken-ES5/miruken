@@ -12,14 +12,6 @@ eval(miruken.callback.namespace);
 eval(miruken.context.namespace);
 eval(validate.namespace);
 
-validatejs.validators.throws = function () {
-    throw new Error("Oh No!");
-};
-
-validatejs.validators.throwsAsync = function () {
-    return Promise.reject(new Error("Oh No!"));
-};
-
 new function () { // closure
 
     var validatejs_test = new base2.Package(this, {
@@ -70,6 +62,29 @@ new function () { // closure
 };
 
 eval(base2.validatejs_test.namespace);
+
+describe("ValidatorRegistry", function () {
+    var CustomValidators = ValidationRegistry.extend({
+        mustBeUpperCase: function () {}
+    });
+
+    it("should not create instance", function () {
+        expect(function () {
+            new CustomValidators();
+        }).to.throw(TypeError, "Abstract class cannot be instantiated.");
+    });
+
+    it("should register validators", function () {
+        expect(validatejs.validators).to.have.property('mustBeUpperCase');
+    });
+
+    it("should register validators on demand", function () {
+        CustomValidators.implement({
+            uniqueLastName: function () {}
+        });
+        expect(validatejs.validators).to.have.property('uniqueLastName');
+    });
+});
 
 describe("ValidateJsCallbackHandler", function () {
     var context;
@@ -172,7 +187,11 @@ describe("ValidateJsCallbackHandler", function () {
         });
 
         it("should pass exceptions through", function () {
-            var ThrowOnValidation = Base.extend({
+            var ThrowValidators = ValidationRegistry.extend({
+                throws:  function () {
+                    throw new Error("Oh No!");
+                }}),
+                ThrowOnValidation = Base.extend({
                 $properties: {
                     bad:  { validate: { throws: true } }
                 }
@@ -284,7 +303,11 @@ describe("ValidateJsCallbackHandler", function () {
         });
            
         it("should pass exceptions through", function (done) {
-            var ThrowOnValidation = Base.extend({
+            var ThrowValidators = ValidationRegistry.extend({
+                throwsAsync:  function () {
+                    return Promise.reject(new Error("Oh No!"));
+                }}),
+                ThrowOnValidation = Base.extend({
                 $properties: {
                     bad:  { validate: { throwsAsync: true } }
                 }

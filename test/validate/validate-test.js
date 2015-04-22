@@ -57,30 +57,30 @@ new function () { // closure
             Player, function (validation, composer) {
                 var player = validation.getObject();
                 if (!player.getFirstName() || player.getFirstName().length == 0) {
-                    validation.getResults().addKey('firstName')
+                    validation.results.addKey('firstName')
                         .addError('required', { message: 'First name required' });
                 }
                 if (!player.getLastName()  || player.getLastName().length == 0) {
-                    validation.getResults().addKey('lastName')
+                    validation.results.addKey('lastName')
                         .addError('required', { message: 'Last name required' });
                 }
                 if ((player.getDOB() instanceof Date) === false) {
-                    validation.getResults().addKey('dob')
+                    validation.results.addKey('dob')
                         .addError('required', { message: 'DOB required' });
                 }
             },
             Coach, function (validation, composer) {
                 var coach = validation.getObject();
                 if (!coach.getFirstName() || coach.getFirstName().length == 0) {
-                    validation.getResults().addKey('firstName')
+                    validation.results.addKey('firstName')
                         .addError('required', { message: 'First name required' });
                 }
                 if (!coach.getLastName()  || coach.getLastName().length == 0) {
-                    validation.getResults().addKey('lastName')
+                    validation.results.addKey('lastName')
                         .addError('required', { message: 'Last name required' });
                 }
                 if (["D", "E", "F"].indexOf(coach.getLicense()) < 0) {
-                    validation.getResults().addKey('license')
+                    validation.results.addKey('license')
                         .addError('license', { message: 'License must be D, E or F' });
                 }
                 return Promise.delay(true, 50);
@@ -203,13 +203,13 @@ describe("ValidationCallbackHandler", function () {
                     start  = new Date(2006, 8, 1),
                     end    = new Date(2007, 7, 31);
                 if (player.getDOB() < start) {
-                    validation.getResults().addKey('dob')
+                    validation.results.addKey('dob')
                         .addError('playerAge', { 
                             message: "Player too old for division " + team.getDivision(),
                             value:   player.getDOB()
                          });
                 } else if (player.getDOB() > end) {
-                    validation.getResults().addKey('dob')
+                    validation.results.addKey('dob')
                         .addError('playerAge', { 
                             message: "Player too young for division " + team.getDivision(),
                             value:   player.getDOB()
@@ -231,7 +231,7 @@ describe("ValidationCallbackHandler", function () {
                 var source = validation.getObject();
                 if ((source instanceof Team) &&
                     (!source.getName() || source.getName().length == 0)) {
-                    validation.getResults().addKey('name')
+                    validation.results.addKey('name')
                         .addError('required', { message: "Team name required" });
                 }
             });

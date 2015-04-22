@@ -22,7 +22,7 @@ new function () { // closure
         version: miruken.version,
         parent:  miruken,
         imports: "miruken,miruken.callback,miruken.context,miruken.ioc,miruken.mvc",
-        exports: "$rootContext,Runner,Directive"
+        exports: "Runner,Directive,$rootContext"
     });
 
     eval(this.imports);
@@ -56,13 +56,15 @@ new function () { // closure
             var parent = this.parent,
                 module = this.ngModule;
             if (module instanceof Array) {
-                var name = String2.slice(this, 7, -1); // [base2.xyz]
+                var name = String2.slice(this, 7, -1);  // [base2.xyz]
                 module = angular.module(name, module);
                 module.constant('$rootContext', $rootContext);
             } else if (parent) {
                 module = parent.ngModule;
             }
-            Object.defineProperty(this, 'ngModule', { value: module });
+            if (module) {
+                Object.defineProperty(this, 'ngModule', { value: module });
+            }
             if (parent === base2) {
                 global[this.name] = this;
             }
@@ -5081,7 +5083,7 @@ new function () { // closure
     });
 
     var extend  = Base.extend;
-    Base.extend = function () {
+    Base.extend = Abstract.extend = function () {
         return (function (base, args) {
             var protocols, mixins, macros, 
                 constraints = args;
@@ -5152,7 +5154,7 @@ new function () { // closure
     };
     
     var implement = Base.implement;
-    Base.implement = function (source) {
+    Base.implement = Abstract.implement = function (source) {
         if ($isFunction(source)) {
             source = source.prototype; 
         }
@@ -6636,7 +6638,8 @@ new function () { // closure
     /**
      * @class {Validation}
      */
-    var Validation = Base.extend({
+    var Validation = Base.extend(
+        $inferProperties, {
         constructor: function (object, async, scope, results) {
             var _asyncResults;
             async   = !!async;
@@ -6661,7 +6664,8 @@ new function () { // closure
     /**
      * @class {ValidationResult}
      */
-    var ValidationResult = Base.extend($inferProperties, {
+    var ValidationResult = Base.extend(
+        $inferProperties, {
         constructor: function () {
             var _errors, _summary;
             this.extend({
@@ -6829,8 +6833,8 @@ new function () { // closure
         name:    "validate",
         version: miruken.version,
         parent:  miruken,
-        imports: "miruken.callback,miruken.validate",
-        exports: "ValidateJsCallbackHandler,$required,$nested"
+        imports: "miruken,miruken.callback,miruken.validate",
+        exports: "ValidationRegistry,ValidateJsCallbackHandler,$required,$nested"
     });
 
     eval(this.imports);
@@ -6843,6 +6847,26 @@ new function () { // closure
         $nested     = Object.freeze({ nested: true });
 
     validatejs.validators.nested = Undefined;
+
+    var $registerValidators = MetaMacro.extend({
+        apply: function (step, metadata, target, definition) {
+            if (step === MetaStep.Subclass || step === MetaStep.Implement) {
+                for (var name in definition) {
+                    var validator = definition[name];
+                    if ($isFunction(validator)) {
+                        validatejs.validators[name] = validator;
+                    }
+                }
+            }
+        },
+        shouldInherit: True,
+        isActive: True
+    });
+
+    /**
+     * @class {ValidationRegistry}
+     */
+    var ValidationRegistry = Abstract.extend($registerValidators);
 
     /**
      * @class {ValidateJsCallbackHandler}

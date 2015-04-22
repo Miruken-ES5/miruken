@@ -4807,7 +4807,7 @@ new function () { // closure
     });
 
     var extend  = Base.extend;
-    Base.extend = function () {
+    Base.extend = Abstract.extend = function () {
         return (function (base, args) {
             var protocols, mixins, macros, 
                 constraints = args;
@@ -4878,7 +4878,7 @@ new function () { // closure
     };
     
     var implement = Base.implement;
-    Base.implement = function (source) {
+    Base.implement = Abstract.implement = function (source) {
         if ($isFunction(source)) {
             source = source.prototype; 
         }
@@ -6362,7 +6362,8 @@ new function () { // closure
     /**
      * @class {Validation}
      */
-    var Validation = Base.extend({
+    var Validation = Base.extend(
+        $inferProperties, {
         constructor: function (object, async, scope, results) {
             var _asyncResults;
             async   = !!async;
@@ -6387,7 +6388,8 @@ new function () { // closure
     /**
      * @class {ValidationResult}
      */
-    var ValidationResult = Base.extend($inferProperties, {
+    var ValidationResult = Base.extend(
+        $inferProperties, {
         constructor: function () {
             var _errors, _summary;
             this.extend({
@@ -6555,8 +6557,8 @@ new function () { // closure
         name:    "validate",
         version: miruken.version,
         parent:  miruken,
-        imports: "miruken.callback,miruken.validate",
-        exports: "ValidateJsCallbackHandler,$required,$nested"
+        imports: "miruken,miruken.callback,miruken.validate",
+        exports: "ValidationRegistry,ValidateJsCallbackHandler,$required,$nested"
     });
 
     eval(this.imports);
@@ -6569,6 +6571,26 @@ new function () { // closure
         $nested     = Object.freeze({ nested: true });
 
     validatejs.validators.nested = Undefined;
+
+    var $registerValidators = MetaMacro.extend({
+        apply: function (step, metadata, target, definition) {
+            if (step === MetaStep.Subclass || step === MetaStep.Implement) {
+                for (var name in definition) {
+                    var validator = definition[name];
+                    if ($isFunction(validator)) {
+                        validatejs.validators[name] = validator;
+                    }
+                }
+            }
+        },
+        shouldInherit: True,
+        isActive: True
+    });
+
+    /**
+     * @class {ValidationRegistry}
+     */
+    var ValidationRegistry = Abstract.extend($registerValidators);
 
     /**
      * @class {ValidateJsCallbackHandler}
@@ -24936,30 +24958,30 @@ new function () { // closure
             Player, function (validation, composer) {
                 var player = validation.getObject();
                 if (!player.getFirstName() || player.getFirstName().length == 0) {
-                    validation.getResults().addKey('firstName')
+                    validation.results.addKey('firstName')
                         .addError('required', { message: 'First name required' });
                 }
                 if (!player.getLastName()  || player.getLastName().length == 0) {
-                    validation.getResults().addKey('lastName')
+                    validation.results.addKey('lastName')
                         .addError('required', { message: 'Last name required' });
                 }
                 if ((player.getDOB() instanceof Date) === false) {
-                    validation.getResults().addKey('dob')
+                    validation.results.addKey('dob')
                         .addError('required', { message: 'DOB required' });
                 }
             },
             Coach, function (validation, composer) {
                 var coach = validation.getObject();
                 if (!coach.getFirstName() || coach.getFirstName().length == 0) {
-                    validation.getResults().addKey('firstName')
+                    validation.results.addKey('firstName')
                         .addError('required', { message: 'First name required' });
                 }
                 if (!coach.getLastName()  || coach.getLastName().length == 0) {
-                    validation.getResults().addKey('lastName')
+                    validation.results.addKey('lastName')
                         .addError('required', { message: 'Last name required' });
                 }
                 if (["D", "E", "F"].indexOf(coach.getLicense()) < 0) {
-                    validation.getResults().addKey('license')
+                    validation.results.addKey('license')
                         .addError('license', { message: 'License must be D, E or F' });
                 }
                 return Promise.delay(true, 50);
@@ -25082,13 +25104,13 @@ describe("ValidationCallbackHandler", function () {
                     start  = new Date(2006, 8, 1),
                     end    = new Date(2007, 7, 31);
                 if (player.getDOB() < start) {
-                    validation.getResults().addKey('dob')
+                    validation.results.addKey('dob')
                         .addError('playerAge', { 
                             message: "Player too old for division " + team.getDivision(),
                             value:   player.getDOB()
                          });
                 } else if (player.getDOB() > end) {
-                    validation.getResults().addKey('dob')
+                    validation.results.addKey('dob')
                         .addError('playerAge', { 
                             message: "Player too young for division " + team.getDivision(),
                             value:   player.getDOB()
@@ -25110,7 +25132,7 @@ describe("ValidationCallbackHandler", function () {
                 var source = validation.getObject();
                 if ((source instanceof Team) &&
                     (!source.getName() || source.getName().length == 0)) {
-                    validation.getResults().addKey('name')
+                    validation.results.addKey('name')
                         .addError('required', { message: "Team name required" });
                 }
             });
@@ -25195,14 +25217,6 @@ eval(miruken.callback.namespace);
 eval(miruken.context.namespace);
 eval(validate.namespace);
 
-validatejs.validators.throws = function () {
-    throw new Error("Oh No!");
-};
-
-validatejs.validators.throwsAsync = function () {
-    return Promise.reject(new Error("Oh No!"));
-};
-
 new function () { // closure
 
     var validatejs_test = new base2.Package(this, {
@@ -25253,6 +25267,29 @@ new function () { // closure
 };
 
 eval(base2.validatejs_test.namespace);
+
+describe("ValidatorRegistry", function () {
+    var CustomValidators = ValidationRegistry.extend({
+        mustBeUpperCase: function () {}
+    });
+
+    it("should not create instance", function () {
+        expect(function () {
+            new CustomValidators();
+        }).to.throw(TypeError, "Abstract class cannot be instantiated.");
+    });
+
+    it("should register validators", function () {
+        expect(validatejs.validators).to.have.property('mustBeUpperCase');
+    });
+
+    it("should register validators on demand", function () {
+        CustomValidators.implement({
+            uniqueLastName: function () {}
+        });
+        expect(validatejs.validators).to.have.property('uniqueLastName');
+    });
+});
 
 describe("ValidateJsCallbackHandler", function () {
     var context;
@@ -25355,7 +25392,11 @@ describe("ValidateJsCallbackHandler", function () {
         });
 
         it("should pass exceptions through", function () {
-            var ThrowOnValidation = Base.extend({
+            var ThrowValidators = ValidationRegistry.extend({
+                throws:  function () {
+                    throw new Error("Oh No!");
+                }}),
+                ThrowOnValidation = Base.extend({
                 $properties: {
                     bad:  { validate: { throws: true } }
                 }
@@ -25467,7 +25508,11 @@ describe("ValidateJsCallbackHandler", function () {
         });
            
         it("should pass exceptions through", function (done) {
-            var ThrowOnValidation = Base.extend({
+            var ThrowValidators = ValidationRegistry.extend({
+                throwsAsync:  function () {
+                    return Promise.reject(new Error("Oh No!"));
+                }}),
+                ThrowOnValidation = Base.extend({
                 $properties: {
                     bad:  { validate: { throwsAsync: true } }
                 }
