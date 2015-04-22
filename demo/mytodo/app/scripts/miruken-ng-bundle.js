@@ -3933,7 +3933,13 @@ new function () { // closure
          * @param   {Any} key  - key used to identify the components
          * @returns {Array} components (or Promises) satisfying the key.
          */
-        resolveAll: function (key) {}
+        resolveAll: function (key) {},
+        /**
+         * Invokes the function with dependencies.
+         * @param   {Function} fn - function to invoke
+         * @returns {Object} result of function.
+         */
+        invoke: function (fn, dependencies) {}
     });
 
     /**
@@ -4036,7 +4042,9 @@ new function () { // closure
             this.base(dependencies);
         },
         mapItem: function (item) {
-            return DependencyModel(item);
+            return !(item !== undefined && item instanceof DependencyModel) 
+                 ? DependencyModel(item) 
+                 : item;
         }                         
     });
 
@@ -4157,11 +4165,9 @@ new function () { // closure
                         var dependencies = _burden[key],
                             manager      = new DependencyManager(dependencies);
                         actions(manager);
-                        if (dependencies === undefined) {
-                            var dependencies = manager.getItems();
-                            if (dependencies.length > 0) {
-                                _burden[key] = dependencies;
-                            }
+                        var dependencies = manager.getItems();
+                        if (dependencies.length > 0) {
+                            _burden[key] = dependencies;
                         }
                     }
                     return dependencies;
@@ -4545,11 +4551,6 @@ new function () { // closure
         constructor: function () {
             var _inspectors = [new DependencyInspector];
             this.extend({
-                register: function (/*registrations*/) {
-                    return Array2.flatten(arguments).map(function (registration) {
-                        return registration.register(this, $composer);
-                    }.bind(this));
-                },
                 addComponent: function (componentModel, policies) {
                     policies  = policies || [];
                     for (var i = 0; i < _inspectors.length; ++i) {
@@ -4567,15 +4568,6 @@ new function () { // closure
                     }
                     return this.registerHandler(componentModel); 
                 },
-                registerHandler: function (componentModel) {
-                    var key       = componentModel.getKey(),
-                        clazz     = componentModel.getClass(),
-                        lifestyle = componentModel.getLifestyle() || new SingletonLifestyle,
-                        factory   = componentModel.getFactory(),
-                        burden    = componentModel.getBurden();
-                    key = componentModel.isInvariant() ? $eq(key) : key;
-                    return _registerHandler(this, key, clazz, lifestyle, factory, burden); 
-                },
                 addInspector: function (inspector) {
                     if (!$isFunction(inspector.inspect)) {
                         throw new TypeError("Inspectors must have an inspect method.");
@@ -4584,11 +4576,42 @@ new function () { // closure
                 },
                 removeInspector: function (inspector) {
                     Array2.remove(_inspectors, inspector);
-                },
-                dispose: function () {
-                    $provide.removeAll(this);
                 }
             })
+        },
+        register: function (/*registrations*/) {
+            return Array2.flatten(arguments).map(function (registration) {
+                return registration.register(this, $composer);
+            }.bind(this));
+        },
+        registerHandler: function (componentModel) {
+            var key       = componentModel.getKey(),
+                clazz     = componentModel.getClass(),
+                lifestyle = componentModel.getLifestyle() || new SingletonLifestyle,
+                factory   = componentModel.getFactory(),
+                burden    = componentModel.getBurden();
+            key = componentModel.isInvariant() ? $eq(key) : key;
+            return _registerHandler(this, key, clazz, lifestyle, factory, burden); 
+        },
+        invoke: function (fn, dependencies) {
+            var inject  = fn.$inject,
+                manager = new DependencyManager(dependencies);
+            if (inject) {
+                if ($isFunction(inject)) {
+                    inject = inject();
+                }
+                manager.merge(inject);
+            }
+            dependencies = manager.getItems();
+            if (dependencies.length > 0) {
+                var burden = { d:  dependencies };
+                deps = _resolveBurden(burden, true, null, $composer);
+                return fn.apply(null, deps.d);
+            }
+            return fn();
+        },
+        dispose: function () {
+            $provide.removeAll(this);
         },
         $validate:[
             ComponentModel, function (validation, composer) {
@@ -4596,13 +4619,13 @@ new function () { // closure
                     key            = componentModel.getKey(),
                     factory        = componentModel.getFactory();
                 if (!key) {
-                    validation.getResults().addKey('key')
+                    validation.results.addKey('key')
                         .addError('required', { 
                             message: 'Key could not be determined for component.' 
                          });
                 }
                 if (!factory) {
-                    validation.getResults().addKey('factory')
+                    validation.results.addKey('factory')
                         .addError('required', { 
                             message: 'Factory could not be determined for component.' 
                          });
@@ -4615,17 +4638,25 @@ new function () { // closure
             if (!(resolution instanceof DependencyResolution)) {
                 resolution = new DependencyResolution(resolution.getKey());
             }
-            return resolution.claim(handler, clazz)
-                 ? lifestyle.resolve(_activate.bind(container, clazz, factory,
-                                     burden, resolution, composer), composer)
-                 : $NOT_HANDLED;  // cycle detected
+            if (!resolution.claim(handler, clazz)) {  // cycle detected
+                return $NOT_HANDLED;
+            }
+            return lifestyle.resolve(function () {
+                var instant      = $instant.test(resolution.getKey()),
+                    dependencies = _resolveBurden(burden, instant, resolution, composer);
+                if ($isPromise(dependencies)) {
+                    return dependencies.then(function (deps) {
+                        return factory.call(composer, deps);
+                    });
+                }
+                return factory.call(composer, dependencies);
+            }, composer);
         }, lifestyle.dispose.bind(lifestyle));
     }
 
-    function _activate(clazz, factory, burden, resolution, composer) {
+    function _resolveBurden(burden, instant, resolution, composer) {
         var promises     = [],
             dependencies = {},
-            instant      = $instant.test(resolution.getKey()),
             containerDep = Container(composer);
         for (var key in burden) {
             var group = burden[key];
@@ -4698,16 +4729,12 @@ new function () { // closure
             }
             dependencies[key] = resolved;
         }
-        function createInstance () {
-            return factory.call(composer, dependencies);
-        }
         if (promises.length === 1) {
-            return promises[0].then(createInstance);
-        } else if (promises.length > 0) {
-            return Promise.all(promises).then(createInstance);
-        } else {
-            return createInstance();
+            return promises[0].return(dependencies);
+        } else if (promises.length > 1) {
+            return Promise.all(promises).return(dependencies);
         }
+        return dependencies;
     }
     
     function _resolveDependency(dependency, required, promise, child, all, composer) {
@@ -4863,7 +4890,7 @@ new function () { // closure
     /**
      * @class {Protocol}
      */
-    var Protocol = Delegate.extend({
+    var Protocol = Base.extend({
         constructor: function (delegate, strict) {
             if ($isNothing(delegate)) {
                 delegate = new Delegate;
@@ -4882,13 +4909,13 @@ new function () { // closure
             Object.defineProperty(this, 'delegate', { value: delegate });
             Object.defineProperty(this, 'strict', { value: !!strict });
         },
-        get: function (propertyName) {
+        __get: function (propertyName) {
             return this.delegate.get(this.constructor, propertyName, this.strict);
         },
-        set: function (propertyName, propertyValue) {                
+        __set: function (propertyName, propertyValue) {                
             return this.delegste.set(this.constructor, propertyName, propertyValue, this.strict);
         },
-        invoke: function (methodName, args) {
+        __invoke: function (methodName, args) {
             return this.delegate.invoke(this.constructor, methodName, args, this.strict);
         }
     }, {
@@ -5200,7 +5227,7 @@ new function () { // closure
                     (function (methodName) {
                         target[methodName] = function () {
                             var args = Array.prototype.slice.call(arguments);
-                            return this.invoke(methodName, args);
+                            return this.__invoke(methodName, args);
                         }
                     })(key);
                 }
@@ -5242,10 +5269,10 @@ new function () { // closure
                     descriptor = false;
                 if (target instanceof Protocol) {
                     spec.get = function () {
-                        return this.get(name);
+                        return this.__get(name);
                     };
                     spec.set = function (value) {
-                        return this.set(name, value);
+                        return this.__set(name, value);
                     };
                 } else {
                     spec.writable = true;
@@ -5571,32 +5598,32 @@ new function () { // closure
      */
     var ArrayManager = Base.extend({
         constructor: function (items) {
-            items = items || [];
+            var _items = [];
             this.extend({
-                getItems: function () { return items; },
+                getItems: function () { return _items; },
                 getIndex: function (index) {
-                    if (items.length > index) {
-                        return items[index];
+                    if (_items.length > index) {
+                        return _items[index];
                     }
                 },
                 setIndex: function (index, item) {
-                    if ((items.length <= index) ||
-                        (items[index] === undefined)) {
-                        items[index] = this.mapItem(item);
+                    if ((_items.length <= index) ||
+                        (_items[index] === undefined)) {
+                        _items[index] = this.mapItem(item);
                     }
                     return this;
                 },
                 insertIndex: function (index, item) {
-                    items.splice(index, 0, this.mapItem(item));
+                    _items.splice(index, 0, this.mapItem(item));
                     return this;
                 },
                 replaceIndex: function (index, item) {
-                    items[index] = this.mapItem(item);
+                    _items[index] = this.mapItem(item);
                     return this;
                 },
                 removeIndex: function (index) {
-                    if (items.length > index) {
-                        items.splice(index, 1);
+                    if (_items.length > index) {
+                        _items.splice(index, 1);
                     }
                     return this;
                 },
@@ -5605,11 +5632,11 @@ new function () { // closure
                     if (arguments.length === 1 && (arguments[0] instanceof Array)) {
                         newItems = arguments[0];
                     } else if (arguments.length > 0) {
-                        newItems = Array.prototype.slice.call(arguments);
+                        newItems = arguments;
                     }
                     if (newItems) {
                         for (var i = 0; i < newItems.length; ++i) {
-                            items.push(this.mapItem(newItems[i]));
+                            _items.push(this.mapItem(newItems[i]));
                         }
                     }
                     return this;
@@ -5622,9 +5649,11 @@ new function () { // closure
                         }
                     }
                     return this;
-                },
-
+                }
             });
+            if (items) {
+                this.append(items);
+            }
         },
         mapItem: function (item) { return item; }
     });
