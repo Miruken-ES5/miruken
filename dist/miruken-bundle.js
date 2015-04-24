@@ -3629,7 +3629,7 @@ new function () { // closure
     /**
      * @protocol {Container}
      */
-    var Container = Protocol.extend(Disposing, {
+    var Container = Protocol.extend(Invoking, Disposing, {
         constructor: function (proxy, strict) {
             this.base(proxy, (strict === undefined) || strict);
         },
@@ -3657,13 +3657,7 @@ new function () { // closure
          * @param   {Any} key  - key used to identify the components
          * @returns {Array} components (or Promises) satisfying the key.
          */
-        resolveAll: function (key) {},
-        /**
-         * Invokes the function with dependencies.
-         * @param   {Function} fn - function to invoke
-         * @returns {Object} result of function.
-         */
-        invoke: function (fn, dependencies) {}
+        resolveAll: function (key) {}
     });
 
     /**
@@ -4317,7 +4311,7 @@ new function () { // closure
             key = componentModel.isInvariant() ? $eq(key) : key;
             return _registerHandler(this, key, clazz, lifestyle, factory, burden); 
         },
-        invoke: function (fn, dependencies) {
+        invoke: function (fn, dependencies, ctx) {
             var inject  = fn.$inject,
                 manager = new DependencyManager(dependencies);
             if (inject) {
@@ -4330,7 +4324,7 @@ new function () { // closure
             if (dependencies.length > 0) {
                 var burden = { d:  dependencies };
                 deps = _resolveBurden(burden, true, null, $composer);
-                return fn.apply(null, deps.d);
+                return fn.apply(ctx, deps.d);
             }
             return fn();
         },
@@ -4509,7 +4503,7 @@ new function () { // closure
     var miruken = new base2.Package(this, {
         name:    "miruken",
         version: "1.0",
-        exports: "Enum,Protocol,Delegate,Miruken,MetaStep,MetaMacro,Disposing,DisposingMixin,Parenting,Starting,Startup,Facet,Interceptor,InterceptorSelector,ProxyBuilder,TraversingAxis,Traversing,TraversingMixin,Traversal,Variance,Modifier,ArrayManager,IndexedList,$isProtocol,$isClass,$classOf,$ancestorOf,$isString,$isFunction,$isObject,$isPromise,$isSomething,$isNothing,$using,$lift,$eq,$use,$copy,$lazy,$eval,$every,$child,$optional,$promise,$instant,$createModifier,$properties,$inferProperties,$inheritStatic"
+        exports: "Enum,Protocol,Delegate,Miruken,MetaStep,MetaMacro,Disposing,DisposingMixin,Invoking,Parenting,Starting,Startup,Facet,Interceptor,InterceptorSelector,ProxyBuilder,TraversingAxis,Traversing,TraversingMixin,Traversal,Variance,Modifier,ArrayManager,IndexedList,$isProtocol,$isClass,$classOf,$ancestorOf,$isString,$isFunction,$isObject,$isPromise,$isSomething,$isNothing,$using,$lift,$eq,$use,$copy,$lazy,$eval,$every,$child,$optional,$promise,$instant,$createModifier,$properties,$inferProperties,$inheritStatic"
     });
 
     eval(this.imports);
@@ -4984,6 +4978,9 @@ new function () { // closure
             }
             var properties = definition[this.tag],
                 descriptors;
+            if ($isFunction(properties)) {
+                properties = properties();
+            }
             for (var name in properties) {
                 var property = properties[name],
                     spec = _.spec || (_.spec = {
@@ -5216,6 +5213,23 @@ new function () { // closure
                 object.dispose = Undefined;  // dispose once
             }
         }
+    });
+
+    /**
+     * @protocol {Invoking}
+     */
+    var Invoking = Protocol.extend({
+        constructor: function (proxy, strict) {
+            this.base(proxy, (strict === undefined) || strict);
+        },
+        /**
+         * Invokes the function with dependencies.
+         * @param   {Function} fn           - function to invoke
+         * @param   {Array}    dependencies - function dependencies
+         * @param   {Object}   ctx          - function context
+         * @returns {Object} result of function.
+         */
+        invoke: function (fn, dependencies, ctx) {}
     });
 
     /**
@@ -6121,7 +6135,7 @@ new function () { // closure
         version: miruken.version,
         parent:  miruken,
         imports: "miruken,miruken.callback",
-        exports: "Validating,Validator,Validation,ValidationResult,ValidationCallbackHandler,$validate"
+        exports: "Validating,Validator,Validation,ValidationResult,ValidationCallbackHandler,$validate,$validateThat"
     });
 
     eval(this.imports);
@@ -6203,7 +6217,7 @@ new function () { // closure
                             continue;
                         }
                         var result = this[key];
-                        if ((result instanceof ValidationResult) && !result.isValid()) {
+                        if ((result instanceof ValidationResult) && !result.valid) {
                             return false;
                         }
                     }
@@ -6294,16 +6308,22 @@ new function () { // closure
         validate: function (object, scope, results) {
             var validation = new Validation(object, false, scope, results);
             $composer.handle(validation, true);
-            results = validation.getResults();
+            results = validation.results;
             _bindValidationResults(object, results);
+            _validateThat(object, scope, results, null, $composer);
             return results;
         },
         validateAsync: function (object, scope, results) {
-            var validation = new Validation(object, true, scope, results);
-            return $composer.deferAll(validation).then(function () {
-                results = validation.getResults();
+            var validation = new Validation(object, true, scope, results),
+                composer = $composer;
+            return composer.deferAll(validation).then(function () {
+                results = validation.results;
                 _bindValidationResults(object, results);
-                return results;
+                var asyncResults = [];
+                _validateThat(object, scope, results, asyncResults, composer);
+                return asyncResults.length > 0
+                     ? Promise.all(asyncResults).return(results)
+                     : results;
             });
         }
     });
@@ -6313,12 +6333,65 @@ new function () { // closure
             source = $classOf(target);
         if (source) {
             $validate.dispatch(this, validation, source, composer, true, validation.addAsyncResult);
-            var asyncResults = validation.getAsyncResults();
+            var asyncResults = validation.asyncResults;
             if (asyncResults) {
                 return Promise.all(asyncResults);
             }
         }
     });
+
+    /**
+     * @class {$validateThat}
+     * Metamacro to validate instances.
+     */
+    var $validateThat = MetaMacro.extend({
+        apply: function _(step, metadata, target, definition) {
+            var validateThat = definition['$validateThat'];
+            if (validateThat) {
+                var validators = {};
+                for (name in validateThat) {
+                    var validator = validateThat[name];
+                    if (validator instanceof Array) {
+                        var dependencies = validator.slice(0);
+                        validator = dependencies.pop();
+                        if (!$isFunction(validator)) {
+                            continue;
+                        }
+                        if (dependencies.length > 0) {
+                            validator = (function (nm, val, deps) {
+                                return function (results, scope, composer) {
+                                    var d = Array2.concat(deps, Array2.map(arguments, $use));
+                                    return Invoking(composer).invoke(val, d, this);
+                                }
+                            })(name, validator, dependencies);
+                        }
+                    }
+                    if ($isFunction(validator)) {
+                        name = 'validateThat' + name.charAt(0).toUpperCase() + name.slice(1);
+                        validators[name] = validator;
+                    };
+                    if (step == MetaStep.Extend) {
+                        target.extend(validators);
+                    } else {
+                        metadata.getClass().implement(validators);
+                    }
+                }
+                delete target['$validateThat'];
+            }
+        }
+    });
+
+    function _validateThat(object, scope, results, asyncResults, composer) {
+        for (var key in object) {
+            if (key.lastIndexOf('validateThat', 0) == 0) {
+                var validator   = object[key],
+                    returnValue = validator.call(object, results, scope, composer);
+                if (asyncResults &&  $isPromise(returnValue)) {
+                    asyncResults.push(returnValue);
+                }
+            }
+        }
+    }
 
     function _bindValidationResults(object, results) {
         var spec = _bindValidationResults.spec || 
@@ -6376,6 +6449,24 @@ new function () { // closure
             if (step === MetaStep.Subclass || step === MetaStep.Implement) {
                 for (var name in definition) {
                     var validator = definition[name];
+                    if (validator instanceof Array) {
+                        var dependencies = validator.slice(0);
+                        validator = dependencies.pop();
+                        if (!$isFunction(validator)) {
+                            continue;
+                        }
+                        if (dependencies.length > 0) {
+                            validator = (function (nm, val, deps) {
+                                return function () {
+                                    if (!$composer) {
+                                        throw new Error("Unable to invoke validator '" + nm + "'.");
+                                    }
+                                    var d = Array2.concat(deps, Array2.map(arguments, $use));
+                                    return Invoking($composer).invoke(val, d);
+                                }
+                            })(name, validator, dependencies);
+                        }
+                    }
                     if ($isFunction(validator)) {
                         validatejs.validators[name] = validator;
                     }
@@ -6482,7 +6573,7 @@ new function () { // closure
                         }
                     } else if (!(name in validatejs.validators)) {
                         validatejs.validators[name] = function () {
-                            var validator = $composer.resolve(name);
+                            var validator = $composer && $composer.resolve(name);
                             if (!validator) {
                                 throw new Error("Unable to resolve validator '" + name + "'.");
                             }

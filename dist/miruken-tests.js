@@ -3629,7 +3629,7 @@ new function () { // closure
     /**
      * @protocol {Container}
      */
-    var Container = Protocol.extend(Disposing, {
+    var Container = Protocol.extend(Invoking, Disposing, {
         constructor: function (proxy, strict) {
             this.base(proxy, (strict === undefined) || strict);
         },
@@ -3657,13 +3657,7 @@ new function () { // closure
          * @param   {Any} key  - key used to identify the components
          * @returns {Array} components (or Promises) satisfying the key.
          */
-        resolveAll: function (key) {},
-        /**
-         * Invokes the function with dependencies.
-         * @param   {Function} fn - function to invoke
-         * @returns {Object} result of function.
-         */
-        invoke: function (fn, dependencies) {}
+        resolveAll: function (key) {}
     });
 
     /**
@@ -4317,7 +4311,7 @@ new function () { // closure
             key = componentModel.isInvariant() ? $eq(key) : key;
             return _registerHandler(this, key, clazz, lifestyle, factory, burden); 
         },
-        invoke: function (fn, dependencies) {
+        invoke: function (fn, dependencies, ctx) {
             var inject  = fn.$inject,
                 manager = new DependencyManager(dependencies);
             if (inject) {
@@ -4330,7 +4324,7 @@ new function () { // closure
             if (dependencies.length > 0) {
                 var burden = { d:  dependencies };
                 deps = _resolveBurden(burden, true, null, $composer);
-                return fn.apply(null, deps.d);
+                return fn.apply(ctx, deps.d);
             }
             return fn();
         },
@@ -4509,7 +4503,7 @@ new function () { // closure
     var miruken = new base2.Package(this, {
         name:    "miruken",
         version: "1.0",
-        exports: "Enum,Protocol,Delegate,Miruken,MetaStep,MetaMacro,Disposing,DisposingMixin,Parenting,Starting,Startup,Facet,Interceptor,InterceptorSelector,ProxyBuilder,TraversingAxis,Traversing,TraversingMixin,Traversal,Variance,Modifier,ArrayManager,IndexedList,$isProtocol,$isClass,$classOf,$ancestorOf,$isString,$isFunction,$isObject,$isPromise,$isSomething,$isNothing,$using,$lift,$eq,$use,$copy,$lazy,$eval,$every,$child,$optional,$promise,$instant,$createModifier,$properties,$inferProperties,$inheritStatic"
+        exports: "Enum,Protocol,Delegate,Miruken,MetaStep,MetaMacro,Disposing,DisposingMixin,Invoking,Parenting,Starting,Startup,Facet,Interceptor,InterceptorSelector,ProxyBuilder,TraversingAxis,Traversing,TraversingMixin,Traversal,Variance,Modifier,ArrayManager,IndexedList,$isProtocol,$isClass,$classOf,$ancestorOf,$isString,$isFunction,$isObject,$isPromise,$isSomething,$isNothing,$using,$lift,$eq,$use,$copy,$lazy,$eval,$every,$child,$optional,$promise,$instant,$createModifier,$properties,$inferProperties,$inheritStatic"
     });
 
     eval(this.imports);
@@ -4984,6 +4978,9 @@ new function () { // closure
             }
             var properties = definition[this.tag],
                 descriptors;
+            if ($isFunction(properties)) {
+                properties = properties();
+            }
             for (var name in properties) {
                 var property = properties[name],
                     spec = _.spec || (_.spec = {
@@ -5216,6 +5213,23 @@ new function () { // closure
                 object.dispose = Undefined;  // dispose once
             }
         }
+    });
+
+    /**
+     * @protocol {Invoking}
+     */
+    var Invoking = Protocol.extend({
+        constructor: function (proxy, strict) {
+            this.base(proxy, (strict === undefined) || strict);
+        },
+        /**
+         * Invokes the function with dependencies.
+         * @param   {Function} fn           - function to invoke
+         * @param   {Array}    dependencies - function dependencies
+         * @param   {Object}   ctx          - function context
+         * @returns {Object} result of function.
+         */
+        invoke: function (fn, dependencies, ctx) {}
     });
 
     /**
@@ -6351,7 +6365,7 @@ new function () { // closure
         version: miruken.version,
         parent:  miruken,
         imports: "miruken,miruken.callback",
-        exports: "Validating,Validator,Validation,ValidationResult,ValidationCallbackHandler,$validate"
+        exports: "Validating,Validator,Validation,ValidationResult,ValidationCallbackHandler,$validate,$validateThat"
     });
 
     eval(this.imports);
@@ -6433,7 +6447,7 @@ new function () { // closure
                             continue;
                         }
                         var result = this[key];
-                        if ((result instanceof ValidationResult) && !result.isValid()) {
+                        if ((result instanceof ValidationResult) && !result.valid) {
                             return false;
                         }
                     }
@@ -6524,16 +6538,22 @@ new function () { // closure
         validate: function (object, scope, results) {
             var validation = new Validation(object, false, scope, results);
             $composer.handle(validation, true);
-            results = validation.getResults();
+            results = validation.results;
             _bindValidationResults(object, results);
+            _validateThat(object, scope, results, null, $composer);
             return results;
         },
         validateAsync: function (object, scope, results) {
-            var validation = new Validation(object, true, scope, results);
-            return $composer.deferAll(validation).then(function () {
-                results = validation.getResults();
+            var validation = new Validation(object, true, scope, results),
+                composer = $composer;
+            return composer.deferAll(validation).then(function () {
+                results = validation.results;
                 _bindValidationResults(object, results);
-                return results;
+                var asyncResults = [];
+                _validateThat(object, scope, results, asyncResults, composer);
+                return asyncResults.length > 0
+                     ? Promise.all(asyncResults).return(results)
+                     : results;
             });
         }
     });
@@ -6543,12 +6563,65 @@ new function () { // closure
             source = $classOf(target);
         if (source) {
             $validate.dispatch(this, validation, source, composer, true, validation.addAsyncResult);
-            var asyncResults = validation.getAsyncResults();
+            var asyncResults = validation.asyncResults;
             if (asyncResults) {
                 return Promise.all(asyncResults);
             }
         }
     });
+
+    /**
+     * @class {$validateThat}
+     * Metamacro to validate instances.
+     */
+    var $validateThat = MetaMacro.extend({
+        apply: function _(step, metadata, target, definition) {
+            var validateThat = definition['$validateThat'];
+            if (validateThat) {
+                var validators = {};
+                for (name in validateThat) {
+                    var validator = validateThat[name];
+                    if (validator instanceof Array) {
+                        var dependencies = validator.slice(0);
+                        validator = dependencies.pop();
+                        if (!$isFunction(validator)) {
+                            continue;
+                        }
+                        if (dependencies.length > 0) {
+                            validator = (function (nm, val, deps) {
+                                return function (results, scope, composer) {
+                                    var d = Array2.concat(deps, Array2.map(arguments, $use));
+                                    return Invoking(composer).invoke(val, d, this);
+                                }
+                            })(name, validator, dependencies);
+                        }
+                    }
+                    if ($isFunction(validator)) {
+                        name = 'validateThat' + name.charAt(0).toUpperCase() + name.slice(1);
+                        validators[name] = validator;
+                    };
+                    if (step == MetaStep.Extend) {
+                        target.extend(validators);
+                    } else {
+                        metadata.getClass().implement(validators);
+                    }
+                }
+                delete target['$validateThat'];
+            }
+        }
+    });
+
+    function _validateThat(object, scope, results, asyncResults, composer) {
+        for (var key in object) {
+            if (key.lastIndexOf('validateThat', 0) == 0) {
+                var validator   = object[key],
+                    returnValue = validator.call(object, results, scope, composer);
+                if (asyncResults &&  $isPromise(returnValue)) {
+                    asyncResults.push(returnValue);
+                }
+            }
+        }
+    }
 
     function _bindValidationResults(object, results) {
         var spec = _bindValidationResults.spec || 
@@ -6606,6 +6679,24 @@ new function () { // closure
             if (step === MetaStep.Subclass || step === MetaStep.Implement) {
                 for (var name in definition) {
                     var validator = definition[name];
+                    if (validator instanceof Array) {
+                        var dependencies = validator.slice(0);
+                        validator = dependencies.pop();
+                        if (!$isFunction(validator)) {
+                            continue;
+                        }
+                        if (dependencies.length > 0) {
+                            validator = (function (nm, val, deps) {
+                                return function () {
+                                    if (!$composer) {
+                                        throw new Error("Unable to invoke validator '" + nm + "'.");
+                                    }
+                                    var d = Array2.concat(deps, Array2.map(arguments, $use));
+                                    return Invoking($composer).invoke(val, d);
+                                }
+                            })(name, validator, dependencies);
+                        }
+                    }
                     if ($isFunction(validator)) {
                         validatejs.validators[name] = validator;
                     }
@@ -6712,7 +6803,7 @@ new function () { // closure
                         }
                     } else if (!(name in validatejs.validators)) {
                         validatejs.validators[name] = function () {
-                            var validator = $composer.resolve(name);
+                            var validator = $composer && $composer.resolve(name);
                             if (!validator) {
                                 throw new Error("Unable to resolve validator '" + name + "'.");
                             }
@@ -24906,71 +24997,77 @@ new function () { // closure
 
     var validate_test = new base2.Package(this, {
         name:    "validate_test",
-        exports: "Player,Coach,Team"
+        exports: "Player,Coach,Team,HttpClient"
     });
 
     eval(this.imports);
 
-    var Player = Base.extend({
-        constructor: function (firstName, lastName, dob) {
-            this.extend({
-                getFirstName: function () { return firstName; },
-                setFirstName: function (value) { firstName = value; },
-                getLastName:  function () { return lastName; },
-                setLastName:  function (value) { lastName = value; },
-                getDOB:       function () { return dob; },
-                setDOB:       function (value) { dob = value; }
-            });
-        }});
+    var HttpClient = Base.extend({
+    });
 
-    var Coach = Base.extend({
-        constructor: function (firstName, lastName, license) {
-            this.extend({
-                getFirstName: function () { return firstName; },
-                setFirstName: function (value) { firstName = value; },
-                getLastName:  function () { return lastName; },
-                setLastName:  function (value) { lastName = value; },
-                getLicense:   function () { return license; },
-                setLicense:   function (value) { license = value; }
-            });
-        }});
-    
-    var Team = CallbackHandler.extend({
-        constructor: function (name, division) {
-            this.extend({
-                getName:     function () { return name; },
-                setName:     function (value) { name = value; },
-                getDivision: function () { return division; },
-                setDivision: function (value) { division = value; }
-            });
+    var Player = Base.extend({
+        $properties: {
+            firstName: '',
+            lastName:  '',
+            dob:       null
+        }
+    });
+
+    var Coach = Base.extend($validateThat,{
+        $properties: {
+            firstName: '',
+            lastName:  '',
+            license:   ''
+        },
+        $validateThat: {
+            coachHadBackgroundCheck: [HttpClient, function (http, results) {
+            }]
+        }
+    });
+ 
+    var Team = Base.extend(
+        $callbacks, $validateThat, {
+        $properties: {
+            name:     '',
+            division: ''
+        },
+        $validateThat: {
+            teamHasDivision: function (results) {
+                if (this.name === 'Liverpool' && this.division !== 'U8') {
+                    results.addKey('division')
+                        .addError('teamHasDivision', { 
+                            message: this.name + ' does not have division ' + this.division
+                            });
+                }
+            }
         },
         $validate:[
             Player, function (validation, composer) {
                 var player = validation.getObject();
-                if (!player.getFirstName() || player.getFirstName().length == 0) {
+                if (!player.firstName || player.firstName.length == 0) {
                     validation.results.addKey('firstName')
                         .addError('required', { message: 'First name required' });
                 }
-                if (!player.getLastName()  || player.getLastName().length == 0) {
+                if (!player.lastName  || player.lastName.length == 0) {
                     validation.results.addKey('lastName')
                         .addError('required', { message: 'Last name required' });
                 }
-                if ((player.getDOB() instanceof Date) === false) {
+                if ((player.dob instanceof Date) === false) {
                     validation.results.addKey('dob')
                         .addError('required', { message: 'DOB required' });
                 }
             },
             Coach, function (validation, composer) {
                 var coach = validation.getObject();
-                if (!coach.getFirstName() || coach.getFirstName().length == 0) {
+                if (!coach.firstName || coach.firstName.length == 0) {
                     validation.results.addKey('firstName')
                         .addError('required', { message: 'First name required' });
                 }
-                if (!coach.getLastName()  || coach.getLastName().length == 0) {
+                if (!coach.lastName  || coach.lastName.length == 0) {
                     validation.results.addKey('lastName')
                         .addError('required', { message: 'Last name required' });
                 }
-                if (["D", "E", "F"].indexOf(coach.getLicense()) < 0) {
+                if (["D", "E", "F"].indexOf(coach.license) < 0) {
                     validation.results.addKey('license')
                         .addError('license', { message: 'License must be D, E or F' });
                 }
@@ -24987,7 +25084,7 @@ eval(base2.validate_test.namespace);
 describe("Validation", function () {
     describe("#getObject", function () {
         it("should get the validated object", function () {
-            var team       = new Team("Aspros"),
+                var team       = new Team({name: "Aspros"}),
                 validation = new Validation(team);
             expect(validation.getObject()).to.equal(team);
         });
@@ -24995,7 +25092,7 @@ describe("Validation", function () {
 
     describe("#getScope", function () {
         it("should get the validation scope", function () {
-            var team       = new Team("Aspros"),
+                var team       = new Team({name: "Aspros"}),
                 validation = new Validation(team, false, "players");
             expect(validation.getScope()).to.equal("players");
         });
@@ -25008,7 +25105,7 @@ describe("ValidationResult", function () {
             var validation = new ValidationResult;
             validation.addKey("name");
             expect(validation).to.have.ownProperty("name");
-            expect(validation["name"].isValid()).to.be.true;
+            expect(validation["name"].valid).to.be.true;
         });
     });
 
@@ -25026,10 +25123,10 @@ describe("ValidationResult", function () {
         it("should reset errors", function () {
             var validation = new ValidationResult;
             validation.addKey("name").addError("required", { message: "Team name required" });
-            expect(validation.isValid()).to.be.false;
+            expect(validation.valid).to.be.false;
             validation.reset();
             expect(validation).to.not.have.ownProperty("name");
-            expect(validation.isValid()).to.be.true;
+            expect(validation.valid).to.be.true;
         });
     });
 });
@@ -25037,18 +25134,18 @@ describe("ValidationResult", function () {
 describe("ValidationCallbackHandler", function () {
     describe("#validate", function () {
         it("should invalidate object", function () {
-            var team   = new Team("Liverpool", "U8"),
+            var team   = new Team({name: "Liverpool", division: "U8"}),
                 league = new Context()
                     .addHandlers(team, new ValidationCallbackHandler),
                 player = new Player;
-            expect(Validator(league).validate(player).isValid()).to.be.false;
+            expect(Validator(league).validate(player).valid).to.be.false;
         });
 
         it("should be valid if no validators", function () {
             var league = new Context()
                     .addHandlers(new ValidationCallbackHandler),
                 player = new Player;
-            expect(Validator(league).validate(player).isValid()).to.be.true;
+            expect(Validator(league).validate(player).valid).to.be.true;
         });
 
         it("should add $validation to target", function () {
@@ -25070,12 +25167,12 @@ describe("ValidationCallbackHandler", function () {
         });
 
         it("should provide key errors", function () {
-            var team       = new Team("Liverpool", "U8"),
+            var team       = new Team({name: "Liverpool", division: "U8"}),
                 league     = new Context()
                     .addHandlers(team, new ValidationCallbackHandler),
-                player     = new Player("Matthew");
+                player     = new Player({firstName: "Matthew"});
             var results = Validator(league).validate(player);
-            expect(results.isValid()).to.be.false;
+            expect(results.valid).to.be.false;
             expect(results.lastName.errors.required).to.eql([{
                 message: "Last name required"
             }]);
@@ -25085,34 +25182,64 @@ describe("ValidationCallbackHandler", function () {
         });
 
         it("should dynamically add validation", function () {
-            var team   = new Team("Liverpool", "U8"),
+            var team   = new Team({name: "Liverpool", division: "U8"}),
                 league = new Context()
                     .addHandlers(team, new ValidationCallbackHandler),
-                player = new Player("Diego", "Morales", new Date(2006, 7, 19));
+                player = new Player({firstName: "Diego", lastName: "Morales", dob: new Date(2006, 7, 19)});
             $validate(league, Player, function (validation, composer) {
                 var player = validation.getObject(),
                     start  = new Date(2006, 8, 1),
                     end    = new Date(2007, 7, 31);
-                if (player.getDOB() < start) {
+                if (player.dob < start) {
                     validation.results.addKey('dob')
                         .addError('playerAge', { 
-                            message: "Player too old for division " + team.getDivision(),
-                            value:   player.getDOB()
+                            message: "Player too old for division " + team.division,
+                            value:   player.dob
                          });
-                } else if (player.getDOB() > end) {
+                } else if (player.dob > end) {
                     validation.results.addKey('dob')
                         .addError('playerAge', { 
-                            message: "Player too young for division " + team.getDivision(),
-                            value:   player.getDOB()
+                            message: "Player too young for division " + team.division,
+                            value:   player.dob
                          });
                 }
             });
             var results = Validator(league).validate(player);
-            expect(results.isValid()).to.be.false;
+            expect(results.valid).to.be.false;
             expect(results.dob.errors.playerAge).to.eql([{
                 message: "Player too old for division U8",
                 value:   new Date(2006, 7, 19)
             }]);
+        });
+
+        it("should validateThat instance", function () {
+            var team       = new Team({name: "Liverpool", division: "U7"}),
+                league     = new Context()
+                    .addHandlers(new ValidationCallbackHandler);
+            var results = Validator(league).validate(team);
+            expect(results.valid).to.be.false;
+            expect(results.division.errors.teamHasDivision).to.eql([{
+                message: "Liverpool does not have division U7"
+            }]);
+        });
+
+        it("should validateThat instance with dependencies", function () {
+            var coach      = new Coach({firstName: "Jordan", license: "D"}),
+                httpClient = new HttpClient,
+                league     = new Context()
+                    .addHandlers(new ValidationCallbackHandler,
+                                 new (CallbackHandler.extend(Invoking, {
+                                     invoke: function (fn, dependencies, ctx) {
+                                         expect(dependencies[0]).to.equal(HttpClient);
+                                         dependencies[0] = httpClient;
+                                         for (var i = 1; i < dependencies.length; ++i) {
+                                             dependencies[i] = Modifier.unwrap(dependencies[i]);
+                                         }
+                                         return fn.apply(ctx, dependencies);
+                                 }
+            })));
+            var results = Validator(league).validate(coach);
+            expect(results.valid).to.be.true;
         });
 
         it("should validate unknown sources", function () {
@@ -25121,25 +25248,25 @@ describe("ValidationCallbackHandler", function () {
             $validate(league, null, function (validation, composer) {
                 var source = validation.getObject();
                 if ((source instanceof Team) &&
-                    (!source.getName() || source.getName().length == 0)) {
+                    (!source.name || source.name.length == 0)) {
                     validation.results.addKey('name')
                         .addError('required', { message: "Team name required" });
                 }
             });
             var results = Validator(league).validate(new Team);
-            expect(results.isValid()).to.be.false;
+            expect(results.valid).to.be.false;
             expect(results.name.errors.required).to.eql([{
                 message: "Team name required"
             }]);
         });
 
         it("should roll up errors", function () {
-            var team       = new Team("Liverpool", "U8"),
+            var team       = new Team({name: "Liverpool", division: "U8"}),
                 league     = new Context()
                     .addHandlers(team, new ValidationCallbackHandler),
                 player     = new Player;
             var results = Validator(league).validate(player);
-            expect(results.isValid()).to.be.false;
+            expect(results.valid).to.be.false;
             expect(results.errors.required).to.deep.include.members([{
                   key:     "firstName",
                   message: "First name required"
@@ -25155,34 +25282,47 @@ describe("ValidationCallbackHandler", function () {
     });
 
     describe("#validateAsync", function () {
+        var league,
+            httpClient = new HttpClient;
+        beforeEach(function() {
+            league = new Context()
+                .addHandlers(new ValidationCallbackHandler,
+                             new (CallbackHandler.extend(Invoking, {
+                                 invoke: function (fn, dependencies, ctx) {
+                                     expect(dependencies[0]).to.equal(HttpClient);
+                                     dependencies[0] = httpClient;
+                                     for (var i = 1; i < dependencies.length; ++i) {
+                                          dependencies[i] = Modifier.unwrap(dependencies[i]);
+                                     }
+                                     return fn.apply(ctx, dependencies);
+                                 }
+                             })));
+        });
+
         it("should invalidate object", function (done) {
-            var team   = new Team("Liverpool", "U8"),
-                league = new Context()
-                    .addHandlers(team, new ValidationCallbackHandler),
+            var team   = new Team({name: "Liverpool", division: "U8"}),
                 coach  = new Coach;
+            league.addHandlers(team);
             Validator(league).validateAsync(coach).then(function (results) {
-                expect(results.isValid()).to.be.false;
+                expect(results.valid).to.be.false;
                 done();
             });
         });
 
         it("should be valid if no validators", function (done) {
-            var league = new Context()
-                    .addHandlers(new ValidationCallbackHandler),
-                coach  = new Coach;
+            var coach = new Coach;
             Validator(league).validateAsync(coach).then(function (results) {
-                expect(results.isValid()).to.be.true;
+                expect(results.valid).to.be.true;
                 done();
             });
         });
 
         it("should provide key errors", function (done) {
-            var team       = new Team("Liverpool", "U8"),
-                league     = new Context()
-                    .addHandlers(team, new ValidationCallbackHandler),
-                coach      = new Coach("Jonathan")
+            var team  = new Team({name: "Liverpool", division: "U8"}),
+                coach = new Coach("Jonathan");
+            league.addHandlers(team);
             Validator(league).validateAsync(coach).then(function (results) {
-                expect(results.isValid()).to.be.false;
+                expect(results.valid).to.be.false;
                 expect(results.license.errors.license).to.eql([{
                     message: "License must be D, E or F"
                 }]);
@@ -25211,7 +25351,7 @@ new function () { // closure
 
     var validatejs_test = new base2.Package(this, {
         name:    "validatejs_test",
-        exports: "Address,LineItem,Order"
+        exports: "Address,LineItem,Order,User,Database,CustomValidators"
     });
 
     eval(this.imports);
@@ -25220,8 +25360,18 @@ new function () { // closure
         $properties: {
             line:    { validate: $required },
             city:    { validate: $required },
-            state:   { validate: $required },
-            zipcode: { validate: $required },
+            state:   { 
+               validate: {
+                   presence: true,
+                   length: { is: 2 }
+               }
+            },
+            zipcode: { 
+               validate: {
+                   presence: true,
+                   length: { is: 5 }
+               }
+            }
         }
     });
 
@@ -25247,11 +25397,56 @@ new function () { // closure
 
     var Order = Base.extend({
         $properties: {
-            address:   { map: Address,  validate: $nested },
-            lineItems: { map: LineItem, validate: $nested }
+            address: {
+                map: Address,  
+                validate: {
+                    presence: true,
+                    nested: true
+                }
+            },
+            lineItems: { 
+                map: LineItem, 
+                validate: {
+                    presence: true,
+                    nested: true
+                }
+            }
         }
     });
-        
+
+    var User = Base.extend({
+        $properties: {
+            userName: {
+                validate: {
+                   uniqueUserName: true
+                }
+            },
+            orders: { map: Order }
+        },
+        constructor: function (userName) {
+            this.userName = userName;
+        }
+    });      
+
+    var Database = Base.extend({
+        constructor: function (userNames) {
+            this.extend({
+                hasUserName: function (userName) {
+                    return userNames.indexOf(userName) >= 0;
+                }
+            });
+        }
+    });
+
+    var CustomValidators = ValidationRegistry.extend({
+        mustBeUpperCase: function () {},
+        uniqueUserName:  [Database, function (db, userName) {
+            if (db.hasUserName(userName)) {
+                return "UserName " + userName + " is already taken";
+            }
+        }]
+    });
+
     eval(this.exports);
 
 };
@@ -25259,10 +25454,6 @@ new function () { // closure
 eval(base2.validatejs_test.namespace);
 
 describe("ValidatorRegistry", function () {
-    var CustomValidators = ValidationRegistry.extend({
-        mustBeUpperCase: function () {}
-    });
-
     it("should not create instance", function () {
         expect(function () {
             new CustomValidators();
@@ -25278,6 +25469,10 @@ describe("ValidatorRegistry", function () {
             uniqueLastName: function () {}
         });
         expect(validatejs.validators).to.have.property('uniqueLastName');
+    });
+
+    it("should register validators with dependencies", function () {
+        expect(validatejs.validators).to.have.property('uniqueUserName');
     });
 });
 
@@ -25316,8 +25511,9 @@ describe("ValidateJsCallbackHandler", function () {
                 line:    "100 Tulip Ln",
                 city:    "Wantaugh",
                 state:   "NY",
-                zipcode: 11580
+                zipcode: "11580"
             });
+            order.lineItems = [new LineItem({plu: '12345', quantity: 2})];
             var results = Validator(context).validate(order);
             expect(results.isValid()).to.be.true;
         });
@@ -25394,6 +25590,26 @@ describe("ValidateJsCallbackHandler", function () {
             expect(function () {
                 Validator(context).validate(new ThrowOnValidation);
             }).to.throw(Error, "Oh No!");
+        });
+
+        it("should validate with dependencies", function () {
+            var user     = new User('neo'),
+                database = new Database(['hellboy', 'razor']);
+            context.addHandlers(new (CallbackHandler.extend(Invoking, {
+                invoke: function (fn, dependencies) {
+                    expect(dependencies[0]).to.equal(Database);
+                    dependencies[0] = database;
+                    for (var i = 1; i < dependencies.length; ++i) {
+                        dependencies[i] = Modifier.unwrap(dependencies[i]);
+                    }
+                    return fn.apply(null, dependencies);
+                }
+            })));
+            var results = Validator(context).validate(user);
+            expect(results.valid).to.be.true;
+            user.userName = 'razor';
+            results = Validator(context).validate(user);
+            expect(results.valid).to.be.false;
         });
 
         it("should dynamically find validators", function () {

@@ -16,7 +16,7 @@ new function () { // closure
 
     var validatejs_test = new base2.Package(this, {
         name:    "validatejs_test",
-        exports: "Address,LineItem,Order"
+        exports: "Address,LineItem,Order,User,Database,CustomValidators"
     });
 
     eval(this.imports);
@@ -25,8 +25,18 @@ new function () { // closure
         $properties: {
             line:    { validate: $required },
             city:    { validate: $required },
-            state:   { validate: $required },
-            zipcode: { validate: $required },
+            state:   { 
+               validate: {
+                   presence: true,
+                   length: { is: 2 }
+               }
+            },
+            zipcode: { 
+               validate: {
+                   presence: true,
+                   length: { is: 5 }
+               }
+            }
         }
     });
 
@@ -52,11 +62,56 @@ new function () { // closure
 
     var Order = Base.extend({
         $properties: {
-            address:   { map: Address,  validate: $nested },
-            lineItems: { map: LineItem, validate: $nested }
+            address: {
+                map: Address,  
+                validate: {
+                    presence: true,
+                    nested: true
+                }
+            },
+            lineItems: { 
+                map: LineItem, 
+                validate: {
+                    presence: true,
+                    nested: true
+                }
+            }
         }
     });
-        
+
+    var User = Base.extend({
+        $properties: {
+            userName: {
+                validate: {
+                   uniqueUserName: true
+                }
+            },
+            orders: { map: Order }
+        },
+        constructor: function (userName) {
+            this.userName = userName;
+        }
+    });      
+
+    var Database = Base.extend({
+        constructor: function (userNames) {
+            this.extend({
+                hasUserName: function (userName) {
+                    return userNames.indexOf(userName) >= 0;
+                }
+            });
+        }
+    });
+
+    var CustomValidators = ValidationRegistry.extend({
+        mustBeUpperCase: function () {},
+        uniqueUserName:  [Database, function (db, userName) {
+            if (db.hasUserName(userName)) {
+                return "UserName " + userName + " is already taken";
+            }
+        }]
+    });
+
     eval(this.exports);
 
 };
@@ -64,10 +119,6 @@ new function () { // closure
 eval(base2.validatejs_test.namespace);
 
 describe("ValidatorRegistry", function () {
-    var CustomValidators = ValidationRegistry.extend({
-        mustBeUpperCase: function () {}
-    });
-
     it("should not create instance", function () {
         expect(function () {
             new CustomValidators();
@@ -83,6 +134,10 @@ describe("ValidatorRegistry", function () {
             uniqueLastName: function () {}
         });
         expect(validatejs.validators).to.have.property('uniqueLastName');
+    });
+
+    it("should register validators with dependencies", function () {
+        expect(validatejs.validators).to.have.property('uniqueUserName');
     });
 });
 
@@ -121,8 +176,9 @@ describe("ValidateJsCallbackHandler", function () {
                 line:    "100 Tulip Ln",
                 city:    "Wantaugh",
                 state:   "NY",
-                zipcode: 11580
+                zipcode: "11580"
             });
+            order.lineItems = [new LineItem({plu: '12345', quantity: 2})];
             var results = Validator(context).validate(order);
             expect(results.isValid()).to.be.true;
         });
@@ -199,6 +255,26 @@ describe("ValidateJsCallbackHandler", function () {
             expect(function () {
                 Validator(context).validate(new ThrowOnValidation);
             }).to.throw(Error, "Oh No!");
+        });
+
+        it("should validate with dependencies", function () {
+            var user     = new User('neo'),
+                database = new Database(['hellboy', 'razor']);
+            context.addHandlers(new (CallbackHandler.extend(Invoking, {
+                invoke: function (fn, dependencies) {
+                    expect(dependencies[0]).to.equal(Database);
+                    dependencies[0] = database;
+                    for (var i = 1; i < dependencies.length; ++i) {
+                        dependencies[i] = Modifier.unwrap(dependencies[i]);
+                    }
+                    return fn.apply(null, dependencies);
+                }
+            })));
+            var results = Validator(context).validate(user);
+            expect(results.valid).to.be.true;
+            user.userName = 'razor';
+            results = Validator(context).validate(user);
+            expect(results.valid).to.be.false;
         });
 
         it("should dynamically find validators", function () {
