@@ -6423,7 +6423,7 @@ new function () { // closure
      * @class {Model}
      */
     var Model = Base.extend(
-        $inferProperties, {
+        $inferProperties, $validateThat, {
         constructor: function (data) {
             this.fromData(data);
         },
@@ -6490,7 +6490,7 @@ new function () { // closure
      * @class {Controller}
      */
     var Controller = CallbackHandler.extend(
-        $inferProperties, $contextual, Validating, {
+        $inferProperties, $contextual, $validateThat, Validating, {
         validate: function (target, scope) {
             return _validateController(this, target, 'validate', scope);
         },
@@ -6853,6 +6853,9 @@ new function () { // closure
     var $validateThat = MetaMacro.extend({
         apply: function _(step, metadata, target, definition) {
             var validateThat = definition['$validateThat'];
+            if ($isFunction(validateThat)) {
+                validateThat = validateThat();
+            }
             if (validateThat) {
                 var validators = {};
                 for (name in validateThat) {

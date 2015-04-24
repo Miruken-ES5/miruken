@@ -9,6 +9,7 @@ eval(base2.namespace);
 eval(miruken.namespace);
 eval(miruken.callback.namespace);
 eval(miruken.context.namespace);
+eval(miruken.validate.namespace);
 eval(validate.namespace);
 
 new function () { // closure
@@ -349,3 +350,16 @@ describe("ValidationCallbackHandler", function () {
         });
     });
 });
+
+describe("$validateThat", function () {
+    it("should create validatorThat methods", function () {
+        var team    = new Team({name: "Liverpool", division: "U9"}),
+            results = new ValidationResult;
+        team.validateThatTeamHasDivision(results);
+        expect(results.valid).to.be.false;
+        expect(results.division.errors.teamHasDivision).to.eql([{
+            message: "Liverpool does not have division U9"
+        }]);
+    });
+});
+

@@ -6347,6 +6347,9 @@ new function () { // closure
     var $validateThat = MetaMacro.extend({
         apply: function _(step, metadata, target, definition) {
             var validateThat = definition['$validateThat'];
+            if ($isFunction(validateThat)) {
+                validateThat = validateThat();
+            }
             if (validateThat) {
                 var validators = {};
                 for (name in validateThat) {

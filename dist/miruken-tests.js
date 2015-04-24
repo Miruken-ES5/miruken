@@ -6147,7 +6147,7 @@ new function () { // closure
      * @class {Model}
      */
     var Model = Base.extend(
-        $inferProperties, {
+        $inferProperties, $validateThat, {
         constructor: function (data) {
             this.fromData(data);
         },
@@ -6214,7 +6214,7 @@ new function () { // closure
      * @class {Controller}
      */
     var Controller = CallbackHandler.extend(
-        $inferProperties, $contextual, Validating, {
+        $inferProperties, $contextual, $validateThat, Validating, {
         validate: function (target, scope) {
             return _validateController(this, target, 'validate', scope);
         },
@@ -6577,6 +6577,9 @@ new function () { // closure
     var $validateThat = MetaMacro.extend({
         apply: function _(step, metadata, target, definition) {
             var validateThat = definition['$validateThat'];
+            if ($isFunction(validateThat)) {
+                validateThat = validateThat();
+            }
             if (validateThat) {
                 var validators = {};
                 for (name in validateThat) {
@@ -23582,6 +23585,12 @@ describe("$properties", function () {
         }
     });
 
+    it("should ignore empty properties", function () {
+        var Person = Base.extend({
+            $properties: {}
+            });
+    });
+
     it("should synthesize properties", function () {
         var person       = new Person,
             friend       = new Person;
@@ -24991,6 +25000,7 @@ eval(base2.namespace);
 eval(miruken.namespace);
 eval(miruken.callback.namespace);
 eval(miruken.context.namespace);
+eval(miruken.validate.namespace);
 eval(validate.namespace);
 
 new function () { // closure
@@ -25331,6 +25341,19 @@ describe("ValidationCallbackHandler", function () {
         });
     });
 });
+
+describe("$validateThat", function () {
+    it("should create validatorThat methods", function () {
+        var team    = new Team({name: "Liverpool", division: "U9"}),
+            results = new ValidationResult;
+        team.validateThatTeamHasDivision(results);
+        expect(results.valid).to.be.false;
+        expect(results.division.errors.teamHasDivision).to.eql([{
+            message: "Liverpool does not have division U9"
+        }]);
+    });
+});
+
 
 },{"../../lib/context.js":3,"../../lib/miruken.js":9,"../../lib/validate":12,"bluebird":15,"chai":16}],67:[function(require,module,exports){
 var miruken    = require('../../lib/miruken.js'),

@@ -188,6 +188,12 @@ describe("$properties", function () {
         }
     });
 
+    it("should ignore empty properties", function () {
+        var Person = Base.extend({
+            $properties: {}
+            });
+    });
+
     it("should synthesize properties", function () {
         var person       = new Person,
             friend       = new Person;
