@@ -4764,7 +4764,7 @@ new function () { // closure
                 isProtocol: function () { return _isProtocol; },
                 getAllProtocols: function () {
                     var protocols = this.base();
-                    if (!_isProtocol && baseClass !== Base) {
+                    if (!_isProtocol && baseClass.$meta) {
                         var baseProtocols = baseClass.$meta.getAllProtocols();
                         for (var i = 0; i < baseProtocols.length; ++i) {
                             var protocol = baseProtocols[i];
@@ -4789,7 +4789,7 @@ new function () { // closure
                     if (this.base(protocol)) {
                         return true;
                     }
-                    return baseClass && (baseClass !== Base) && (baseClass !== Protocol)
+                    return baseClass && (baseClass !== Protocol) && baseClass.conformsTo
                          ? baseClass.conformsTo(protocol)
                          : false;
                 },
@@ -5545,10 +5545,8 @@ new function () { // closure
                 }
                 delete spec.writable;
                 delete spec.value;
-                if (base !== Base) {
-                    ctor = _proxiedMethod('constructor', this.base, base);
-                    ctor.apply(this, facets[Facet.Parameters]);
-                }
+                ctor = _proxiedMethod('constructor', this.base, base);
+                ctor.apply(this, facets[Facet.Parameters]);
             },
             extend: _proxyExtender,
             getInterceptors: function (source, method) {
@@ -6540,17 +6538,17 @@ new function () { // closure
             $composer.handle(validation, true);
             results = validation.results;
             _bindValidationResults(object, results);
-            _validateThat(object, scope, results, null, $composer);
+            _validateThat(validation, null, $composer);
             return results;
         },
         validateAsync: function (object, scope, results) {
             var validation = new Validation(object, true, scope, results),
-                composer = $composer;
+                composer   = $composer;
             return composer.deferAll(validation).then(function () {
                 results = validation.results;
                 _bindValidationResults(object, results);
                 var asyncResults = [];
-                _validateThat(object, scope, results, asyncResults, composer);
+                _validateThat(validation, asyncResults, composer);
                 return asyncResults.length > 0
                      ? Promise.all(asyncResults).return(results)
                      : results;
@@ -6559,7 +6557,7 @@ new function () { // closure
     });
 
     $handle(CallbackHandler, Validation, function (validation, composer) {
-        var target = validation.getObject(),
+        var target = validation.object,
             source = $classOf(target);
         if (source) {
             $validate.dispatch(this, validation, source, composer, true, validation.addAsyncResult);
@@ -6592,7 +6590,7 @@ new function () { // closure
                         }
                         if (dependencies.length > 0) {
                             validator = (function (nm, val, deps) {
-                                return function (results, scope, composer) {
+                                return function (validation, composer) {
                                     var d = Array2.concat(deps, Array2.map(arguments, $use));
                                     return Invoking(composer).invoke(val, d, this);
                                 }
@@ -6611,15 +6609,18 @@ new function () { // closure
                 }
                 delete target['$validateThat'];
             }
-        }
+        },
+        shouldInherit: True,
+        isActive: True
     });
 
-    function _validateThat(object, scope, results, asyncResults, composer) {
+    function _validateThat(validation, asyncResults, composer) {
+        var object = validation.object;
         for (var key in object) {
             if (key.lastIndexOf('validateThat', 0) == 0) {
                 var validator   = object[key],
-                    returnValue = validator.call(object, results, scope, composer);
-                if (asyncResults &&  $isPromise(returnValue)) {
+                    returnValue = validator.call(object, validation, composer);
+                if (asyncResults && $isPromise(returnValue)) {
                     asyncResults.push(returnValue);
                 }
             }
@@ -25023,14 +25024,21 @@ new function () { // closure
         }
     });
 
-    var Coach = Base.extend($validateThat,{
+    var Coach = Base.extend($validateThat, {
         $properties: {
             firstName: '',
             lastName:  '',
             license:   ''
         },
         $validateThat: {
-            coachHadBackgroundCheck: [HttpClient, function (http, results) {
+            coachPassedBackgroundCheck: [HttpClient, function (http, validation) {
+                return Promise.delay(10).then(function () {
+                    if (validation.object.lastName === 'Smith') {
+                        validation.results.addError('coachPassedBackgroundCheck', { 
+                            message: 'Coach failed background check'
+                        });
+                    }
+                });
             }]
         }
     });
@@ -25039,21 +25047,22 @@ new function () { // closure
         $callbacks, $validateThat, {
         $properties: {
             name:     '',
-            division: ''
+            division: '',
+            players:  []
         },
         $validateThat: {
-            teamHasDivision: function (results) {
+            teamHasDivision: function (validation) {
                 if (this.name === 'Liverpool' && this.division !== 'U8') {
-                    results.addKey('division')
+                    validation.results.addKey('division')
                         .addError('teamHasDivision', { 
                             message: this.name + ' does not have division ' + this.division
-                            });
+                        });
                 }
             }
         },
         $validate:[
             Player, function (validation, composer) {
-                var player = validation.getObject();
+                var player = validation.object;
                 if (!player.firstName || player.firstName.length == 0) {
                     validation.results.addKey('firstName')
                         .addError('required', { message: 'First name required' });
@@ -25068,7 +25077,7 @@ new function () { // closure
                 }
             },
             Coach, function (validation, composer) {
-                var coach = validation.getObject();
+                var coach = validation.object;
                 if (!coach.firstName || coach.firstName.length == 0) {
                     validation.results.addKey('firstName')
                         .addError('required', { message: 'First name required' });
@@ -25092,19 +25101,19 @@ new function () { // closure
 eval(base2.validate_test.namespace);
 
 describe("Validation", function () {
-    describe("#getObject", function () {
+    describe("#object", function () {
         it("should get the validated object", function () {
                 var team       = new Team({name: "Aspros"}),
                 validation = new Validation(team);
-            expect(validation.getObject()).to.equal(team);
+            expect(validation.object).to.equal(team);
         });
     });
 
-    describe("#getScope", function () {
+    describe("#scope", function () {
         it("should get the validation scope", function () {
                 var team       = new Team({name: "Aspros"}),
                 validation = new Validation(team, false, "players");
-            expect(validation.getScope()).to.equal("players");
+            expect(validation.scope).to.equal("players");
         });
     });
 });
@@ -25197,7 +25206,7 @@ describe("ValidationCallbackHandler", function () {
                     .addHandlers(team, new ValidationCallbackHandler),
                 player = new Player({firstName: "Diego", lastName: "Morales", dob: new Date(2006, 7, 19)});
             $validate(league, Player, function (validation, composer) {
-                var player = validation.getObject(),
+                var player = validation.object,
                     start  = new Date(2006, 8, 1),
                     end    = new Date(2007, 7, 31);
                 if (player.dob < start) {
@@ -25256,7 +25265,7 @@ describe("ValidationCallbackHandler", function () {
             var league = new Context()
                     .addHandlers(new ValidationCallbackHandler);
             $validate(league, null, function (validation, composer) {
-                var source = validation.getObject();
+                var source = validation.object;
                 if ((source instanceof Team) &&
                     (!source.name || source.name.length == 0)) {
                     validation.results.addKey('name')
@@ -25339,17 +25348,53 @@ describe("ValidationCallbackHandler", function () {
                 done();
             });
         });
+
+        it("should validateThat instance", function (done) {
+            var team   = new Team({name: "Liverpool", division: "U8"}),
+                coach  = new Coach({firstName: "John", lastName: "Smith"});
+            league.addHandlers(team);
+            Validator(league).validateAsync(coach).then(function (results) {
+                expect(results.valid).to.be.false;
+                expect(results.errors.coachPassedBackgroundCheck).to.eql([{
+                    message: "Coach failed background check"
+                }]);
+                done();
+            });
+        });
     });
 });
 
 describe("$validateThat", function () {
     it("should create validatorThat methods", function () {
-        var team    = new Team({name: "Liverpool", division: "U9"}),
-            results = new ValidationResult;
-        team.validateThatTeamHasDivision(results);
-        expect(results.valid).to.be.false;
-        expect(results.division.errors.teamHasDivision).to.eql([{
+        var team       = new Team({name: "Liverpool", division: "U9"}),
+            validation = new Validation(team);
+        team.validateThatTeamHasDivision(validation);
+        expect(validation.results.valid).to.be.false;
+        expect(validation.results.division.errors.teamHasDivision).to.eql([{
             message: "Liverpool does not have division U9"
+        }]);
+    });
+
+    it("should extend validatorThat methods on instances", function () {
+        var team   = new Team({name: "Liverpool", division: "U9"}),
+            league = new Context()
+                .addHandlers(team, new ValidationCallbackHandler);
+        team.extend({
+            $validateThat: {
+                teamHasAtLeastSevenPlayerWhenU9: function (validation) {
+                    if (this.division === "U9" && this.players.length < 7) {
+                        validation.results.addKey('players')
+                            .addError('teamHasAtLeastSevenPlayerWhenU9', { 
+                                message: this.name + ' must have at lease 7 players for division ' + this.division
+                                });
+                    }
+                }
+            }
+        });
+        var results = Validator(league).validate(team);
+        expect(results.valid).to.be.false;
+        expect(results.players.errors.teamHasAtLeastSevenPlayerWhenU9).to.eql([{
+            message: "Liverpool must have at lease 7 players for division U9"
         }]);
     });
 });

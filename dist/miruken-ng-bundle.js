@@ -5040,7 +5040,7 @@ new function () { // closure
                 isProtocol: function () { return _isProtocol; },
                 getAllProtocols: function () {
                     var protocols = this.base();
-                    if (!_isProtocol && baseClass !== Base) {
+                    if (!_isProtocol && baseClass.$meta) {
                         var baseProtocols = baseClass.$meta.getAllProtocols();
                         for (var i = 0; i < baseProtocols.length; ++i) {
                             var protocol = baseProtocols[i];
@@ -5065,7 +5065,7 @@ new function () { // closure
                     if (this.base(protocol)) {
                         return true;
                     }
-                    return baseClass && (baseClass !== Base) && (baseClass !== Protocol)
+                    return baseClass && (baseClass !== Protocol) && baseClass.conformsTo
                          ? baseClass.conformsTo(protocol)
                          : false;
                 },
@@ -5821,10 +5821,8 @@ new function () { // closure
                 }
                 delete spec.writable;
                 delete spec.value;
-                if (base !== Base) {
-                    ctor = _proxiedMethod('constructor', this.base, base);
-                    ctor.apply(this, facets[Facet.Parameters]);
-                }
+                ctor = _proxiedMethod('constructor', this.base, base);
+                ctor.apply(this, facets[Facet.Parameters]);
             },
             extend: _proxyExtender,
             getInterceptors: function (source, method) {
@@ -6816,17 +6814,17 @@ new function () { // closure
             $composer.handle(validation, true);
             results = validation.results;
             _bindValidationResults(object, results);
-            _validateThat(object, scope, results, null, $composer);
+            _validateThat(validation, null, $composer);
             return results;
         },
         validateAsync: function (object, scope, results) {
             var validation = new Validation(object, true, scope, results),
-                composer = $composer;
+                composer   = $composer;
             return composer.deferAll(validation).then(function () {
                 results = validation.results;
                 _bindValidationResults(object, results);
                 var asyncResults = [];
-                _validateThat(object, scope, results, asyncResults, composer);
+                _validateThat(validation, asyncResults, composer);
                 return asyncResults.length > 0
                      ? Promise.all(asyncResults).return(results)
                      : results;
@@ -6835,7 +6833,7 @@ new function () { // closure
     });
 
     $handle(CallbackHandler, Validation, function (validation, composer) {
-        var target = validation.getObject(),
+        var target = validation.object,
             source = $classOf(target);
         if (source) {
             $validate.dispatch(this, validation, source, composer, true, validation.addAsyncResult);
@@ -6868,7 +6866,7 @@ new function () { // closure
                         }
                         if (dependencies.length > 0) {
                             validator = (function (nm, val, deps) {
-                                return function (results, scope, composer) {
+                                return function (validation, composer) {
                                     var d = Array2.concat(deps, Array2.map(arguments, $use));
                                     return Invoking(composer).invoke(val, d, this);
                                 }
@@ -6887,15 +6885,18 @@ new function () { // closure
                 }
                 delete target['$validateThat'];
             }
-        }
+        },
+        shouldInherit: True,
+        isActive: True
     });
 
-    function _validateThat(object, scope, results, asyncResults, composer) {
+    function _validateThat(validation, asyncResults, composer) {
+        var object = validation.object;
         for (var key in object) {
             if (key.lastIndexOf('validateThat', 0) == 0) {
                 var validator   = object[key],
-                    returnValue = validator.call(object, results, scope, composer);
-                if (asyncResults &&  $isPromise(returnValue)) {
+                    returnValue = validator.call(object, validation, composer);
+                if (asyncResults && $isPromise(returnValue)) {
                     asyncResults.push(returnValue);
                 }
             }
