@@ -1849,8 +1849,9 @@ new function () { // closure
     /**
      * @class {Lookup}
      */
-    var Lookup = Base.extend({
-            constructor: function (key, many) {
+    var Lookup = Base.extend(
+        $inferProperties, {
+        constructor: function (key, many) {
             if ($isNothing(key)) {
                 throw new TypeError("The key is required.");
             }
@@ -1873,7 +1874,8 @@ new function () { // closure
     /**
      * @class {Deferred}
      */
-    var Deferred = Base.extend({
+    var Deferred = Base.extend(
+        $inferProperties, {
         constructor: function (callback, many) {
             if ($isNothing(callback)) {
                 throw new TypeError("The callback is required.");
@@ -1896,7 +1898,8 @@ new function () { // closure
     /**
      * @class {Resolution}
      */
-    var Resolution = Base.extend({
+    var Resolution = Base.extend(
+        $inferProperties, {
         constructor: function (key, many) {
             if ($isNothing(key)) {
                 throw new TypeError("The key is required.");
@@ -3778,7 +3781,7 @@ new function () { // closure
             if (dependencies && !Array2.contains(dependencies, undefined)) {
                 return;
             }
-            var clazz = componentModel.getClass();
+            var clazz = componentModel.class;
             componentModel.manageDependencies(function (manager) {
                 while (clazz && (clazz !== Base)) {
                     var injects = [clazz.prototype.$inject, clazz.prototype.inject,
@@ -3804,7 +3807,8 @@ new function () { // closure
     /**
      * @class {ComponentModel}
      */
-    var ComponentModel = Base.extend({
+    var ComponentModel = Base.extend(
+        $inferProperties, $validateThat, {
         constructor: function () {
             var _key, _class, _lifestyle, _factory,
                 _invariant = false, _burden = {};
@@ -3839,7 +3843,7 @@ new function () { // closure
                 },
                 getFactory: function () {
                     var factory = _factory,
-                        clazz   = this.getClass();
+                        clazz   = this.class;
                     if (!factory) {
                         var interceptors = _burden[Facet.Interceptors];
                         if (interceptors && interceptors.length > 0) {
@@ -3892,6 +3896,22 @@ new function () { // closure
                 },
                 getBurden: function () { return _burden; }
             });
+        },
+        $validateThat: {
+            keyCanBeDetermined: function (validation) {
+                if (!this.key) {
+                    validation.results.addKey('key').addError('required', { 
+                        message: 'Key could not be determined for component.' 
+                    });
+                }
+            },
+            factoryCanBeDetermined: function (validation) {
+                if (!this.factory) {
+                    validation.results.addKey('factory').addError('required', { 
+                        message: 'Factory could not be determined for component.' 
+                    });
+                }
+            }
         }
     });
 
@@ -4303,11 +4323,11 @@ new function () { // closure
             }.bind(this));
         },
         registerHandler: function (componentModel) {
-            var key       = componentModel.getKey(),
-                clazz     = componentModel.getClass(),
-                lifestyle = componentModel.getLifestyle() || new SingletonLifestyle,
-                factory   = componentModel.getFactory(),
-                burden    = componentModel.getBurden();
+            var key       = componentModel.key,
+                clazz     = componentModel.class,
+                lifestyle = componentModel.lifestyle || new SingletonLifestyle,
+                factory   = componentModel.factory,
+                burden    = componentModel.burden;
             key = componentModel.isInvariant() ? $eq(key) : key;
             return _registerHandler(this, key, clazz, lifestyle, factory, burden); 
         },
@@ -4330,37 +4350,19 @@ new function () { // closure
         },
         dispose: function () {
             $provide.removeAll(this);
-        },
-        $validate:[
-            ComponentModel, function (validation, composer) {
-                var componentModel = validation.getObject(),
-                    key            = componentModel.getKey(),
-                    factory        = componentModel.getFactory();
-                if (!key) {
-                    validation.results.addKey('key')
-                        .addError('required', { 
-                            message: 'Key could not be determined for component.' 
-                         });
-                }
-                if (!factory) {
-                    validation.results.addKey('factory')
-                        .addError('required', { 
-                            message: 'Factory could not be determined for component.' 
-                         });
-                }
-            }]
+        }
     });
 
     function _registerHandler(container, key, clazz, lifestyle, factory, burden) {
         return $provide(container, key, function handler(resolution, composer) {
             if (!(resolution instanceof DependencyResolution)) {
-                resolution = new DependencyResolution(resolution.getKey());
+                resolution = new DependencyResolution(resolution.key);
             }
             if (!resolution.claim(handler, clazz)) {  // cycle detected
                 return $NOT_HANDLED;
             }
             return lifestyle.resolve(function () {
-                var instant      = $instant.test(resolution.getKey()),
+                var instant      = $instant.test(resolution.key),
                     dependencies = _resolveBurden(burden, instant, resolution, composer);
                 if ($isPromise(dependencies)) {
                     return dependencies.then(function (deps) {
@@ -4462,7 +4464,7 @@ new function () { // closure
                 var error = new DependencyResolutionError(dependency,
                        lang.format("Dependency %1 could not be resolved.",
                                    dependency.formattedDependencyChain()));
-                if ($instant.test(dependency.getKey())) {
+                if ($instant.test(dependency.key)) {
                     throw error;
                 }
                 return Promise.reject(error);
@@ -4984,17 +4986,21 @@ new function () { // closure
             for (var name in properties) {
                 var property = properties[name],
                     spec = _.spec || (_.spec = {
-                    enumerable:   true,
-                    configurable: true
+                        configurable: true,
+                        enumerable:   true
                     }),
                     descriptor = false;
                 if (target instanceof Protocol) {
-                    spec.get = function () {
-                        return this.__get(name);
-                    };
-                    spec.set = function (value) {
-                        return this.__set(name, value);
-                    };
+                    spec.get = function (get) {
+                        return function () {
+                            return this.__get(get);
+                        };
+                    }(name);
+                    spec.set = function (set) {
+                        return function (value) {
+                            return this.__set(set, value);
+                        };
+                    }(name);
                 } else {
                     spec.writable = true;
                     if ($isNothing(property) || $isString(property) ||
@@ -5002,13 +5008,24 @@ new function () { // closure
                         spec.value = property;
                     } else {
                         descriptor = true;
-                        if (property.get) {
-                            spec.get = property.get;
-                        }
-                        if (property.set) {
-                            spec.set = property.set;
-                        }
-                        if (spec.get || spec.set) {
+                        if (property.get || property.set) {
+                            var methods = {},
+                                cname   = name.charAt(0).toUpperCase() + name.slice(1);
+                            if (property.get) {
+                                var get      = 'get' + cname; 
+                                methods[get] = property.get;
+                                spec.get     = _makeGetter(get);
+                            }
+                            if (property.set) {
+                                var set      = 'set' + cname 
+                                methods[set] = property.set;
+                                spec.set     = _makeSetter(set); 
+                            }
+                            if (step == MetaStep.Extend) {
+                                target.extend(methods);
+                            } else {
+                                metadata.getClass().implement(methods);
+                            }
                             delete spec.writable;
                         } else {
                             spec.value = property.value;
@@ -5055,6 +5072,25 @@ new function () { // closure
         isActive: True
     });
 
+    function _makeGetter(getMethodName) {
+        return function () {
+            var getter = this[getMethodName];
+            if ($isFunction(getter)) {
+                return getter.call(this);
+            }
+        };   
+    }
+
+    function _makeSetter(setMethodName) {
+        return function (value) {
+            var setter = this[setMethodName];
+            if ($isFunction(setter)) {
+                setter.call(this, value);
+                return value;
+            }
+        };
+    }
+    
     function _matchDescriptor(descriptor, filter) {
         if (typeOf(descriptor) !== 'object' || typeOf(filter) !== 'object') {
             return false;
@@ -5103,15 +5139,15 @@ new function () { // closure
                     continue;
                 }
                 var spec = _.spec || (_.spec = {
-                    enumerable: true
+                    configurable: true,
+                    enumerable:   true
                 });
                 if (_inferProperty(key, value, definition, spec)) {
                     var name = spec.name;
-                    if (name && name.length > 0) {
-                        name = name.charAt(0).toLowerCase() + name.slice(1);
-                        if (!(name in target)) {
-                            this.defineProperty(metadata, target, name, spec);
-                        }
+                    if (name && !(name in target)) {
+                        spec.get = _makeGetter(spec.get);
+                        spec.set = _makeSetter(spec.set);                        
+                        this.defineProperty(metadata, target, name, spec);
                     }
                     delete spec.name;
                     delete spec.get;
@@ -5132,22 +5168,24 @@ new function () { // closure
         for (var i = 0; i < DEFAULT_GETTERS.length; ++i) {
             var prefix = DEFAULT_GETTERS[i];
             if (key.lastIndexOf(prefix, 0) == 0) {
-                if (value.length === 0) { // no arguments
-                    spec.name = key.substring(prefix.length);
-                    spec.get  = value;
-                    break;
+                if (value.length === 0) {  // no arguments
+                    var name  = key.substring(prefix.length);
+                    spec.get  = key;
+                    spec.set  = 'set' + name;
+                    spec.name = name.charAt(0).toLowerCase() + name.slice(1);
+                    return true;
                 }
             }
         }
-        if (spec.get) {
-            spec.set = definition['set' + spec.name];
-        } else if (key.lastIndexOf('set', 0) == 0) {
-            if (value.length === 1) { // 1 argument
-                spec.name = key.substring(3);
-                spec.set  = value;
+        if (key.lastIndexOf('set', 0) == 0) {
+            if (value.length === 1) {  // 1 argument
+                var name  = key.substring(3);
+                spec.set  = key;
+                spec.get  = 'get' + name;
+                spec.name = name.charAt(0).toLowerCase() + name.slice(1);
+                return true;
             }
         }
-        return !!spec.name;
     }
 
     /**
@@ -5565,15 +5603,22 @@ new function () { // closure
             proxied    = {};
         for (var i = 0; i < sources.length; ++i) {
             var source      = sources[i],
-                sourceProto = source.prototype;
+                sourceProto = source.prototype,
+                isProtocol  = $isProtocol(source);
             for (key in sourceProto) {
                 if (!(key in proxied) && !(key in _noProxyMethods)
                 && (!proxy.shouldProxy || proxy.shouldProxy(key, source))) {
-                    var member = $isProtocol(source) ? undefined : sourceProto[key];
-                    if ($isNothing(member) || $isFunction(member)) {
-                        proxyProto[key] = _proxiedMethod(key, member, proxy);
+                    var proto = sourceProto, descriptor;
+                    while (proto && !(
+                        descriptor = Object.getOwnPropertyDescriptor(proto, key))
+                          ) proto = Object.getPrototypeOf(proto);
+                    if ('value' in descriptor) {
+                        var member = isProtocol ? undefined : descriptor.value;
+                        if ($isNothing(member) || $isFunction(member)) {
+                            proxyProto[key] = _proxiedMethod(key, member, proxy);
+                        }
+                        proxied[key] = true;
                     }
-                    proxied[key] = true;
                 }
             }
         }

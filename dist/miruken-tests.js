@@ -1849,8 +1849,9 @@ new function () { // closure
     /**
      * @class {Lookup}
      */
-    var Lookup = Base.extend({
-            constructor: function (key, many) {
+    var Lookup = Base.extend(
+        $inferProperties, {
+        constructor: function (key, many) {
             if ($isNothing(key)) {
                 throw new TypeError("The key is required.");
             }
@@ -1873,7 +1874,8 @@ new function () { // closure
     /**
      * @class {Deferred}
      */
-    var Deferred = Base.extend({
+    var Deferred = Base.extend(
+        $inferProperties, {
         constructor: function (callback, many) {
             if ($isNothing(callback)) {
                 throw new TypeError("The callback is required.");
@@ -1896,7 +1898,8 @@ new function () { // closure
     /**
      * @class {Resolution}
      */
-    var Resolution = Base.extend({
+    var Resolution = Base.extend(
+        $inferProperties, {
         constructor: function (key, many) {
             if ($isNothing(key)) {
                 throw new TypeError("The key is required.");
@@ -3778,7 +3781,7 @@ new function () { // closure
             if (dependencies && !Array2.contains(dependencies, undefined)) {
                 return;
             }
-            var clazz = componentModel.getClass();
+            var clazz = componentModel.class;
             componentModel.manageDependencies(function (manager) {
                 while (clazz && (clazz !== Base)) {
                     var injects = [clazz.prototype.$inject, clazz.prototype.inject,
@@ -3804,7 +3807,8 @@ new function () { // closure
     /**
      * @class {ComponentModel}
      */
-    var ComponentModel = Base.extend({
+    var ComponentModel = Base.extend(
+        $inferProperties, $validateThat, {
         constructor: function () {
             var _key, _class, _lifestyle, _factory,
                 _invariant = false, _burden = {};
@@ -3839,7 +3843,7 @@ new function () { // closure
                 },
                 getFactory: function () {
                     var factory = _factory,
-                        clazz   = this.getClass();
+                        clazz   = this.class;
                     if (!factory) {
                         var interceptors = _burden[Facet.Interceptors];
                         if (interceptors && interceptors.length > 0) {
@@ -3892,6 +3896,22 @@ new function () { // closure
                 },
                 getBurden: function () { return _burden; }
             });
+        },
+        $validateThat: {
+            keyCanBeDetermined: function (validation) {
+                if (!this.key) {
+                    validation.results.addKey('key').addError('required', { 
+                        message: 'Key could not be determined for component.' 
+                    });
+                }
+            },
+            factoryCanBeDetermined: function (validation) {
+                if (!this.factory) {
+                    validation.results.addKey('factory').addError('required', { 
+                        message: 'Factory could not be determined for component.' 
+                    });
+                }
+            }
         }
     });
 
@@ -4303,11 +4323,11 @@ new function () { // closure
             }.bind(this));
         },
         registerHandler: function (componentModel) {
-            var key       = componentModel.getKey(),
-                clazz     = componentModel.getClass(),
-                lifestyle = componentModel.getLifestyle() || new SingletonLifestyle,
-                factory   = componentModel.getFactory(),
-                burden    = componentModel.getBurden();
+            var key       = componentModel.key,
+                clazz     = componentModel.class,
+                lifestyle = componentModel.lifestyle || new SingletonLifestyle,
+                factory   = componentModel.factory,
+                burden    = componentModel.burden;
             key = componentModel.isInvariant() ? $eq(key) : key;
             return _registerHandler(this, key, clazz, lifestyle, factory, burden); 
         },
@@ -4330,37 +4350,19 @@ new function () { // closure
         },
         dispose: function () {
             $provide.removeAll(this);
-        },
-        $validate:[
-            ComponentModel, function (validation, composer) {
-                var componentModel = validation.getObject(),
-                    key            = componentModel.getKey(),
-                    factory        = componentModel.getFactory();
-                if (!key) {
-                    validation.results.addKey('key')
-                        .addError('required', { 
-                            message: 'Key could not be determined for component.' 
-                         });
-                }
-                if (!factory) {
-                    validation.results.addKey('factory')
-                        .addError('required', { 
-                            message: 'Factory could not be determined for component.' 
-                         });
-                }
-            }]
+        }
     });
 
     function _registerHandler(container, key, clazz, lifestyle, factory, burden) {
         return $provide(container, key, function handler(resolution, composer) {
             if (!(resolution instanceof DependencyResolution)) {
-                resolution = new DependencyResolution(resolution.getKey());
+                resolution = new DependencyResolution(resolution.key);
             }
             if (!resolution.claim(handler, clazz)) {  // cycle detected
                 return $NOT_HANDLED;
             }
             return lifestyle.resolve(function () {
-                var instant      = $instant.test(resolution.getKey()),
+                var instant      = $instant.test(resolution.key),
                     dependencies = _resolveBurden(burden, instant, resolution, composer);
                 if ($isPromise(dependencies)) {
                     return dependencies.then(function (deps) {
@@ -4462,7 +4464,7 @@ new function () { // closure
                 var error = new DependencyResolutionError(dependency,
                        lang.format("Dependency %1 could not be resolved.",
                                    dependency.formattedDependencyChain()));
-                if ($instant.test(dependency.getKey())) {
+                if ($instant.test(dependency.key)) {
                     throw error;
                 }
                 return Promise.reject(error);
@@ -4984,17 +4986,21 @@ new function () { // closure
             for (var name in properties) {
                 var property = properties[name],
                     spec = _.spec || (_.spec = {
-                    enumerable:   true,
-                    configurable: true
+                        configurable: true,
+                        enumerable:   true
                     }),
                     descriptor = false;
                 if (target instanceof Protocol) {
-                    spec.get = function () {
-                        return this.__get(name);
-                    };
-                    spec.set = function (value) {
-                        return this.__set(name, value);
-                    };
+                    spec.get = function (get) {
+                        return function () {
+                            return this.__get(get);
+                        };
+                    }(name);
+                    spec.set = function (set) {
+                        return function (value) {
+                            return this.__set(set, value);
+                        };
+                    }(name);
                 } else {
                     spec.writable = true;
                     if ($isNothing(property) || $isString(property) ||
@@ -5002,13 +5008,24 @@ new function () { // closure
                         spec.value = property;
                     } else {
                         descriptor = true;
-                        if (property.get) {
-                            spec.get = property.get;
-                        }
-                        if (property.set) {
-                            spec.set = property.set;
-                        }
-                        if (spec.get || spec.set) {
+                        if (property.get || property.set) {
+                            var methods = {},
+                                cname   = name.charAt(0).toUpperCase() + name.slice(1);
+                            if (property.get) {
+                                var get      = 'get' + cname; 
+                                methods[get] = property.get;
+                                spec.get     = _makeGetter(get);
+                            }
+                            if (property.set) {
+                                var set      = 'set' + cname 
+                                methods[set] = property.set;
+                                spec.set     = _makeSetter(set); 
+                            }
+                            if (step == MetaStep.Extend) {
+                                target.extend(methods);
+                            } else {
+                                metadata.getClass().implement(methods);
+                            }
                             delete spec.writable;
                         } else {
                             spec.value = property.value;
@@ -5055,6 +5072,25 @@ new function () { // closure
         isActive: True
     });
 
+    function _makeGetter(getMethodName) {
+        return function () {
+            var getter = this[getMethodName];
+            if ($isFunction(getter)) {
+                return getter.call(this);
+            }
+        };   
+    }
+
+    function _makeSetter(setMethodName) {
+        return function (value) {
+            var setter = this[setMethodName];
+            if ($isFunction(setter)) {
+                setter.call(this, value);
+                return value;
+            }
+        };
+    }
+    
     function _matchDescriptor(descriptor, filter) {
         if (typeOf(descriptor) !== 'object' || typeOf(filter) !== 'object') {
             return false;
@@ -5103,15 +5139,15 @@ new function () { // closure
                     continue;
                 }
                 var spec = _.spec || (_.spec = {
-                    enumerable: true
+                    configurable: true,
+                    enumerable:   true
                 });
                 if (_inferProperty(key, value, definition, spec)) {
                     var name = spec.name;
-                    if (name && name.length > 0) {
-                        name = name.charAt(0).toLowerCase() + name.slice(1);
-                        if (!(name in target)) {
-                            this.defineProperty(metadata, target, name, spec);
-                        }
+                    if (name && !(name in target)) {
+                        spec.get = _makeGetter(spec.get);
+                        spec.set = _makeSetter(spec.set);                        
+                        this.defineProperty(metadata, target, name, spec);
                     }
                     delete spec.name;
                     delete spec.get;
@@ -5132,22 +5168,24 @@ new function () { // closure
         for (var i = 0; i < DEFAULT_GETTERS.length; ++i) {
             var prefix = DEFAULT_GETTERS[i];
             if (key.lastIndexOf(prefix, 0) == 0) {
-                if (value.length === 0) { // no arguments
-                    spec.name = key.substring(prefix.length);
-                    spec.get  = value;
-                    break;
+                if (value.length === 0) {  // no arguments
+                    var name  = key.substring(prefix.length);
+                    spec.get  = key;
+                    spec.set  = 'set' + name;
+                    spec.name = name.charAt(0).toLowerCase() + name.slice(1);
+                    return true;
                 }
             }
         }
-        if (spec.get) {
-            spec.set = definition['set' + spec.name];
-        } else if (key.lastIndexOf('set', 0) == 0) {
-            if (value.length === 1) { // 1 argument
-                spec.name = key.substring(3);
-                spec.set  = value;
+        if (key.lastIndexOf('set', 0) == 0) {
+            if (value.length === 1) {  // 1 argument
+                var name  = key.substring(3);
+                spec.set  = key;
+                spec.get  = 'get' + name;
+                spec.name = name.charAt(0).toLowerCase() + name.slice(1);
+                return true;
             }
         }
-        return !!spec.name;
     }
 
     /**
@@ -5565,15 +5603,22 @@ new function () { // closure
             proxied    = {};
         for (var i = 0; i < sources.length; ++i) {
             var source      = sources[i],
-                sourceProto = source.prototype;
+                sourceProto = source.prototype,
+                isProtocol  = $isProtocol(source);
             for (key in sourceProto) {
                 if (!(key in proxied) && !(key in _noProxyMethods)
                 && (!proxy.shouldProxy || proxy.shouldProxy(key, source))) {
-                    var member = $isProtocol(source) ? undefined : sourceProto[key];
-                    if ($isNothing(member) || $isFunction(member)) {
-                        proxyProto[key] = _proxiedMethod(key, member, proxy);
+                    var proto = sourceProto, descriptor;
+                    while (proto && !(
+                        descriptor = Object.getOwnPropertyDescriptor(proto, key))
+                          ) proto = Object.getPrototypeOf(proto);
+                    if ('value' in descriptor) {
+                        var member = isProtocol ? undefined : descriptor.value;
+                        if ($isNothing(member) || $isFunction(member)) {
+                            proxyProto[key] = _proxiedMethod(key, member, proxy);
+                        }
+                        proxied[key] = true;
                     }
-                    proxied[key] = true;
                 }
             }
         }
@@ -22176,27 +22221,31 @@ new function () { // closure
 
     eval(this.imports);
 
-    var Engine = Protocol.extend({
+    var Engine = Protocol.extend(
+        $inferProperties, {
         getNumberOfCylinders: function () {},
         getHorsepower: function () {},
         getDisplacement: function () {}
     });
 
-    var Car = Protocol.extend({
+    var Car = Protocol.extend(
+        $inferProperties, {
         getMake: function () {},
         getModel: function() {},
         getEngine: function () {}
     });
 
-    var Diagnostics = Protocol.extend({
+    var Diagnostics = Protocol.extend(
+        $inferProperties, {
         getMPG: function () {}
     });
 
-    var Junkyard = Protocol.extend({
+    var Junkyard = Protocol.extend(
+        $inferProperties, {
         decomission: function (part) {}
     });
 
-    var V12 = Base.extend(Engine, {
+    var V12 = Base.extend(Engine, $inferProperties, {
         $inject: [,,$optional(Diagnostics)],
         constructor: function (horsepower, displacement, diagnostics) {
             this.extend({
@@ -22208,7 +22257,7 @@ new function () { // closure
         getNumberOfCylinders: function () { return 12; },
     });
  
-    var RebuiltV12 = V12.extend(Engine, Disposing, {
+    var RebuiltV12 = V12.extend(Engine, Disposing, $inferProperties, {
         $inject: [,,,Junkyard],
         constructor: function (horsepower, displacement, diagnostics, junkyard) {
             this.base(horsepower, displacement, diagnostics, junkyard);
@@ -22220,7 +22269,7 @@ new function () { // closure
         }
     });
 
-    var Supercharger = Base.extend(Engine, {
+    var Supercharger = Base.extend(Engine, $inferProperties, {
         $inject: [Engine],
         constructor: function (engine, boost) {
             this.extend({
@@ -22234,7 +22283,7 @@ new function () { // closure
         }
     });
 
-    var Ferrari = Base.extend(Car, {
+    var Ferrari = Base.extend(Car, $inferProperties, {
         $inject: [,Engine],
         constructor: function (model, engine) {
             this.extend({
@@ -22245,7 +22294,7 @@ new function () { // closure
         }
     });
 
-    var Bugatti = Base.extend(Car, {
+    var Bugatti = Base.extend(Car, $inferProperties, {
         $inject: [,Engine],
         constructor: function (model, engine) {
             this.extend({
@@ -22256,7 +22305,7 @@ new function () { // closure
         }
     });
 
-    var Auction = Base.extend({
+    var Auction = Base.extend($inferProperties,{
         $inject: [$every(Car)],
         constructor: function (cars) {
             var inventory = {};
@@ -22274,7 +22323,7 @@ new function () { // closure
         }
     });
 
-    var OBDII = Base.extend(Diagnostics, {
+    var OBDII = Base.extend(Diagnostics, $inferProperties, {
         constructor: function () {
             this.extend({
                 getMPG: function () { return 22.0; }
@@ -22282,7 +22331,7 @@ new function () { // closure
         }
     });
 
-    var CraigsJunk = Base.extend(Junkyard, {
+    var CraigsJunk = Base.extend(Junkyard, $inferProperties, {
         constructor: function () {
             var _parts = [];
             this.extend({
@@ -22374,7 +22423,7 @@ describe("ComponentModel", function () {
         it("should return class if no key", function () {
             var componentModel = new ComponentModel;
             componentModel.setClass(Ferrari);
-            expect(componentModel.getKey()).to.equal(Ferrari);
+            expect(componentModel.key).to.equal(Ferrari);
         });
     });
 
@@ -22391,7 +22440,7 @@ describe("ComponentModel", function () {
         it("should return default factory", function () {
             var componentModel = new ComponentModel;
             componentModel.setClass(Ferrari);
-            expect(componentModel.getFactory()).to.be.a('function');
+            expect(componentModel.factory).to.be.a('function');
         });
     });
 
@@ -22512,7 +22561,7 @@ describe("ComponentModel", function () {
              }));
              Promise.resolve(container.resolve(Engine)).then(function (engine) {
                  expect(engine).to.be.instanceOf(V12);
-                 expect(engine.getHorsepower()).to.equal(450);
+                 expect(engine.horsepower).to.equal(450);
                  expect(engine.getDisplacement()).to.equal(6.2);
                  done();
             });
@@ -22526,7 +22575,7 @@ describe("ComponentModel", function () {
                                   .dependsOn($use(255), $use(5.0))
             );
             Promise.resolve(container.resolve(Engine)).then(function (engine) {
-                expect(engine.getHorsepower()).to.equal(255);
+                expect(engine.horsepower).to.equal(255);
                 expect(engine.getDisplacement()).to.equal(5.0);
                 done();
             });
@@ -22540,7 +22589,7 @@ describe("ComponentModel", function () {
             }));
             Promise.resolve(container.resolve(Engine)).then(function (engine) {
                 expect(engine).to.be.instanceOf(V12);
-                expect(engine.getHorsepower()).to.equal(1000);
+                expect(engine.horsepower).to.equal(1000);
                 expect(engine.getDisplacement()).to.equal(7.7);
                 done();
             });
@@ -22556,7 +22605,7 @@ describe("ComponentModel", function () {
                                   .interceptors(LogInterceptor)
             );
             Promise.resolve(container.resolve(Engine)).then(function (engine) {
-                expect(engine.getHorsepower()).to.equal(255);
+                expect(engine.horsepower).to.equal(255);
                 expect(engine.getDisplacement()).to.equal(5.0);
                 done();
             });
@@ -22604,7 +22653,7 @@ describe("ComponentBuilder", function () {
         it("should configure component dependencies", function (done) {
             container.register($component(Engine).boundTo(V12).dependsOn($use(255), $use(5.0)));
             Promise.resolve(container.resolve(Engine)).then(function (engine) {
-                expect(engine.getHorsepower()).to.equal(255);
+                expect(engine.horsepower).to.equal(255);
                 expect(engine.getDisplacement()).to.equal(5.0);
                 done();
             });
@@ -22618,7 +22667,7 @@ describe("ComponentBuilder", function () {
                                    .dependsOn($use(255), $use(5.0))
                                    .interceptors(LogInterceptor));
             Promise.resolve(container.resolve(Engine)).then(function (engine) {
-                expect(engine.getHorsepower()).to.equal(255);
+                expect(engine.horsepower).to.equal(255);
                 expect(engine.getDisplacement()).to.equal(5.0);
                 done();
             });
@@ -22762,7 +22811,7 @@ describe("ContextualLifestyle", function () {
             Container(container).register($component(Controller).dependsOn(Context));
             Promise.resolve(Container(container).resolve(Controller)).catch(function (error) {
                 expect(error).to.be.instanceof(DependencyResolutionError);
-                expect(error.dependency.getKey()).to.equal(Context);
+                expect(error.dependency.key).to.equal(Context);
                 done();
             });
         });
@@ -22932,7 +22981,7 @@ describe("IoContainer", function () {
         it("should resolve instance with supplied dependencies", function (done) {
             container.register($component(V12).dependsOn($use(917), $use(6.3)));
             Promise.resolve(container.resolve(Engine)).then(function (engine) {
-                expect(engine.getHorsepower()).to.equal(917);
+                expect(engine.horsepower).to.equal(917);
                 expect(engine.getDisplacement()).to.equal(6.3);
                 done();
             });
@@ -22943,7 +22992,7 @@ describe("IoContainer", function () {
                 $component(Supercharger).dependsOn([,$use(.5)]),
                 $component(V12).dependsOn($use(175), $use(3.2)));
             Promise.resolve(container.resolve(Engine)).then(function (engine) {
-                expect(engine.getHorsepower()).to.equal(262.5);
+                expect(engine.horsepower).to.equal(262.5);
                 expect(engine.getDisplacement()).to.equal(3.2);
                 done();
             });
@@ -23296,7 +23345,7 @@ describe("IoContainer", function () {
             Promise.resolve(container.resolve(Car)).catch(function (error) {
                 expect(error).to.be.instanceof(DependencyResolutionError);
                 expect(error.message).to.match(/Dependency.*Engine.*<= (.*Car.*<-.*Ferrari.*)could not be resolved./);
-                expect(error.dependency.getKey()).to.equal(Engine);
+                expect(error.dependency.key).to.equal(Engine);
                 done();
             });
         });
@@ -23307,7 +23356,7 @@ describe("IoContainer", function () {
             Promise.resolve(container.resolve(Car)).catch(function (error) {
                 expect(error).to.be.instanceof(DependencyResolutionError);
                 expect(error.message).to.match(/Dependency.*Engine.*<= (.*Engine.*<-.*V12.*) <= (.*Car.*<-.*Ferrari.*) could not be resolved./);
-                expect(error.dependency.getKey()).to.equal(Engine);
+                expect(error.dependency.key).to.equal(Engine);
                 done();
             });
         });
@@ -23575,7 +23624,18 @@ describe("$properties", function () {
             firstName: '',
             lastName:  '',
             fullName:  {
-                get: function () { return this.firstName + ' ' + this.lastName; }
+                get: function () {
+                    return this.firstName + ' ' + this.lastName;
+                },
+                set: function (value) {
+                    var parts = value.split(' ');
+                    if (parts.length > 0) {
+                        this.firstName = parts[0];
+                    }
+                    if (parts.length > 1) {
+                        this.lastName = parts[1];
+                    }
+                }
             },
             age:       11,
             pet:       { map: Animal}
@@ -23589,12 +23649,12 @@ describe("$properties", function () {
     it("should ignore empty properties", function () {
         var Person = Base.extend({
             $properties: {}
-            });
+        });
     });
 
     it("should synthesize properties", function () {
-        var person       = new Person,
-            friend       = new Person;
+        var person = new Person,
+            friend = new Person;
         expect(person.firstName).to.equal('');
         expect(person.lastName).to.equal('');
         expect(person.age).to.equal(11);
@@ -23607,11 +23667,25 @@ describe("$properties", function () {
         expect(person.$properties).to.be.undefined;
     });
 
-    it("should synthesize custom properties", function () {
+    it("should synthesize value properties", function () {
         var person       = new Person;
         person.firstName = 'Mickey';
         person.lastName  = 'Mouse';
         expect(person.fullName).to.equal('Mickey Mouse');
+    });
+
+    it("should synthesize property getters ", function () {
+        var person       = new Person;
+        person.firstName = 'Mickey';
+        person.lastName  = 'Mouse';
+        expect(person.getFullName()).to.equal('Mickey Mouse');
+    });
+
+    it("should synthesize property setters ", function () {
+        var person       = new Person;
+        person.fullName  = 'Harry Potter';
+        expect(person.firstName).to.equal('Harry');
+        expect(person.lastName).to.equal('Potter');
     });
 
     it("should retrieve property descriptor", function () {
@@ -23781,6 +23855,20 @@ describe("$inferProperties", function () {
         person.age = 23;
         expect(person.age).to.equal(23);
         expect(person.getAge()).to.equal(23);
+    });
+
+    it("should support property overrides", function () {
+        var Teacher = Person.extend({
+                getFirstName: function () { return 'Teacher ' + this.base(); }
+
+            }),
+            teacher = new Teacher('Jane');
+        expect(teacher.firstName).to.equal('Teacher Jane');
+        Teacher.implement({
+            setFirstName: function (value) { this.base('Sarah'); }
+        });                        
+        teacher.firstName = 'Mary';
+        expect(teacher.firstName).to.equal('Teacher Sarah');
     });
 });
 

@@ -177,7 +177,18 @@ describe("$properties", function () {
             firstName: '',
             lastName:  '',
             fullName:  {
-                get: function () { return this.firstName + ' ' + this.lastName; }
+                get: function () {
+                    return this.firstName + ' ' + this.lastName;
+                },
+                set: function (value) {
+                    var parts = value.split(' ');
+                    if (parts.length > 0) {
+                        this.firstName = parts[0];
+                    }
+                    if (parts.length > 1) {
+                        this.lastName = parts[1];
+                    }
+                }
             },
             age:       11,
             pet:       { map: Animal}
@@ -191,12 +202,12 @@ describe("$properties", function () {
     it("should ignore empty properties", function () {
         var Person = Base.extend({
             $properties: {}
-            });
+        });
     });
 
     it("should synthesize properties", function () {
-        var person       = new Person,
-            friend       = new Person;
+        var person = new Person,
+            friend = new Person;
         expect(person.firstName).to.equal('');
         expect(person.lastName).to.equal('');
         expect(person.age).to.equal(11);
@@ -209,11 +220,25 @@ describe("$properties", function () {
         expect(person.$properties).to.be.undefined;
     });
 
-    it("should synthesize custom properties", function () {
+    it("should synthesize value properties", function () {
         var person       = new Person;
         person.firstName = 'Mickey';
         person.lastName  = 'Mouse';
         expect(person.fullName).to.equal('Mickey Mouse');
+    });
+
+    it("should synthesize property getters ", function () {
+        var person       = new Person;
+        person.firstName = 'Mickey';
+        person.lastName  = 'Mouse';
+        expect(person.getFullName()).to.equal('Mickey Mouse');
+    });
+
+    it("should synthesize property setters ", function () {
+        var person       = new Person;
+        person.fullName  = 'Harry Potter';
+        expect(person.firstName).to.equal('Harry');
+        expect(person.lastName).to.equal('Potter');
     });
 
     it("should retrieve property descriptor", function () {
@@ -383,6 +408,20 @@ describe("$inferProperties", function () {
         person.age = 23;
         expect(person.age).to.equal(23);
         expect(person.getAge()).to.equal(23);
+    });
+
+    it("should support property overrides", function () {
+        var Teacher = Person.extend({
+                getFirstName: function () { return 'Teacher ' + this.base(); }
+
+            }),
+            teacher = new Teacher('Jane');
+        expect(teacher.firstName).to.equal('Teacher Jane');
+        Teacher.implement({
+            setFirstName: function (value) { this.base('Sarah'); }
+        });                        
+        teacher.firstName = 'Mary';
+        expect(teacher.firstName).to.equal('Teacher Sarah');
     });
 });
 
