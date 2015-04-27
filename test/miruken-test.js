@@ -861,7 +861,8 @@ describe("ProxyBuilder", function () {
                 dog          = new DogProxy({
                                    parameters:   ['Patches'],
                                    interceptors: [new LogInterceptor]
-                               });
+                });
+            expect(dog.name).to.equal('Patches');
             expect(dog.getName()).to.equal('Patches');
             expect(dog.talk()).to.equal('Ruff Ruff');
             expect(dog.fetch("bone")).to.equal('Fetched bone');
@@ -872,11 +873,13 @@ describe("ProxyBuilder", function () {
                 AnimalProxy  = proxyBuilder.buildProxy([Animal]),
                 AnimalInterceptor = Interceptor.extend({
                     intercept: function (invocation) {
-                            var method = invocation.method,
-                                args   = invocation.args;
-                        if (method === 'talk') {
+                        var method = invocation.method,
+                            args   = invocation.args;
+                        if (method === "getName") {
+                            return "Pluto";
+                        } else if (method === "talk") {
                             return "I don't know what to say.";
-                        } else if (method === 'eat') {
+                        } else if (method === "eat") {
                             return lang.format("I don't like %1.", args[0]);
                         }
                         return invocation.proceed();
@@ -884,7 +887,8 @@ describe("ProxyBuilder", function () {
                 }),
                 animal = new AnimalProxy({
                              interceptors: [new AnimalInterceptor]
-                         });
+                });
+//            expect(animal.name).to.equal("Pluto");
             expect(animal.talk()).to.equal("I don't know what to say.");
             expect(animal.eat('pizza')).to.equal("I don't like pizza.");
         });
