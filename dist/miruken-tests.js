@@ -6054,15 +6054,6 @@ new function () { // closure
                     throw new Error(lang.format(
                         "Interceptor cannot proceed without a class or delegate method '%1'.",
                         key));
-                },
-                canProceed: function () {
-                    if (interceptors && (idx + 1 < interceptors.length)) {
-                        return true;
-                    }
-                    if (delegate) {
-                        return $isFunction(delegate(key));
-                    }
-                    return !!method;
                 }
             };
             spec.value = key;

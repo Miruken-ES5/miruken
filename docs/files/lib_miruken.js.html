@@ -1,4 +1,177 @@
-require('./base2.js');
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <title>lib/miruken.js - miruken</title>
+    <link rel="stylesheet" href="http://yui.yahooapis.com/3.9.1/build/cssgrids/cssgrids-min.css">
+    <link rel="stylesheet" href="../assets/vendor/prettify/prettify-min.css">
+    <link rel="stylesheet" href="../assets/css/main.css" id="site_styles">
+    <link rel="icon" href="../assets/favicon.ico">
+    <script src="http://yui.yahooapis.com/combo?3.9.1/build/yui/yui-min.js"></script>
+</head>
+<body class="yui3-skin-sam">
+
+<div id="doc">
+    <div id="hd" class="yui3-g header">
+        <div class="yui3-u-3-4">
+                <h1><img src="../assets/css/logo.png" title="miruken" width="117" height="52"></h1>
+        </div>
+        <div class="yui3-u-1-4 version">
+            <em>API Docs for: 0.1.0</em>
+        </div>
+    </div>
+    <div id="bd" class="yui3-g">
+
+        <div class="yui3-u-1-4">
+            <div id="docs-sidebar" class="sidebar apidocs">
+                <div id="api-list">
+                    <h2 class="off-left">APIs</h2>
+                    <div id="api-tabview" class="tabview">
+                        <ul class="tabs">
+                            <li><a href="#api-classes">Classes</a></li>
+                            <li><a href="#api-modules">Modules</a></li>
+                        </ul>
+                
+                        <div id="api-tabview-filter">
+                            <input type="search" id="api-filter" placeholder="Type to filter APIs">
+                        </div>
+                
+                        <div id="api-tabview-panel">
+                            <ul id="api-classes" class="apis classes">
+                                <li><a href="../classes/miruken.$inferProperties.html">miruken.$inferProperties</a></li>
+                                <li><a href="../classes/miruken.$inhertStatic.html">miruken.$inhertStatic</a></li>
+                                <li><a href="../classes/miruken.$properties.html">miruken.$properties</a></li>
+                                <li><a href="../classes/miruken.$proxyProtocol.html">miruken.$proxyProtocol</a></li>
+                                <li><a href="../classes/miruken.ArrayManager.html">miruken.ArrayManager</a></li>
+                                <li><a href="../classes/miruken.callback.$callbacks.html">miruken.callback.$callbacks</a></li>
+                                <li><a href="../classes/miruken.callback._Node.html">miruken.callback._Node</a></li>
+                                <li><a href="../classes/miruken.callback.AcceptingCallbackHandler.html">miruken.callback.AcceptingCallbackHandler</a></li>
+                                <li><a href="../classes/miruken.callback.CallbackHandler.html">miruken.callback.CallbackHandler</a></li>
+                                <li><a href="../classes/miruken.callback.CallbackHandlerAspect.html">miruken.callback.CallbackHandlerAspect</a></li>
+                                <li><a href="../classes/miruken.callback.CallbackHandlerDecorator.html">miruken.callback.CallbackHandlerDecorator</a></li>
+                                <li><a href="../classes/miruken.callback.CallbackHandlerFilter.html">miruken.callback.CallbackHandlerFilter</a></li>
+                                <li><a href="../classes/miruken.callback.CascadeCallbackHandler.html">miruken.callback.CascadeCallbackHandler</a></li>
+                                <li><a href="../classes/miruken.callback.CompositeCallbackHandler.html">miruken.callback.CompositeCallbackHandler</a></li>
+                                <li><a href="../classes/miruken.callback.ConditionalCallbackHandler.html">miruken.callback.ConditionalCallbackHandler</a></li>
+                                <li><a href="../classes/miruken.callback.Deferred.html">miruken.callback.Deferred</a></li>
+                                <li><a href="../classes/miruken.callback.HandleMethod.html">miruken.callback.HandleMethod</a></li>
+                                <li><a href="../classes/miruken.callback.InternalCallback.html">miruken.callback.InternalCallback</a></li>
+                                <li><a href="../classes/miruken.callback.InvocationDelegate.html">miruken.callback.InvocationDelegate</a></li>
+                                <li><a href="../classes/miruken.callback.InvocationOptionsHandler.html">miruken.callback.InvocationOptionsHandler</a></li>
+                                <li><a href="../classes/miruken.callback.InvocationSemantics.html">miruken.callback.InvocationSemantics</a></li>
+                                <li><a href="../classes/miruken.callback.Lookup.html">miruken.callback.Lookup</a></li>
+                                <li><a href="../classes/miruken.callback.MethodCallbackHandler.html">miruken.callback.MethodCallbackHandler</a></li>
+                                <li><a href="../classes/miruken.callback.ProvidingCallbackHandler.html">miruken.callback.ProvidingCallbackHandler</a></li>
+                                <li><a href="../classes/miruken.callback.Resolution.html">miruken.callback.Resolution</a></li>
+                                <li><a href="../classes/miruken.ClassMeta.html">miruken.ClassMeta</a></li>
+                                <li><a href="../classes/miruken.context.{$contextual}
+                Metamacro to implement Contextual protocol..html">miruken.context.{$contextual}
+                Metamacro to implement Contextual protocol.</a></li>
+                                <li><a href="../classes/miruken.context.{ContextualHelper}.html">miruken.context.{ContextualHelper}</a></li>
+                                <li><a href="../classes/miruken.context.{Contextual}.html">miruken.context.{Contextual}</a></li>
+                                <li><a href="../classes/miruken.context.{Context}.html">miruken.context.{Context}</a></li>
+                                <li><a href="../classes/miruken.Delegate.html">miruken.Delegate</a></li>
+                                <li><a href="../classes/miruken.Disposing.html">miruken.Disposing</a></li>
+                                <li><a href="../classes/miruken.DisposingMixin.html">miruken.DisposingMixin</a></li>
+                                <li><a href="../classes/miruken.Enum.html">miruken.Enum</a></li>
+                                <li><a href="../classes/miruken.error.{ErrorCallbackHandler}.html">miruken.error.{ErrorCallbackHandler}</a></li>
+                                <li><a href="../classes/miruken.IndexedList.html">miruken.IndexedList</a></li>
+                                <li><a href="../classes/miruken.InstanceMeta.html">miruken.InstanceMeta</a></li>
+                                <li><a href="../classes/miruken.Interceptor.html">miruken.Interceptor</a></li>
+                                <li><a href="../classes/miruken.InterceptorSelector.html">miruken.InterceptorSelector</a></li>
+                                <li><a href="../classes/miruken.Invoking.html">miruken.Invoking</a></li>
+                                <li><a href="../classes/miruken.ioc..{BasedOnBuilder}.html">miruken.ioc..{BasedOnBuilder}</a></li>
+                                <li><a href="../classes/miruken.ioc..{FromBuilder}.html">miruken.ioc..{FromBuilder}</a></li>
+                                <li><a href="../classes/miruken.ioc..{FromPackageBuilder}.html">miruken.ioc..{FromPackageBuilder}</a></li>
+                                <li><a href="../classes/miruken.ioc..{Installer}.html">miruken.ioc..{Installer}</a></li>
+                                <li><a href="../classes/miruken.ioc..{KeyBuilder}.html">miruken.ioc..{KeyBuilder}</a></li>
+                                <li><a href="../classes/miruken.ioc.ComponentBuilder.html">miruken.ioc.ComponentBuilder</a></li>
+                                <li><a href="../classes/miruken.ioc.ComponentModel.html">miruken.ioc.ComponentModel</a></li>
+                                <li><a href="../classes/miruken.ioc.ComponentPolicy.html">miruken.ioc.ComponentPolicy</a></li>
+                                <li><a href="../classes/miruken.ioc.Container.html">miruken.ioc.Container</a></li>
+                                <li><a href="../classes/miruken.ioc.ContextualLifestyle.html">miruken.ioc.ContextualLifestyle</a></li>
+                                <li><a href="../classes/miruken.ioc.DependencyInspector.html">miruken.ioc.DependencyInspector</a></li>
+                                <li><a href="../classes/miruken.ioc.DependencyManager.html">miruken.ioc.DependencyManager</a></li>
+                                <li><a href="../classes/miruken.ioc.DependencyModel.html">miruken.ioc.DependencyModel</a></li>
+                                <li><a href="../classes/miruken.ioc.DependencyResolution.html">miruken.ioc.DependencyResolution</a></li>
+                                <li><a href="../classes/miruken.ioc.DependencyResolutionError.html">miruken.ioc.DependencyResolutionError</a></li>
+                                <li><a href="../classes/miruken.ioc.InterceptorBuilder.html">miruken.ioc.InterceptorBuilder</a></li>
+                                <li><a href="../classes/miruken.ioc.IoContainer.html">miruken.ioc.IoContainer</a></li>
+                                <li><a href="../classes/miruken.ioc.Lifestyle.html">miruken.ioc.Lifestyle</a></li>
+                                <li><a href="../classes/miruken.ioc.Registration.html">miruken.ioc.Registration</a></li>
+                                <li><a href="../classes/miruken.ioc.SingletonLifestyle.html">miruken.ioc.SingletonLifestyle</a></li>
+                                <li><a href="../classes/miruken.ioc.TransientLifestyle.html">miruken.ioc.TransientLifestyle</a></li>
+                                <li><a href="../classes/miruken.ioc.ValidationError.html">miruken.ioc.ValidationError</a></li>
+                                <li><a href="../classes/miruken.MetaBase.html">miruken.MetaBase</a></li>
+                                <li><a href="../classes/miruken.MetaMacro.html">miruken.MetaMacro</a></li>
+                                <li><a href="../classes/miruken.Miruken.html">miruken.Miruken</a></li>
+                                <li><a href="../classes/miruken.Modifier.html">miruken.Modifier</a></li>
+                                <li><a href="../classes/miruken.mvc.{Controller}.html">miruken.mvc.{Controller}</a></li>
+                                <li><a href="../classes/miruken.mvc.{Model}.html">miruken.mvc.{Model}</a></li>
+                                <li><a href="../classes/miruken.ng.{Directive}.html">miruken.ng.{Directive}</a></li>
+                                <li><a href="../classes/miruken.ng.{Runner}.html">miruken.ng.{Runner}</a></li>
+                                <li><a href="../classes/miruken.ObjectDelegate.html">miruken.ObjectDelegate</a></li>
+                                <li><a href="../classes/miruken.Parenting.html">miruken.Parenting</a></li>
+                                <li><a href="../classes/miruken.Protocol.html">miruken.Protocol</a></li>
+                                <li><a href="../classes/miruken.ProxyBuilder.html">miruken.ProxyBuilder</a></li>
+                                <li><a href="../classes/miruken.Starting.html">miruken.Starting</a></li>
+                                <li><a href="../classes/miruken.Startup.html">miruken.Startup</a></li>
+                                <li><a href="../classes/miruken.StrictProtocol.html">miruken.StrictProtocol</a></li>
+                                <li><a href="../classes/miruken.Traversal.html">miruken.Traversal</a></li>
+                                <li><a href="../classes/miruken.Traversing.html">miruken.Traversing</a></li>
+                                <li><a href="../classes/miruken.TraversingMixin.html">miruken.TraversingMixin</a></li>
+                                <li><a href="../classes/miruken.validate.{$validateThat}
+                Metamacro to validate instances..html">miruken.validate.{$validateThat}
+                Metamacro to validate instances.</a></li>
+                                <li><a href="../classes/miruken.validate.{ValidateJsCallbackHandler}.html">miruken.validate.{ValidateJsCallbackHandler}</a></li>
+                                <li><a href="../classes/miruken.validate.{ValidationCallbackHandler}.html">miruken.validate.{ValidationCallbackHandler}</a></li>
+                                <li><a href="../classes/miruken.validate.{ValidationRegistry}.html">miruken.validate.{ValidationRegistry}</a></li>
+                                <li><a href="../classes/miruken.validate.{ValidationResult}.html">miruken.validate.{ValidationResult}</a></li>
+                                <li><a href="../classes/miruken.validate.{Validation}.html">miruken.validate.{Validation}</a></li>
+                            </ul>
+                
+                            <ul id="api-modules" class="apis modules">
+                                <li><a href="../modules/callback.html">callback</a></li>
+                                <li><a href="../modules/ioc.html">ioc</a></li>
+                                <li><a href="../modules/miruken.html">miruken</a></li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="yui3-u-3-4">
+                <div id="api-options">
+                    Show:
+                    <label for="api-show-inherited">
+                        <input type="checkbox" id="api-show-inherited" checked>
+                        Inherited
+                    </label>
+            
+                    <label for="api-show-protected">
+                        <input type="checkbox" id="api-show-protected">
+                        Protected
+                    </label>
+            
+                    <label for="api-show-private">
+                        <input type="checkbox" id="api-show-private">
+                        Private
+                    </label>
+                    <label for="api-show-deprecated">
+                        <input type="checkbox" id="api-show-deprecated">
+                        Deprecated
+                    </label>
+            
+                </div>
+            
+            <div class="apidocs">
+                <div id="docs-main">
+                    <div class="content">
+<h1 class="file-heading">File: lib/miruken.js</h1>
+
+<div class="file">
+    <pre class="code prettyprint linenums">
+require(&#x27;./base2.js&#x27;);
 
 new function () { // closure
 
@@ -8,14 +181,14 @@ new function () { // closure
      * @namespace miruken
      */
     var miruken = new base2.Package(this, {
-        name:    "miruken",
-        version: "1.0",
-        exports: "Enum,Protocol,StrictProtocol,Delegate,Miruken,MetaStep,MetaMacro,Disposing,DisposingMixin,Invoking,Parenting,Starting,Startup,Facet,Interceptor,InterceptorSelector,ProxyBuilder,TraversingAxis,Traversing,TraversingMixin,Traversal,Variance,Modifier,ArrayManager,IndexedList,$isProtocol,$isClass,$classOf,$ancestorOf,$isString,$isFunction,$isObject,$isPromise,$isSomething,$isNothing,$using,$lift,$eq,$use,$copy,$lazy,$eval,$every,$child,$optional,$promise,$instant,$createModifier,$properties,$inferProperties,$inheritStatic"
+        name:    &quot;miruken&quot;,
+        version: &quot;1.0&quot;,
+        exports: &quot;Enum,Protocol,StrictProtocol,Delegate,Miruken,MetaStep,MetaMacro,Disposing,DisposingMixin,Invoking,Parenting,Starting,Startup,Facet,Interceptor,InterceptorSelector,ProxyBuilder,TraversingAxis,Traversing,TraversingMixin,Traversal,Variance,Modifier,ArrayManager,IndexedList,$isProtocol,$isClass,$classOf,$ancestorOf,$isString,$isFunction,$isObject,$isPromise,$isSomething,$isNothing,$using,$lift,$eq,$use,$copy,$lazy,$eval,$every,$child,$optional,$promise,$instant,$createModifier,$properties,$inferProperties,$inheritStatic&quot;
     });
 
     eval(this.imports);
 
-    var META = '$meta';
+    var META = &#x27;$meta&#x27;;
 
     var $eq       = $createModifier(),
         $use      = $createModifier(),
@@ -35,7 +208,7 @@ new function () { // closure
      */
     var Enum = Base.extend({
         constructor: function() {
-            throw new TypeError("Enums cannot be instantiated.");
+            throw new TypeError(&quot;Enums cannot be instantiated.&quot;);
         }
     }, {
         coerce: function (choices) {
@@ -98,9 +271,9 @@ new function () { // closure
     var ObjectDelegate = Delegate.extend({
         constructor: function (object) {
             if ($isNothing(object)) {
-                throw new TypeError("No object specified.");
+                throw new TypeError(&quot;No object specified.&quot;);
             }
-            Object.defineProperty(this, 'object', { value: object });
+            Object.defineProperty(this, &#x27;object&#x27;, { value: object });
         },
         /**
          * Description goes here
@@ -143,7 +316,7 @@ new function () { // closure
         invoke: function (protocol, methodName, args, strict) {
             var object = this.object,
                 method = object[methodName];
-            if (method && (!strict || protocol.adoptedBy(object))) {
+            if (method &amp;&amp; (!strict || protocol.adoptedBy(object))) {
                 return method.apply(object, args);
             }
         }
@@ -164,14 +337,14 @@ new function () { // closure
                     delegate = delegate.toDelegate();
                     if ((delegate instanceof Delegate) === false) {
                         throw new TypeError(lang.format(
-                            "Invalid delegate: %1 is not a Delegate nor does it have a 'toDelegate' method that returned one.", delegate));
+                            &quot;Invalid delegate: %1 is not a Delegate nor does it have a &#x27;toDelegate&#x27; method that returned one.&quot;, delegate));
                     }
                 } else {
                     delegate = new ObjectDelegate(delegate);
                 }
             }
-            Object.defineProperty(this, 'delegate', { value: delegate });
-            Object.defineProperty(this, 'strict', { value: !!strict });
+            Object.defineProperty(this, &#x27;delegate&#x27;, { value: delegate });
+            Object.defineProperty(this, &#x27;strict&#x27;, { value: !!strict });
         },
         __get: function (propertyName) {
             return this.delegate.get(this.constructor, propertyName, this.strict);
@@ -184,11 +357,11 @@ new function () { // closure
         }
     }, {
         isProtocol: function (target) {
-            return target && (target.prototype instanceof Protocol);
+            return target &amp;&amp; (target.prototype instanceof Protocol);
         },
         conformsTo: False,
         adoptedBy:  function (target) {
-            return target && $isFunction(target.conformsTo)
+            return target &amp;&amp; $isFunction(target.conformsTo)
                  ? target.conformsTo(this)
                  : false;
         },
@@ -249,11 +422,11 @@ new function () { // closure
                 getAllProtocols: function () {
                     var protocols = this.getProtocols(),
                         inner     = protocols.slice(0);
-                    for (var i = 0; i < inner.length; ++i) {
+                    for (var i = 0; i &lt; inner.length; ++i) {
                         var innerProtocols = inner[i].$meta.getAllProtocols();
-                        for (var ii = 0; ii < innerProtocols.length; ++ii) {
+                        for (var ii = 0; ii &lt; innerProtocols.length; ++ii) {
                             var protocol = innerProtocols[ii];
-                            if (protocols.indexOf(protocol) < 0) {
+                            if (protocols.indexOf(protocol) &lt; 0) {
                                 protocols.push(protocol);
                             }
                         } 
@@ -273,10 +446,10 @@ new function () { // closure
                     if (!(protocols instanceof Array)) {
                         protocols = Array.prototype.slice.call(arguments);
                     }
-                    for (var i = 0; i < protocols.length; ++i) {
+                    for (var i = 0; i &lt; protocols.length; ++i) {
                         var protocol = protocols[i];
                         if ((protocol.prototype instanceof Protocol) 
-                        &&  (_protocols.indexOf(protocol) === -1)) {
+                        &amp;&amp;  (_protocols.indexOf(protocol) === -1)) {
                             _protocols.push(protocol);
                             this.protocolAdded(protocol);
                         }
@@ -297,10 +470,10 @@ new function () { // closure
                  * @return {boolean}    bool        - definition
                  */
                 conformsTo: function (protocol) {
-                    if (!(protocol && (protocol.prototype instanceof Protocol))) {
+                    if (!(protocol &amp;&amp; (protocol.prototype instanceof Protocol))) {
                         return false;
                     }
-                    for (var index = 0; index < _protocols.length; ++index) {
+                    for (var index = 0; index &lt; _protocols.length; ++index) {
                         var proto = _protocols[index];
                         if (protocol === proto || proto.conformsTo(protocol)) {
                             return true;
@@ -343,7 +516,7 @@ new function () { // closure
                 linkBase: function (method) {
                     if (!this[method]) {
                         this.extend(method, function () {
-                            var baseMethod = parent && parent[method];
+                            var baseMethod = parent &amp;&amp; parent[method];
                             if (baseMethod) {
                                 return baseMethod.apply(parent, arguments);
                             }
@@ -372,11 +545,11 @@ new function () { // closure
                 isProtocol: function () { return _isProtocol; },
                 getAllProtocols: function () {
                     var protocols = this.base();
-                    if (!_isProtocol && baseClass.$meta) {
+                    if (!_isProtocol &amp;&amp; baseClass.$meta) {
                         var baseProtocols = baseClass.$meta.getAllProtocols();
-                        for (var i = 0; i < baseProtocols.length; ++i) {
+                        for (var i = 0; i &lt; baseProtocols.length; ++i) {
                             var protocol = baseProtocols[i];
-                            if (protocols.indexOf(protocol) < 0) {
+                            if (protocols.indexOf(protocol) &lt; 0) {
                                 protocols.push(protocol);
                             }
                         }
@@ -389,7 +562,7 @@ new function () { // closure
                     }
                 },
                 conformsTo: function (protocol) {
-                    if (!(protocol && (protocol.prototype instanceof Protocol))) {
+                    if (!(protocol &amp;&amp; (protocol.prototype instanceof Protocol))) {
                         return false;
                     } else if ((protocol === subClass) || (subClass.prototype instanceof protocol)) {
                         return true;
@@ -397,7 +570,7 @@ new function () { // closure
                     if (this.base(protocol)) {
                         return true;
                     }
-                    return baseClass && (baseClass !== Protocol) && baseClass.conformsTo
+                    return baseClass &amp;&amp; (baseClass !== Protocol) &amp;&amp; baseClass.conformsTo
                          ? baseClass.conformsTo(protocol)
                          : false;
                 },
@@ -408,9 +581,9 @@ new function () { // closure
                     }
                     var inherit = (this !== metadata),
                         active  = (step !== MetaStep.Subclass);
-                    for (var i = 0; i < _macros.length; ++i) {
+                    for (var i = 0; i &lt; _macros.length; ++i) {
                         var macro = _macros[i];
-                        if ((!active  || macro.isActive()) &&
+                        if ((!active  || macro.isActive()) &amp;&amp;
                             (!inherit || macro.shouldInherit())) {
                             macro.apply(step, metadata, target, definition);
                         }
@@ -446,10 +619,10 @@ new function () { // closure
             if (base.prototype instanceof Protocol) {
                 (protocols = []).push(base);
             }
-            if (args.length > 0 && (args[0] instanceof Array)) {
+            if (args.length &gt; 0 &amp;&amp; (args[0] instanceof Array)) {
                 constraints = args.shift();
             }
-            while (constraints.length > 0) {
+            while (constraints.length &gt; 0) {
                 var constraint = constraints[0];
                 if (!constraint) {
                     break;
@@ -458,7 +631,7 @@ new function () { // closure
                 } else if (constraint instanceof MetaMacro) {
                     (macros || (macros = [])).push(constraint);
                 } else if ($isFunction(constraint) 
-                           &&  constraint.prototype instanceof MetaMacro) {
+                           &amp;&amp;  constraint.prototype instanceof MetaMacro) {
                     (macros || (macros = [])).push(new constraint);
                 } else if (constraint.prototype) {
                     (mixins || (mixins = [])).push(constraint);
@@ -525,7 +698,7 @@ new function () { // closure
     var extendInstance = Base.prototype.extend;
     Base.prototype.extend = function (key, value) {
         var definition = (arguments.length === 1) ? key : {};
-        if (arguments.length >= 2) {
+        if (arguments.length &gt;= 2) {
             definition[key] = value;
         }
         var metadata = this.$meta;
@@ -595,8 +768,8 @@ new function () { // closure
     var $properties = MetaMacro.extend({
         constructor: function _(tag) {
             var spec = _.spec || (_.spec = {});
-            spec.value = tag || '$properties';
-            Object.defineProperty(this, 'tag', spec);
+            spec.value = tag || &#x27;$properties&#x27;;
+            Object.defineProperty(this, &#x27;tag&#x27;, spec);
         },
         apply: function _(step, metadata, target, definition) {
             if ($isNothing(definition) || !definition.hasOwnProperty(this.tag)) {
@@ -628,7 +801,7 @@ new function () { // closure
                 } else {
                     spec.writable = true;
                     if ($isNothing(property) || $isString(property) ||
-                        typeOf(property.length) == "number" || typeOf(property) !== 'object') {
+                        typeOf(property.length) == &quot;number&quot; || typeOf(property) !== &#x27;object&#x27;) {
                         spec.value = property;
                     } else {
                         descriptor = true;
@@ -636,12 +809,12 @@ new function () { // closure
                             var methods = {},
                                 cname   = name.charAt(0).toUpperCase() + name.slice(1);
                             if (property.get) {
-                                var get      = 'get' + cname; 
+                                var get      = &#x27;get&#x27; + cname; 
                                 methods[get] = property.get;
                                 spec.get     = _makeGetter(get);
                             }
                             if (property.set) {
-                                var set      = 'set' + cname 
+                                var set      = &#x27;set&#x27; + cname 
                                 methods[set] = property.set;
                                 spec.set     = _makeSetter(set); 
                             }
@@ -716,7 +889,7 @@ new function () { // closure
     }
     
     function _matchDescriptor(descriptor, filter) {
-        if (typeOf(descriptor) !== 'object' || typeOf(filter) !== 'object') {
+        if (typeOf(descriptor) !== &#x27;object&#x27; || typeOf(filter) !== &#x27;object&#x27;) {
             return false;
         }
         for (var key in filter) {
@@ -731,8 +904,8 @@ new function () { // closure
                     if (!(value instanceof Array)) {
                         return false;
                     }
-                    for (var i = 0; i < match.length; ++i) {
-                        if (value.indexOf(match[i]) < 0) {
+                    for (var i = 0; i &lt; match.length; ++i) {
+                        if (value.indexOf(match[i]) &lt; 0) {
                             return false;
                         }
                     }
@@ -769,7 +942,7 @@ new function () { // closure
                 });
                 if (_inferProperty(key, value, definition, spec)) {
                     var name = spec.name;
-                    if (name && !(name in target)) {
+                    if (name &amp;&amp; !(name in target)) {
                         spec.get = _makeGetter(spec.get);
                         spec.set = _makeSetter(spec.set);                        
                         this.defineProperty(metadata, target, name, spec);
@@ -787,26 +960,26 @@ new function () { // closure
         isActive: True
     });
 
-    var DEFAULT_GETTERS = ['get', 'is', 'can'];
+    var DEFAULT_GETTERS = [&#x27;get&#x27;, &#x27;is&#x27;, &#x27;can&#x27;];
 
     function _inferProperty(key, value, definition, spec) {
-        for (var i = 0; i < DEFAULT_GETTERS.length; ++i) {
+        for (var i = 0; i &lt; DEFAULT_GETTERS.length; ++i) {
             var prefix = DEFAULT_GETTERS[i];
             if (key.lastIndexOf(prefix, 0) == 0) {
                 if (value.length === 0) {  // no arguments
                     var name  = key.substring(prefix.length);
                     spec.get  = key;
-                    spec.set  = 'set' + name;
+                    spec.set  = &#x27;set&#x27; + name;
                     spec.name = name.charAt(0).toLowerCase() + name.slice(1);
                     return true;
                 }
             }
         }
-        if (key.lastIndexOf('set', 0) == 0) {
+        if (key.lastIndexOf(&#x27;set&#x27;, 0) == 0) {
             if (value.length === 1) {  // 1 argument
                 var name  = key.substring(3);
                 spec.set  = key;
-                spec.get  = 'get' + name;
+                spec.get  = &#x27;get&#x27; + name;
                 spec.name = name.charAt(0).toLowerCase() + name.slice(1);
                 return true;
             }
@@ -823,7 +996,7 @@ new function () { // closure
         constructor: function _(/*members*/) {
             var spec = _.spec || (_.spec = {});
             spec.value = Array.prototype.slice.call(arguments);
-            Object.defineProperty(this, 'members', spec);
+            Object.defineProperty(this, &#x27;members&#x27;, spec);
             delete spec.value;
         },
         apply: function (step, metadata, target) {
@@ -831,16 +1004,16 @@ new function () { // closure
                 var members  = this.members,
                     clazz    = metadata.getClass(),
                     ancestor = $ancestorOf(clazz);
-                if (members.length > 0) {
-                    for (var i = 0; i < members.length; ++i) {
+                if (members.length &gt; 0) {
+                    for (var i = 0; i &lt; members.length; ++i) {
                         var member = members[i];
                         if (!(member in clazz)) {
                             clazz[member] = ancestor[member];
                         }
                     }
-                } else if (ancestor !== Base && ancestor !== Object) {
+                } else if (ancestor !== Base &amp;&amp; ancestor !== Object) {
                     for (var key in ancestor) {
-                        if (ancestor.hasOwnProperty(key) && !(key in clazz)) {
+                        if (ancestor.hasOwnProperty(key) &amp;&amp; !(key in clazz)) {
                             clazz[key] = ancestor[key];
                         }
                     }
@@ -944,7 +1117,7 @@ new function () { // closure
      * @return   {Any} result of executing action in context.
      */
     function $using(disposing, action, context) {
-        if (disposing && $isFunction(disposing.dispose)) {
+        if (disposing &amp;&amp; $isFunction(disposing.dispose)) {
             if ($isFunction(action)) {
                 var result;
                 try {
@@ -991,7 +1164,7 @@ new function () { // closure
                 return wrapped;
             } else {
                 if (!allowNew) {
-                    throw new Error("Modifiers should not be called with the new operator.");
+                    throw new Error(&quot;Modifiers should not be called with the new operator.&quot;);
                 }
                 this.getSource = function () {
                     return source;
@@ -1031,7 +1204,7 @@ new function () { // closure
                  * @return {Object} item
                  */
                 getIndex: function (index) {
-                    if (_items.length > index) {
+                    if (_items.length &gt; index) {
                         return _items[index];
                     }
                 },
@@ -1043,7 +1216,7 @@ new function () { // closure
                  * @return {Object}     item
                  */
                 setIndex: function (index, item) {
-                    if ((_items.length <= index) ||
+                    if ((_items.length &lt;= index) ||
                         (_items[index] === undefined)) {
                         _items[index] = this.mapItem(item);
                     }
@@ -1078,7 +1251,7 @@ new function () { // closure
                  * @return {Object}     item
                  */
                 removeIndex: function (index) {
-                    if (_items.length > index) {
+                    if (_items.length &gt; index) {
                         _items.splice(index, 1);
                     }
                     return this;
@@ -1091,13 +1264,13 @@ new function () { // closure
                  */
                 append: function (/* items */) {
                     var newItems;
-                    if (arguments.length === 1 && (arguments[0] instanceof Array)) {
+                    if (arguments.length === 1 &amp;&amp; (arguments[0] instanceof Array)) {
                         newItems = arguments[0];
-                    } else if (arguments.length > 0) {
+                    } else if (arguments.length &gt; 0) {
                         newItems = arguments;
                     }
                     if (newItems) {
-                        for (var i = 0; i < newItems.length; ++i) {
+                        for (var i = 0; i &lt; newItems.length; ++i) {
                             _items.push(this.mapItem(newItems[i]));
                         }
                     }
@@ -1110,7 +1283,7 @@ new function () { // closure
                  * @return {This}       this  - description
                  */
                 merge: function (items) {
-                    for (var index = 0; index < items.length; ++index) {
+                    for (var index = 0; index &lt; items.length; ++index) {
                         var item = items[index];
                         if (item !== undefined) {
                             this.setIndex(index, item);
@@ -1158,7 +1331,7 @@ new function () { // closure
                  * @return {Index}      index - description
                  */
                 getIndex: function (index) {
-                    return index && _index[index];
+                    return index &amp;&amp; _index[index];
                 },
                 /** 
                  * Description goes here
@@ -1171,7 +1344,7 @@ new function () { // closure
                         insert      = indexedNode;
                     if (index) {
                         insert = insert || this.head;
-                        while (insert && order(node, insert) >= 0) {
+                        while (insert &amp;&amp; order(node, insert) &gt;= 0) {
                             insert = insert.next;
                         }
                     }
@@ -1230,7 +1403,7 @@ new function () { // closure
                     }
                     var index = node.index;
                     if (this.getIndex(index) === node) {
-                        if (next && next.index === index) {
+                        if (next &amp;&amp; next.index === index) {
                             _index[index] = next;
                         } else {
                             delete _index[index];
@@ -1247,10 +1420,10 @@ new function () { // closure
      * @type Enum
      */
     var Facet = Enum({
-        Parameters:           'parameters',
-        Interceptors:         'interceptors',
-        InterceptorSelectors: 'interceptorSelectors',
-        Delegate:             'delegate'
+        Parameters:           &#x27;parameters&#x27;,
+        Interceptors:         &#x27;interceptors&#x27;,
+        InterceptorSelectors: &#x27;interceptorSelectors&#x27;,
+        Delegate:             &#x27;delegate&#x27;
         });
 
 
@@ -1304,7 +1477,7 @@ new function () { // closure
          */
         buildProxy: function(types, options) {
             if (!(types instanceof Array)) {
-                throw new TypeError("ProxyBuilder requires an array of types to proxy.");
+                throw new TypeError(&quot;ProxyBuilder requires an array of types to proxy.&quot;);
             }
             var classes   = Array2.filter(types, $isClass),
                 protocols = Array2.filter(types, $isProtocol);
@@ -1318,19 +1491,19 @@ new function () { // closure
             constructor: function _(facets) {
                 var spec = _.spec || (_.spec = {});
                 spec.value = facets[Facet.InterceptorSelectors]
-                if (spec.value && spec.value.length > 0) {
-                    Object.defineProperty(this, 'selectors', spec);
+                if (spec.value &amp;&amp; spec.value.length &gt; 0) {
+                    Object.defineProperty(this, &#x27;selectors&#x27;, spec);
                 }
                 spec.value = facets[Facet.Interceptors];
-                if (spec.value && spec.value.length > 0) {
-                    Object.defineProperty(this, 'interceptors', spec);
+                if (spec.value &amp;&amp; spec.value.length &gt; 0) {
+                    Object.defineProperty(this, &#x27;interceptors&#x27;, spec);
                 }
                 spec.value = facets[Facet.Delegate];
                 if (spec.value) {
                     spec.writable = true;
-                    Object.defineProperty(this, 'delegate', spec);
+                    Object.defineProperty(this, &#x27;delegate&#x27;, spec);
                 }
-                ctor = _proxyMethod('constructor', this.base, base);
+                ctor = _proxyMethod(&#x27;constructor&#x27;, this.base, base);
                 ctor.apply(this, facets[Facet.Parameters]);
                 delete spec.writable;
                 delete spec.value;
@@ -1355,18 +1528,18 @@ new function () { // closure
         var sources    = [proxy].concat(protocols),
             proxyProto = proxy.prototype,
             proxied    = {};
-        for (var i = 0; i < sources.length; ++i) {
+        for (var i = 0; i &lt; sources.length; ++i) {
             var source      = sources[i],
                 sourceProto = source.prototype,
                 isProtocol  = $isProtocol(source);
             for (key in sourceProto) {
                 if (!((key in proxied) || (key in _noProxyMethods))
-                && (!proxy.shouldProxy || proxy.shouldProxy(key, source))) {
+                &amp;&amp; (!proxy.shouldProxy || proxy.shouldProxy(key, source))) {
                     var proto = sourceProto, descriptor;
-                    while (proto && !(
+                    while (proto &amp;&amp; !(
                         descriptor = Object.getOwnPropertyDescriptor(proto, key))
                           ) proto = Object.getPrototypeOf(proto);
-                    if ('value' in descriptor) {
+                    if (&#x27;value&#x27; in descriptor) {
                         var member = isProtocol ? undefined : descriptor.value;
                         if ($isNothing(member) || $isFunction(member)) {
                             proxyProto[key] = _proxyMethod(key, member, proxy);
@@ -1374,8 +1547,8 @@ new function () { // closure
                         proxied[key] = true;
                     } else if (isProtocol) {
                         var cname = key.charAt(0).toUpperCase() + key.slice(1),
-                            get   = 'get' + cname,
-                            set   = 'set' + cname,
+                            get   = &#x27;get&#x27; + cname,
+                            set   = &#x27;set&#x27; + cname,
                             spec  = _proxyClass.spec || (_proxyClass.spec = {
                                 enumerable: true
                             });
@@ -1432,7 +1605,7 @@ new function () { // closure
                 },
                 proceed: function () {
                     ++idx;
-                    if (interceptors && idx < interceptors.length) {
+                    if (interceptors &amp;&amp; idx &lt; interceptors.length) {
                         var interceptor = interceptors[idx];
                         return interceptor.intercept(invocation);
                     }
@@ -1445,17 +1618,17 @@ new function () { // closure
                         return method.apply(_this, this.args);
                     }
                     throw new Error(lang.format(
-                        "Interceptor cannot proceed without a class or delegate method '%1'.",
+                        &quot;Interceptor cannot proceed without a class or delegate method &#x27;%1&#x27;.&quot;,
                         key));
                 }
             };
             spec.value = key;
-            Object.defineProperty(invocation, 'method', spec);
+            Object.defineProperty(invocation, &#x27;method&#x27;, spec);
             spec.value = source;
-            Object.defineProperty(invocation, 'source', spec);
+            Object.defineProperty(invocation, &#x27;source&#x27;, spec);
             delete spec.value;
             spec.get = function () {
-                if (interceptors && (idx + 1 < interceptors.length)) {
+                if (interceptors &amp;&amp; (idx + 1 &lt; interceptors.length)) {
                     return true;
                 }
                 if (delegate) {
@@ -1463,7 +1636,7 @@ new function () { // closure
                 }
                 return !!method;
             };
-            Object.defineProperty(invocation, 'canProceed', spec);
+            Object.defineProperty(invocation, &#x27;canProceed&#x27;, spec);
             delete spec.get;
             return invocation.proceed();
         }
@@ -1475,14 +1648,14 @@ new function () { // closure
         var proxy     = this.constructor,
             clazz     = proxy.prototype,
             overrides = (arguments.length === 1) ? arguments[0] : {};
-        if (arguments.length >= 2) {
+        if (arguments.length &gt;= 2) {
             overrides[arguments[0]] = arguments[1];
         }
         for (methodName in overrides) {
-            if (!(methodName in _noProxyMethods) && 
+            if (!(methodName in _noProxyMethods) &amp;&amp; 
                 (!proxy.shouldProxy || proxy.shouldProxy(methodName, clazz))) {
                 var method = this[methodName];
-                if (method && method.baseMethod) {
+                if (method &amp;&amp; method.baseMethod) {
                     this[methodName] = method.baseMethod;
                 }
                 this.base(methodName, overrides[methodName]);
@@ -1494,7 +1667,7 @@ new function () { // closure
 
     function _throwProxiesSealedExeception()
     {
-        throw new TypeError("Proxy classes are sealed and cannot be extended from.");
+        throw new TypeError(&quot;Proxy classes are sealed and cannot be extended from.&quot;);
     }
 
     var _noProxyMethods = {
@@ -1514,12 +1687,12 @@ new function () { // closure
         },
         getClasses: function (cb) {
             _listContents(this, cb, function (member, memberName) {
-                return $isClass(member) && (memberName != "constructor");
+                return $isClass(member) &amp;&amp; (memberName != &quot;constructor&quot;);
             });
         },
         getPackages: function (cb) {
             _listContents(this, cb, function (member, memberName) {
-                return (member instanceof Package) && (memberName != "parent");
+                return (member instanceof Package) &amp;&amp; (memberName != &quot;parent&quot;);
             });
         }
     });
@@ -1550,7 +1723,7 @@ new function () { // closure
      * @returns  {boolean} true if a class (and not a protocol).
      */
     function $isClass(clazz) {
-        return clazz && (clazz.prototype instanceof Base) && !$isProtocol(clazz);
+        return clazz &amp;&amp; (clazz.prototype instanceof Base) &amp;&amp; !$isProtocol(clazz);
     }
 
     /**
@@ -1560,7 +1733,7 @@ new function () { // closure
      * @return   {Function} class of instance. 
      */
     function $classOf(instance) {
-        return instance && instance.constructor;
+        return instance &amp;&amp; instance.constructor;
     }
 
     /**
@@ -1570,7 +1743,7 @@ new function () { // closure
      * @return   {Function} ancestor of class. 
      */
     function $ancestorOf(clazz) {
-        return clazz && clazz.ancestor;
+        return clazz &amp;&amp; clazz.ancestor;
     }
 
     /**
@@ -1580,7 +1753,7 @@ new function () { // closure
      * @returns  {boolean} true if a string.
      */
     function $isString(str) {
-        return typeOf(str)  === 'string';
+        return typeOf(str)  === &#x27;string&#x27;;
     }
 
     /**
@@ -1610,7 +1783,7 @@ new function () { // closure
      * @returns  {boolean} true if a promise. 
      */
     function $isPromise(promise) {
-        return promise && $isFunction(promise.then);
+        return promise &amp;&amp; $isFunction(promise.then);
     }
 
     /**
@@ -1620,7 +1793,7 @@ new function () { // closure
      * @returns  {boolean} true if value not null or undefined.
      */
     function $isSomething(value) {
-        return (value !== undefined && value !== null);
+        return (value !== undefined &amp;&amp; value !== null);
     }
 
     /**
@@ -1759,14 +1932,14 @@ new function () { // closure
                 break;
 
             default:
-                throw new Error("Unrecognized TraversingAxis " + axis + '.');
+                throw new Error(&quot;Unrecognized TraversingAxis &quot; + axis + &#x27;.&#x27;);
             }
         }
     });
 
     function checkCircularity(visited, node) {
         if (visited.indexOf(node) !== -1) {
-            throw new Error('Circularity detected for node ' + node + '.');
+            throw new Error(&#x27;Circularity detected for node &#x27; + node + &#x27;.&#x27;);
         }
         visited.push(node);
         return node;
@@ -1778,7 +1951,7 @@ new function () { // closure
 
     function _traverseRoot(visitor, context) {
         var parent, root = this, visited = [this];
-        while ($isFunction(root.getParent) && (parent = root.getParent())) {
+        while ($isFunction(root.getParent) &amp;&amp; (parent = root.getParent())) {
             checkCircularity(visited, parent);
             root = parent;   
         }
@@ -1786,11 +1959,11 @@ new function () { // closure
     }
 
     function _traverseChildren(visitor, withSelf, context) {
-        if ((withSelf && visitor.call(context, this)) || !$isFunction(this.getChildren)) {
+        if ((withSelf &amp;&amp; visitor.call(context, this)) || !$isFunction(this.getChildren)) {
             return;
         }
         var children = this.getChildren();
-        for (var i = 0; i < children.length; ++i) {
+        for (var i = 0; i &lt; children.length; ++i) {
             if (visitor.call(context, children[i])) {
                 return;
             }
@@ -1799,10 +1972,10 @@ new function () { // closure
 
     function _traverseAncestors(visitor, withSelf, context) {
         var parent = this, visited = [this];
-        if (withSelf && visitor.call(context, this)) {
+        if (withSelf &amp;&amp; visitor.call(context, this)) {
             return;
         }
-        while ($isFunction(parent.getParent) && (parent = parent.getParent()) &&
+        while ($isFunction(parent.getParent) &amp;&amp; (parent = parent.getParent()) &amp;&amp;
                !visitor.call(context, parent)) {
             checkCircularity(visited, parent);
         }
@@ -1835,16 +2008,16 @@ new function () { // closure
     }
 
     function _traverseParentSiblingOrSelf(visitor, withSelf, withParent, context) {
-        if (withSelf && visitor.call(context, this) || !$isFunction(this.getParent)) {
+        if (withSelf &amp;&amp; visitor.call(context, this) || !$isFunction(this.getParent)) {
             return;
         }
         var self = this, parent = this.getParent();
         if (parent) {
             if ($isFunction(parent.getChildren)) {
                 var children = parent.getChildren();
-                for (var i = 0; i < children.length; ++i) {
+                for (var i = 0; i &lt; children.length; ++i) {
                     var sibling = children[i];
-                    if (sibling != self && visitor.call(context, sibling)) {
+                    if (sibling != self &amp;&amp; visitor.call(context, sibling)) {
                         return;
                     }
                 }
@@ -1936,7 +2109,7 @@ new function () { // closure
             return;
         }
         var queue = [node];
-        while (queue.length > 0) {
+        while (queue.length &gt; 0) {
             var next = queue.shift();
             checkCircularity(visited, next);
             if (visitor.call(context, next)) {
@@ -1955,7 +2128,7 @@ new function () { // closure
         }
         var queue = [node],
             stack = [];
-        while (queue.length > 0) {
+        while (queue.length &gt; 0) {
             var next = queue.shift();
             checkCircularity(visited, next);
             stack.push(next);
@@ -1966,7 +2139,7 @@ new function () { // closure
                 });
             queue.push.apply(queue, level);
         }
-        while (stack.length > 0) {
+        while (stack.length &gt; 0) {
             if (visitor.call(context, stack.pop())) {
                 return;
             }
@@ -2003,7 +2176,7 @@ new function () { // closure
             return new Wrapper;
         };
 
-    if (typeof module !== 'undefined' && module.exports) {
+    if (typeof module !== &#x27;undefined&#x27; &amp;&amp; module.exports) {
         module.exports = exports = miruken;
     }
 
@@ -2016,3 +2189,22 @@ new function () { // closure
     eval(this.exports);
 
 }
+
+    </pre>
+</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+<script src="../assets/vendor/prettify/prettify-min.js"></script>
+<script>prettyPrint();</script>
+<script src="../assets/js/yui-prettify.js"></script>
+<script src="../assets/../api.js"></script>
+<script src="../assets/js/api-filter.js"></script>
+<script src="../assets/js/api-list.js"></script>
+<script src="../assets/js/api-search.js"></script>
+<script src="../assets/js/apidocs.js"></script>
+</body>
+</html>

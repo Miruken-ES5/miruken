@@ -76,14 +76,14 @@ module.exports = function(grunt) {
     },
     yuidoc: {
         all: {
-            name: '<%= pkg.name %>',
+            name:        '<%= pkg.name %>',
             description: '<%= pkg.description %>',
-            version: '<%= pkg.version %>',
-            url: '<%= pkg.homepage %>',
+            version:     '<%= pkg.version %>',
+            url:         '<%= pkg.homepage %>',
             options: {
-                paths: ['./lib'],
-                ignorePaths: ["./lib/base2.js"],
-                outdir: './docs/'
+                paths:       ['./lib'],
+                ignorePaths: ['./lib/base2.js'],
+                outdir:       './docs/'
             }
         }
     }
@@ -105,8 +105,9 @@ module.exports = function(grunt) {
   grunt.option('force', true);
 
   //Test task.
-  grunt.registerTask('test',  ['concurrent:test']);
-  grunt.registerTask('build', ['browserify:dist','copy:main', 'karma:dist']);
-  grunt.registerTask('debug',   ['browserify:debug','karma:debug']);
-  grunt.registerTask("docs", ["yuidoc"]);
+  grunt.registerTask('test',   ['concurrent:test']);
+  grunt.registerTask('build',  ['browserify:dist','copy:main', 'karma:dist']);
+  grunt.registerTask('debug',  ['browserify:debug','karma:debug']);
+  grunt.registerTask("minify", ['browserify:dist', 'uglify']);
+  grunt.registerTask("docs",   ['yuidoc']);
 };
