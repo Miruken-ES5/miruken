@@ -1710,6 +1710,9 @@ var miruken = require('./miruken.js'),
 new function () { // closure
 
     /**
+     * Definition goes here
+     * @module miruken
+     * @submodule callback
      * @namespace miruken.callback
      */
     var callback = new base2.Package(this, {
@@ -1729,13 +1732,14 @@ new function () { // closure
         $NOT_HANDLED = {};
 
     /**
-     * @protocol {InternalCallback}
+     * Definition goes here {Protocol}
+     * @class InternalCallback
      */
     var InternalCallback = Protocol.extend();
 
     /**
-     * @class $callbacks
      * Metamacro to register callback definitions.
+     * @class $callbacks
      */
     var $callbacks = MetaMacro.extend({
         apply: function (step, metadata, target, definition) {
@@ -1777,7 +1781,10 @@ new function () { // closure
     });
 
     /**
-     * @class {HandleMethod}
+     * Definition goes here
+     * @class HandleMethod
+     * @constructor
+     * @extends Base
      */
     var HandleMethod = Base.extend({
         constructor: function (type, protocol, methodName, args, strict) {
@@ -1847,7 +1854,10 @@ new function () { // closure
     });
 
     /**
-     * @class {Lookup}
+     * Definition goes here
+     * @class Lookup
+     * @constructor
+     * @extends Base
      */
     var Lookup = Base.extend(
         $inferProperties, {
@@ -1872,7 +1882,10 @@ new function () { // closure
     });
 
     /**
-     * @class {Deferred}
+     * Definition goes here
+     * @class Deferred
+     * @constructor
+     * @extends Base
      */
     var Deferred = Base.extend(
         $inferProperties, {
@@ -1896,7 +1909,10 @@ new function () { // closure
     });
 
     /**
-     * @class {Resolution}
+     * Definition goes here
+     * @class Resolution
+     * @constructor
+     * @extends Base
      */
     var Resolution = Base.extend(
         $inferProperties, {
@@ -1921,7 +1937,10 @@ new function () { // closure
     });
 
     /**
-     * @class {CallbackHandler}
+     * Definition goes here
+     * @class CallbackHandler
+     * @constructor
+     * @extends Base
      */
     var CallbackHandler = Base.extend(
         $callbacks, {
@@ -1933,6 +1952,7 @@ new function () { // closure
         },
         /**
          * Handles the callback.
+         * @method handle
          * @param   {Object}          callback    - any callback
          * @param   {boolean}         greedy      - true of handle greedily
          * @param   {CallbackHandler} [composer]  - initiated the handle for composition
@@ -1986,7 +2006,10 @@ new function () { // closure
     });
 
     /**
-     * @class {CallbackHandlerDecorator}
+     * Definition goes here
+     * @class CallbackHandlerDecorator
+     * @constructor
+     * @extends CallbackHandler
      */
     var CallbackHandlerDecorator = CallbackHandler.extend({
         constructor: function _(decoratee) {
@@ -2006,7 +2029,10 @@ new function () { // closure
     });
 
     /**
-     * @class {CallbackHandlerFilter}
+     * Definition goes here
+     * @class CallbackHandlerFilter
+     * @constructor
+     * @extends CallbackHandlerDecorator
      */
     var CallbackHandlerFilter = CallbackHandlerDecorator.extend({
         constructor: function _(decoratee, filter) {
@@ -2036,7 +2062,10 @@ new function () { // closure
     });
 
     /**
-     * @class {CallbackHandlerAspect}
+     * Definition goes here
+     * @class CallbackHandlerAspect
+     * @constructor
+     * @extends CallbackHandlerFilter
      */
     var CallbackHandlerAspect = CallbackHandlerFilter.extend({
         constructor: function (decoratee, before, after) {
@@ -2069,7 +2098,10 @@ new function () { // closure
     });
 
     /**
-     * @class {CascadeCallbackHandler}
+     * Definition goes here
+     * @class CascadeCallbackHandler
+     * @constructor
+     * @extends CallbackHandler
      */
     var CascadeCallbackHandler = CallbackHandler.extend({
         constructor: function _(handler, cascadeToHandler) {
@@ -2099,7 +2131,10 @@ new function () { // closure
     });
 
     /**
-     * @class {CompositeCallbackHandler}
+     * Definition goes here
+     * @class CompositeCallbackHandler
+     * @constructor
+     * @extends CallbackHandler
      */
     var CompositeCallbackHandler = CallbackHandler.extend({
         constructor: function () {
@@ -2153,7 +2188,10 @@ new function () { // closure
     });
 
     /**
-     * @class {ConditionalCallbackHandler}
+     * Definition goes here
+     * @class ConditionalCallbackHandler
+     * @constructor
+     * @extends CallbackHandlerDecorator
      */
     var ConditionalCallbackHandler = CallbackHandlerDecorator.extend({
         constructor: function _(decoratee, condition) {
@@ -2177,7 +2215,10 @@ new function () { // closure
     });
 
     /**
-     * @class {AcceptingCallbackHandler}
+     * Definition goes here
+     * @class AcceptingCallbackHandler
+     * @constructor
+     * @extends CallbackHandler
      */
     var AcceptingCallbackHandler = CallbackHandler.extend({
         constructor: function (handler, constraint) {
@@ -2195,7 +2236,10 @@ new function () { // closure
     };
 
     /**
-     * @class {ProvidingCallbackHandler}
+     * Definition goes here
+     * @class ProvidingCallbackHandler
+     * @constructor
+     * @extends CallbackHandler
      */
     var ProvidingCallbackHandler = CallbackHandler.extend({
         constructor: function (provider, constraint) {
@@ -2213,7 +2257,10 @@ new function () { // closure
     };
 
     /**
-     * @class {MethodCallbackHandler}
+     * Definition goes here
+     * @class MethodCallbackHandler
+     * @constructor
+     * @extends CallbackHandler
      */
     var MethodCallbackHandler = CallbackHandler.extend({
         constructor: function _(methodName, method) {
@@ -2250,7 +2297,8 @@ new function () { // closure
 
     /**
      * InvocationOptions enum
-     * @enum {Number}
+     * @property InvocationOptions
+     * @type Enum
      */
     var InvocationOptions = {
         None:        0,
@@ -2262,7 +2310,10 @@ new function () { // closure
     InvocationOptions = Enum(InvocationOptions);
 
     /**
-     * @class {InvocationSemantics}
+     * Definition goes here
+     * @class InvocationSemantics
+     * @constructor
+     * @extends Base
      */
     var InvocationSemantics = Base.extend(InternalCallback, {
         constructor: function (options) {
@@ -2296,7 +2347,10 @@ new function () { // closure
     });
 
     /**
-     * @class {InvocationOptionsHandler}
+     * Definition goes here
+     * @class InvocationOptionsHandler
+     * @constructor
+     * @extends CallbackHandler
      */
     var InvocationOptionsHandler = CallbackHandler.extend({
         constructor: function _(handler, options) {
@@ -2317,7 +2371,10 @@ new function () { // closure
     });
 
     /**
-     * @class {InvocationDelegate}
+     * Definition goes here
+     * @class InvocationDelegate
+     * @constructor
+     * @extends Delegate
      */
     var InvocationDelegate = Delegate.extend({
         constructor: function _(handler) {
@@ -2444,11 +2501,11 @@ new function () { // closure
     });
 
     /**
-     * @function $define
      * Defines a new handler relationship.
+     * @method $define
      * @param    {string}   tag       - name of definition
      * @param    {Variance} variance  - variance of definition
-     * @returns  {Function} function to add to definition.
+     * @return   {Function} function to add to definition.
      */
     function $define(tag, variance) {
         if (!$isString(tag) || tag.length === 0 || /\s/.test(tag)) {
@@ -2613,7 +2670,11 @@ new function () { // closure
     }
 
     /**
-     * @class {_Node}
+     * Definition goes here
+     * @class _Node
+     * @param {Constraint} constraint
+     * @param {Handler} handler
+     * @param {Removed} removed
      */
     function _Node(constraint, handler, removed) {
         var invariant   = $eq.test(constraint);
@@ -3610,6 +3671,9 @@ var miruken = require('../miruken.js'),
 new function () { // closure
 
     /**
+     * Definition goes here
+     * @module miruken
+     * @submodule ioc
      * @namespace miruken.ioc
      */
     var ioc = new base2.Package(this, {
@@ -3630,17 +3694,21 @@ new function () { // closure
         $proxyBuilder = new ProxyBuilder;
 
     /**
-     * @protocol {Container}
+     * Definition goes here
+     * @class Container
+     * @constructor
      */
     var Container = StrictProtocol.extend(Invoking, Disposing, {
         /**
          * Registers on or more components in the container.
+         * @method register
          * @param   {Any*}    registrations  - Registrations
          * @returns {Promise} a promise representing the registration.
          */
         register: function (/*registrations*/) {},
         /**
          * Adds a configured component to the container with policies.
+         * @method addComponent
          * @param   {ComponentModel}    componentModel  - component model
          * @param   {Array}             policies        - component policies
          * @returns {Promise} a promise representing the component.
@@ -3648,12 +3716,14 @@ new function () { // closure
         addComponent: function (componentModel, policies) {},
         /**
          * Resolves the component for the key.
+         * @method resolve
          * @param   {Any} key  - key used to identify the component
          * @returns {Any} component (or Promise) satisfying the key.
          */
         resolve: function (key) {},
         /**
          * Resolves all the components for the key.
+         * @method resolveAll
          * @param   {Any} key  - key used to identify the components
          * @returns {Array} components (or Promises) satisfying the key.
          */
@@ -3661,7 +3731,9 @@ new function () { // closure
     });
 
     /**
-     * @protocol {Registration}
+     * Definition goes here
+     * @class Registration
+     * @extends Protocol
      */
     var Registration = Protocol.extend({
         /**
@@ -3673,11 +3745,14 @@ new function () { // closure
     });
 
     /**
-     * @protocol {ComponentPolicy}
+     * Definition goes here
+     * @class ComponentPolicy
+     * @extends Protocol
      */
     var ComponentPolicy = Protocol.extend({
         /**
          * Applies the policy to the ComponentModel.
+         * @method apply
          * @param {ComponentModel} componentModel  - component model
          */
          apply: function (componentModel) {}
@@ -3685,7 +3760,8 @@ new function () { // closure
 
     /**
      * DependencyModifiers enum
-     * @enum {Number}
+     * @property DependencyModifiers
+     * @type Enum
      */
     var DependencyModifiers = Enum({
         None:       0,
@@ -3701,7 +3777,10 @@ new function () { // closure
         });
 
     /**
-     * @class {DependencyModel}
+     * Definition goes here
+     * @class DependencyModel
+     * @constructor
+     * @extends Base
      */
     var DependencyModel = Base.extend({
         constructor: function _(dependency, modifiers) {
@@ -3753,7 +3832,10 @@ new function () { // closure
     });
 
     /**
-     * @class {DependencyManager}
+     * Definition goes here
+     * @class DependencyManager
+     * @constructor
+     * @extends ArrayManager
      */
     var DependencyManager = ArrayManager.extend({
         constructor: function (dependencies) {
@@ -3767,7 +3849,9 @@ new function () { // closure
     });
 
     /**
-     * @class {DependencyInspector}
+     * Definition goes here
+     * @class DependencyInspector
+     * @extends Base
      */
     var DependencyInspector = Base.extend({
         inspect: function (componentModel, policies) {
@@ -3802,7 +3886,10 @@ new function () { // closure
     });
 
     /**
-     * @class {ComponentModel}
+     * Definition goes here
+     * @class ComponentModel
+     * @constructor
+     * @extends Base
      */
     var ComponentModel = Base.extend(
         $inferProperties, $validateThat, {
@@ -3926,7 +4013,9 @@ new function () { // closure
     }
 
     /**
-     * @class {Lifestyle}
+     * Definition goes here
+     * @class Lifestyle
+     * @extends Base
      */
     var Lifestyle = Base.extend(ComponentPolicy, Disposing, DisposingMixin, {
         resolve: function (factory) { return factory(); },
@@ -3955,12 +4044,17 @@ new function () { // closure
     });
 
    /**
-     * @class {TransientLifestyle}
+     * Definition goes here
+     * @class TransientLifestyle
+     * @extends Lifestyle
      */
     var TransientLifestyle = Lifestyle.extend();
 
    /**
-     * @class {SingletonLifestyle}
+     * Definition goes here
+     * @class SingletonLifestyle
+     * @constructor
+     * @extends Lifestyle
      */
     var SingletonLifestyle = Lifestyle.extend({
         constructor: function (instance) {
@@ -4003,7 +4097,10 @@ new function () { // closure
     });
 
    /**
-     * @class {ContextualLifestyle}
+     * Definition goes here
+     * @class ContextualLifestyle
+     * @constructor
+     * @extends Lifestyle
      */
     var ContextualLifestyle = Lifestyle.extend({
         constructor: function () {
@@ -4075,7 +4172,10 @@ new function () { // closure
     });
 
     /**
-     * @class {ComponentBuilder}
+     * Definition goes here
+     * @class ComponentBuilder
+     * @constructor
+     * @extends Base
      */
     var ComponentBuilder = Base.extend(Registration, {
         constructor: function (key) {
@@ -4172,7 +4272,10 @@ new function () { // closure
     });
 
     /**
-     * @class {InterceptorBuilder}
+     * Definition goes here
+     * @class InterceptorBuilder
+     * @constructor
+     * @extends Base
      */
     var InterceptorBuilder = Base.extend(Registration, {
         constructor: function (component, componentModel, interceptors) {
@@ -4210,16 +4313,20 @@ new function () { // closure
     });
 
     /**
-     * @function $component
+     * Definition goes here
+     * @method $component
      * @param   {Any} key - component key
-     * @returns {ComponentBuilder} a fluent component builder.
+     * @return  {ComponentBuilder} a fluent component builder.
      */
     function $component(key) {
         return new ComponentBuilder(key);
     }
 
     /**
-     * @class {DependencyResolution}
+     * Definition goes here
+     * @class DependencyResolution
+     * @constructor
+     * @extends Resolution
      */
     var DependencyResolution = Resolution.extend({
         constructor: function (key, parent, many) {
@@ -4252,7 +4359,8 @@ new function () { // closure
     });
 
     /**
-     * @class {DependencyResolutionError}
+     * Definition goes here
+     * @class DependencyResolutionError
      * @param {DependencyResolution} dependency  - failing dependency
      * @param {string}               message     - error message
      */
@@ -4265,7 +4373,8 @@ new function () { // closure
     DependencyResolutionError.prototype.constructor = DependencyResolutionError;
 
     /**
-     * @class {ValidationError}
+     * Definition goes here
+     * @class ValidationError
      * @param {ComponentModel}  componentModel  - invaid component model
      * @param {ValidtionResult} validation      - validation errors
      * @param {string}          message         - error message
@@ -4280,7 +4389,10 @@ new function () { // closure
     ComponentModelError.prototype.constructor = ComponentModelError;
 
     /**
-     * @class {IoContainer}
+     * Definition goes here
+     * @class IoContainer
+     * @constructor
+     * @extends CallbackHandler
      */
     var IoContainer = CallbackHandler.extend(Container, {
         constructor: function () {
@@ -4498,8 +4610,9 @@ require('./base2.js');
 new function () { // closure
 
     /**
-     * Namespacing for miruken
+     * Definition goes here
      * @module miruken
+     * @namespace miruken
      */
     var miruken = new base2.Package(this, {
         name:    "miruken",
@@ -4757,7 +4870,7 @@ new function () { // closure
                 /**
                  * Description goes here
                  * @method addProtocol
-                 * @params {Array}     protocols        - definition
+                 * @param  {Array}     protocols        - definition
                  * @return {Array}     protocols        - definition
                  */
                 addProtocol: function (protocols) {
@@ -4779,7 +4892,7 @@ new function () { // closure
                 /**
                  * Description goes here
                  * @method protocolAdded
-                 * @params {Protocol}   protocol        - definition
+                 * @param  {Protocol}   protocol        - definition
                  * @return {Protocol}   protocol        - definition
                  */
                 protocolAdded: function (protocol) {
@@ -4805,10 +4918,10 @@ new function () { // closure
                 /**
                  * Description goes here
                  * @method apply
-                 * @params {Step}           step        - definition
-                 * @params {MetaData}       metadata    - definition
-                 * @params {Target}         target      - definition
-                 * @params {Definition}     definition  - definition
+                 * @param {Step}           step        - definition
+                 * @param {MetaData}       metadata    - definition
+                 * @param {Target}         target      - definition
+                 * @param {Definition}     definition  - definition
                  */
                 apply: function _(step, metadata, target, definition) {
                     if (parent) {
@@ -4820,7 +4933,7 @@ new function () { // closure
                 /**
                  * Description goes here
                  * @method getDescriptor
-                 * @params {Filter}     filter      - definition
+                 * @param  {Filter}     filter      - definition
                  * @return {Parent}     parent      - definition
                  */
                 getDescriptor: function (filter) {
@@ -4831,7 +4944,7 @@ new function () { // closure
                 /**
                  * Description goes here
                  * @method linkBase
-                 * @params {Method}     method      - definition
+                 * @param  {Method}     method      - definition
                  * @return {Method}     method      - definition
                  */
                 linkBase: function (method) {
@@ -5392,7 +5505,7 @@ new function () { // closure
          * @param   {Function} fn           - function to invoke
          * @param   {Array}    dependencies - function dependencies
          * @param   {Object}   ctx          - function context
-         * @returns {Object} result of function.
+         * @return {Object} result of function.
          */
         invoke: function (fn, dependencies, ctx) {}
     });
@@ -5406,7 +5519,7 @@ new function () { // closure
         /**
          * Creates a new child of the parent.
          * @method newChild
-         * @returns {Any} the new child.
+         * @return {Any} the new child.
          */
         newChild: function () {}
     });
@@ -5435,7 +5548,7 @@ new function () { // closure
      * @param    {Disposing}           disposing  - object to dispose
      * @param    {Function | Promise}  action     - block or Promise
      * @param    {Object}              context    - block context
-     * @returns  {Any} result of executing action in context.
+     * @return   {Any} result of executing action in context.
      */
     function $using(disposing, action, context) {
         if (disposing && $isFunction(disposing.dispose)) {
@@ -5532,8 +5645,8 @@ new function () { // closure
                 /** 
                  * Description goes here
                  * @method getIndex
-                 * @params {Index}      index - description
-                 * @params {Item}       item  - description
+                 * @param  {Index}      index - description
+                 * @param  {Item}       item  - description
                  * @return {Object}     item
                  */
                 setIndex: function (index, item) {
@@ -5546,8 +5659,8 @@ new function () { // closure
                 /** 
                  * Description goes here
                  * @method insertIndex
-                 * @params {Index}      index - description
-                 * @params {Item}       item  - description
+                 * @param  {Index}      index - description
+                 * @param  {Item}       item  - description
                  * @return {Object}     item
                  */
                 insertIndex: function (index, item) {
@@ -5557,8 +5670,8 @@ new function () { // closure
                 /** 
                  * Description goes here
                  * @method replaceIndex
-                 * @params {Index}      index - description
-                 * @params {Item}       item  - description
+                 * @param  {Index}      index - description
+                 * @param  {Item}       item  - description
                  * @return {Object}     item
                  */
                 replaceIndex: function (index, item) {
@@ -5568,7 +5681,7 @@ new function () { // closure
                 /** 
                  * Description goes here
                  * @method removeIndex
-                 * @params {Index}      index - description
+                 * @param  {Index}      index - description
                  * @return {Object}     item
                  */
                 removeIndex: function (index) {
@@ -5580,7 +5693,7 @@ new function () { // closure
                 /** 
                  * Description goes here
                  * @method append
-                 * @params {Items}      items - description
+                 * @param  {Items}      items - description
                  * @return {Object}     this  - description
                  */
                 append: function (/* items */) {
@@ -5600,7 +5713,7 @@ new function () { // closure
                 /** 
                  * Description goes here
                  * @method merge
-                 * @params {Array}      items - description
+                 * @param  {Array}      items - description
                  * @return {This}       this  - description
                  */
                 merge: function (items) {
@@ -5620,7 +5733,7 @@ new function () { // closure
         /** 
          * Description goes here
          * @method mapItem
-         * @params {Object}     item - description
+         * @param  {Object}     item - description
          * @return {Object}     item - description
          */
         mapItem: function (item) { return item; }
@@ -5648,7 +5761,7 @@ new function () { // closure
                 /** 
                  * Description goes here
                  * @method getIndex
-                 * @params {Index}      index - description
+                 * @param  {Index}      index - description
                  * @return {Index}      index - description
                  */
                 getIndex: function (index) {
@@ -5657,8 +5770,8 @@ new function () { // closure
                 /** 
                  * Description goes here
                  * @method insert
-                 * @params {Node}       node    - description
-                 * @params {Index}      index   - description
+                 * @param  {Node}       node    - description
+                 * @param  {Index}      index   - description
                  */
                 insert: function (node, index) {
                     var indexedNode = this.getIndex(index),
@@ -5702,7 +5815,7 @@ new function () { // closure
                 /** 
                  * Description goes here
                  * @method remove
-                 * @params {Node}       node    - description
+                 * @param  {Node}       node    - description
                  */
                 remove: function (node) {
                     var prev = node.prev,
@@ -5756,7 +5869,7 @@ new function () { // closure
     var Interceptor = Base.extend({
         /**
          * @method intercept
-         * @params {Invocation} invocation
+         * @param  {Invocation} invocation
          * @return {Invocation} invocation
          */
         intercept: function (invocation) {
@@ -5773,9 +5886,9 @@ new function () { // closure
         /**
          * Description goes here
          * @method selectInterceptors
-         * @params {Type}           type
-         * @params {Method}         method
-         * @params {Interceptors}   interceptors
+         * @param  {Type}           type
+         * @param  {Method}         method
+         * @param  {Interceptors}   interceptors
          * @return {Interceptors}   interceptors
          */
         selectInterceptors: function (type, method, interceptors) {
@@ -5792,8 +5905,8 @@ new function () { // closure
         /**
          * Description goes here
          * @method buildProxy
-         * @params {Array}          types           - description
-         * @params {Options}        options         - description
+         * @param  {Array}          types           - description
+         * @param  {Options}        options         - description
          * @return {Object}         buildProxy      - description
          */
         buildProxy: function(types, options) {
@@ -5898,8 +6011,6 @@ new function () { // closure
                             }
                         }(set);
                         Object.defineProperty(proxy.prototype, key, spec);
-                        delete spec.get;
-                        delete spec.set;
                         proxied[key] = true;
                     }
                 }
@@ -5908,27 +6019,6 @@ new function () { // closure
         proxy.extend = proxy.implement = _throwProxiesSealedExeception;
     }
     
-    function _extendProxy() {
-        var proxy     = this.constructor,
-            clazz     = proxy.prototype,
-            overrides = (arguments.length === 1) ? arguments[0] : {};
-        if (arguments.length >= 2) {
-            overrides[arguments[0]] = arguments[1];
-        }
-        for (methodName in overrides) {
-            if (!(methodName in _noProxyMethods) && 
-                (!proxy.shouldProxy || proxy.shouldProxy(methodName, clazz))) {
-                var method = this[methodName];
-                if (method && method.baseMethod) {
-                    this[methodName] = method.baseMethod;
-                }
-                this.base(methodName, overrides[methodName]);
-                this[methodName] = _proxyMethod(methodName, this[methodName], clazz);
-            }
-        }
-        return this;
-    }
-
     function _proxyMethod(key, method, source) {
         var spec = _proxyMethod.spec || (_proxyMethod.spec = {}),
             interceptors;
@@ -5964,6 +6054,15 @@ new function () { // closure
                     throw new Error(lang.format(
                         "Interceptor cannot proceed without a class or delegate method '%1'.",
                         key));
+                },
+                canProceed: function () {
+                    if (interceptors && (idx + 1 < interceptors.length)) {
+                        return true;
+                    }
+                    if (delegate) {
+                        return $isFunction(delegate(key));
+                    }
+                    return !!method;
                 }
             };
             spec.value = key;
@@ -5971,10 +6070,42 @@ new function () { // closure
             spec.value = source;
             Object.defineProperty(invocation, 'source', spec);
             delete spec.value;
+            spec.get = function () {
+                if (interceptors && (idx + 1 < interceptors.length)) {
+                    return true;
+                }
+                if (delegate) {
+                    return $isFunction(delegate(key));
+                }
+                return !!method;
+            };
+            Object.defineProperty(invocation, 'canProceed', spec);
+            delete spec.get;
             return invocation.proceed();
         }
         methodProxy.baseMethod = method;
         return methodProxy;
+    }
+    
+    function _extendProxy() {
+        var proxy     = this.constructor,
+            clazz     = proxy.prototype,
+            overrides = (arguments.length === 1) ? arguments[0] : {};
+        if (arguments.length >= 2) {
+            overrides[arguments[0]] = arguments[1];
+        }
+        for (methodName in overrides) {
+            if (!(methodName in _noProxyMethods) && 
+                (!proxy.shouldProxy || proxy.shouldProxy(methodName, clazz))) {
+                var method = this[methodName];
+                if (method && method.baseMethod) {
+                    this[methodName] = method.baseMethod;
+                }
+                this.base(methodName, overrides[methodName]);
+                this[methodName] = _proxyMethod(methodName, this[methodName], clazz);
+            }
+        }
+        return this;
     }
 
     function _throwProxiesSealedExeception()
@@ -6042,7 +6173,7 @@ new function () { // closure
      * Description goes here
      * @method $classOf
      * @param    {Object}  instance  - object
-     * @returns  {Function} class of instance. 
+     * @return   {Function} class of instance. 
      */
     function $classOf(instance) {
         return instance && instance.constructor;
@@ -6052,7 +6183,7 @@ new function () { // closure
      * Description goes here
      * @method $ancestorOf
      * @param    {Function} clazz  - clazz
-     * @returns  {Function} ancestor of class. 
+     * @return   {Function} ancestor of class. 
      */
     function $ancestorOf(clazz) {
         return clazz && clazz.ancestor;
@@ -6122,7 +6253,7 @@ new function () { // closure
      * Description goes here
      * @method $lift
      * @param    {Any} value  - any value
-     * @returns  {Function} function that returns value.
+     * @return   {Function} function that returns value.
      */
     function $lift(value) {
         return function() { return value; };
@@ -6349,9 +6480,9 @@ new function () { // closure
         /**
          * Description goes here
          * @method preOrder
-         * @params {Node}       node       -   description
-         * @params {Visitor}    visitor    -   description
-         * @params {Context}    context    -   description
+         * @param  {Node}       node       -   description
+         * @param  {Visitor}    visitor    -   description
+         * @param  {Context}    context    -   description
          * @return {Array}      preOrder   -   description
          */
         preOrder: function (node, visitor, context) {
@@ -6360,9 +6491,9 @@ new function () { // closure
         /**
          * Description goes here
          * @method postOrder
-         * @params {Node}       node        -   description
-         * @params {Visitor}    visitor     -   description
-         * @params {Context}    context     -   description
+         * @param  {Node}       node        -   description
+         * @param  {Visitor}    visitor     -   description
+         * @param  {Context}    context     -   description
          * @return {Array}      postOrder   -   description
          */
         postOrder: function (node, visitor, context) {
@@ -6371,9 +6502,9 @@ new function () { // closure
         /**
          * Description goes here
          * @method levelOrder
-         * @params {Node}       node        -   description
-         * @params {Visitor}    visitor     -   description
-         * @params {Context}    context     -   description
+         * @param  {Node}       node        -   description
+         * @param  {Visitor}    visitor     -   description
+         * @param  {Context}    context     -   description
          * @return {Array}      levelOrder  -   description
          */
         levelOrder: function (node, visitor, context) {
@@ -6382,9 +6513,9 @@ new function () { // closure
         /**
          * Description goes here
          * @method reverseLevelOrder
-         * @params {Node}       node                -   description
-         * @params {Visitor}    visitor             -   description
-         * @params {Context}    context             -   description
+         * @param  {Node}       node                -   description
+         * @param  {Visitor}    visitor             -   description
+         * @param  {Context}    context             -   description
          * @return {Array}      reverseLevelOrder   -   description
          */
         reverseLevelOrder: function (node, visitor, context) {
@@ -6461,7 +6592,7 @@ new function () { // closure
     /**
      * Description goes here
      * @method      _liftMethods
-     * @params      {Object}   source  - object to lift
+     * @param       {Object}   source  - object to lift
      */
     function _liftMethods(source) {
         source = source.prototype;
