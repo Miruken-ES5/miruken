@@ -73,6 +73,19 @@ module.exports = function(grunt) {
           },
           singleRun: false
         }
+    },
+    yuidoc: {
+        all: {
+            name: '<%= pkg.name %>',
+            description: '<%= pkg.description %>',
+            version: '<%= pkg.version %>',
+            url: '<%= pkg.homepage %>',
+            options: {
+                paths: ['./lib'],
+                ignorePaths: ["./lib/base2.js"],
+                outdir: './docs/'
+            }
+        }
     }
   });
 
@@ -86,6 +99,7 @@ module.exports = function(grunt) {
   grunt.loadNpmTasks('grunt-browserify');
   grunt.loadNpmTasks('grunt-contrib-copy');
   grunt.loadNpmTasks('grunt-karma');
+  grunt.loadNpmTasks('grunt-contrib-yuidoc');
 
   //Making grunt default to force in order not to break the project.
   grunt.option('force', true);
@@ -94,4 +108,5 @@ module.exports = function(grunt) {
   grunt.registerTask('test',  ['concurrent:test']);
   grunt.registerTask('build', ['browserify:dist','copy:main', 'karma:dist']);
   grunt.registerTask('debug',   ['browserify:debug','karma:debug']);
+  grunt.registerTask("docs", ["yuidoc"]);
 };
