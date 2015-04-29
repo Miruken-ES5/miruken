@@ -796,8 +796,12 @@ new function () { // closure
 
     /**
      * Defines a new handler relationship.
-     * @method $define
+<<<<<<< HEAD
      * @param    {string}   tag       - name of definition
+=======
+     * @method $define
+     * @param    {String}   tag       - name of definition
+>>>>>>> 326a4407501dc5e33cf7a399e63471deade3b0ce
      * @param    {Variance} variance  - variance of definition
      * @return   {Function} function to add to definition.
      */
