@@ -1934,9 +1934,9 @@ new function () { // closure
         /**
          * Handles the callback.
          * @param   {Object}          callback    - any callback
-         * @param   {Boolean}         greedy      - true of handle greedily
+         * @param   {boolean}         greedy      - true of handle greedily
          * @param   {CallbackHandler} [composer]  - initiated the handle for composition
-         * @returns {Boolean} true if the callback was handled, false otherwise.
+         * @returns {boolean} true if the callback was handled, false otherwise.
          */
         handle: function (callback, greedy, composer) {
             return !$isNothing(callback) &&
@@ -2446,7 +2446,7 @@ new function () { // closure
     /**
      * @function $define
      * Defines a new handler relationship.
-     * @param    {String}   tag       - name of definition
+     * @param    {string}   tag       - name of definition
      * @param    {Variance} variance  - variance of definition
      * @returns  {Function} function to add to definition.
      */
@@ -3632,10 +3632,7 @@ new function () { // closure
     /**
      * @protocol {Container}
      */
-    var Container = Protocol.extend(Invoking, Disposing, {
-        constructor: function (proxy, strict) {
-            this.base(proxy, (strict === undefined) || strict);
-        },
+    var Container = StrictProtocol.extend(Invoking, Disposing, {
         /**
          * Registers on or more components in the container.
          * @param   {Any*}    registrations  - Registrations
@@ -4257,7 +4254,7 @@ new function () { // closure
     /**
      * @class {DependencyResolutionError}
      * @param {DependencyResolution} dependency  - failing dependency
-     * @param {String}               message     - error message
+     * @param {string}               message     - error message
      */
     function DependencyResolutionError(dependency, message) {
         this.message    = message;
@@ -4271,7 +4268,7 @@ new function () { // closure
      * @class {ValidationError}
      * @param {ComponentModel}  componentModel  - invaid component model
      * @param {ValidtionResult} validation      - validation errors
-     * @param {String}          message         - error message
+     * @param {string}          message         - error message
      */
     function ComponentModelError(componentModel, validation, message) {
         this.message        = message || "The component model contains one or more errors";
@@ -4493,6 +4490,7 @@ new function () { // closure
     eval(this.exports);
 
 }
+
 },{"../context.js":3,"../miruken.js":9,"../validate":10,"bluebird":13}],9:[function(require,module,exports){
 (function (global){
 require('./base2.js');
@@ -4500,15 +4498,18 @@ require('./base2.js');
 new function () { // closure
 
     /**
-     * @namespace miruken
+     * Namespacing for miruken
+     * @module miruken
      */
     var miruken = new base2.Package(this, {
         name:    "miruken",
         version: "1.0",
-        exports: "Enum,Protocol,Delegate,Miruken,MetaStep,MetaMacro,Disposing,DisposingMixin,Invoking,Parenting,Starting,Startup,Facet,Interceptor,InterceptorSelector,ProxyBuilder,TraversingAxis,Traversing,TraversingMixin,Traversal,Variance,Modifier,ArrayManager,IndexedList,$isProtocol,$isClass,$classOf,$ancestorOf,$isString,$isFunction,$isObject,$isPromise,$isSomething,$isNothing,$using,$lift,$eq,$use,$copy,$lazy,$eval,$every,$child,$optional,$promise,$instant,$createModifier,$properties,$inferProperties,$inheritStatic"
+        exports: "Enum,Protocol,StrictProtocol,Delegate,Miruken,MetaStep,MetaMacro,Disposing,DisposingMixin,Invoking,Parenting,Starting,Startup,Facet,Interceptor,InterceptorSelector,ProxyBuilder,TraversingAxis,Traversing,TraversingMixin,Traversal,Variance,Modifier,ArrayManager,IndexedList,$isProtocol,$isClass,$classOf,$ancestorOf,$isString,$isFunction,$isObject,$isPromise,$isSomething,$isNothing,$using,$lift,$eq,$use,$copy,$lazy,$eval,$every,$child,$optional,$promise,$instant,$createModifier,$properties,$inferProperties,$inheritStatic"
     });
 
     eval(this.imports);
+
+    var META = '$meta';
 
     var $eq       = $createModifier(),
         $use      = $createModifier(),
@@ -4522,8 +4523,9 @@ new function () { // closure
         $instant  = $createModifier();
 
     /**
-     * @class {Enum}
      * Represents an enumeration
+     * @class Enum
+     * @constructor
      */
     var Enum = Base.extend({
         constructor: function() {
@@ -4537,7 +4539,8 @@ new function () { // closure
 
     /**
      * Variance enum
-     * @enum {Number}
+     * @property Variance
+     * @type Enum
      */
     var Variance = Enum({
         Covariant:     1,  // out
@@ -4546,38 +4549,45 @@ new function () { // closure
         });
 
     /**
-     * @class {Delegate}
+     * Delegates stuff
+     * @class Delegate
+     * @extends Base
      */
     var Delegate = Base.extend({
         /**
          * Delegates the property get on the protocol.
+         * @method get
          * @param   {Protocol} protocol      - receiving protocol
-         * @param   {String}   propertyName  - name of the property
-         * @param   {Boolean}  strict        - true if target must adopt protocol
+         * @param   {string}   propertyName  - name of the property
+         * @param   {boolean}  strict        - true if target must adopt protocol
          * @returns {Any}      the result of the proxied get.
          */
         get: function (protocol, propertyName, strict) {},
         /**
          * Delegates the property set on the protocol.
+         * @method set
          * @param   {Protocol} protocol      - receiving protocol
-         * @param   {String}   propertyName  - name of the property
+         * @param   {string}   propertyName  - name of the property
          * @param   {Object}   propertyValue - value of the property
-         * @param   {Boolean}  strict        - true if target must adopt protocol
+         * @param   {boolean}  strict        - true if target must adopt protocol
          */
         set: function (protocol, propertyName, propertyValue, strict) {},
         /**
          * Delegates the method invocation on the protocol.
+         * @method invoke
          * @param   {Protocol} protocol    - receiving protocol
-         * @param   {String}   methodName  - name of the method
+         * @param   {string}   methodName  - name of the method
          * @param   {Array}    args        - method arguments
-         * @param   {Boolean}  strict      - true if target must adopt protocol
+         * @param   {boolean}  strict      - true if target must adopt protocol
          * @returns {Any}      the result of the proxied invocation.
          */
          invoke: function (protocol, methodName, args, strict) {}
     });
 
     /**
-     * @class {ObjectDelegate}
+     * @class ObjectDelegate
+     * @constructor
+     * @extends Delegate
      */
     var ObjectDelegate = Delegate.extend({
         constructor: function (object) {
@@ -4586,18 +4596,44 @@ new function () { // closure
             }
             Object.defineProperty(this, 'object', { value: object });
         },
+        /**
+         * Description goes here
+         * @method get
+         * @params {Protocol}    protocol        - definition
+         * @params {string}      propertyName    - definition
+         * @params {boolean}     strict          - definition
+         * @return {Object}      object          - definition
+         */
         get: function (protocol, propertyName, strict) {
             var object = this.object;
             if (!strict || protocol.adoptedBy(object)) {
                 return object[propertyName];
             }
         },
+        /**
+         * Description goes here
+         * @method set
+         * @params {Protocol}    protocol        - definition
+         * @params {string}      propertyName    - definition
+         * @params {string}      propertyValue   - definition
+         * @params {boolean}     strict          - definition
+         * @return {Object}      object          - definition
+         */
         set: function (protocol, propertyName, propertyValue, strict) {
             var object = this.object;
             if (!strict || protocol.adoptedBy(object)) {
                 return object[propertyName] = propertyValue;
             }
         },
+        /**
+         * Description goes here
+         * @method invoke
+         * @params {Protocol}    protocol        - definition
+         * @params {string}      methodName      - definition
+         * @params {Array}       args            - definition
+         * @params {boolean}     strict          - definition
+         * @return {Method}      method          - definition
+         */
         invoke: function (protocol, methodName, args, strict) {
             var object = this.object,
                 method = object[methodName];
@@ -4608,13 +4644,15 @@ new function () { // closure
     });
 
     /**
-     * @class {Protocol}
+     * Description goes here
+     * @class Protocol
+     * @constructor
+     * @extends Base
      */
     var Protocol = Base.extend({
         constructor: function (delegate, strict) {
             if ($isNothing(delegate)) {
                 delegate = new Delegate;
-                //throw new TypeError("No delegate specified.");
             } else if ((delegate instanceof Delegate) === false) {
                 if ($isFunction(delegate.toDelegate)) {
                     delegate = delegate.toDelegate();
@@ -4653,7 +4691,8 @@ new function () { // closure
 
     /**
      * MetaStep enum
-     * @enum {Number}
+     * @property MetaStep
+     * @type Enum
      */
     var MetaStep = Enum({
         Subclass:  1,
@@ -4662,7 +4701,9 @@ new function () { // closure
         });
 
     /**
-     * @class {MetaMacro}
+     * Description goes here
+     * @class MetaMacro
+     * @extends Base
      */
     var MetaMacro = Base.extend({
         apply: function (step, metadata, target, definition) {},
@@ -4673,14 +4714,32 @@ new function () { // closure
     });
 
     /**
-     * @class {MetaBase}
+     * Description goes here
+     * @class MetaBase
+     * @constructor
+     * @extends MetaMacro
      */
     var MetaBase = MetaMacro.extend({
         constructor: function(parent)  {
             var _protocols = [];
             this.extend({
+                /**
+                 * Description goes here
+                 * @method getParent
+                 * @return {Parent}     parent          - definition
+                 */
                 getParent: function () { return parent; },
+                /**
+                 * Description goes here
+                 * @method getProtocols
+                 * @return {Protocols}     protocols    - definition
+                 */
                 getProtocols: function () { return _protocols.slice(0) },
+                /**
+                 * Description goes here
+                 * @method getAllProtocols
+                 * @return {Array}     protocols        - definition
+                 */
                 getAllProtocols: function () {
                     var protocols = this.getProtocols(),
                         inner     = protocols.slice(0);
@@ -4695,6 +4754,12 @@ new function () { // closure
                     }
                     return protocols;
                 },
+                /**
+                 * Description goes here
+                 * @method addProtocol
+                 * @params {Array}     protocols        - definition
+                 * @return {Array}     protocols        - definition
+                 */
                 addProtocol: function (protocols) {
                     if ($isNothing(protocols)) {
                         return;
@@ -4711,8 +4776,20 @@ new function () { // closure
                         }
                     }
                 },
+                /**
+                 * Description goes here
+                 * @method protocolAdded
+                 * @params {Protocol}   protocol        - definition
+                 * @return {Protocol}   protocol        - definition
+                 */
                 protocolAdded: function (protocol) {
                 },
+                /**
+                 * Description goes here
+                 * @method conformsTo
+                 * @params {Protocol}   protocol    - definition
+                 * @return {boolean}    bool        - definition
+                 */
                 conformsTo: function (protocol) {
                     if (!(protocol && (protocol.prototype instanceof Protocol))) {
                         return false;
@@ -4725,6 +4802,14 @@ new function () { // closure
                     }
                     return false;
                 },
+                /**
+                 * Description goes here
+                 * @method apply
+                 * @params {Step}           step        - definition
+                 * @params {MetaData}       metadata    - definition
+                 * @params {Target}         target      - definition
+                 * @params {Definition}     definition  - definition
+                 */
                 apply: function _(step, metadata, target, definition) {
                     if (parent) {
                         parent.apply(step, metadata, target, definition);
@@ -4732,11 +4817,23 @@ new function () { // closure
                         (_.p || (_.p = new $properties)).apply(step, metadata, target, definition);
                     }
                 },
+                /**
+                 * Description goes here
+                 * @method getDescriptor
+                 * @params {Filter}     filter      - definition
+                 * @return {Parent}     parent      - definition
+                 */
                 getDescriptor: function (filter) {
                     if (parent) {
                         return parent.getDescriptor(filter);
                     }
                 },
+                /**
+                 * Description goes here
+                 * @method linkBase
+                 * @params {Method}     method      - definition
+                 * @return {Method}     method      - definition
+                 */
                 linkBase: function (method) {
                     if (!this[method]) {
                         this.extend(method, function () {
@@ -4753,7 +4850,10 @@ new function () { // closure
     });
 
     /**
-     * @class {ClassMeta}
+     * Description goes here
+     * @class ClassMeta
+     * @constructor
+     * @extends MetaBase
      */
     var ClassMeta = MetaBase.extend({
         constructor: function(baseClass, subClass, protocols, macros)  {
@@ -4816,7 +4916,10 @@ new function () { // closure
     });
 
     /**
-     * @class {InstanceMeta}
+     * Description goes here
+     * @class InstanceMeta
+     * @constructor
+     * @extends MetaBase
      */
     var InstanceMeta = MetaBase.extend({
         constructor: function (classMeta) {
@@ -4862,13 +4965,13 @@ new function () { // closure
                 staticDef   = args.shift(),
                 subclass    = extend.call(base, instanceDef, staticDef),
                 metadata    = new ClassMeta(base, subclass, protocols, macros);
-            Object.defineProperty(subclass, '$meta', {
+            Object.defineProperty(subclass, META, {
                 enumerable:   false,
                 configurable: false,
                 writable:     false,
                 value:        metadata
             });
-            Object.defineProperty(subclass.prototype, '$meta', {
+            Object.defineProperty(subclass.prototype, META, {
                 enumerable:   false,
                 configurable: false,
                 get:          _createInstanceMeta
@@ -4891,7 +4994,7 @@ new function () { // closure
             }),
             metadata = new InstanceMeta(this.constructor.$meta);
         spec.value = metadata;
-        Object.defineProperty(this, '$meta', spec);
+        Object.defineProperty(this, META, spec);
         delete spec.value;
         return metadata;
     }
@@ -4928,8 +5031,9 @@ new function () { // closure
     }
 
     /**
-     * @class {$proxyProtocol}
      * Metamacro to proxy protocol methods through delegate.
+     * @class $proxyProtocol
+     * @extends MetaMacro
      */
     var $proxyProtocol = MetaMacro.extend({
         apply: function (step, metadata, target, definition) {
@@ -4965,8 +5069,22 @@ new function () { // closure
     Protocol.$meta.apply(MetaStep.Subclass, Protocol.$meta, Protocol.prototype);
 
     /**
-     * @class {$properties}
+     * Description goes here
+     * @class StrictProtocol
+     * @constructor
+     * @extends Protocol     
+     */
+    var StrictProtocol = Protocol.extend({
+        constructor: function (proxy, strict) {
+            this.base(proxy, (strict === undefined) || strict);
+        }
+    });
+
+    /**
      * Metamacro to create properties.
+     * @class $properties
+     * @constructor
+     * @extends MetaMacro
      */
     var $properties = MetaMacro.extend({
         constructor: function _(tag) {
@@ -5128,8 +5246,9 @@ new function () { // closure
     }
 
     /**
-     * @class {$inferProperties}
      * Metamacro to derive properties from existng methods.
+     * @class $inferProperties
+     * @extends MetaMacro
      */
     var $inferProperties = MetaMacro.extend({
         apply: function _(step, metadata, target, definition) {
@@ -5189,8 +5308,10 @@ new function () { // closure
     }
 
     /**
-     * @class {$inhertStatic}
      * Metamacro to inherit static members in subclass.
+     * @class $inhertStatic
+     * @constructor
+     * @extends MetaMacro
      */
     var $inheritStatic = MetaMacro.extend({
         constructor: function _(/*members*/) {
@@ -5224,25 +5345,31 @@ new function () { // closure
     });
 
     /**
-     * @class {Miruken}
      * Base class to prefer coercion over casting.
+     * @class Miruken
+     * @extends Base
      */
     var Miruken = Base.extend(null, {
         coerce: function () { return this.new.apply(this, arguments); }
     });
 
     /**
-     * @protocol {Disposing}
+     * Protocol for Disposing
+     * @class Disposing
+     * @extends Protocol
      */
     var Disposing = Protocol.extend({
         /**
          * Releases the object.
+         * @method dispose
          */
         dispose: function () {}
     });
 
     /**
-     * @class {DisposingMixin}
+     * Description goes here
+     * @class DisposingMixin
+     * @extends Module
      */
     var DisposingMixin = Module.extend({
         dispose: function (object) {
@@ -5254,12 +5381,12 @@ new function () { // closure
     });
 
     /**
-     * @protocol {Invoking}
+     * Description goes here
+     * @class Invoking
+     * @extends StrictProtocol
+     * @constructor
      */
-    var Invoking = Protocol.extend({
-        constructor: function (proxy, strict) {
-            this.base(proxy, (strict === undefined) || strict);
-        },
+    var Invoking = StrictProtocol.extend({
         /**
          * Invokes the function with dependencies.
          * @param   {Function} fn           - function to invoke
@@ -5271,33 +5398,40 @@ new function () { // closure
     });
 
     /**
-     * @protocol {Parenting}
+     * Description goes here
+     * @class Parenting
+     * @extends Protocol
      */
     var Parenting = Protocol.extend({
         /**
          * Creates a new child of the parent.
+         * @method newChild
          * @returns {Any} the new child.
          */
         newChild: function () {}
     });
 
     /**
-     * @protocol {Starting}
+     * Description goes here
+     * @class Starting
+     * @extends Protocol
      */
     var Starting = Protocol.extend({
         start: function () {}
     });
 
     /**
-     * @class {Startup}
+     * Description goes here
+     * @class Startup
+     * @extends Base
      */
     var Startup = Base.extend(Starting, {
         start: function () {}
     });
 
     /**
-     * @function $using
      * Convenience function for disposing resources.
+     * @method $using
      * @param    {Disposing}           disposing  - object to dispose
      * @param    {Function | Promise}  action     - block or Promise
      * @param    {Object}              context    - block context
@@ -5326,7 +5460,8 @@ new function () { // closure
     }
 
     /**
-     * @class {Modifier}
+     * Description goes here
+     * @class Modifier
      */
     function Modifier() {}
     Modifier.isModified = function (source) {
@@ -5370,18 +5505,37 @@ new function () { // closure
     }
 
     /**
-     * @class {ArrayManager}
+     * Description goes here
+     * @class ArrayManager
+     * @extends Base
      */
     var ArrayManager = Base.extend({
         constructor: function (items) {
             var _items = [];
             this.extend({
+                /** 
+                 * Description goes here
+                 * @method getItems
+                 * @return {Object} item
+                 */
                 getItems: function () { return _items; },
+                /** 
+                 * Description goes here
+                 * @method getIndex
+                 * @return {Object} item
+                 */
                 getIndex: function (index) {
                     if (_items.length > index) {
                         return _items[index];
                     }
                 },
+                /** 
+                 * Description goes here
+                 * @method getIndex
+                 * @params {Index}      index - description
+                 * @params {Item}       item  - description
+                 * @return {Object}     item
+                 */
                 setIndex: function (index, item) {
                     if ((_items.length <= index) ||
                         (_items[index] === undefined)) {
@@ -5389,20 +5543,46 @@ new function () { // closure
                     }
                     return this;
                 },
+                /** 
+                 * Description goes here
+                 * @method insertIndex
+                 * @params {Index}      index - description
+                 * @params {Item}       item  - description
+                 * @return {Object}     item
+                 */
                 insertIndex: function (index, item) {
                     _items.splice(index, 0, this.mapItem(item));
                     return this;
                 },
+                /** 
+                 * Description goes here
+                 * @method replaceIndex
+                 * @params {Index}      index - description
+                 * @params {Item}       item  - description
+                 * @return {Object}     item
+                 */
                 replaceIndex: function (index, item) {
                     _items[index] = this.mapItem(item);
                     return this;
                 },
+                /** 
+                 * Description goes here
+                 * @method removeIndex
+                 * @params {Index}      index - description
+                 * @return {Object}     item
+                 */
                 removeIndex: function (index) {
                     if (_items.length > index) {
                         _items.splice(index, 1);
                     }
                     return this;
                 },
+                /** 
+                 * Description goes here
+                 * @method append
+                 * @params {Items}      items - description
+                 * @return {Object}     this  - description
+                 */
                 append: function (/* items */) {
                     var newItems;
                     if (arguments.length === 1 && (arguments[0] instanceof Array)) {
@@ -5417,6 +5597,12 @@ new function () { // closure
                     }
                     return this;
                 },
+                /** 
+                 * Description goes here
+                 * @method merge
+                 * @params {Array}      items - description
+                 * @return {This}       this  - description
+                 */
                 merge: function (items) {
                     for (var index = 0; index < items.length; ++index) {
                         var item = items[index];
@@ -5431,24 +5617,49 @@ new function () { // closure
                 this.append(items);
             }
         },
+        /** 
+         * Description goes here
+         * @method mapItem
+         * @params {Object}     item - description
+         * @return {Object}     item - description
+         */
         mapItem: function (item) { return item; }
     });
 
     /**
-     * @class {IndexedList}
      * Maintains a simple doublely-linked list with indexing.
      * Indexes are partially ordered according to the order comparator.
+     * @class IndexedList
+     * @constructor
+     * @extends Base
      */
     var IndexedList = Base.extend({
         constructor: function(order) {
             var _index = {};
             this.extend({
+                /** 
+                 * Description goes here
+                 * @method isEmpty
+                 * @return {Object}     this - description
+                 */
                 isEmpty: function () {
                     return !this.head;
                 },
+                /** 
+                 * Description goes here
+                 * @method getIndex
+                 * @params {Index}      index - description
+                 * @return {Index}      index - description
+                 */
                 getIndex: function (index) {
                     return index && _index[index];
                 },
+                /** 
+                 * Description goes here
+                 * @method insert
+                 * @params {Node}       node    - description
+                 * @params {Index}      index   - description
+                 */
                 insert: function (node, index) {
                     var indexedNode = this.getIndex(index),
                         insert      = indexedNode;
@@ -5488,6 +5699,11 @@ new function () { // closure
                         }
                     }
                 },
+                /** 
+                 * Description goes here
+                 * @method remove
+                 * @params {Node}       node    - description
+                 */
                 remove: function (node) {
                     var prev = node.prev,
                         next = node.next;
@@ -5521,7 +5737,8 @@ new function () { // closure
 
     /**
      * Facet enum
-     * @enum {Number}
+     * @property Facet
+     * @type Enum
      */
     var Facet = Enum({
         Parameters:           'parameters',
@@ -5532,27 +5749,53 @@ new function () { // closure
 
 
     /**
-     * @class {Interceptor}
+     * Description goes here
+     * @class Interceptor
+     * @extends Base
      */
     var Interceptor = Base.extend({
+        /**
+         * @method intercept
+         * @params {Invocation} invocation
+         * @return {Invocation} invocation
+         */
         intercept: function (invocation) {
             return invocation.proceed();
         }
     });
 
     /**
-     * @class {Interceptor}
+     * Description goes here
+     * @class InterceptorSelector
+     * @extends Base
      */
     var InterceptorSelector = Base.extend({
+        /**
+         * Description goes here
+         * @method selectInterceptors
+         * @params {Type}           type
+         * @params {Method}         method
+         * @params {Interceptors}   interceptors
+         * @return {Interceptors}   interceptors
+         */
         selectInterceptors: function (type, method, interceptors) {
             return interceptors;
         }
     });
 
     /**
-     * @class {ProxyBuilder}
+     * Description goes here
+     * @class ProxyBuilder
+     * @extends Base
      */
     var ProxyBuilder = Base.extend({
+        /**
+         * Description goes here
+         * @method buildProxy
+         * @params {Array}          types           - description
+         * @params {Options}        options         - description
+         * @return {Object}         buildProxy      - description
+         */
         buildProxy: function(types, options) {
             if (!(types instanceof Array)) {
                 throw new TypeError("ProxyBuilder requires an array of types to proxy.");
@@ -5581,12 +5824,11 @@ new function () { // closure
                     spec.writable = true;
                     Object.defineProperty(this, 'delegate', spec);
                 }
+                ctor = _proxyMethod('constructor', this.base, base);
+                ctor.apply(this, facets[Facet.Parameters]);
                 delete spec.writable;
                 delete spec.value;
-                ctor = _proxiedMethod('constructor', this.base, base);
-                ctor.apply(this, facets[Facet.Parameters]);
             },
-            extend: _proxyExtender,
             getInterceptors: function (source, method) {
                 var selectors = this.selectors;
                 return selectors 
@@ -5594,10 +5836,16 @@ new function () { // closure
                            return selector.selectInterceptors(source, method, interceptors);
                        }, this.interceptors)
                      : this.interceptors;
-            }
+            },
+            extend: _extendProxy
         }, {
             shouldProxy: options.shouldProxy
         });
+        _proxyClass(proxy, protocols);
+        return proxy;
+    }
+
+    function _proxyClass(proxy, protocols) {
         var sources    = [proxy].concat(protocols),
             proxyProto = proxy.prototype,
             proxied    = {};
@@ -5606,7 +5854,7 @@ new function () { // closure
                 sourceProto = source.prototype,
                 isProtocol  = $isProtocol(source);
             for (key in sourceProto) {
-                if (!(key in proxied) && !(key in _noProxyMethods)
+                if (!((key in proxied) || (key in _noProxyMethods))
                 && (!proxy.shouldProxy || proxy.shouldProxy(key, source))) {
                     var proto = sourceProto, descriptor;
                     while (proto && !(
@@ -5615,18 +5863,52 @@ new function () { // closure
                     if ('value' in descriptor) {
                         var member = isProtocol ? undefined : descriptor.value;
                         if ($isNothing(member) || $isFunction(member)) {
-                            proxyProto[key] = _proxiedMethod(key, member, proxy);
+                            proxyProto[key] = _proxyMethod(key, member, proxy);
                         }
+                        proxied[key] = true;
+                    } else if (isProtocol) {
+                        var cname = key.charAt(0).toUpperCase() + key.slice(1),
+                            get   = 'get' + cname,
+                            set   = 'set' + cname,
+                            spec  = _proxyClass.spec || (_proxyClass.spec = {
+                                enumerable: true
+                            });
+                        spec.get = function (get) {
+                            var proxyGet;
+                            return function () {
+                                if (get in this) {
+                                    return (this[get]).call(this);
+                                }
+                                if (!proxyGet) {
+                                    proxyGet = _proxyMethod(get, undefined, proxy);
+                                }
+                                return proxyGet.call(this);
+                            }
+                        }(get);
+                        spec.set = function (set) {
+                            var proxySet;
+                            return function (value) {
+                                if (set in this) {
+                                    return (this[set]).call(this, value);
+                                }
+                                if (!proxySet) {
+                                    proxySet = _proxyMethod(set, undefined, proxy);
+                                }
+                                return proxySet.call(this, value);
+                            }
+                        }(set);
+                        Object.defineProperty(proxy.prototype, key, spec);
+                        delete spec.get;
+                        delete spec.set;
                         proxied[key] = true;
                     }
                 }
             }
         }
         proxy.extend = proxy.implement = _throwProxiesSealedExeception;
-        return proxy;
     }
-
-    function _proxyExtender() {
+    
+    function _extendProxy() {
         var proxy     = this.constructor,
             clazz     = proxy.prototype,
             overrides = (arguments.length === 1) ? arguments[0] : {};
@@ -5641,18 +5923,19 @@ new function () { // closure
                     this[methodName] = method.baseMethod;
                 }
                 this.base(methodName, overrides[methodName]);
-                this[methodName] = _proxiedMethod(methodName, this[methodName], clazz);
+                this[methodName] = _proxyMethod(methodName, this[methodName], clazz);
             }
         }
         return this;
     }
 
-    function _proxiedMethod(key, method, source) {
-        var spec = _proxiedMethod.spec || (_proxiedMethod.spec = {}),
+    function _proxyMethod(key, method, source) {
+        var spec = _proxyMethod.spec || (_proxyMethod.spec = {}),
             interceptors;
-        function proxyMethod () {
-            var _this    = this, idx = -1,
-                delegate = this.delegate;
+        function methodProxy() {
+            var _this    = this,
+                delegate = this.delegate,
+                idx      = -1;
             if (!interceptors) {
                 interceptors = this.getInterceptors(source, key);
             }
@@ -5662,8 +5945,7 @@ new function () { // closure
                     delegate = value; 
                 },
                 replaceDelegate: function (value) {
-                    _this.delegate = value;
-                    delegate = value;
+                    _this.delegate = delegate = value;
                 },
                 proceed: function () {
                     ++idx;
@@ -5691,8 +5973,8 @@ new function () { // closure
             delete spec.value;
             return invocation.proceed();
         }
-        proxyMethod.baseMethod = method;
-        return proxyMethod;
+        methodProxy.baseMethod = method;
+        return methodProxy;
     }
 
     function _throwProxiesSealedExeception()
@@ -5739,23 +6021,26 @@ new function () { // closure
     }
 
     /**
-     * @function $isProtocol
+     * Description goes here
+     * @method $isProtocol
      * @param    {Any}     protocol  - protocol to test
-     * @returns  {Boolean} true if a protocol.
+     * @returns  {boolean} true if a protocol.
      */
     var $isProtocol = Protocol.isProtocol;
 
     /**
-     * @function $isClass
+     * Description goes here
+     * @method $isClass
      * @param    {Any}     clazz  - class to test
-     * @returns  {Boolean} true if a class (and not a protocol).
+     * @returns  {boolean} true if a class (and not a protocol).
      */
     function $isClass(clazz) {
         return clazz && (clazz.prototype instanceof Base) && !$isProtocol(clazz);
     }
 
     /**
-     * @function $classOf
+     * Description goes here
+     * @method $classOf
      * @param    {Object}  instance  - object
      * @returns  {Function} class of instance. 
      */
@@ -5764,7 +6049,8 @@ new function () { // closure
     }
 
     /**
-     * @function $ancestorOf
+     * Description goes here
+     * @method $ancestorOf
      * @param    {Function} clazz  - clazz
      * @returns  {Function} ancestor of class. 
      */
@@ -5773,61 +6059,68 @@ new function () { // closure
     }
 
     /**
-     * @function $isString
+     * Description goes here
+     * @method $isString
      * @param    {Any}     str  - string to test
-     * @returns  {Boolean} true if a string.
+     * @returns  {boolean} true if a string.
      */
     function $isString(str) {
         return typeOf(str)  === 'string';
     }
 
     /**
-     * @function $isFunction
+     * Description goes here
+     * @method $isFunction
      * @param    {Any}     fn  - function to test
-     * @returns  {Boolean} true if a function.
+     * @returns  {boolean} true if a function.
      */
     function $isFunction(fn) {
         return fn instanceof Function;
     }
 
     /**
-     * @function $isObject
+     * Description goes here
+     * @method $isObject
      * @param    {Any}     obj  - object to test
-     * @returns  {Boolean} true if an object.
+     * @returns  {boolean} true if an object.
      */
     function $isObject(obj) {
         return obj === Object(obj);
     }
 
     /**
-     * @function $isPromise
+     * Description goes here
+     * @method $isPromise
      * @param    {Any}     promise  - promise to test
-     * @returns  {Boolean} true if a promise. 
+     * @returns  {boolean} true if a promise. 
      */
     function $isPromise(promise) {
         return promise && $isFunction(promise.then);
     }
 
     /**
-     * @function $isSomething
+     * Description goes here
+     * @method $isSomething
      * @param    {Any}     value  - value to test
-     * @returns  {Boolean} true if value not null or undefined.
+     * @returns  {boolean} true if value not null or undefined.
      */
     function $isSomething(value) {
         return (value !== undefined && value !== null);
     }
 
     /**
-     * @function $isNothing
+     * Description goes here
+     * @method $isNothing
      * @param    {Any}     value  - value to test
-     * @returns  {Boolean} true if value null or undefined.
+     * @returns  {boolean} true if value null or undefined.
      */
     function $isNothing(value) {
         return (value === undefined || value === null);
     }
 
     /**
-     * @function $lift
+     * Description goes here
+     * @method $lift
      * @param    {Any} value  - any value
      * @returns  {Function} function that returns value.
      */
@@ -5841,7 +6134,8 @@ new function () { // closure
 
     /**
      * Traversing enum
-     * @enum {Number}
+     * @property TraversingAxis
+     * @type Enum
      */
     var TraversingAxis = Enum({
         Self:                    1,
@@ -5860,23 +6154,35 @@ new function () { // closure
     });
 
     /**
-     * @protocol {Traversing}
+     * Description goes here
+     * @class Traversing
+     * @extends Protocol
      */
     var Traversing = Protocol.extend({
         /**
          * Traverse a graph of objects.
+         * @method traverse
          * @param {TraversingAxis} axis       - axis of traversal
          * @param {Function}       visitor    - receives visited nodes
-         * @param {Object}         [context]  - visitor callback context
+         * @param {Object}         context    - visitor callback context
          */
         traverse: function (axis, visitor, context) {}
     });
 
     /**
      * Traversing mixin
-     * @class {Traversing}
+     * @class TraversingMixin
+     * @extends Module
      */
     var TraversingMixin = Module.extend({
+        /**
+         * Traverse a graph of objects.
+         * @method traverse
+         * @param {Object}      object      -   axis of traversal
+         * @param {Axis}        axis        -   receives visited nodes
+         * @param {Visitor}     visitor     -   receives visited nodes
+         * @param {Object}      context     -   visitor callback context
+         */
         traverse: function (object, axis, visitor, context) {
             if ($isFunction(axis)) {
                 context = visitor;
@@ -6034,16 +6340,53 @@ new function () { // closure
         }
     }
 
+    /**
+     * Description goes here
+     * @class Traversal
+     * @extends Abstract
+     */
     var Traversal = Abstract.extend({}, {
+        /**
+         * Description goes here
+         * @method preOrder
+         * @params {Node}       node       -   description
+         * @params {Visitor}    visitor    -   description
+         * @params {Context}    context    -   description
+         * @return {Array}      preOrder   -   description
+         */
         preOrder: function (node, visitor, context) {
             return _preOrder(node, visitor, context, []);
         },
+        /**
+         * Description goes here
+         * @method postOrder
+         * @params {Node}       node        -   description
+         * @params {Visitor}    visitor     -   description
+         * @params {Context}    context     -   description
+         * @return {Array}      postOrder   -   description
+         */
         postOrder: function (node, visitor, context) {
             return _postOrder(node, visitor, context, []);
         },
+        /**
+         * Description goes here
+         * @method levelOrder
+         * @params {Node}       node        -   description
+         * @params {Visitor}    visitor     -   description
+         * @params {Context}    context     -   description
+         * @return {Array}      levelOrder  -   description
+         */
         levelOrder: function (node, visitor, context) {
             return _levelOrder(node, visitor, context, []);
         },
+        /**
+         * Description goes here
+         * @method reverseLevelOrder
+         * @params {Node}       node                -   description
+         * @params {Visitor}    visitor             -   description
+         * @params {Context}    context             -   description
+         * @return {Array}      reverseLevelOrder   -   description
+         */
         reverseLevelOrder: function (node, visitor, context) {
             return _reverseLevelOrder(node, visitor, context, []);
         }
@@ -6116,8 +6459,9 @@ new function () { // closure
     }
 
     /**
-     * @function _liftMethods
-     * @param    {Object} source  - object to lift
+     * Description goes here
+     * @method      _liftMethods
+     * @params      {Object}   source  - object to lift
      */
     function _liftMethods(source) {
         source = source.prototype;
@@ -6132,7 +6476,8 @@ new function () { // closure
     }
 
     /**
-     * @function new
+     * Description goes here
+     * @method new
      */
     if (Function.prototype.new === undefined)
         Function.prototype.new = function () {
@@ -6209,12 +6554,8 @@ new function () { // closure
     /**
      * @protocol {Validator}
      */
-    var Validator = Protocol.extend(Validating, {
-        constructor: function (proxy, strict) {
-            this.base(proxy, (strict === undefined) || strict);
-        }
-    });
-
+    var Validator = StrictProtocol.extend(Validating);
+    
     /**
      * @class {Validation}
      */

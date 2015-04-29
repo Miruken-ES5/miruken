@@ -872,11 +872,14 @@ describe("ProxyBuilder", function () {
             var proxyBuilder = new ProxyBuilder,
                 AnimalProxy  = proxyBuilder.buildProxy([Animal]),
                 AnimalInterceptor = Interceptor.extend({
+                    name : '',
                     intercept: function (invocation) {
                         var method = invocation.method,
                             args   = invocation.args;
                         if (method === "getName") {
-                            return "Pluto";
+                            return this.name;
+                        } else if (method === 'setName') {
+                            return (this.name = args[0]);
                         } else if (method === "talk") {
                             return "I don't know what to say.";
                         } else if (method === "eat") {
@@ -886,9 +889,10 @@ describe("ProxyBuilder", function () {
                     }
                 }),
                 animal = new AnimalProxy({
-                             interceptors: [new AnimalInterceptor]
+                    interceptors: [new AnimalInterceptor]
                 });
-//            expect(animal.name).to.equal("Pluto");
+            animal.name = "Pluto";
+            expect(animal.name).to.equal("Pluto");
             expect(animal.talk()).to.equal("I don't know what to say.");
             expect(animal.eat('pizza')).to.equal("I don't like pizza.");
         });

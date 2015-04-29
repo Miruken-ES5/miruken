@@ -406,6 +406,7 @@ describe("ComponentModel", function () {
                                   .interceptors(LogInterceptor)
             );
             Promise.resolve(container.resolve(Engine)).then(function (engine) {
+                var i = 0;
                 expect(engine.horsepower).to.equal(255);
                 expect(engine.displacement).to.equal(5.0);
                 done();
