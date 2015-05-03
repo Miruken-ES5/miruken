@@ -1768,7 +1768,7 @@ new function () { // closure
                 for (var idx = 0; idx < list.length; ++idx) {
                     var constraint = list[idx];
                     if (++idx >= list.length) {
-                        throw new Error(lang.format(
+                        throw new Error(format(
                             "Incomplete '%1' definition: missing handler for constraint %2.",
                             tag, constraint));
                         }
@@ -2040,7 +2040,7 @@ new function () { // closure
             if ($isNothing(filter)) {
                 throw new TypeError("No filter specified.");
             } else if (!$isFunction(filter)) {
-                throw new TypeError(lang.format("Invalid filter: %1 is not a function.", filter));
+                throw new TypeError(format("Invalid filter: %1 is not a function.", filter));
             }
             var spec = _.spec || (_.spec = {});
             spec.value = filter;
@@ -2199,7 +2199,7 @@ new function () { // closure
             if ($isNothing(condition)) {
                 throw new TypeError("No condition specified.");
             } else if (!$isFunction(condition)) {
-                throw new TypeError(lang.format(
+                throw new TypeError(format(
                     "Invalid condition: %1 is not a function.", condition));
             }
             var spec = _.spec || (_.spec = {});
@@ -2267,7 +2267,7 @@ new function () { // closure
             if (!$isString(methodName) || methodName.length === 0 || !methodName.trim()) {
                 throw new TypeError("No methodName specified.");
             } else if (!$isFunction(method)) {
-                throw new TypeError(lang.format("Invalid method: %1 is not a function.", method));
+                throw new TypeError(format("Invalid method: %1 is not a function.", method));
             }
             var spec = _.spec || (_.spec = {});
             spec.value = methodName;
@@ -2403,8 +2403,7 @@ new function () { // closure
             bestEffort   = semantics.getOption(InvocationOptions.BestEffort),
             handleMethod = new HandleMethod(type, protocol, methodName, args, strict);
         if (handler.handle(handleMethod, !!broadcast) === false && !bestEffort) {
-            throw new TypeError(lang.format(
-                "Object %1 has no method '%2'", handler, methodName));
+            throw new TypeError(format("Object %1 has no method '%2'", handler, methodName));
         }
         return handleMethod.getReturnValue();
     }
@@ -2511,7 +2510,7 @@ new function () { // closure
         if (!$isString(tag) || tag.length === 0 || /\s/.test(tag)) {
             throw new TypeError("The tag must be a non-empty string with no whitespace.");
         } else if (_definitions[tag]) {
-            throw new TypeError(lang.format("'%1' is already defined.", tag));
+            throw new TypeError(format("'%1' is already defined.", tag));
         }
 
         var handled, comparer;
@@ -2553,7 +2552,7 @@ new function () { // closure
                 constraint = $classOf(Modifier.unwrap(constraint));
             }
             if ($isNothing(handler)) {
-                throw new TypeError(lang.format(
+                throw new TypeError(format(
                     "Incomplete '%1' definition: missing handler for constraint %2.",
                     tag, constraint));
             } else if (removed && !$isFunction(removed)) {
@@ -2800,8 +2799,9 @@ new function () { // closure
 }
 
 }).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
-},{"./miruken.js":9,"bluebird":13}],3:[function(require,module,exports){
+},{"./miruken.js":10,"bluebird":14}],3:[function(require,module,exports){
 var miruken = require('./miruken.js');
+              require('./graph.js');
               require('./callback.js');
 
 new function () { // closure
@@ -2813,7 +2813,7 @@ new function () { // closure
         name:    "context",
         version: miruken.version,
         parent:  miruken,
-        imports: "miruken,miruken.callback",
+        imports: "miruken,miruken.graph,miruken.callback",
         exports: "ContextState,ContextObserver,Context,Contextual,ContextualMixin,ContextualHelper,$contextual"
     });
 
@@ -2843,7 +2843,8 @@ new function () { // closure
      * @class {Context}
      */
     var Context = CompositeCallbackHandler.extend(
-    Parenting, Traversing, Disposing, TraversingMixin, {
+        Parenting, Traversing, Disposing, TraversingMixin,
+        $inferProperties, {
         constructor: function (parent) {
             this.base();
 
@@ -3098,10 +3099,22 @@ new function () { // closure
         }
     });
 
+    var axisNames  = TraversingAxis.names,
+        axisValues =  TraversingAxis.values;
+    
    /**
      * Context traversal
      */
     Context.implement({
+        /*
+        $properties: {
+            $self: {
+                get: function () {
+                    return _newContextTraversal(this, TraversingAxis.Self);
+                }
+            }
+        },
+*/
         self: function () {
             return _newContextTraversal(this, TraversingAxis.Self);
         },
@@ -3204,7 +3217,7 @@ new function () { // closure
 
 }
 
-},{"./callback.js":2,"./miruken.js":9}],4:[function(require,module,exports){
+},{"./callback.js":2,"./graph.js":5,"./miruken.js":10}],4:[function(require,module,exports){
 var miruken    = require('./miruken.js'),
     prettyjson = require('prettyjson'),
     Promise    = require('bluebird');
@@ -3325,15 +3338,371 @@ new function() { // closure
 
 }
 
-},{"./callback.js":2,"./miruken.js":9,"bluebird":13,"prettyjson":15}],5:[function(require,module,exports){
+},{"./callback.js":2,"./miruken.js":10,"bluebird":14,"prettyjson":16}],5:[function(require,module,exports){
+var miruken = require('./miruken.js');
+
+new function () { // closure
+
+    /**
+     * Definition goes here
+     * @module miruken
+     * @submodule callback
+     * @namespace miruken.graph
+     */
+    var grpah = new base2.Package(this, {
+        name:    "graph",
+        version: miruken.version,
+        parent:  miruken,
+        imports: "miruken",
+        exports: "TraversingAxis,Traversing,TraversingMixin,Traversal"
+    });
+
+    eval(this.imports);
+
+    // =========================================================================
+    // Traversing
+    // =========================================================================
+
+    /**
+     * Traversing enum
+     * @property TraversingAxis
+     * @type Enum
+     */
+    var TraversingAxis = Enum({
+        Self:                    1,
+        Root:                    2,
+        Child:                   3,
+        Sibling:                 4,
+        Ancestor:                5,
+        Descendant:              6,
+        DescendantReverse:       7,
+        ChildOrSelf:             8,
+        SiblingOrSelf:           9,
+        AncestorOrSelf:          10,
+        DescendantOrSelf:        11,
+        DescendantOrSelfReverse: 12,
+        ParentSiblingOrSelf:     13
+    });
+
+    /**
+     * Description goes here
+     * @class Traversing
+     * @extends Protocol
+     */
+    var Traversing = Protocol.extend({
+        /**
+         * Traverse a graph of objects.
+         * @method traverse
+         * @param {TraversingAxis} axis       - axis of traversal
+         * @param {Function}       visitor    - receives visited nodes
+         * @param {Object}         context    - visitor callback context
+         */
+        traverse: function (axis, visitor, context) {}
+    });
+
+    /**
+     * Traversing mixin
+     * @class TraversingMixin
+     * @extends Module
+     */
+    var TraversingMixin = Module.extend({
+        /**
+         * Traverse a graph of objects.
+         * @method traverse
+         * @param {Object}      object      -   axis of traversal
+         * @param {Axis}        axis        -   receives visited nodes
+         * @param {Visitor}     visitor     -   receives visited nodes
+         * @param {Object}      context     -   visitor callback context
+         */
+        traverse: function (object, axis, visitor, context) {
+            if ($isFunction(axis)) {
+                context = visitor;
+                visitor = axis;
+                axis    = TraversingAxis.Child;
+            }
+            if (!$isFunction(visitor)) return;
+            switch (axis) {
+            case TraversingAxis.Self:
+                _traverseSelf.call(object, visitor, context);
+                break;
+                
+            case TraversingAxis.Root:
+                _traverseRoot.call(object, visitor, context);
+                break;
+                
+            case TraversingAxis.Child:
+                _traverseChildren.call(object, visitor, false, context);
+                break;
+
+            case TraversingAxis.Sibling:
+                _traverseParentSiblingOrSelf.call(object, visitor, false, false, context);
+                break;
+                
+            case TraversingAxis.ChildOrSelf:
+                _traverseChildren.call(object, visitor, true, context);
+                break;
+
+            case TraversingAxis.SiblingOrSelf:
+                _traverseParentSiblingOrSelf.call(object, visitor, true, false, context);
+                break;
+                
+            case TraversingAxis.Ancestor:
+                _traverseAncestors.call(object, visitor, false, context);
+                break;
+                
+            case TraversingAxis.AncestorOrSelf:
+                _traverseAncestors.call(object, visitor, true, context);
+                break;
+                
+            case TraversingAxis.Descendant:
+                _traverseDescendants.call(object, visitor, false, context);
+                break;
+  
+            case TraversingAxis.DescendantReverse:
+                _traverseDescendantsReverse.call(object, visitor, false, context);
+                break;
+              
+            case TraversingAxis.DescendantOrSelf:
+                _traverseDescendants.call(object, visitor, true, context);
+                break;
+
+            case TraversingAxis.DescendantOrSelfReverse:
+                _traverseDescendantsReverse.call(object, visitor, true, context);
+                break;
+                
+            case TraversingAxis.ParentSiblingOrSelf:
+                _traverseParentSiblingOrSelf.call(object, visitor, true, true, context);
+                break;
+
+            default:
+                throw new Error("Unrecognized TraversingAxis " + axis + '.');
+            }
+        }
+    });
+
+    function checkCircularity(visited, node) {
+        if (visited.indexOf(node) !== -1) {
+            throw new Error('Circularity detected for node ' + node + '.');
+        }
+        visited.push(node);
+        return node;
+    }
+
+    function _traverseSelf(visitor, context) {
+        visitor.call(context, this);
+    }
+
+    function _traverseRoot(visitor, context) {
+        var parent, root = this, visited = [this];
+        while ($isFunction(root.getParent) && (parent = root.getParent())) {
+            checkCircularity(visited, parent);
+            root = parent;   
+        }
+        visitor.call(context, root);
+    }
+
+    function _traverseChildren(visitor, withSelf, context) {
+        if ((withSelf && visitor.call(context, this)) || !$isFunction(this.getChildren)) {
+            return;
+        }
+        var children = this.getChildren();
+        for (var i = 0; i < children.length; ++i) {
+            if (visitor.call(context, children[i])) {
+                return;
+            }
+        }
+    }
+
+    function _traverseAncestors(visitor, withSelf, context) {
+        var parent = this, visited = [this];
+        if (withSelf && visitor.call(context, this)) {
+            return;
+        }
+        while ($isFunction(parent.getParent) && (parent = parent.getParent()) &&
+               !visitor.call(context, parent)) {
+            checkCircularity(visited, parent);
+        }
+    }
+
+    function _traverseDescendants(visitor, withSelf, context) {
+        if (withSelf) {
+            Traversal.levelOrder(this, visitor, context);
+        } else {
+            var self = this;
+            Traversal.levelOrder(this, function (node) {
+                if (node != self) {
+                    return visitor.call(context, node);
+                }
+            }, context);
+        }
+    }
+
+    function _traverseDescendantsReverse(visitor, withSelf, context) {
+        if (withSelf) {
+            Traversal.reverseLevelOrder(this, visitor, context);
+        } else {
+            var self = this;
+            Traversal.reverseLevelOrder(this, function (node) {
+                if (node != self) {
+                    return visitor.call(context, node);
+                }
+            }, context);
+        }
+    }
+
+    function _traverseParentSiblingOrSelf(visitor, withSelf, withParent, context) {
+        if (withSelf && visitor.call(context, this) || !$isFunction(this.getParent)) {
+            return;
+        }
+        var self = this, parent = this.getParent();
+        if (parent) {
+            if ($isFunction(parent.getChildren)) {
+                var children = parent.getChildren();
+                for (var i = 0; i < children.length; ++i) {
+                    var sibling = children[i];
+                    if (sibling != self && visitor.call(context, sibling)) {
+                        return;
+                    }
+                }
+            }
+            if (withParent) {
+                visitor.call(context, parent);
+            }
+        }
+    }
+
+    /**
+     * Description goes here
+     * @class Traversal
+     * @extends Abstract
+     */
+    var Traversal = Abstract.extend({}, {
+        /**
+         * Description goes here
+         * @method preOrder
+         * @param  {Node}       node       -   description
+         * @param  {Visitor}    visitor    -   description
+         * @param  {Context}    context    -   description
+         * @return {Array}      preOrder   -   description
+         */
+        preOrder: function (node, visitor, context) {
+            return _preOrder(node, visitor, context, []);
+        },
+        /**
+         * Description goes here
+         * @method postOrder
+         * @param  {Node}       node        -   description
+         * @param  {Visitor}    visitor     -   description
+         * @param  {Context}    context     -   description
+         * @return {Array}      postOrder   -   description
+         */
+        postOrder: function (node, visitor, context) {
+            return _postOrder(node, visitor, context, []);
+        },
+        /**
+         * Description goes here
+         * @method levelOrder
+         * @param  {Node}       node        -   description
+         * @param  {Visitor}    visitor     -   description
+         * @param  {Context}    context     -   description
+         * @return {Array}      levelOrder  -   description
+         */
+        levelOrder: function (node, visitor, context) {
+            return _levelOrder(node, visitor, context, []);
+        },
+        /**
+         * Description goes here
+         * @method reverseLevelOrder
+         * @param  {Node}       node                -   description
+         * @param  {Visitor}    visitor             -   description
+         * @param  {Context}    context             -   description
+         * @return {Array}      reverseLevelOrder   -   description
+         */
+        reverseLevelOrder: function (node, visitor, context) {
+            return _reverseLevelOrder(node, visitor, context, []);
+        }
+    });
+
+    function _preOrder(node, visitor, context, visited) {
+        checkCircularity(visited, node);
+        if (!node || !$isFunction(visitor) || visitor.call(context, node)) {
+            return true;
+        }
+        if ($isFunction(node.traverse))
+            node.traverse(function (child) {
+                return Traversal.preOrder(child, visitor, context);
+            });
+        return false;
+    }
+
+    function _postOrder(node, visitor, context, visited) {
+        checkCircularity(visited, node);
+        if (!node || !$isFunction(visitor)) {
+            return true;
+        }
+        if ($isFunction(node.traverse))
+            node.traverse(function (child) {
+                return Traversal.postOrder(child, visitor, context);
+            });
+        return visitor.call(context, node);
+    }
+
+    function _levelOrder(node, visitor, context, visited) {
+        if (!node || !$isFunction(visitor)) {
+            return;
+        }
+        var queue = [node];
+        while (queue.length > 0) {
+            var next = queue.shift();
+            checkCircularity(visited, next);
+            if (visitor.call(context, next)) {
+                return;
+            }
+            if ($isFunction(next.traverse))
+                next.traverse(function (child) {
+                    if (child) queue.push(child);
+                });
+        }
+    }
+
+    function _reverseLevelOrder(node, visitor, context, visited) {
+        if (!node || !$isFunction(visitor)) {
+            return;
+        }
+        var queue = [node],
+            stack = [];
+        while (queue.length > 0) {
+            var next = queue.shift();
+            checkCircularity(visited, next);
+            stack.push(next);
+            var level = [];
+            if ($isFunction(next.traverse))
+                next.traverse(function (child) {
+                    if (child) level.unshift(child);
+                });
+            queue.push.apply(queue, level);
+        }
+        while (stack.length > 0) {
+            if (visitor.call(context, stack.pop())) {
+                return;
+            }
+        }
+    }
+
+    eval(this.exports);
+
+}
+
+},{"./miruken.js":10}],6:[function(require,module,exports){
 module.exports = require('./miruken.js');
+require('./graph.js');
 require('./callback.js');
 require('./context.js');
 require('./error.js');
 require('./validate');
 require('./ioc');
 
-},{"./callback.js":2,"./context.js":3,"./error.js":4,"./ioc":7,"./miruken.js":9,"./validate":10}],6:[function(require,module,exports){
+},{"./callback.js":2,"./context.js":3,"./error.js":4,"./graph.js":5,"./ioc":8,"./miruken.js":10,"./validate":11}],7:[function(require,module,exports){
 var miruken = require('../miruken.js'),
     Promise = require('bluebird');
               require('./ioc.js');
@@ -3610,13 +3979,13 @@ new function () { // closure
         if (from instanceof Package) {
             return new FromPackageBuilder(from);
         }
-        throw new TypeError(lang.format("Unrecognized $classes from %1.", hint));
+        throw new TypeError(format("Unrecognized $classes from %1.", hint));
     }
 
     $classes.fromPackage = function (package) {
         if (!(package instanceof Package)) {
             throw new TypeError(
-                lang.format("$classes expected a Package, but received %1 instead.", package));
+                format("$classes expected a Package, but received %1 instead.", package));
         }
         return new FromPackageBuilder(package);
     };
@@ -3657,12 +4026,13 @@ new function () { // closure
 
     eval(this.exports);
 }
-},{"../miruken.js":9,"./ioc.js":8,"bluebird":13}],7:[function(require,module,exports){
+
+},{"../miruken.js":10,"./ioc.js":9,"bluebird":14}],8:[function(require,module,exports){
 module.exports = require('./ioc.js');
 require('./config.js');
 
 
-},{"./config.js":6,"./ioc.js":8}],8:[function(require,module,exports){
+},{"./config.js":7,"./ioc.js":9}],9:[function(require,module,exports){
 var miruken = require('../miruken.js'),
     Promise = require('bluebird');
               require('../context.js'),
@@ -3910,7 +4280,7 @@ new function () { // closure
                 },
                 setClass: function (value) {
                     if ($isSomething(value) && !$isClass(value)) {
-                        throw new TypeError(lang.format("%1 is not a class.", value));
+                        throw new TypeError(format("%1 is not a class.", value));
                     }
                     _class = value;
                 },
@@ -3921,7 +4291,7 @@ new function () { // closure
                 getLifestyle: function () { return _lifestyle; },
                 setLifestyle: function (value) {
                     if (!$isSomething(value) && !(value instanceof Lifestyle)) {
-                        throw new TypeError(lang.format("%1 is not a Lifestyle.", value));
+                        throw new TypeError(format("%1 is not a Lifestyle.", value));
                     }
                     _lifestyle = value; 
                 },
@@ -3947,7 +4317,7 @@ new function () { // closure
                 },
                 setFactory: function (value) {
                     if ($isSomething(value) && !$isFunction(value)) {
-                        throw new TypeError(lang.format("%1 is not a function.", value));
+                        throw new TypeError(format("%1 is not a function.", value));
                     }
                     _factory = value;
                 },
@@ -3959,7 +4329,7 @@ new function () { // closure
                         value = key, key = Facet.Parameters;
                     }
                     if ($isSomething(value) && !(value instanceof Array)) {
-                        throw new TypeError(lang.format("%1 is not an array.", value));
+                        throw new TypeError(format("%1 is not an array.", value));
                     }
                     _burden[key] = Array2.map(value, DependencyModel);
                 },
@@ -4571,8 +4941,8 @@ new function () { // closure
         if (result === undefined) {
             if (required) {
                 var error = new DependencyResolutionError(dependency,
-                       lang.format("Dependency %1 could not be resolved.",
-                                   dependency.formattedDependencyChain()));
+                       format("Dependency %1 could not be resolved.",
+                              dependency.formattedDependencyChain()));
                 if ($instant.test(dependency.key)) {
                     throw error;
                 }
@@ -4589,7 +4959,7 @@ new function () { // closure
 
     function _createChild(parent) {
         if (!(parent && $isFunction(parent.newChild))) {
-            throw new Error(lang.format(
+            throw new Error(format(
                 "Child dependency requested, but %1 is not a parent.", parent));
         }
         return parent.newChild();
@@ -4603,7 +4973,7 @@ new function () { // closure
 
 }
 
-},{"../context.js":3,"../miruken.js":9,"../validate":10,"bluebird":13}],9:[function(require,module,exports){
+},{"../context.js":3,"../miruken.js":10,"../validate":11,"bluebird":14}],10:[function(require,module,exports){
 (function (global){
 require('./base2.js');
 
@@ -4617,7 +4987,7 @@ new function () { // closure
     var miruken = new base2.Package(this, {
         name:    "miruken",
         version: "1.0",
-        exports: "Enum,Protocol,StrictProtocol,Delegate,Miruken,MetaStep,MetaMacro,Disposing,DisposingMixin,Invoking,Parenting,Starting,Startup,Facet,Interceptor,InterceptorSelector,ProxyBuilder,TraversingAxis,Traversing,TraversingMixin,Traversal,Variance,Modifier,ArrayManager,IndexedList,$isProtocol,$isClass,$classOf,$ancestorOf,$isString,$isFunction,$isObject,$isPromise,$isSomething,$isNothing,$using,$lift,$eq,$use,$copy,$lazy,$eval,$every,$child,$optional,$promise,$instant,$createModifier,$properties,$inferProperties,$inheritStatic"
+        exports: "Enum,Variance,Protocol,StrictProtocol,Delegate,Miruken,MetaStep,MetaMacro,Disposing,DisposingMixin,Invoking,Parenting,Starting,Startup,Facet,Interceptor,InterceptorSelector,ProxyBuilder,Modifier,ArrayManager,IndexedList,$isProtocol,$isClass,$classOf,$ancestorOf,$isString,$isFunction,$isObject,$isPromise,$isSomething,$isNothing,$using,$lift,$eq,$use,$copy,$lazy,$eval,$every,$child,$optional,$promise,$instant,$createModifier,$properties,$inferProperties,$inheritStatic"
     });
 
     eval(this.imports);
@@ -4634,7 +5004,7 @@ new function () { // closure
         $optional = $createModifier(),
         $promise  = $createModifier(),
         $instant  = $createModifier();
-
+    
     /**
      * Represents an enumeration
      * @class Enum
@@ -4646,7 +5016,16 @@ new function () { // closure
         }
     }, {
         coerce: function (choices) {
-            return Object.freeze(this.extend(null, choices));
+            var en     = this.extend(null, choices),
+                names  = Object.freeze(Object.keys(choices)),
+                values = Object.freeze(Array2.map(names, function (name) {
+                        return choices[name];
+                }));
+            Object.defineProperties(en, {
+                names:  { value: names },
+                values: { value: values }
+            });
+            return Object.freeze(en);
         }
     });
 
@@ -4755,7 +5134,7 @@ new function () { // closure
             }
         }
     });
-
+    
     /**
      * Description goes here
      * @class Protocol
@@ -4770,7 +5149,7 @@ new function () { // closure
                 if ($isFunction(delegate.toDelegate)) {
                     delegate = delegate.toDelegate();
                     if ((delegate instanceof Delegate) === false) {
-                        throw new TypeError(lang.format(
+                        throw new TypeError(format(
                             "Invalid delegate: %1 is not a Delegate nor does it have a 'toDelegate' method that returned one.", delegate));
                     }
                 } else {
@@ -4819,7 +5198,22 @@ new function () { // closure
      * @extends Base
      */
     var MetaMacro = Base.extend({
+        /**
+         * Description goes here
+         * @method apply
+         * @param {Step}           step        - definition
+         * @param {MetaData}       metadata    - definition
+         * @param {Target}         target      - definition
+         * @param {Definition}     definition  - definition
+         */
         apply: function (step, metadata, target, definition) {},
+        /**
+         * Description goes here
+         * @method protocolAdded
+         * @param {MetaData}       metadata    - definition
+         * @param {Protocol}       protocol    - definition
+         */
+        protocolAdded: function (metadata, protocol) {},
         shouldInherit: False,
         isActive: False,
     }, {
@@ -4885,17 +5279,14 @@ new function () { // closure
                         if ((protocol.prototype instanceof Protocol) 
                         &&  (_protocols.indexOf(protocol) === -1)) {
                             _protocols.push(protocol);
-                            this.protocolAdded(protocol);
+                            this.protocolAdded(this, protocol);
                         }
                     }
                 },
-                /**
-                 * Description goes here
-                 * @method protocolAdded
-                 * @param  {Protocol}   protocol        - definition
-                 * @return {Protocol}   protocol        - definition
-                 */
-                protocolAdded: function (protocol) {
+                protocolAdded: function (metadata, protocol) {
+                    if (parent) {
+                        parent.protocolAdded(metadata, protocol);
+                    }
                 },
                 /**
                  * Description goes here
@@ -4915,14 +5306,6 @@ new function () { // closure
                     }
                     return false;
                 },
-                /**
-                 * Description goes here
-                 * @method apply
-                 * @param {Step}           step        - definition
-                 * @param {MetaData}       metadata    - definition
-                 * @param {Target}         target      - definition
-                 * @param {Definition}     definition  - definition
-                 */
                 apply: function _(step, metadata, target, definition) {
                     if (parent) {
                         parent.apply(step, metadata, target, definition);
@@ -4990,9 +5373,16 @@ new function () { // closure
                     }
                     return protocols;
                 },
-                protocolAdded: function (protocol) {
-                    if (_isProtocol) {
-                        _liftMethods.call(subClass.prototype, protocol);
+                protocolAdded: function (metadata, protocol) {
+                    this.base(metadata, protocol);
+                    if (!_macros || _macros.length == 0) {
+                        return;
+                    }
+                    for (var i = 0; i < _macros.length; ++i) {
+                        macro = _macros[i];
+                        if ($isFunction(macro.protocolAdded)) {
+                            macro.protocolAdded(metadata, protocol);
+                        }
                     }
                 },
                 conformsTo: function (protocol) {
@@ -5045,7 +5435,7 @@ new function () { // closure
         }
     });
 
-    var extend  = Base.extend;
+    var baseExtend  = Base.extend;
     Base.extend = Abstract.extend = function () {
         return (function (base, args) {
             var protocols, mixins, macros, 
@@ -5076,7 +5466,7 @@ new function () { // closure
             }
             var instanceDef = args.shift(),
                 staticDef   = args.shift(),
-                subclass    = extend.call(base, instanceDef, staticDef),
+                subclass    = baseExtend.call(base, instanceDef, staticDef),
                 metadata    = new ClassMeta(base, subclass, protocols, macros);
             Object.defineProperty(subclass, META, {
                 enumerable:   false,
@@ -5171,6 +5561,17 @@ new function () { // closure
             }
             if (step === MetaStep.Subclass) {
                 clazz.adoptedBy = Protocol.adoptedBy;
+            }
+        },
+        protocolAdded: function (metadata, protocol) {
+            var source        = protocol.prototype,
+                target        = metadata.getClass().prototype,
+                protocolProto = Protocol.prototype;
+            for (var key in source) {
+                if (!((key in protocolProto) && (key in this))) {
+                    var descriptor = _getPropertyDescriptor(source, key);
+                    Object.defineProperty(target, key, descriptor);
+                }
             }
         },
         shouldInherit: True,
@@ -5275,7 +5676,7 @@ new function () { // closure
                 metadata.extend({
                     getDescriptor: function (filter) {
                         if ($isNothing(filter)) {
-                            return lang.extend(lang.extend({}, this.base(filter)), descriptors);
+                            return extend(extend({}, this.base(filter)), descriptors);
                         }
                         if ($isString(filter)) {
                             return descriptors[filter] || this.base(filter);
@@ -5285,7 +5686,7 @@ new function () { // closure
                                 var descriptor = descriptors[key];
                                 if (_matchDescriptor(descriptor, filter)) {
                                     matches = matches || {};
-                                    lang.extend(matches, key, descriptor);
+                                    extend(matches, key, descriptor);
                                 }
                             }
                             return matches;
@@ -5394,7 +5795,7 @@ new function () { // closure
         isActive: True
     });
 
-    var DEFAULT_GETTERS = ['get', 'is', 'can'];
+    var DEFAULT_GETTERS = ['get', 'is'];
 
     function _inferProperty(key, value, definition, spec) {
         for (var i = 0; i < DEFAULT_GETTERS.length; ++i) {
@@ -5969,10 +6370,7 @@ new function () { // closure
             for (key in sourceProto) {
                 if (!((key in proxied) || (key in _noProxyMethods))
                 && (!proxy.shouldProxy || proxy.shouldProxy(key, source))) {
-                    var proto = sourceProto, descriptor;
-                    while (proto && !(
-                        descriptor = Object.getOwnPropertyDescriptor(proto, key))
-                          ) proto = Object.getPrototypeOf(proto);
+                    var descriptor = _getPropertyDescriptor(sourceProto, key);
                     if ('value' in descriptor) {
                         var member = isProtocol ? undefined : descriptor.value;
                         if ($isNothing(member) || $isFunction(member)) {
@@ -6051,7 +6449,7 @@ new function () { // closure
                     } else if (method) {
                         return method.apply(_this, this.args);
                     }
-                    throw new Error(lang.format(
+                    throw new Error(format(
                         "Interceptor cannot proceed without a class or delegate method '%1'.",
                         key));
                 }
@@ -6250,351 +6648,12 @@ new function () { // closure
         return function() { return value; };
     }
 
-    // =========================================================================
-    // Traversing
-    // =========================================================================
-
-    /**
-     * Traversing enum
-     * @property TraversingAxis
-     * @type Enum
-     */
-    var TraversingAxis = Enum({
-        Self:                    1,
-        Root:                    2,
-        Child:                   3,
-        Sibling:                 4,
-        Ancestor:                5,
-        Descendant:              6,
-        DescendantReverse:       7,
-        ChildOrSelf:             8,
-        SiblingOrSelf:           9,
-        AncestorOrSelf:          10,
-        DescendantOrSelf:        11,
-        DescendantOrSelfReverse: 12,
-        ParentSiblingOrSelf:     13
-    });
-
-    /**
-     * Description goes here
-     * @class Traversing
-     * @extends Protocol
-     */
-    var Traversing = Protocol.extend({
-        /**
-         * Traverse a graph of objects.
-         * @method traverse
-         * @param {TraversingAxis} axis       - axis of traversal
-         * @param {Function}       visitor    - receives visited nodes
-         * @param {Object}         context    - visitor callback context
-         */
-        traverse: function (axis, visitor, context) {}
-    });
-
-    /**
-     * Traversing mixin
-     * @class TraversingMixin
-     * @extends Module
-     */
-    var TraversingMixin = Module.extend({
-        /**
-         * Traverse a graph of objects.
-         * @method traverse
-         * @param {Object}      object      -   axis of traversal
-         * @param {Axis}        axis        -   receives visited nodes
-         * @param {Visitor}     visitor     -   receives visited nodes
-         * @param {Object}      context     -   visitor callback context
-         */
-        traverse: function (object, axis, visitor, context) {
-            if ($isFunction(axis)) {
-                context = visitor;
-                visitor = axis;
-                axis    = TraversingAxis.Child;
-            }
-            if (!$isFunction(visitor)) return;
-            switch (axis) {
-            case TraversingAxis.Self:
-                _traverseSelf.call(object, visitor, context);
-                break;
-                
-            case TraversingAxis.Root:
-                _traverseRoot.call(object, visitor, context);
-                break;
-                
-            case TraversingAxis.Child:
-                _traverseChildren.call(object, visitor, false, context);
-                break;
-
-            case TraversingAxis.Sibling:
-                _traverseParentSiblingOrSelf.call(object, visitor, false, false, context);
-                break;
-                
-            case TraversingAxis.ChildOrSelf:
-                _traverseChildren.call(object, visitor, true, context);
-                break;
-
-            case TraversingAxis.SiblingOrSelf:
-                _traverseParentSiblingOrSelf.call(object, visitor, true, false, context);
-                break;
-                
-            case TraversingAxis.Ancestor:
-                _traverseAncestors.call(object, visitor, false, context);
-                break;
-                
-            case TraversingAxis.AncestorOrSelf:
-                _traverseAncestors.call(object, visitor, true, context);
-                break;
-                
-            case TraversingAxis.Descendant:
-                _traverseDescendants.call(object, visitor, false, context);
-                break;
-  
-            case TraversingAxis.DescendantReverse:
-                _traverseDescendantsReverse.call(object, visitor, false, context);
-                break;
-              
-            case TraversingAxis.DescendantOrSelf:
-                _traverseDescendants.call(object, visitor, true, context);
-                break;
-
-            case TraversingAxis.DescendantOrSelfReverse:
-                _traverseDescendantsReverse.call(object, visitor, true, context);
-                break;
-                
-            case TraversingAxis.ParentSiblingOrSelf:
-                _traverseParentSiblingOrSelf.call(object, visitor, true, true, context);
-                break;
-
-            default:
-                throw new Error("Unrecognized TraversingAxis " + axis + '.');
-            }
-        }
-    });
-
-    function checkCircularity(visited, node) {
-        if (visited.indexOf(node) !== -1) {
-            throw new Error('Circularity detected for node ' + node + '.');
-        }
-        visited.push(node);
-        return node;
-    }
-
-    function _traverseSelf(visitor, context) {
-        visitor.call(context, this);
-    }
-
-    function _traverseRoot(visitor, context) {
-        var parent, root = this, visited = [this];
-        while ($isFunction(root.getParent) && (parent = root.getParent())) {
-            checkCircularity(visited, parent);
-            root = parent;   
-        }
-        visitor.call(context, root);
-    }
-
-    function _traverseChildren(visitor, withSelf, context) {
-        if ((withSelf && visitor.call(context, this)) || !$isFunction(this.getChildren)) {
-            return;
-        }
-        var children = this.getChildren();
-        for (var i = 0; i < children.length; ++i) {
-            if (visitor.call(context, children[i])) {
-                return;
-            }
-        }
-    }
-
-    function _traverseAncestors(visitor, withSelf, context) {
-        var parent = this, visited = [this];
-        if (withSelf && visitor.call(context, this)) {
-            return;
-        }
-        while ($isFunction(parent.getParent) && (parent = parent.getParent()) &&
-               !visitor.call(context, parent)) {
-            checkCircularity(visited, parent);
-        }
-    }
-
-    function _traverseDescendants(visitor, withSelf, context) {
-        if (withSelf) {
-            Traversal.levelOrder(this, visitor, context);
-        } else {
-            var self = this;
-            Traversal.levelOrder(this, function (node) {
-                if (node != self) {
-                    return visitor.call(context, node);
-                }
-            }, context);
-        }
-    }
-
-    function _traverseDescendantsReverse(visitor, withSelf, context) {
-        if (withSelf) {
-            Traversal.reverseLevelOrder(this, visitor, context);
-        } else {
-            var self = this;
-            Traversal.reverseLevelOrder(this, function (node) {
-                if (node != self) {
-                    return visitor.call(context, node);
-                }
-            }, context);
-        }
-    }
-
-    function _traverseParentSiblingOrSelf(visitor, withSelf, withParent, context) {
-        if (withSelf && visitor.call(context, this) || !$isFunction(this.getParent)) {
-            return;
-        }
-        var self = this, parent = this.getParent();
-        if (parent) {
-            if ($isFunction(parent.getChildren)) {
-                var children = parent.getChildren();
-                for (var i = 0; i < children.length; ++i) {
-                    var sibling = children[i];
-                    if (sibling != self && visitor.call(context, sibling)) {
-                        return;
-                    }
-                }
-            }
-            if (withParent) {
-                visitor.call(context, parent);
-            }
-        }
-    }
-
-    /**
-     * Description goes here
-     * @class Traversal
-     * @extends Abstract
-     */
-    var Traversal = Abstract.extend({}, {
-        /**
-         * Description goes here
-         * @method preOrder
-         * @param  {Node}       node       -   description
-         * @param  {Visitor}    visitor    -   description
-         * @param  {Context}    context    -   description
-         * @return {Array}      preOrder   -   description
-         */
-        preOrder: function (node, visitor, context) {
-            return _preOrder(node, visitor, context, []);
-        },
-        /**
-         * Description goes here
-         * @method postOrder
-         * @param  {Node}       node        -   description
-         * @param  {Visitor}    visitor     -   description
-         * @param  {Context}    context     -   description
-         * @return {Array}      postOrder   -   description
-         */
-        postOrder: function (node, visitor, context) {
-            return _postOrder(node, visitor, context, []);
-        },
-        /**
-         * Description goes here
-         * @method levelOrder
-         * @param  {Node}       node        -   description
-         * @param  {Visitor}    visitor     -   description
-         * @param  {Context}    context     -   description
-         * @return {Array}      levelOrder  -   description
-         */
-        levelOrder: function (node, visitor, context) {
-            return _levelOrder(node, visitor, context, []);
-        },
-        /**
-         * Description goes here
-         * @method reverseLevelOrder
-         * @param  {Node}       node                -   description
-         * @param  {Visitor}    visitor             -   description
-         * @param  {Context}    context             -   description
-         * @return {Array}      reverseLevelOrder   -   description
-         */
-        reverseLevelOrder: function (node, visitor, context) {
-            return _reverseLevelOrder(node, visitor, context, []);
-        }
-    });
-
-    function _preOrder(node, visitor, context, visited) {
-        checkCircularity(visited, node);
-        if (!node || !$isFunction(visitor) || visitor.call(context, node)) {
-            return true;
-        }
-        if ($isFunction(node.traverse))
-            node.traverse(function (child) {
-                return Traversal.preOrder(child, visitor, context);
-            });
-        return false;
-    }
-
-    function _postOrder(node, visitor, context, visited) {
-        checkCircularity(visited, node);
-        if (!node || !$isFunction(visitor)) {
-            return true;
-        }
-        if ($isFunction(node.traverse))
-            node.traverse(function (child) {
-                return Traversal.postOrder(child, visitor, context);
-            });
-        return visitor.call(context, node);
-    }
-
-    function _levelOrder(node, visitor, context, visited) {
-        if (!node || !$isFunction(visitor)) {
-            return;
-        }
-        var queue = [node];
-        while (queue.length > 0) {
-            var next = queue.shift();
-            checkCircularity(visited, next);
-            if (visitor.call(context, next)) {
-                return;
-            }
-            if ($isFunction(next.traverse))
-                next.traverse(function (child) {
-                    if (child) queue.push(child);
-                });
-        }
-    }
-
-    function _reverseLevelOrder(node, visitor, context, visited) {
-        if (!node || !$isFunction(visitor)) {
-            return;
-        }
-        var queue = [node],
-            stack = [];
-        while (queue.length > 0) {
-            var next = queue.shift();
-            checkCircularity(visited, next);
-            stack.push(next);
-            var level = [];
-            if ($isFunction(next.traverse))
-                next.traverse(function (child) {
-                    if (child) level.unshift(child);
-                });
-            queue.push.apply(queue, level);
-        }
-        while (stack.length > 0) {
-            if (visitor.call(context, stack.pop())) {
-                return;
-            }
-        }
-    }
-
-    /**
-     * Description goes here
-     * @method      _liftMethods
-     * @param       {Object}   source  - object to lift
-     */
-    function _liftMethods(source) {
-        source = source.prototype;
-        for (var key in source) {
-            if (!(key in this)) {
-                var member = source[key];
-                if ($isFunction(member)) {
-                    this[key] = member;
-                }
-            }
-        }
+    function _getPropertyDescriptor(object, key) {
+        var source = object, descriptor;
+        while (source && !(
+            descriptor = Object.getOwnPropertyDescriptor(source, key))
+              ) source = Object.getPrototypeOf(source);
+        return descriptor;
     }
 
     /**
@@ -6625,12 +6684,12 @@ new function () { // closure
 }
 
 }).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
-},{"./base2.js":1}],10:[function(require,module,exports){
+},{"./base2.js":1}],11:[function(require,module,exports){
 module.exports = require('./validate.js');
 require('./validatejs.js');
 
 
-},{"./validate.js":11,"./validatejs.js":12}],11:[function(require,module,exports){
+},{"./validate.js":12,"./validatejs.js":13}],12:[function(require,module,exports){
 var miruken = require('../miruken.js'),
     Promise = require('bluebird');
               require('../callback.js');
@@ -6753,7 +6812,7 @@ new function () { // closure
                                 var named    = errors[name],
                                     existing = _summary[name];
                                 for (var ii = 0; ii < named.length; ++ii) {
-                                    var error = lang.pcopy(named[ii]);
+                                    var error = pcopy(named[ii]);
                                     error.key = error.key ? (key + "." + error.key) : key;
                                     if (existing) {
                                         existing.push(error);
@@ -6925,7 +6984,7 @@ new function () { // closure
 
 }
 
-},{"../callback.js":2,"../miruken.js":9,"bluebird":13}],12:[function(require,module,exports){
+},{"../callback.js":2,"../miruken.js":10,"bluebird":14}],13:[function(require,module,exports){
 var miruken    = require('../miruken.js'),
     validate   = require('./validate.js'),
     validatejs = require("validate.js"),
@@ -7101,7 +7160,7 @@ new function () { // closure
     eval(this.exports);
 
 }
-},{"../callback.js":2,"../miruken.js":9,"./validate.js":11,"bluebird":13,"validate.js":19}],13:[function(require,module,exports){
+},{"../callback.js":2,"../miruken.js":10,"./validate.js":12,"bluebird":14,"validate.js":20}],14:[function(require,module,exports){
 (function (process,global){
 /* @preserve
  * The MIT License (MIT)
@@ -12199,7 +12258,7 @@ function isUndefined(arg) {
 },{}]},{},[4])(4)
 });                    ;if (typeof window !== 'undefined' && window !== null) {                               window.P = window.Promise;                                                     } else if (typeof self !== 'undefined' && self !== null) {                             self.P = self.Promise;                                                         }
 }).call(this,require('_process'),typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
-},{"_process":14}],14:[function(require,module,exports){
+},{"_process":15}],15:[function(require,module,exports){
 // shim for using process in browser
 
 var process = module.exports = {};
@@ -12259,7 +12318,7 @@ process.chdir = function (dir) {
 };
 process.umask = function() { return 0; };
 
-},{}],15:[function(require,module,exports){
+},{}],16:[function(require,module,exports){
 'use strict';
 
 // ### Module dependencies
@@ -12490,7 +12549,7 @@ exports.renderString = function renderString(data, options, indentation) {
   return output;
 };
 
-},{"../package.json":18,"./utils":16,"colors":17}],16:[function(require,module,exports){
+},{"../package.json":19,"./utils":17,"colors":18}],17:[function(require,module,exports){
 'use strict';
 
 /**
@@ -12512,7 +12571,7 @@ exports.getMaxIndexLength = function(input) {
   return maxWidth;
 };
 
-},{}],17:[function(require,module,exports){
+},{}],18:[function(require,module,exports){
 /*
 colors.js
 
@@ -12856,7 +12915,7 @@ addProperty('zalgo', function () {
   return zalgo(this);
 });
 
-},{}],18:[function(require,module,exports){
+},{}],19:[function(require,module,exports){
 module.exports={
   "author": {
     "name": "Rafael de Oleza",
@@ -12932,7 +12991,7 @@ module.exports={
   "_resolved": "https://registry.npmjs.org/prettyjson/-/prettyjson-1.1.0.tgz"
 }
 
-},{}],19:[function(require,module,exports){
+},{}],20:[function(require,module,exports){
 //     Validate.js 0.7.0
 
 //     (c) 2013-2015 Nicklas Ansman, 2013 Wrapp
@@ -13883,4 +13942,4 @@ module.exports={
         typeof module !== 'undefined' ? /* istanbul ignore next */ module : null,
         typeof define !== 'undefined' ? /* istanbul ignore next */ define : null);
 
-},{}]},{},[5]);
+},{}]},{},[6]);

@@ -14,6 +14,7 @@ describe("Context", function() {
         it("should start in the default state", function() {
             var context = new Context;
             expect(context.getState()).to.equal(ContextState.Active);
+            expect(context.state).to.equal(context.getState());
             expect(context.getChildren()).to.be.empty;
         });
     });
@@ -22,12 +23,13 @@ describe("Context", function() {
         it("should not have a parent when root", function() {
             var context = new Context;
             expect(context.getParent()).to.not.exist;
+            expect(context.parent).to.equal(context.getParent());
         });
         
         it("should have a parent when a child", function() {
             var context = new Context,
             child   = context.newChild();
-            expect(child.getParent()).to.equal(context);
+            expect(child.parent).to.equal(context);
         });
     });
     
@@ -37,6 +39,7 @@ describe("Context", function() {
                 child1  = context.newChild(),
                 child2  = context.newChild();
             expect(context.getChildren()).to.include(child1, child2);
+            expect(context.children).to.eql(context.getChildren());
         });
     });
     
@@ -71,7 +74,7 @@ describe("Context", function() {
         it("should return new child context", function() {
             var context      = new Context,
                 childContext = context.newChild();
-            expect(childContext.getParent()).to.equal(context);
+            expect(childContext.parent).to.equal(context);
         });
 
         it("should execute block with new child context and then end it", function() {
@@ -79,10 +82,10 @@ describe("Context", function() {
                 childContext = context.newChild();
             $using(
                 childContext, function (ctx) {
-                    expect(ctx.getState()).to.equal(ContextState.Active);
-                    expect(ctx.getParent()).to.equal(context); }
+                    expect(ctx.state).to.equal(ContextState.Active);
+                    expect(ctx.parent).to.equal(context); }
             );
-            expect(childContext.getState()).to.equal(ContextState.Ended);
+            expect(childContext.state).to.equal(ContextState.Ended);
         });
     });
 
@@ -104,15 +107,15 @@ describe("Context", function() {
         it("should end the context", function() {
             var context = new Context;
             context.end();
-            expect(context.getState()).to.equal(ContextState.Ended);
+            expect(context.state).to.equal(ContextState.Ended);
         });
         
         it("should end children", function() {
             var context = new Context,
                 child   = context.newChild();
             context.end();
-            expect(context.getState()).to.equal(ContextState.Ended);
-            expect(child.getState()).to.equal(ContextState.Ended);
+            expect(context.state).to.equal(ContextState.Ended);
+            expect(child.state).to.equal(ContextState.Ended);
         });
     });
 
@@ -120,7 +123,7 @@ describe("Context", function() {
         it("should end the context", function() {
             var context = new Context;
             context.dispose();
-            expect(context.getState()).to.equal(ContextState.Ended);
+            expect(context.state).to.equal(ContextState.Ended);
         });
     });
     
@@ -130,9 +133,9 @@ describe("Context", function() {
                 child1  = context.newChild(),
                 child2  = context.newChild();
             context.unwind();
-            expect(context.getState()).to.equal(ContextState.Active);
-            expect(child1.getState()).to.equal(ContextState.Ended);
-            expect(child2.getState()).to.equal(ContextState.Ended);
+            expect(context.state).to.equal(ContextState.Active);
+            expect(child1.state).to.equal(ContextState.Ended);
+            expect(child2.state).to.equal(ContextState.Ended);
         });
     });
 
@@ -144,10 +147,10 @@ describe("Context", function() {
                 grandChild = child1.newChild();
             var root       = context.unwindToRootContext();
             expect(root).to.equal(context);
-            expect(context.getState()).to.equal(ContextState.Active);
-            expect(child1.getState()).to.equal(ContextState.Ended);
-            expect(child2.getState()).to.equal(ContextState.Ended);
-            expect(grandChild.getState()).to.equal(ContextState.Ended);
+            expect(context.state).to.equal(ContextState.Active);
+            expect(child1.state).to.equal(ContextState.Ended);
+            expect(child2.state).to.equal(ContextState.Ended);
+            expect(grandChild.state).to.equal(ContextState.Ended);
         });
     });
 
@@ -469,7 +472,7 @@ describe("Contextual", function() {
                 controller = new Controller;
             controller.setContext(context);
             controller.endContext();
-            expect(context.getState()).to.equal(ContextState.Ended);
+            expect(context.state).to.equal(ContextState.Ended);
             expect(controller.isActiveContext()).to.be.false;
         });
     });
