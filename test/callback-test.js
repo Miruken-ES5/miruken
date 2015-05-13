@@ -52,7 +52,8 @@ new function () { // closure
 
     var Security = Protocol.extend({
         admit: function (guest) {},
-        trackActivity: function (activity) {}
+        trackActivity: function (activity) {},
+        scan: function () {}
     });
 
     var Level1Security = Base.extend(Security, {
@@ -64,6 +65,9 @@ new function () { // closure
     var Level2Security = Base.extend(Security, {
         trackActivity: function (activity) {
             console.log(lang.format("Tracking '%1'", activity.name));
+        },
+        scan: function () {
+            return Promise.delay(true, 2);
         }
     });
 
@@ -463,20 +467,20 @@ describe("Definitions", function () {
 describe("CallbackHandler", function () {
     describe("#handle", function () {
         it("should not handle nothing", function () {
-            var casino     = new Casino();
+            var casino     = new Casino;
             expect(casino.handle()).to.be.false;
             expect(casino.handle(null)).to.be.false;
         });
 
         it("should not handle anonymous objects", function () {
-            var casino     = new Casino();
+            var casino     = new Casino;
             expect(casino.handle({name:'Joe'})).to.be.false;
         });
 
         it("should handle callbacks", function () {
             var cashier    = new Cashier(1000000.00),
                 casino     = new Casino('Belagio').addHandlers(cashier),
-                countMoney = new CountMoney();
+                countMoney = new CountMoney;
             expect(casino.handle(countMoney)).to.be.true;
             expect(countMoney.getTotal()).to.equal(1000000.00);
         });
@@ -683,7 +687,7 @@ describe("CallbackHandler", function () {
                 blackjack  = new Activity('Blackjack'),
                 casino     = new Casino('Belagio')
                 .addHandlers(cashier, blackjack),
-            countMoney = new CountMoney();
+            countMoney = new CountMoney;
             cashier.transfer(50000, blackjack)
 
             expect(blackjack.getBalance()).to.equal(50000);
@@ -1203,8 +1207,8 @@ describe("CallbackHandler", function () {
         it("should cascade handlers using short syntax", function () {
             var guest    = new Guest(17),
                 baccarat = new Activity('Baccarat'),
-                level1   = new Level1Security(),
-                level2   = new Level2Security(),
+                level1   = new Level1Security,
+                level2   = new Level2Security,
                 security = CallbackHandler(level1).next(level2);
             expect(Security(security).admit(guest)).to.be.false;
             Security(security).trackActivity(baccarat);
@@ -1212,8 +1216,8 @@ describe("CallbackHandler", function () {
 
         it("should compose handlers using short syntax", function () {
             var baccarat = new Activity('Baccarat'),
-                level1   = new Level1Security(),
-                level2   = new Level2Security(),
+                level1   = new Level1Security,
+                level2   = new Level2Security,
                 compose  = CallbackHandler(level1).next(level2, baccarat),
             countMoney = new CountMoney();
             expect(compose.handle(countMoney)).to.be.true;
@@ -1347,8 +1351,8 @@ describe("CascadeCallbackHandler", function () {
         it("should cascade handlers", function () {
             var guest    = new Guest(17),
                 baccarat = new Activity('Baccarat'),
-                level1   = new Level1Security(),
-                level2   = new Level2Security(),
+                level1   = new Level1Security,
+                level2   = new Level2Security,
                 security = new CascadeCallbackHandler(level1, level2);
             expect(Security(security).admit(guest)).to.be.false;
             Security(security).trackActivity(baccarat);
@@ -1361,9 +1365,16 @@ describe("InvocationCallbackHandler", function () {
         it("should handle invocations", function () {
             var guest1 = new Guest(17),
                 guest2 = new Guest(21),
-                level1 = CallbackHandler(new Level1Security());
+                level1 = CallbackHandler(new Level1Security);
             expect(Security(level1).admit(guest1)).to.be.false;
             expect(Security(level1).admit(guest2)).to.be.true;
+        });
+        
+        it("should handle async invocations", function (done) {
+            var level2 = CallbackHandler(new Level2Security);
+            Security(level2).scan().then(function () {
+                done();
+            });
         });
 
         it("should ignore explicitly unhandled invocations", function () {
@@ -1380,7 +1391,7 @@ describe("InvocationCallbackHandler", function () {
 
         it("should fail missing methods", function () {
             var letItRide = new Activity('Let It Ride'),
-                level1    = new Level1Security(),
+                level1    = new Level1Security,
                 casino    = new Casino('Treasure Island')
                 .addHandlers(level1, letItRide);
 
@@ -1391,7 +1402,7 @@ describe("InvocationCallbackHandler", function () {
 
         it("can ignore missing methods", function () {
             var letItRide = new Activity('Let It Ride'),
-                level1    = new Level1Security(),
+                level1    = new Level1Security,
                 casino    = new Casino('Treasure Island')
                 .addHandlers(level1, letItRide);
             expect(Security(casino.bestEffort()).trackActivity(letItRide)).to.be.undefined;
@@ -1415,8 +1426,8 @@ describe("InvocationCallbackHandler", function () {
 
         it("can broadcast invocations", function () {
             var letItRide = new Activity('Let It Ride'),
-                level1    = new Level1Security(),
-                level2    = new Level2Security(),
+                level1    = new Level1Security,
+                level2    = new Level2Security,
                 casino    = new Casino('Treasure Island')
                 .addHandlers(level1, level2, letItRide);
             Security(casino.broadcast()).trackActivity(letItRide);
@@ -1424,10 +1435,124 @@ describe("InvocationCallbackHandler", function () {
 
         it("can notify invocations", function () {
             var letItRide = new Activity('Let It Ride'),
-                level1    = new Level1Security(),
+                level1    = new Level1Security,
                 casino    = new Casino('Treasure Island')
                 .addHandlers(level1, letItRide);
             Security(casino.notify()).trackActivity(letItRide);
         });
     })
+});
+
+describe("AspectCallbackHandler", function () {
+    describe("#handle", function () {
+        it("should ignore callback", function () {
+            var cashier    = new Cashier(1000000.00),
+                casino     = new Casino('Belagio').addHandlers(cashier),
+                countMoney = new CountMoney;
+            expect(casino.aspect(False).handle(countMoney)).to.be.true;
+            expect(countMoney.getTotal()).to.equal(0);
+        });
+
+        it("should ignore invocation", function () {
+            var guest = new Guest(21),
+                level = CallbackHandler(new Level1Security);
+            expect(Security(level.aspect(False)).admit(guest)).to.be.undefined;
+        });
+
+        it("should handle callback with side-effect", function () {
+            var cashier    = new Cashier(1000000.00),
+                casino     = new Casino('Belagio').addHandlers(cashier),
+                countMoney = new CountMoney;
+            expect(casino.aspect(True, function (countIt) { countIt.record(-1); })
+                   .handle(countMoney)).to.be.true;
+            expect(countMoney.getTotal()).to.equal(999999.00);
+        });
+
+        it("should invoke with side-effect", function () {
+            var count = 0,
+                guest = new Guest(21),
+                level = CallbackHandler(new Level1Security);
+            expect(Security(level.aspect(True, function () { ++count; }))
+                            .admit(guest)).to.be.true;
+            expect(count).to.equal(1);
+        });
+
+        it("should ignore deferrerd callback", function (done) {
+            var cashier    = new Cashier(750000.00),
+                casino     = new Casino('Venetian').addHandlers(cashier),
+                wireMoney  = new WireMoney(250000);
+            Promise.resolve(casino.aspect(function () {
+                setTimeout(done, 2);
+                return Promise.resolve(false);
+            }).defer(wireMoney)).then(function (handled) {
+                throw new Error("Should not get here");
+            });
+        });
+
+        it("should ignore async invocation", function (done) {
+            var level2 = CallbackHandler(new Level2Security);
+            Security(level2.aspect(function () {
+                setTimeout(done, 2);
+                return Promise.resolve(false);
+            })).scan().then(function (scanned) {
+                throw new Error("Should not get here");
+            });
+        });
+
+        it("should handle deferred callback with side-effect", function (done) {
+            var cashier    = new Cashier(750000.00),
+                casino     = new Casino('Venetian').addHandlers(cashier),
+                wireMoney  = new WireMoney(250000);
+            Promise.resolve(casino.aspect(True, function (wire) {
+                received = wire.received;
+                done();
+            }).defer(wireMoney)).then(function (handled) {
+                expect(handled).to.be.true;
+                expect(wireMoney.received).to.equal(250000);
+            });
+        });
+
+        it("should invoke async with side-effect", function (done) {
+            var level2 = CallbackHandler(new Level2Security);
+            Security(level2.aspect(True, function () {
+                done();
+            })).scan().then(function (scanned) {
+                expect(scanned).to.be.true;
+            });
+        });
+
+        it("should fail on exception in before", function () {
+            var cashier    = new Cashier(1000000.00),
+                casino     = new Casino('Belagio').addHandlers(cashier),
+                countMoney = new CountMoney;
+            expect(function () {
+                expect(casino.aspect(function () { throw new Error; })
+                       .handle(countMoney)).to.be.false;
+            }).to.throw(Error);
+        });
+
+        it("should fail callback on rejection in before", function (done) {
+            var cashier    = new Cashier(1000000.00),
+                casino     = new Casino('Belagio').addHandlers(cashier),
+                countMoney = new CountMoney;
+            casino.aspect(function () {
+                setTimeout(done, 2);
+                return Promise.reject(new Error("Something bad"));
+            }).defer(countMoney).catch(function (error) {
+                expect(error).to.be.instanceOf(Error);
+                expect(error.message).to.equal("Something bad");
+            });
+        });
+
+        it("should fail async invoke on rejection in before", function (done) {
+            var level2 = CallbackHandler(new Level2Security);
+            Security(level2.aspect(function () {
+                setTimeout(done, 2);
+                return Promise.reject(new Error("Something bad"));
+            })).scan().catch(function (error) {
+                expect(error).to.be.instanceOf(Error);
+                expect(error.message).to.equal("Something bad");
+            });
+        });
+    });
 });

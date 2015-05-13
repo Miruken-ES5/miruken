@@ -12,7 +12,7 @@ eval(error.namespace);
 
 describe("ErrorCallbackHandler", function () {
     describe("#handleError", function () {
-        it("should handle errors", function () {
+        it("should handle errors", function (done) {
             var context      = new Context,
                 errorHandler = new ErrorCallbackHandler,
                 error        = new Error('passwords do not match');
@@ -74,14 +74,14 @@ describe("CallbackHandler", function () {
             var context      = new Context,
                 errorHandler = new ErrorCallbackHandler;
             context.addHandlers(new Paymentech, errorHandler);
-            Payments(context.recoverable()).validateCard({number:'1234'});
+            Payments(context.recover()).validateCard({number:'1234'});
         });
 
         it("should implicitly recover from errors asynchronously", function (done) {
             var context      = new Context,
                 errorHandler = new ErrorCallbackHandler;
             context.addHandlers(new Paymentech, errorHandler); 
-            var pay = Payments(context.recoverable()).processPayment({amount:1000});
+            var pay = Payments(context.recover()).processPayment({amount:1000});
             Promise.resolve(pay).then(function (result) {
                 expect(result).to.be.undefined;
                 done();
@@ -97,7 +97,7 @@ describe("CallbackHandler", function () {
                     return Promise.resolve('custom');
                 }
             });
-            var pay = Payments(customize.recoverable()).processPayment({amount:1000});
+            var pay = Payments(customize.recover()).processPayment({amount:1000});
             Promise.resolve(pay).then(function (result) {
                 expect(result).to.equal('custom');
                 done();
@@ -109,7 +109,7 @@ describe("CallbackHandler", function () {
                 errorHandler = new ErrorCallbackHandler;
             context.addHandlers(new Paymentech, errorHandler);
             var pay = Payments(context).processPayment({amount:1000})
-                .catch(context.recover());
+                .catch(context.recoverError());
             Promise.resolve(pay).then(function (result) {
                 expect(result).to.be.undefined;
                 done();
@@ -126,7 +126,7 @@ describe("CallbackHandler", function () {
                 }
             });
             var pay = Payments(context).processPayment({amount:1000})
-                .catch(customize.recover());
+                .catch(customize.recoverError());
             Promise.resolve(pay).then(function (result) {
                 expect(result).to.equal('custom');
                 done();

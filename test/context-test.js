@@ -312,7 +312,7 @@ describe("Context", function() {
             expect(root.descendantOrSelf().resolve(Dog)).to.equal(dog);
         });
 
-        it("should traverse parent, siblings or |self|", function() {
+        it("should traverse ancestot, siblings or |self|", function() {
             var dog        = new Dog,
                 root       = new Context,
                 child1     = root.newChild(),
@@ -321,10 +321,10 @@ describe("Context", function() {
                 grandChild = child3.newChild();
             root.store(dog);
             expect(child2.descendantOrSelf().resolve(Dog)).to.be.undefined;
-            expect(root.parentSiblingOrSelf().resolve(Dog)).to.equal(dog);
+            expect(root.ancestorSiblingOrSelf().resolve(Dog)).to.equal(dog);
         });
 
-        it("should traverse parent, |siblings| or self", function() {
+        it("should traverse ancestor, |siblings| or self", function() {
             var dog        = new Dog,
                 root       = new Context,
                 child1     = root.newChild(),
@@ -333,10 +333,10 @@ describe("Context", function() {
                 grandChild = child3.newChild();
             child2.store(dog);
             expect(grandChild.descendantOrSelf().resolve(Dog)).to.be.undefined;
-            expect(child3.parentSiblingOrSelf().resolve(Dog)).to.equal(dog);
+            expect(child3.ancestorSiblingOrSelf().resolve(Dog)).to.equal(dog);
         });
 
-        it("should traverse |parent|, siblings or self", function() {
+        it("should traverse |ancestor|, siblings or self", function() {
             var dog        = new Dog,
                 root       = new Context,
                 child1     = root.newChild(),
@@ -344,7 +344,7 @@ describe("Context", function() {
                 child3     = root.newChild(),
                 grandChild = child3.newChild();
             child3.store(dog);
-            expect(grandChild.parentSiblingOrSelf().resolve(Dog)).to.equal(dog);
+            expect(grandChild.ancestorSiblingOrSelf().resolve(Dog)).to.equal(dog);
         });
     });
 

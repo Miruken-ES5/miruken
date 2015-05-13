@@ -224,7 +224,14 @@ new function () { // closure
             if ($injector) {
                 _provideInjector(context, $injector);
             }
-            return context.resolve($instant(component));
+            var instance = context.resolve($instant(component));
+            for (var key in $scope) {
+                if ($scope[key] === this) {
+                    $scope[key] = instance;
+                    break;
+                }
+            }
+            return instance;
         };
     }
 
@@ -2076,6 +2083,7 @@ new function () { // closure
                 getReturnValue: function () { return _returnValue; },
                 setReturnValue: function (value) { _returnValue = value; },
                 getException:   function () { return _exception; },
+                setException:   function (exception) { _exception = exception; },
                 invokeOn:       function (target, composer) {
                     if (!target || (strict && protocol && !protocol.adoptedBy(target))) {
                         return false;
@@ -2104,13 +2112,9 @@ new function () { // closure
                         if (result === $NOT_HANDLED) {
                             return false;
                         }
-                        if (_returnValue === undefined) {
-                            _returnValue = result;
-                        }
-                    } catch(exception) {
-                        if (_returnValue === undefined && _exception === undefined) {
-                            _exception = exception;
-                        }
+                        _returnValue = result;
+                    } catch (exception) {
+                        _exception = exception;
                         throw exception;
                     } finally {
                         if (oldComposer) {
@@ -2346,33 +2350,55 @@ new function () { // closure
     var CallbackHandlerAspect = CallbackHandlerFilter.extend({
         constructor: function (decoratee, before, after) {
             this.base(decoratee, function (callback, composer, proceed) {
-                var promise;
-                if ($isFunction(before) && before(callback, composer) === false) {
-                    return true;
-                }
-                try {
-                    var handled = proceed();
-                    if (handled && (promise = getEffectivePromise(callback))) {
-                        // Use 'fulfilled' or 'rejected' handlers instead of 'finally' to ensure
-                        // aspect boundary is consistent with synchronous invocations and avoid
-                        // reentrancy issues.
-                        if ($isFunction(after))
-                            promise.then(function (result) {
-                                after(callback, composer);
-                            }, function (error) {
-                                after(callback, composer);
+                if ($isFunction(before)) {
+                    var test = before(callback, composer);
+                    if ($isPromise(test)) {
+                        var isMethod = callback instanceof HandleMethod,
+                            accept = test.then(function (accepted) {
+                                if (accepted !== false) {
+                                    _aspectProceed(callback, composer, proceed);
+                                    return isMethod ? method.getReturnValue() : true;
+                                }
+                                return NullThenable;
                             });
-                        return handled;
+                        if (isMethod) {
+                            callback.setReturnValue(accept);
+                        } else if (callback instanceof Deferred) {
+                            callback.track(accept);
+                        }
+                        return true;
+                    } else if (test === false) {
+                        return true;
                     }
-                } finally {
-                    if (!promise && $isFunction(after)) {
-                        after(callback, composer);
-                    }
-                }
+                }                    
+                return _aspectProceed(callback, composer, proceed, after);
             });
         }
     });
 
+    function _aspectProceed(callback, composer, proceed, after) {
+        var promise;
+        try {
+            var handled = proceed();
+            if (handled && (promise = getEffectivePromise(callback))) {
+                // Use 'fulfilled' or 'rejected' handlers instead of 'finally' to ensure
+                // aspect boundary is consistent with synchronous invocations and avoid
+                // reentrancy issues.
+                if ($isFunction(after))
+                    promise.then(function (result) {
+                        after(callback, composer);
+                    }, function (error) {
+                        after(callback, composer);
+                    });
+            }
+            return handled;
+        } finally {
+            if (!promise && $isFunction(after)) {
+                after(callback, composer);
+            }
+        }
+    }
+    
     /**
      * Definition goes here
      * @class CascadeCallbackHandler
@@ -3374,23 +3400,11 @@ new function () { // closure
             return childContext;
         }
     });
-
-    var axisNames  = TraversingAxis.names,
-        axisValues =  TraversingAxis.values;
     
    /**
      * Context traversal
      */
     Context.implement({
-        /*
-        $properties: {
-            $self: {
-                get: function () {
-                    return _newContextTraversal(this, TraversingAxis.Self);
-                }
-            }
-        },
-*/
         self: function () {
             return _newContextTraversal(this, TraversingAxis.Self);
         },
@@ -3421,8 +3435,11 @@ new function () { // closure
         descendantOrSelf: function () {
             return _newContextTraversal(this, TraversingAxis.DescendantOrSelf);   
         },
-        parentSiblingOrSelf: function () {
-            return _newContextTraversal(this, TraversingAxis.ParentSiblingOrSelf);   
+        ancestorSiblingOrSelf: function () {
+            return _newContextTraversal(this, TraversingAxis.AncestorSiblingOrSelf);   
+        },
+        axis: function (axis) {
+            return _newContextTraversal(this, axis);   
         }
     });
 
@@ -3494,10 +3511,9 @@ new function () { // closure
 }
 
 },{"./callback.js":4,"./graph.js":7,"./miruken.js":12}],6:[function(require,module,exports){
-var miruken    = require('./miruken.js'),
-    prettyjson = require('prettyjson'),
-    Promise    = require('bluebird');
-                 require('./callback.js'),
+var miruken = require('./miruken.js'),
+    Promise = require('bluebird');
+              require('./callback.js');
 
 new function() { // closure
 
@@ -3528,42 +3544,48 @@ new function() { // closure
      * @class {ErrorCallbackHandler}
      */
     var ErrorCallbackHandler = CallbackHandler.extend({
-    /**
-     * Handles the error.
-     * @param   {Any}          error      - error (usually Error)
-     * @param   {Any}          [context]  - scope of error
-     * @returns {Promise(Any)} the handled error.
-     */
+        /**
+         * Handles the error.
+         * @param   {Any}          error      - error (usually Error)
+         * @param   {Any}          [context]  - scope of error
+         * @returns {Promise(Any)} the handled error.
+         */
         handleError: function(error, context) {
-            return Promise.resolve(Errors($composer).reportError(error, context));
+            var reportError = Errors($composer).reportError(error, context);
+            return reportError === undefined
+                 ? Promise.reject(error)
+                 : Promise.resolve(reportError);
         },
-    /**
-     * Handles the exception.
-     * @param   {Exception}    excption   - exception
-     * @param   {Any}          [context]  - scope of error
-     * @returns {Promise(Any)} the handled exception.
-     */
+        /**
+         * Handles the exception.
+         * @param   {Exception}    excption   - exception
+         * @param   {Any}          [context]  - scope of error
+         * @returns {Promise(Any)} the handled exception.
+         */
         handleException: function(exception, context) {
-            return Promise.resolve(Errors($composer).reportException(exception, context));
-        },
-    /**
-     * Reports the error. i.e. to the console.
-     * @param   {Any}          error      - error (usually Error)
-     * @param   {Any}          [context]  - scope of error
-     * @returns {Promise(Any)} the reported error (could be a dialog).
-     */
+            var reportException = Errors($composer).reportException(exception, context);
+            return reportException === undefined
+                 ? Promise.reject(exception)
+                 : Promise.resolve(reportException);
+        },                                                      
+        /**
+         * Reports the error. i.e. to the console.
+         * @param   {Any}          error      - error (usually Error)
+         * @param   {Any}          [context]  - scope of error
+         * @returns {Promise(Any)} the reported error (could be a dialog).
+         */
         reportError: function(error, context) {
-            console.error(formatJson(error));
+            console.error(error);
             return Promise.resolve();
         },
-    /**
-     * Reports the excepion. i.e. to the console.
-     * @param   {Exception}    exception  - exception
-     * @param   {Any}          [context]  - scope of exception
-     * @returns {Promise(Any)} the reported exception (could be a dialog).
-     */
+        /**
+         * Reports the excepion. i.e. to the console.
+         * @param   {Exception}    exception  - exception
+         * @param   {Any}          [context]  - scope of exception
+         * @returns {Promise(Any)} the reported exception (could be a dialog).
+         */
         reportException: function(exception, context) {
-            console.error(formatJson(exception));
+            console.error(exception);
             return Promise.resolve();
         }
     });
@@ -3572,13 +3594,13 @@ new function() { // closure
      * Recoverable filter
      */
     CallbackHandler.implement({
-        recoverable: function(context) {
+        recover: function (context) {
             return new CallbackHandlerFilter(this, function(callback, composer, proceed) {
                 try {
                     var promise,
                     handled = proceed();
                     if (handled && (promise = getEffectivePromise(callback))) {
-                        promise = promise.caught(function(error) {
+                        promise = promise.catch(function(error) {
                             return Errors(composer).handleError(error, context);
                         });
                         if (callback instanceof HandleMethod) {
@@ -3593,18 +3615,12 @@ new function() { // closure
             });
         },
 
-        recover: function(context) {
-            return function(error) {
+        recoverError: function (context) {
+            return function (error) {
                 return Errors(this).handleError(error, context);
             }.bind(this);
         }
     });
-
-    function formatJson(object) {
-        var json = prettyjson.render(object);
-        json = json.split('\n').join('\n    ');
-        return '    ' + json;
-    }
 
     if (typeof module !== 'undefined' && module.exports) {
         module.exports = exports = error;
@@ -3614,7 +3630,7 @@ new function() { // closure
 
 }
 
-},{"./callback.js":4,"./miruken.js":12,"bluebird":18,"prettyjson":20}],7:[function(require,module,exports){
+},{"./callback.js":4,"./miruken.js":12,"bluebird":18}],7:[function(require,module,exports){
 var miruken = require('./miruken.js');
 
 new function () { // closure
@@ -3657,7 +3673,7 @@ new function () { // closure
         AncestorOrSelf:          10,
         DescendantOrSelf:        11,
         DescendantOrSelfReverse: 12,
-        ParentSiblingOrSelf:     13
+        AncestorSiblingOrSelf:   13
     });
 
     /**
@@ -3711,7 +3727,7 @@ new function () { // closure
                 break;
 
             case TraversingAxis.Sibling:
-                _traverseParentSiblingOrSelf.call(object, visitor, false, false, context);
+                _traverseAncestorSiblingOrSelf.call(object, visitor, false, false, context);
                 break;
                 
             case TraversingAxis.ChildOrSelf:
@@ -3719,7 +3735,7 @@ new function () { // closure
                 break;
 
             case TraversingAxis.SiblingOrSelf:
-                _traverseParentSiblingOrSelf.call(object, visitor, true, false, context);
+                _traverseAncestorSiblingOrSelf.call(object, visitor, true, false, context);
                 break;
                 
             case TraversingAxis.Ancestor:
@@ -3746,8 +3762,8 @@ new function () { // closure
                 _traverseDescendantsReverse.call(object, visitor, true, context);
                 break;
                 
-            case TraversingAxis.ParentSiblingOrSelf:
-                _traverseParentSiblingOrSelf.call(object, visitor, true, true, context);
+            case TraversingAxis.AncestorSiblingOrSelf:
+                _traverseAncestorSiblingOrSelf.call(object, visitor, true, true, context);
                 break;
 
             default:
@@ -3826,7 +3842,7 @@ new function () { // closure
         }
     }
 
-    function _traverseParentSiblingOrSelf(visitor, withSelf, withParent, context) {
+    function _traverseAncestorSiblingOrSelf(visitor, withSelf, withAncestor, context) {
         if (withSelf && visitor.call(context, this) || !$isFunction(this.getParent)) {
             return;
         }
@@ -3841,8 +3857,8 @@ new function () { // closure
                     }
                 }
             }
-            if (withParent) {
-                visitor.call(context, parent);
+            if (withAncestor) {
+                _traverseAncestors.call(parent, visitor, true, context);
             }
         }
     }
@@ -4326,7 +4342,7 @@ new function () { // closure
         name:    "ioc",
         version: miruken.version,
         parent:  miruken,
-        imports: "miruken,miruken.callback,miruken.context,miruken.validate",
+        imports: "miruken,miruken.graph,miruken.callback,miruken.context,miruken.validate",
         exports: "Container,Registration,ComponentPolicy,Lifestyle,TransientLifestyle,SingletonLifestyle,ContextualLifestyle,DependencyModifiers,DependencyModel,DependencyManager,DependencyInspector,ComponentModel,ComponentBuilder,ComponentModelError,IoContainer,DependencyResolution,DependencyResolutionError,$component,$$composer,$container"
     });
 
@@ -5263,7 +5279,7 @@ new function () { // closure
     var miruken = new base2.Package(this, {
         name:    "miruken",
         version: "1.0",
-        exports: "Enum,Variance,Protocol,StrictProtocol,Delegate,Miruken,MetaStep,MetaMacro,Disposing,DisposingMixin,Invoking,Parenting,Starting,Startup,Facet,Interceptor,InterceptorSelector,ProxyBuilder,Modifier,ArrayManager,IndexedList,$isProtocol,$isClass,$classOf,$ancestorOf,$isString,$isFunction,$isObject,$isPromise,$isSomething,$isNothing,$using,$lift,$eq,$use,$copy,$lazy,$eval,$every,$child,$optional,$promise,$instant,$createModifier,$properties,$inferProperties,$inheritStatic"
+        exports: "Enum,NullThenable,Variance,Protocol,StrictProtocol,Delegate,Miruken,MetaStep,MetaMacro,Disposing,DisposingMixin,Invoking,Parenting,Starting,Startup,Facet,Interceptor,InterceptorSelector,ProxyBuilder,Modifier,ArrayManager,IndexedList,$isProtocol,$isClass,$classOf,$ancestorOf,$isString,$isFunction,$isObject,$isPromise,$isSomething,$isNothing,$using,$lift,$eq,$use,$copy,$lazy,$eval,$every,$child,$optional,$promise,$instant,$createModifier,$properties,$inferProperties,$inheritStatic"
     });
 
     eval(this.imports);
@@ -5305,6 +5321,14 @@ new function () { // closure
         }
     });
 
+    /**
+     * NullThenable
+     * Null pattern for thenable.
+     */
+    var NullThenable = Object.freeze({
+        then: Undefined
+    });
+    
     /**
      * Variance enum
      * @property Variance
@@ -5504,7 +5528,8 @@ new function () { // closure
      */
     var MetaBase = MetaMacro.extend({
         constructor: function(parent)  {
-            var _protocols = [];
+            var _protocols   = [],
+                _descriptors;
             this.extend({
                 /**
                  * Description goes here
@@ -5567,8 +5592,8 @@ new function () { // closure
                 /**
                  * Description goes here
                  * @method conformsTo
-                 * @params {Protocol}   protocol    - definition
-                 * @return {boolean}    bool        - definition
+                 * @params {Protocol}   protocol     - definition
+                 * @return {boolean}    bool         - definition
                  */
                 conformsTo: function (protocol) {
                     if (!(protocol && (protocol.prototype instanceof Protocol))) {
@@ -5591,14 +5616,90 @@ new function () { // closure
                 },
                 /**
                  * Description goes here
+                 * @method defineProperty
+                 * @param  {Object}     target      - definition
+                 * @param  {string}     name        - definition
+                 * @param  {Object}     spec        - definition
+                 * @param  {Object}     descriptor  - definition
+                 */
+                defineProperty: function(target, name, spec, descriptor) {
+                    descriptor = extend({}, descriptor);
+                    Object.defineProperty(target, name, spec);
+                    this.addDescriptor(name, descriptor);
+                },
+                /**
+                 * Description goes here
                  * @method getDescriptor
                  * @param  {Filter}     filter      - definition
                  * @return {Parent}     parent      - definition
                  */
                 getDescriptor: function (filter) {
-                    if (parent) {
-                        return parent.getDescriptor(filter);
+                    var descriptors;
+                    if ($isNothing(filter)) {
+                        if (parent) {
+                            descriptors = parent.getDescriptor(filter);
+                        }
+                        if (_descriptors) {
+                            descriptors = extend(descriptors || {}, _descriptors);
+                        }
+                    } else if ($isString(filter)) {
+                        return _descriptors[filter] || (parent && parent.getDescriptor(filter));
+                    } else {
+                        if (parent) {
+                            descriptors = parent.getDescriptor(filter);
+                        }
+                        for (var key in _descriptors) {
+                            var descriptor = _descriptors[key];
+                            if (this.matchDescriptor(descriptor, filter)) {
+                                descriptors = extend(descriptors || {}, key, descriptor);
+                            }
+                        }
                     }
+                    return descriptors;
+                },
+                /**
+                 * Description goes here
+                 * @method addDescriptor
+                 * @param  {string}     name        - definition
+                 * @param  {Object}     descriptor  - definition
+                 */
+                addDescriptor: function (name, descriptor) {
+                    _descriptors = extend(_descriptors || {}, name, descriptor);
+                    return this;
+                },
+                /**
+                 * Description goes here
+                 * @method matchDescriptor
+                 * @param  {Object}     descriptor  - definition
+                 * @param  {Object}     filter      - definition
+                 */
+                matchDescriptor: function (descriptor, filter) {
+                    if (typeOf(descriptor) !== 'object' || typeOf(filter) !== 'object') {
+                        return;
+                    }
+                    for (var key in filter) {
+                        var match = filter[key];
+                        if (match === undefined) {
+                            if (!(key in descriptor)) {
+                                return false;
+                            }
+                        } else {
+                            var value = descriptor[key];
+                            if (match instanceof Array) {
+                                if (!(value instanceof Array)) {
+                                    return false;
+                                }
+                                for (var i = 0; i < match.length; ++i) {
+                                    if (value.indexOf(match[i]) < 0) {
+                                        return false;
+                                    }
+                                }
+                            } else if (!(value === match || this.matchDescriptor(value, match))) {
+                                return false;
+                            }
+                        }
+                    }
+                    return true;
                 },
                 /**
                  * Description goes here
@@ -5886,8 +5987,7 @@ new function () { // closure
             if ($isNothing(definition) || !definition.hasOwnProperty(this.tag)) {
                 return;
             }
-            var properties = definition[this.tag],
-                descriptors;
+            var properties = definition[this.tag];
             if ($isFunction(properties)) {
                 properties = properties();
             }
@@ -5896,8 +5996,11 @@ new function () { // closure
                     spec = _.spec || (_.spec = {
                         configurable: true,
                         enumerable:   true
-                    }),
-                    descriptor = false;
+                    });
+                if ($isNothing(property) || $isString(property) ||
+                    typeOf(property.length) == "number" || typeOf(property) !== 'object') {
+                    property = { value: property };
+                }
                 if (target instanceof Protocol) {
                     spec.get = function (get) {
                         return function () {
@@ -5911,70 +6014,38 @@ new function () { // closure
                     }(name);
                 } else {
                     spec.writable = true;
-                    if ($isNothing(property) || $isString(property) ||
-                        typeOf(property.length) == "number" || typeOf(property) !== 'object') {
-                        spec.value = property;
+                    if (property.get || property.set) {
+                        var methods = {},
+                            cname   = name.charAt(0).toUpperCase() + name.slice(1);
+                        if (property.get) {
+                            var get      = 'get' + cname; 
+                            methods[get] = property.get;
+                            spec.get     = _makeGetter(get);
+                        }
+                        if (property.set) {
+                            var set      = 'set' + cname 
+                            methods[set] = property.set;
+                            spec.set     = _makeSetter(set); 
+                        }
+                        if (step == MetaStep.Extend) {
+                            target.extend(methods);
+                        } else {
+                            metadata.getClass().implement(methods);
+                        }
+                        delete spec.writable;
                     } else {
-                        descriptor = true;
-                        if (property.get || property.set) {
-                            var methods = {},
-                                cname   = name.charAt(0).toUpperCase() + name.slice(1);
-                            if (property.get) {
-                                var get      = 'get' + cname; 
-                                methods[get] = property.get;
-                                spec.get     = _makeGetter(get);
-                            }
-                            if (property.set) {
-                                var set      = 'set' + cname 
-                                methods[set] = property.set;
-                                spec.set     = _makeSetter(set); 
-                            }
-                            if (step == MetaStep.Extend) {
-                                target.extend(methods);
-                            } else {
-                                metadata.getClass().implement(methods);
-                            }
-                            delete spec.writable;
-                        } else {
-                            spec.value = property.value;
-                        }
+                        spec.value = property.value;
                     }
                 }
-                this.defineProperty(metadata, target, name, spec);
-                if (descriptor) {
-                    _cleanDescriptor(property);
-                    Object.freeze(property);
-                    (descriptors || (descriptors = {}))[name] = property;
-                }
+                _cleanDescriptor(property);
+                this.defineProperty(metadata, target, name, spec, property);
                 _cleanDescriptor(spec);
-            }
-            if (descriptors) {
-                metadata.extend({
-                    getDescriptor: function (filter) {
-                        if ($isNothing(filter)) {
-                            return extend(extend({}, this.base(filter)), descriptors);
-                        }
-                        if ($isString(filter)) {
-                            return descriptors[filter] || this.base(filter);
-                        } else {
-                            var matches = this.base(filter);
-                            for (var key in descriptors) {
-                                var descriptor = descriptors[key];
-                                if (_matchDescriptor(descriptor, filter)) {
-                                    matches = matches || {};
-                                    extend(matches, key, descriptor);
-                                }
-                            }
-                            return matches;
-                        }
-                    }
-                });
             }
             delete definition[this.tag];
             delete target[this.tag];
         },
-        defineProperty: function(metadata, target, name, spec) {
-            Object.defineProperty(target, name, spec);
+        defineProperty: function(metadata, target, name, spec, descriptor) {
+            metadata.defineProperty(target, name, spec, descriptor);
         },
         shouldInherit: True,
         isActive: True
@@ -5997,35 +6068,6 @@ new function () { // closure
                 return value;
             }
         };
-    }
-    
-    function _matchDescriptor(descriptor, filter) {
-        if (typeOf(descriptor) !== 'object' || typeOf(filter) !== 'object') {
-            return false;
-        }
-        for (var key in filter) {
-            var match = filter[key];
-            if (match === undefined) {
-                if (!(key in descriptor)) {
-                    return false;
-                }
-            } else {
-                var value = descriptor[key];
-                if (match instanceof Array) {
-                    if (!(value instanceof Array)) {
-                        return false;
-                    }
-                    for (var i = 0; i < match.length; ++i) {
-                        if (value.indexOf(match[i]) < 0) {
-                            return false;
-                        }
-                    }
-                } else if (!(value === match || _matchDescriptor(value, match))) {
-                    return false;
-                }
-            }
-        }
-        return true;
     }
 
     function _cleanDescriptor(descriptor) {
@@ -6065,7 +6107,7 @@ new function () { // closure
             }
         },
         defineProperty: function(metadata, target, name, spec) {
-            Object.defineProperty(target, name, spec);
+            metadata.defineProperty(target, name, spec);
         },
         shouldInherit: True,
         isActive: True
@@ -6632,8 +6674,55 @@ new function () { // closure
             shouldProxy: options.shouldProxy
         });
         _proxyClass(proxy, protocols);
+        proxy.extend = proxy.implement = _throwProxiesSealedExeception;
         return proxy;
     }
+
+    function _throwProxiesSealedExeception()
+    {
+        throw new TypeError("Proxy classes are sealed and cannot be extended from.");
+    }
+
+    /**
+     * Metamacro to intercept proxied methods.
+     * @class $interceptMethods
+     * @extends MetaMacro
+     */
+    var $interceptMethods = MetaMacro.extend({
+        apply: function (step, metadata, target, definition) {
+            var proxy = metadata.getClass();
+            switch (step) {
+                case MetaStep.Subclass:
+                {
+                    for (key in target) {
+                        if (!(key in _noProxyMethods) &&
+                            (!proxy.shouldProxy || proxy.shouldProxy(key, proxy))) {
+                            var descriptor = _getPropertyDescriptor(sourceProto, key);
+                            if ('value' in descriptor) {
+                                var member = descriptor.value;
+                                if ($isNothing(member) || $isFunction(member)) {
+                                    target[key] = _proxyMethod(key, member, proxy);
+                                }
+                            }
+                        }
+                    }
+                    break;
+                }
+                case MetaStep.Implement:
+                {
+                    break;
+                }
+                case MetaStep.Extend:
+                {
+                    break;
+                }
+            }
+        },
+        protocolAdded: function (metadata, protocol) {
+        },
+        shouldInherit: True,
+        isActive: True
+    });
 
     function _proxyClass(proxy, protocols) {
         var sources    = [proxy].concat(protocols),
@@ -6690,7 +6779,6 @@ new function () { // closure
                 }
             }
         }
-        proxy.extend = proxy.implement = _throwProxiesSealedExeception;
     }
     
     function _proxyMethod(key, method, source) {
@@ -6771,11 +6859,6 @@ new function () { // closure
             }
         }
         return this;
-    }
-
-    function _throwProxiesSealedExeception()
-    {
-        throw new TypeError("Proxy classes are sealed and cannot be extended from.");
     }
 
     var _noProxyMethods = {
@@ -7028,16 +7111,34 @@ new function () { // closure
                     }
                 }
             }
+            return this;
         },
-        pluck: function (/*values*/) {
-            var data = {};
-            for (var i = 0; i < arguments.length; ++i) {
-                var key   = arguments[i],
-                    value = this[key];
-                if (!$isFunction(value)) {
-                    data[key] = value;
+        toData: function (spec, data) {
+            data = data || {};
+            var meta        = this.$meta,
+                descriptors = meta && meta.getDescriptor();
+            if (descriptors) {
+                var all = $isNothing(spec);
+                for (var key in descriptors) {
+                    if (all || (key in spec)) {
+                        var keyValue   = this[key],
+                            descriptor = descriptors[key],
+                            keySpec    = all ? spec : spec[key];
+                        if (!(all || keySpec)) {
+                            continue;
+                        }
+                        if (descriptor.root) {
+                            if (keyValue && $isFunction(keyValue.toData)) {
+                                keyValue.toData(keySpec, data);
+                            }
+                        } else if (keyValue && $isFunction(keyValue.toData)) {
+                            data[key] = keyValue.toData(keySpec);
+                        } else {
+                            data[key] = keyValue;
+                        }
+                    }
                 }
-            }
+            }            
             return data;
         }
     }, {
@@ -7411,6 +7512,17 @@ new function () { // closure
         }
     });
 
+    CallbackHandler.implement({
+        validate: function (target, scope) {
+            //return this.aspect(function () {
+            //    return confirmed || (confirmed = confirm(message));
+            //});
+        },
+        validateAsync: function (target, scope) {
+
+        }        
+    });
+    
     /**
      * @class {$validateThat}
      * Metamacro to validate instances.
@@ -7666,7 +7778,7 @@ new function () { // closure
     eval(this.exports);
 
 }
-},{"../callback.js":4,"../miruken.js":12,"./validate.js":16,"bluebird":18,"validate.js":24}],18:[function(require,module,exports){
+},{"../callback.js":4,"../miruken.js":12,"./validate.js":16,"bluebird":18,"validate.js":20}],18:[function(require,module,exports){
 (function (process,global){
 /* @preserve
  * The MIT License (MIT)
@@ -12825,679 +12937,6 @@ process.chdir = function (dir) {
 process.umask = function() { return 0; };
 
 },{}],20:[function(require,module,exports){
-'use strict';
-
-// ### Module dependencies
-require('colors');
-var Utils = require('./utils');
-
-exports.version = require('../package.json').version;
-
-// ### Render function
-// *Parameters:*
-//
-// * **`data`**: Data to render
-// * **`options`**: Hash with different options to configure the parser
-// * **`indentation`**: Base indentation of the parsed output
-//
-// *Example of options hash:*
-//
-//     {
-//       emptyArrayMsg: '(empty)', // Rendered message on empty strings
-//       keysColor: 'blue',        // Color for keys in hashes
-//       dashColor: 'red',         // Color for the dashes in arrays
-//       stringColor: 'grey',      // Color for strings
-//       defaultIndentation: 2     // Indentation on nested objects
-//     }
-exports.render = function render(data, options, indentation) {
-  // Default values
-  indentation = indentation || 0;
-  options = options || {};
-  options.emptyArrayMsg = options.emptyArrayMsg || '(empty array)';
-  options.keysColor = options.keysColor || 'green';
-  options.dashColor = options.dashColor || 'green';
-  options.numberColor = options.numberColor || 'blue';
-  options.defaultIndentation = options.defaultIndentation || 2;
-  options.noColor = !!options.noColor;
-
-  options.stringColor = options.stringColor || null;
-
-  var output = [];
-
-  // Helper function to detect if an object can be directly serializable
-  var isSerializable = function(input, onlyPrimitives) {
-    if (typeof input === 'boolean' ||
-        typeof input === 'number' || input === null || 
-		input instanceof Date) {
-      return true;
-    }
-    if (typeof input === 'string' && input.indexOf('\n') === -1) {
-      return true;
-    }
-
-    if (options.inlineArrays && !onlyPrimitives) {
-      if (Array.isArray(input) && isSerializable(input[0], true)) {
-        return true;
-      }
-    }
-
-    return false;
-  };
-
-  var indentLines = function(string, spaces){
-    var lines = string.split('\n');
-    lines = lines.map(function(line){
-      return Utils.indent(spaces) + line;
-    });
-    return lines.join('\n');
-  };
-
-  var addColorToData = function(input) {
-    if (options.noColor) {
-      return input;
-    }
-
-    if (typeof input === 'string') {
-      // Print strings in regular terminal color
-      return options.stringColor ? input[options.stringColor] : input;
-    }
-
-    var sInput = input + '';
-
-    if (input === true) {
-      return sInput.green;
-    }
-    if (input === false) {
-      return sInput.red;
-    }
-    if (input === null) {
-      return sInput.grey;
-    }
-    if (typeof input === 'number') {
-      return sInput[options.numberColor];
-    }
-    if (Array.isArray(input)) {
-      return input.join(', ');
-    }
-
-    return sInput;
-  };
-
-  // Render a string exactly equal
-  if (isSerializable(data)) {	
-    output.push(Utils.indent(indentation) + addColorToData(data));
-  }
-  else if (typeof data === 'string') {
-    //unserializable string means it's multiline
-    output.push(Utils.indent(indentation) + '"""');
-    output.push(indentLines(data, indentation + options.defaultIndentation));
-    output.push(Utils.indent(indentation) + '"""');
-  }
-  else if (Array.isArray(data)) {
-    // If the array is empty, render the `emptyArrayMsg`
-    if (data.length === 0) {
-      output.push(Utils.indent(indentation) + options.emptyArrayMsg);
-    } else {
-      data.forEach(function(element) {
-        // Prepend the dash at the begining of each array's element line
-        var line = ('- ');
-        if (!options.noColor) {
-          line = line[options.dashColor];
-        }
-        line = Utils.indent(indentation) + line;
-
-        // If the element of the array is a string, bool, number, or null
-        // render it in the same line
-        if (isSerializable(element)) {
-          line += exports.render(element, options);
-          output.push(line);
-
-        // If the element is an array or object, render it in next line
-        } else {
-          output.push(line);
-          output.push(exports.render(
-            element, options, indentation + options.defaultIndentation
-          ));
-        }
-      });
-    }
-  }
-  else if (typeof data === 'object') {
-    // Get the size of the longest index to align all the values
-    var maxIndexLength = Utils.getMaxIndexLength(data);
-    var key;
-    var isError = data instanceof Error;
-
-    Object.getOwnPropertyNames(data).forEach(function(i) {
-      // Prepend the index at the beginning of the line
-      key = (i + ': ');
-      if (!options.noColor) {
-        key = key[options.keysColor];
-      }
-      key = Utils.indent(indentation) + key;
-
-      // Skip `undefined`, it's not a valid JSON value.
-      if (data[i] === undefined) {
-        return;
-      }
-
-      // If the value is serializable, render it in the same line
-      if (isSerializable(data[i]) && (!isError || i !== 'stack')) {
-        key += exports.render(data[i], options, maxIndexLength - i.length);
-        output.push(key);
-
-        // If the index is an array or object, render it in next line
-      } else {
-        output.push(key);
-        output.push(
-          exports.render(
-            isError && i === 'stack' ? data[i].split('\n') : data[i],
-            options,
-            indentation + options.defaultIndentation
-          )
-        );
-      }
-    });
-  }
-  // Return all the lines as a string
-  return output.join('\n');
-};
-
-// ### Render from string function
-// *Parameters:*
-//
-// * **`data`**: Data to render as a string
-// * **`options`**: Hash with different options to configure the parser
-// * **`indentation`**: Base indentation of the parsed output
-//
-// *Example of options hash:*
-//
-//     {
-//       emptyArrayMsg: '(empty)', // Rendered message on empty strings
-//       keysColor: 'blue',        // Color for keys in hashes
-//       dashColor: 'red',         // Color for the dashes in arrays
-//       defaultIndentation: 2     // Indentation on nested objects
-//     }
-exports.renderString = function renderString(data, options, indentation) {
-
-  var output = '';
-  var parsedData;
-  // If the input is not a string or if it's empty, just return an empty string
-  if (typeof data !== 'string' || data === '') {
-    return '';
-  }
-
-  // Remove non-JSON characters from the beginning string
-  if (data[0] !== '{' && data[0] !== '[') {
-    var beginingOfJson;
-    if (data.indexOf('{') === -1) {
-      beginingOfJson = data.indexOf('[');
-    } else if (data.indexOf('[') === -1) {
-      beginingOfJson = data.indexOf('{');
-    } else if (data.indexOf('{') < data.indexOf('[')) {
-      beginingOfJson = data.indexOf('{');
-    } else {
-      beginingOfJson = data.indexOf('[');
-    }
-    output += data.substr(0, beginingOfJson) + '\n';
-    data = data.substr(beginingOfJson);
-  }
-
-  try {
-    parsedData = JSON.parse(data);
-  } catch (e) {
-    // Return an error in case of an invalid JSON
-    return 'Error:'.red + ' Not valid JSON!';
-  }
-
-  // Call the real render() method
-  output += exports.render(parsedData, options, indentation);
-  return output;
-};
-
-},{"../package.json":23,"./utils":21,"colors":22}],21:[function(require,module,exports){
-'use strict';
-
-/**
- * Creates a string with the same length as `numSpaces` parameter
- **/
-exports.indent = function indent(numSpaces) {
-  return new Array(numSpaces+1).join(' ');
-};
-
-/**
- * Gets the string length of the longer index in a hash
- **/
-exports.getMaxIndexLength = function(input) {
-  var maxWidth = 0;
-
-  Object.getOwnPropertyNames(input).forEach(function(key) {
-    maxWidth = Math.max(maxWidth, key.length);
-  });
-  return maxWidth;
-};
-
-},{}],22:[function(require,module,exports){
-/*
-colors.js
-
-Copyright (c) 2010
-
-Marak Squires
-Alexis Sellier (cloudhead)
-
-Permission is hereby granted, free of charge, to any person obtaining a copy
-of this software and associated documentation files (the "Software"), to deal
-in the Software without restriction, including without limitation the rights
-to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
-copies of the Software, and to permit persons to whom the Software is
-furnished to do so, subject to the following conditions:
-
-The above copyright notice and this permission notice shall be included in
-all copies or substantial portions of the Software.
-
-THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
-IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
-AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
-OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
-THE SOFTWARE.
-
-*/
-
-var isHeadless = false;
-
-if (typeof module !== 'undefined') {
-  isHeadless = true;
-}
-
-if (!isHeadless) {
-  var exports = {};
-  var module = {};
-  var colors = exports;
-  exports.mode = "browser";
-} else {
-  exports.mode = "console";
-}
-
-//
-// Prototypes the string object to have additional method calls that add terminal colors
-//
-var addProperty = function (color, func) {
-  exports[color] = function (str) {
-    return func.apply(str);
-  };
-  String.prototype.__defineGetter__(color, func);
-};
-
-function stylize(str, style) {
-
-  var styles;
-
-  if (exports.mode === 'console') {
-    styles = {
-      //styles
-      'bold'      : ['\x1B[1m',  '\x1B[22m'],
-      'italic'    : ['\x1B[3m',  '\x1B[23m'],
-      'underline' : ['\x1B[4m',  '\x1B[24m'],
-      'inverse'   : ['\x1B[7m',  '\x1B[27m'],
-      'strikethrough' : ['\x1B[9m',  '\x1B[29m'],
-      //text colors
-      //grayscale
-      'white'     : ['\x1B[37m', '\x1B[39m'],
-      'grey'      : ['\x1B[90m', '\x1B[39m'],
-      'black'     : ['\x1B[30m', '\x1B[39m'],
-      //colors
-      'blue'      : ['\x1B[34m', '\x1B[39m'],
-      'cyan'      : ['\x1B[36m', '\x1B[39m'],
-      'green'     : ['\x1B[32m', '\x1B[39m'],
-      'magenta'   : ['\x1B[35m', '\x1B[39m'],
-      'red'       : ['\x1B[31m', '\x1B[39m'],
-      'yellow'    : ['\x1B[33m', '\x1B[39m'],
-      //background colors
-      //grayscale
-      'whiteBG'     : ['\x1B[47m', '\x1B[49m'],
-      'greyBG'      : ['\x1B[49;5;8m', '\x1B[49m'],
-      'blackBG'     : ['\x1B[40m', '\x1B[49m'],
-      //colors
-      'blueBG'      : ['\x1B[44m', '\x1B[49m'],
-      'cyanBG'      : ['\x1B[46m', '\x1B[49m'],
-      'greenBG'     : ['\x1B[42m', '\x1B[49m'],
-      'magentaBG'   : ['\x1B[45m', '\x1B[49m'],
-      'redBG'       : ['\x1B[41m', '\x1B[49m'],
-      'yellowBG'    : ['\x1B[43m', '\x1B[49m']
-    };
-  } else if (exports.mode === 'browser') {
-    styles = {
-      //styles
-      'bold'      : ['<b>',  '</b>'],
-      'italic'    : ['<i>',  '</i>'],
-      'underline' : ['<u>',  '</u>'],
-      'inverse'   : ['<span style="background-color:black;color:white;">',  '</span>'],
-      'strikethrough' : ['<del>',  '</del>'],
-      //text colors
-      //grayscale
-      'white'     : ['<span style="color:white;">',   '</span>'],
-      'grey'      : ['<span style="color:gray;">',    '</span>'],
-      'black'     : ['<span style="color:black;">',   '</span>'],
-      //colors
-      'blue'      : ['<span style="color:blue;">',    '</span>'],
-      'cyan'      : ['<span style="color:cyan;">',    '</span>'],
-      'green'     : ['<span style="color:green;">',   '</span>'],
-      'magenta'   : ['<span style="color:magenta;">', '</span>'],
-      'red'       : ['<span style="color:red;">',     '</span>'],
-      'yellow'    : ['<span style="color:yellow;">',  '</span>'],
-      //background colors
-      //grayscale
-      'whiteBG'     : ['<span style="background-color:white;">',   '</span>'],
-      'greyBG'      : ['<span style="background-color:gray;">',    '</span>'],
-      'blackBG'     : ['<span style="background-color:black;">',   '</span>'],
-      //colors
-      'blueBG'      : ['<span style="background-color:blue;">',    '</span>'],
-      'cyanBG'      : ['<span style="background-color:cyan;">',    '</span>'],
-      'greenBG'     : ['<span style="background-color:green;">',   '</span>'],
-      'magentaBG'   : ['<span style="background-color:magenta;">', '</span>'],
-      'redBG'       : ['<span style="background-color:red;">',     '</span>'],
-      'yellowBG'    : ['<span style="background-color:yellow;">',  '</span>']
-    };
-  } else if (exports.mode === 'none') {
-    return str + '';
-  } else {
-    console.log('unsupported mode, try "browser", "console" or "none"');
-  }
-  return styles[style][0] + str + styles[style][1];
-}
-
-function applyTheme(theme) {
-
-  //
-  // Remark: This is a list of methods that exist
-  // on String that you should not overwrite.
-  //
-  var stringPrototypeBlacklist = [
-    '__defineGetter__', '__defineSetter__', '__lookupGetter__', '__lookupSetter__', 'charAt', 'constructor',
-    'hasOwnProperty', 'isPrototypeOf', 'propertyIsEnumerable', 'toLocaleString', 'toString', 'valueOf', 'charCodeAt',
-    'indexOf', 'lastIndexof', 'length', 'localeCompare', 'match', 'replace', 'search', 'slice', 'split', 'substring',
-    'toLocaleLowerCase', 'toLocaleUpperCase', 'toLowerCase', 'toUpperCase', 'trim', 'trimLeft', 'trimRight'
-  ];
-
-  Object.keys(theme).forEach(function (prop) {
-    if (stringPrototypeBlacklist.indexOf(prop) !== -1) {
-      console.log('warn: '.red + ('String.prototype' + prop).magenta + ' is probably something you don\'t want to override. Ignoring style name');
-    }
-    else {
-      if (typeof(theme[prop]) === 'string') {
-        addProperty(prop, function () {
-          return exports[theme[prop]](this);
-        });
-      }
-      else {
-        addProperty(prop, function () {
-          var ret = this;
-          for (var t = 0; t < theme[prop].length; t++) {
-            ret = exports[theme[prop][t]](ret);
-          }
-          return ret;
-        });
-      }
-    }
-  });
-}
-
-
-//
-// Iterate through all default styles and colors
-//
-var x = ['bold', 'underline', 'strikethrough', 'italic', 'inverse', 'grey', 'black', 'yellow', 'red', 'green', 'blue', 'white', 'cyan', 'magenta', 'greyBG', 'blackBG', 'yellowBG', 'redBG', 'greenBG', 'blueBG', 'whiteBG', 'cyanBG', 'magentaBG'];
-x.forEach(function (style) {
-
-  // __defineGetter__ at the least works in more browsers
-  // http://robertnyman.com/javascript/javascript-getters-setters.html
-  // Object.defineProperty only works in Chrome
-  addProperty(style, function () {
-    return stylize(this, style);
-  });
-});
-
-function sequencer(map) {
-  return function () {
-    if (!isHeadless) {
-      return this.replace(/( )/, '$1');
-    }
-    var exploded = this.split(""), i = 0;
-    exploded = exploded.map(map);
-    return exploded.join("");
-  };
-}
-
-var rainbowMap = (function () {
-  var rainbowColors = ['red', 'yellow', 'green', 'blue', 'magenta']; //RoY G BiV
-  return function (letter, i, exploded) {
-    if (letter === " ") {
-      return letter;
-    } else {
-      return stylize(letter, rainbowColors[i++ % rainbowColors.length]);
-    }
-  };
-})();
-
-exports.themes = {};
-
-exports.addSequencer = function (name, map) {
-  addProperty(name, sequencer(map));
-};
-
-exports.addSequencer('rainbow', rainbowMap);
-exports.addSequencer('zebra', function (letter, i, exploded) {
-  return i % 2 === 0 ? letter : letter.inverse;
-});
-
-exports.setTheme = function (theme) {
-  if (typeof theme === 'string') {
-    try {
-      exports.themes[theme] = require(theme);
-      applyTheme(exports.themes[theme]);
-      return exports.themes[theme];
-    } catch (err) {
-      console.log(err);
-      return err;
-    }
-  } else {
-    applyTheme(theme);
-  }
-};
-
-
-addProperty('stripColors', function () {
-  return ("" + this).replace(/\x1B\[\d+m/g, '');
-});
-
-// please no
-function zalgo(text, options) {
-  var soul = {
-    "up" : [
-      '̍', '̎', '̄', '̅',
-      '̿', '̑', '̆', '̐',
-      '͒', '͗', '͑', '̇',
-      '̈', '̊', '͂', '̓',
-      '̈', '͊', '͋', '͌',
-      '̃', '̂', '̌', '͐',
-      '̀', '́', '̋', '̏',
-      '̒', '̓', '̔', '̽',
-      '̉', 'ͣ', 'ͤ', 'ͥ',
-      'ͦ', 'ͧ', 'ͨ', 'ͩ',
-      'ͪ', 'ͫ', 'ͬ', 'ͭ',
-      'ͮ', 'ͯ', '̾', '͛',
-      '͆', '̚'
-    ],
-    "down" : [
-      '̖', '̗', '̘', '̙',
-      '̜', '̝', '̞', '̟',
-      '̠', '̤', '̥', '̦',
-      '̩', '̪', '̫', '̬',
-      '̭', '̮', '̯', '̰',
-      '̱', '̲', '̳', '̹',
-      '̺', '̻', '̼', 'ͅ',
-      '͇', '͈', '͉', '͍',
-      '͎', '͓', '͔', '͕',
-      '͖', '͙', '͚', '̣'
-    ],
-    "mid" : [
-      '̕', '̛', '̀', '́',
-      '͘', '̡', '̢', '̧',
-      '̨', '̴', '̵', '̶',
-      '͜', '͝', '͞',
-      '͟', '͠', '͢', '̸',
-      '̷', '͡', ' ҉'
-    ]
-  },
-  all = [].concat(soul.up, soul.down, soul.mid),
-  zalgo = {};
-
-  function randomNumber(range) {
-    var r = Math.floor(Math.random() * range);
-    return r;
-  }
-
-  function is_char(character) {
-    var bool = false;
-    all.filter(function (i) {
-      bool = (i === character);
-    });
-    return bool;
-  }
-
-  function heComes(text, options) {
-    var result = '', counts, l;
-    options = options || {};
-    options["up"] = options["up"] || true;
-    options["mid"] = options["mid"] || true;
-    options["down"] = options["down"] || true;
-    options["size"] = options["size"] || "maxi";
-    text = text.split('');
-    for (l in text) {
-      if (is_char(l)) {
-        continue;
-      }
-      result = result + text[l];
-      counts = {"up" : 0, "down" : 0, "mid" : 0};
-      switch (options.size) {
-      case 'mini':
-        counts.up = randomNumber(8);
-        counts.min = randomNumber(2);
-        counts.down = randomNumber(8);
-        break;
-      case 'maxi':
-        counts.up = randomNumber(16) + 3;
-        counts.min = randomNumber(4) + 1;
-        counts.down = randomNumber(64) + 3;
-        break;
-      default:
-        counts.up = randomNumber(8) + 1;
-        counts.mid = randomNumber(6) / 2;
-        counts.down = randomNumber(8) + 1;
-        break;
-      }
-
-      var arr = ["up", "mid", "down"];
-      for (var d in arr) {
-        var index = arr[d];
-        for (var i = 0 ; i <= counts[index]; i++) {
-          if (options[index]) {
-            result = result + soul[index][randomNumber(soul[index].length)];
-          }
-        }
-      }
-    }
-    return result;
-  }
-  return heComes(text);
-}
-
-
-// don't summon zalgo
-addProperty('zalgo', function () {
-  return zalgo(this);
-});
-
-},{}],23:[function(require,module,exports){
-module.exports={
-  "author": {
-    "name": "Rafael de Oleza",
-    "email": "rafeca@gmail.com",
-    "url": "https://github.com/rafeca"
-  },
-  "name": "prettyjson",
-  "description": "Package for formatting JSON data in a coloured YAML-style, perfect for CLI output",
-  "version": "1.1.0",
-  "homepage": "http://rafeca.com/prettyjson",
-  "keywords": [
-    "json",
-    "cli",
-    "formatting",
-    "colors"
-  ],
-  "repository": {
-    "type": "git",
-    "url": "https://github.com/rafeca/prettyjson.git"
-  },
-  "bugs": {
-    "url": "https://github.com/rafeca/prettyjson/issues"
-  },
-  "main": "./lib/prettyjson",
-  "scripts": {
-    "test": "npm run jshint && mocha --reporter spec",
-    "testwin": "node ./node_modules/mocha/bin/mocha --reporter spec",
-    "jshint": "jshint lib/*.js",
-    "coverage": "istanbul cover _mocha --report lcovonly -- -R spec",
-    "coveralls": "npm run coverage && cat ./coverage/lcov.info | coveralls && rm -rf ./coverage",
-    "changelog": "git log $(git describe --tags --abbrev=0)..HEAD --pretty='* %s' --first-parent"
-  },
-  "bin": {
-    "prettyjson": "./bin/prettyjson"
-  },
-  "engines": {
-    "node": ">= 0.10.0 < 0.12.0"
-  },
-  "dependencies": {
-    "colors": "0.6.2",
-    "minimist": "0.0.8"
-  },
-  "devDependencies": {
-    "mocha": "^1.18.2",
-    "should": "^3.1.4",
-    "jshint": "^2.4.4",
-    "getversion": "~0.1.1",
-    "istanbul": "~0.2.4",
-    "coveralls": "^2.10.0",
-    "mocha-lcov-reporter": "0.0.1"
-  },
-  "gitHead": "5ab0755baae84985f094d27ad0332d6437f34e86",
-  "_id": "prettyjson@1.1.0",
-  "_shasum": "de1bc2711a5b7b7a944c217849ec65f299bd4751",
-  "_from": "prettyjson@>=1.0.0 <2.0.0",
-  "_npmVersion": "2.4.1",
-  "_nodeVersion": "0.10.32",
-  "_npmUser": {
-    "name": "rafeca",
-    "email": "rafeca@gmail.com"
-  },
-  "maintainers": [
-    {
-      "name": "rafeca",
-      "email": "rafeca@gmail.com"
-    }
-  ],
-  "dist": {
-    "shasum": "de1bc2711a5b7b7a944c217849ec65f299bd4751",
-    "tarball": "http://registry.npmjs.org/prettyjson/-/prettyjson-1.1.0.tgz"
-  },
-  "directories": {},
-  "_resolved": "https://registry.npmjs.org/prettyjson/-/prettyjson-1.1.0.tgz"
-}
-
-},{}],24:[function(require,module,exports){
 //     Validate.js 0.7.0
 
 //     (c) 2013-2015 Nicklas Ansman, 2013 Wrapp

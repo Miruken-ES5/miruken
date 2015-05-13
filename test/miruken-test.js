@@ -104,6 +104,16 @@ describe("Enum", function () {
     });
 });
 
+describe("NullThenable", function () {
+    it("should ignore then", function () {
+        NullThenable.then(function () {
+            throw new Error("Should not be called");
+        }, function () {
+            throw new Error("Should not be called");
+        });
+    });
+});
+
 describe("$meta", function () {
     it("should have class metadata", function () {
         expect(Dog.$meta).to.be.ok;

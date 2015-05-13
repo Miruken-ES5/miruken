@@ -41,7 +41,7 @@ module.exports = function(grunt) {
       },
       debug: {
         files: {
-           'debug/miruken-tests.js':  ['test/miruken-test.js']
+           'debug/miruken-tests.js':  ['test/callback-test.js']
            //'debug/miruken-tests.js':     ['test/**/*.js']
         }
       }
@@ -106,7 +106,7 @@ module.exports = function(grunt) {
 
   //Test task.
   grunt.registerTask('test',   ['concurrent:test']);
-  grunt.registerTask('build',  ['browserify:dist','copy:main', 'karma:dist']);
+  grunt.registerTask('build',  ['minify','copy:main', 'karma:dist']);
   grunt.registerTask('debug',  ['browserify:debug','karma:debug']);
   grunt.registerTask("minify", ['browserify:dist', 'uglify']);
   grunt.registerTask("docs",   ['yuidoc']);

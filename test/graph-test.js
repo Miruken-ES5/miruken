@@ -205,19 +205,21 @@ describe("Traversing", function () {
             expect(visited).to.eql([child3_1, child1, child2, child3, root]);
         });
 
-        it("should traverse parent, siblings or self", function () {
+        it("should traverse ancestor, siblings or self", function () {
             var root     = new TreeNode('root'),
+                parent   = new TreeNode('parent'),
                 child1   = new TreeNode('child 1'),
                 child2   = new TreeNode('child 2'),
                 child3   = new TreeNode('child 3'),
                 child3_1 = new TreeNode('child 3 1'),
                 visited  = [];
             child3.addChild(child3_1);
-            root.addChild(child1, child2, child3);
-            child3.traverse(TraversingAxis.ParentSiblingOrSelf, function (node) {
+            parent.addChild(child1, child2, child3);
+            root.addChild(parent);
+            child3.traverse(TraversingAxis.AncestorSiblingOrSelf, function (node) {
                 visited.push(node);
             });
-            expect(visited).to.eql([child3, child1, child2, root]);
+            expect(visited).to.eql([child3, child1, child2, parent, root]);
         });
 
         it("should detect circular references", function () {

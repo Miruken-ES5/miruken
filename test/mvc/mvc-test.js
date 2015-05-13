@@ -72,7 +72,7 @@ describe("Model", function () {
             expect(person.hobbies).to.eql(['Soccer', 'Tennis']);
         });
 
-        it("should construct model from state", function () {
+        it("should construct model from data", function () {
             var person = new Person({
                 firstName: 'Carl',
                 lastName:  'Lewis'
@@ -80,25 +80,139 @@ describe("Model", function () {
             expect(person.firstName).to.equal('Carl');
             expect(person.lastName).to.equal('Lewis');
         });
+    });
 
-        it("should pluck all data from model", function () {
-            var person = new Person({
-                firstName: 'Lionel',
-                lastName:  'Messi',
-                age:       24
+    describe("#fromData", function () {
+        it("should import from data", function () {
+            var person = new Person;
+            person.fromData({
+                firstName: 'David',
+                lastName:  'Beckham'
             });
-            var data = person.pluck('firstName');
-            expect(data).to.eql({firstName: 'Lionel'});
-            data     = person.pluck('firstName', 'lastName');
-            expect(data).to.eql({firstName: 'Lionel', lastName: 'Messi'});
-            data = person.pluck('fullName');
-            expect(data).to.eql({fullName: undefined});
+            expect(person.firstName).to.equal('David');
+            expect(person.lastName).to.equal('Beckham');
+        });
+    });
+
+    describe("#toData", function () {
+        it("should export all data", function () {
+            var person = new Person({
+                   firstName: 'Christiano',
+                   lastName:  'Ronaldo',
+                   age:       23
+                }),
+                data = person.toData();
+            expect(data).to.eql({
+                firstName: 'Christiano',
+                lastName:  'Ronaldo',
+                hobbies:   undefined,
+                age:       23
+            });
+        });
+
+        it("should export partial data", function () {
+            var person = new Person({
+                    firstName: 'Christiano',
+                    lastName:  'Ronaldo',
+                    age:       23
+                }),
+                data = person.toData({lastName: true});
+            expect(data).to.eql({
+                lastName: 'Ronaldo'
+            });
+        });
+        
+        it("should export nested data", function () {
+            var person = new Person({
+                    firstName: 'Lionel',
+                    lastName:  'Messi',
+                    age:       24
+                }),
+                doctor = new Doctor({
+                    firstName: 'Mitchell',
+                    lastName:  'Moskowitz',
+                });
+            doctor.patient = person;
+            expect(doctor.toData()).to.eql({
+                firstName: 'Mitchell',
+                lastName:  'Moskowitz',
+                hobbies:   undefined,
+                age:       0,
+                patient: {
+                    firstName: 'Lionel',
+                    lastName:  'Messi',
+                    hobbies:   undefined,
+                    age:       24
+                }
+            });
+        });
+
+        it("should export partial nested data", function () {
+            var person = new Person({
+                    firstName: 'Lionel',
+                    lastName:  'Messi',
+                    age:       24
+                }),
+                doctor = new Doctor({
+                    firstName: 'Mitchell',
+                    lastName:  'Moskowitz',
+                });
+            doctor.patient = person;
+            var data = doctor.toData({
+                patient: {
+                    lastName: true,
+                    age: true
+                }
+            });
+            expect(data).to.eql({
+                patient: {
+                    lastName:  'Messi',
+                    age:       24
+                }
+            });
+        });
+
+        it("should export rooted data", function () {
+            var PersonWrapper = Model.extend({
+                    $properties: {
+                        person: { map: Person, root: true }
+                    }
+                }),
+                wrapper = new PersonWrapper({
+                    firstName: 'Franck',
+                    lastName:  'Ribery',
+                    age:       32
+                });
+            expect(wrapper.person.firstName).to.equal('Franck');
+            expect(wrapper.person.lastName).to.equal('Ribery');
+            expect(wrapper.toData()).to.eql({
+                firstName: 'Franck',
+                lastName:  'Ribery',
+                hobbies:   undefined,
+                age:       32
+            });
+        });
+
+        it("should export partial rooted data", function () {
+            var PersonWrapper = Model.extend({
+                    $properties: {
+                        person: { map: Person, root: true }
+                    }
+                }),
+                wrapper = new PersonWrapper({
+                    firstName: 'Franck',
+                    lastName:  'Ribery',
+                    age:       32
+                });
+            expect(wrapper.toData({person: { age: true }})).to.eql({
+                age: 32
+            });
         });
     });
 
     describe("#map", function () {
         it("should map one-to-one", function () {
-            var state = {
+            var data = {
                 firstName: 'Daniel',
                 lastName:  'Worrel',
                 patient:   {
@@ -106,7 +220,7 @@ describe("Model", function () {
                     lastName:  'Smith'
                 }
             }
-            var doctor  = new Doctor(state),
+            var doctor  = new Doctor(data),
                 patient = doctor.patient; 
             expect(doctor.firstName).to.equal('Daniel');
             expect(doctor.lastName).to.equal('Worrel');
@@ -116,7 +230,7 @@ describe("Model", function () {
         });
 
         it("should map one-to-many", function () {
-            var state = {
+            var data = {
                 firstName: 'Daniel',
                 lastName:  'Worrel',
                 patient:   [{
@@ -127,7 +241,7 @@ describe("Model", function () {
                     lastName:  'Romo'
                 }]  
             }
-            var doctor   = new Doctor(state),
+            var doctor   = new Doctor(data),
                 patients = doctor.patient; 
             expect(doctor.firstName).to.equal('Daniel');
             expect(doctor.lastName).to.equal('Worrel');
@@ -140,17 +254,17 @@ describe("Model", function () {
         });
 
         it("should ignore case", function () {
-            var state = {
+            var data = {
                 fiRstNamE: 'Bruce',
                 LaStNaMe:  'Lee'
             }
-            var person = new Person(state);
+            var person = new Person(data);
             expect(person.firstName).to.equal('Bruce');
             expect(person.lastName).to.equal('Lee');
         });
 
         it("should preserve grouping", function () {
-            var state = {
+            var data = {
                 patient:   [[{
                     firstName: 'Abbot',
                     }, {
@@ -161,7 +275,7 @@ describe("Model", function () {
                     }]
                 ]  
             }
-            var doctor = new Doctor(state),
+            var doctor = new Doctor(data),
                 group1 = doctor.patient[0],
                 group2 = doctor.patient[1];
             expect(group1[0].firstName).to.equal('Abbot');
@@ -175,11 +289,11 @@ describe("Model", function () {
                     person: { map: Person, root: true }
                 }
             }),
-                state = {
+                data = {
                     firstName: 'Henry',
                     lastName:  'Ford'
             }
-            var model = new PersonModel(state);
+            var model = new PersonModel(data);
             expect(model.person.firstName).to.equal('Henry');
             expect(model.person.lastName).to.equal('Ford');
         });
