@@ -1405,14 +1405,14 @@ describe("InvocationCallbackHandler", function () {
                 level1    = new Level1Security,
                 casino    = new Casino('Treasure Island')
                 .addHandlers(level1, letItRide);
-            expect(Security(casino.bestEffort()).trackActivity(letItRide)).to.be.undefined;
+            expect(Security(casino.$bestEffort()).trackActivity(letItRide)).to.be.undefined;
         });
 
         it("should require protocol conformance", function () {
             var gate  = new (CallbackHandler.extend(Security, {
                     admit: function (guest) { return true; }
                 }));
-            expect(Security(gate.strict()).admit(new Guest('Me'))).to.be.true;
+            expect(Security(gate.$strict()).admit(new Guest('Me'))).to.be.true;
         });
 
         it("should reject if no protocol conformance", function () {
@@ -1420,7 +1420,7 @@ describe("InvocationCallbackHandler", function () {
                     admit: function (guest) { return true; }
                 }));
             expect(function () {
-                Security(gate.strict()).admit(new Guest('Me'))
+                Security(gate.$strict()).admit(new Guest('Me'))
             }).to.throw(Error, /has no method 'admit'/);
         });
 
@@ -1430,7 +1430,7 @@ describe("InvocationCallbackHandler", function () {
                 level2    = new Level2Security,
                 casino    = new Casino('Treasure Island')
                 .addHandlers(level1, level2, letItRide);
-            Security(casino.broadcast()).trackActivity(letItRide);
+            Security(casino.$broadcast()).trackActivity(letItRide);
         });
 
         it("can notify invocations", function () {
@@ -1438,7 +1438,7 @@ describe("InvocationCallbackHandler", function () {
                 level1    = new Level1Security,
                 casino    = new Casino('Treasure Island')
                 .addHandlers(level1, letItRide);
-            Security(casino.notify()).trackActivity(letItRide);
+            Security(casino.$notify()).trackActivity(letItRide);
         });
     })
 });
@@ -1482,20 +1482,24 @@ describe("AspectCallbackHandler", function () {
                 casino     = new Casino('Venetian').addHandlers(cashier),
                 wireMoney  = new WireMoney(250000);
             Promise.resolve(casino.aspect(function () {
-                setTimeout(done, 2);
                 return Promise.resolve(false);
             }).defer(wireMoney)).then(function (handled) {
                 throw new Error("Should not get here");
+            }, function (error) {
+                expect(error).to.be.instanceOf(RejectedError);
+                done();
             });
         });
 
         it("should ignore async invocation", function (done) {
             var level2 = CallbackHandler(new Level2Security);
             Security(level2.aspect(function () {
-                setTimeout(done, 2);
                 return Promise.resolve(false);
             })).scan().then(function (scanned) {
                 throw new Error("Should not get here");
+            }, function (error) {
+                expect(error).to.be.instanceOf(RejectedError);
+                done();
             });
         });
 

@@ -1720,7 +1720,7 @@ new function () { // closure
         version: miruken.version,
         parent:  miruken,
         imports: "miruken",
-        exports: "CallbackHandler,CallbackHandlerDecorator,CallbackHandlerFilter,CallbackHandlerAspect,CascadeCallbackHandler,CompositeCallbackHandler,ConditionalCallbackHandler,AcceptingCallbackHandler,ProvidingCallbackHandler,MethodCallbackHandler,InvocationOptions,Resolution,HandleMethod,getEffectivePromise,$handle,$callbacks,$define,$provide,$lookup,$NOT_HANDLED"
+        exports: "CallbackHandler,CallbackHandlerDecorator,CallbackHandlerFilter,CallbackHandlerAspect,CascadeCallbackHandler,CompositeCallbackHandler,ConditionalCallbackHandler,AcceptingCallbackHandler,ProvidingCallbackHandler,MethodCallbackHandler,InvocationOptions,Resolution,HandleMethod,RejectedError,getEffectivePromise,$handle,$callbacks,$define,$provide,$lookup,$NOT_HANDLED"
     });
 
     eval(this.imports);
@@ -1730,12 +1730,6 @@ new function () { // closure
         $provide     = $define('$provide', Variance.Covariant),
         $lookup      = $define('$lookup' , Variance.Invariant),
         $NOT_HANDLED = {};
-
-    /**
-     * Definition goes here {Protocol}
-     * @class InternalCallback
-     */
-    var InternalCallback = Protocol.extend();
 
     /**
      * Metamacro to register callback definitions.
@@ -1935,6 +1929,20 @@ new function () { // closure
 
     /**
      * Definition goes here
+     * @class Reentrant
+     * @constructor
+     * @extends Base
+     */
+    var Reentrant = Base.extend({
+        constructor: function (callback) {
+            this.extend({
+                getCallback: function () { return callback; },
+            });
+        }
+    });
+
+    /**
+     * Definition goes here
      * @class CallbackHandler
      * @constructor
      * @extends Base
@@ -1991,6 +1999,9 @@ new function () { // closure
             },
             HandleMethod, function (method, composer) {
                 return method.invokeOn(this.delegate, composer) || method.invokeOn(this, composer);
+            },
+            Reentrant, function (reentrant, composer) {
+                return $handle.dispatch(this, reentrant.getCallback(), null, composer);
             }
         ],
         toDelegate: function () { return new InvocationDelegate(this); }
@@ -2000,6 +2011,25 @@ new function () { // closure
 
     Base.implement({
         toCallbackHandler: function () { return CallbackHandler(this); }
+    });
+
+    /**
+     * Definition goes here
+     * @class ReentrantCallbackHandler
+     * @constructor
+     * @extends CallbackHandler
+     */
+    var ReentrantCallbackHandler = CallbackHandler.extend({
+        constructor: function _(handler) {
+            this.extend({
+                handleCallback: function (callback, greedy, composer) {
+                    if (!(callback instanceof Reentrant)) {
+                        callback = new Reentrant(callback);
+                    }
+                    return handler.handleCallback(callback, greedy, composer);
+                }
+            });                        
+        }
     });
 
     /**
@@ -2020,7 +2050,7 @@ new function () { // closure
             this.decoratee = decoratee;
         },
         handleCallback: function (callback, greedy, composer) {
-            return this.decoratee.handle(callback, greedy, composer)
+            return this.decoratee.handleCallback(callback, greedy, composer)
                 || this.base(callback, greedy, composer);
         }
     });
@@ -2046,17 +2076,31 @@ new function () { // closure
         },
         handleCallback: function (callback, greedy, composer) {
             var decoratee = this.decoratee;
-            if (InternalCallback.adoptedBy(callback)) {
-                return decoratee.handle(callback, greedy);
+            if (callback instanceof Reentrant) {
+                return decoratee.handleCallback(callback, greedy, composer);
             }
             if (composer == this) {
-                composer = decoratee;
+                composer = new ReentrantCallbackHandler(composer);
             }
             return this._filter(callback, composer, function () {
-                    return decoratee.handle(callback, greedy);
+                return decoratee.handleCallback(callback, greedy, composer);
             })
         }
-    });
+    });                                                                   
+
+    /**
+     * Definition goes here
+     * @class RejectedError
+     */
+    function RejectedError() {
+        if (Error.captureStackTrace) {
+            Error.captureStackTrace(this, this.constructor);
+        } else {
+            Error.call(this);
+        }
+    }
+    RejectedError.prototype             = new Error;
+    RejectedError.prototype.constructor = RejectedError;
 
     /**
      * Definition goes here
@@ -2068,16 +2112,16 @@ new function () { // closure
         constructor: function (decoratee, before, after) {
             this.base(decoratee, function (callback, composer, proceed) {
                 if ($isFunction(before)) {
-                    var test = before(callback, composer);
+                    var test     = before(callback, composer),
+                        isMethod = callback instanceof HandleMethod;
                     if ($isPromise(test)) {
-                        var isMethod = callback instanceof HandleMethod,
-                            accept = test.then(function (accepted) {
-                                if (accepted !== false) {
-                                    _aspectProceed(callback, composer, proceed);
-                                    return isMethod ? method.getReturnValue() : true;
-                                }
-                                return NullThenable;
-                            });
+                        var accept = test.then(function (accepted) {
+                            if (accepted !== false) {
+                                _aspectProceed(callback, composer, proceed);
+                                return isMethod ? method.getReturnValue() : true;
+                            }
+                            return Promise.reject(new RejectedError);
+                        });
                         if (isMethod) {
                             callback.setReturnValue(accept);
                         } else if (callback instanceof Deferred) {
@@ -2087,7 +2131,7 @@ new function () { // closure
                     } else if (test === false) {
                         return true;
                     }
-                }                    
+                }
                 return _aspectProceed(callback, composer, proceed, after);
             });
         }
@@ -2138,10 +2182,10 @@ new function () { // closure
         },
         handleCallback: function (callback, greedy, composer) {
             var handled = greedy
-                ? (this.handler.handle(callback, true, composer)
-                   | this.cascadeToHandler.handle(callback, true, composer))
-                : (this.handler.handle(callback, false, composer)
-                   || this.cascadeToHandler.handle(callback, false, composer));
+                ? (this.handler.handleCallback(callback, true, composer)
+                   | this.cascadeToHandler.handleCallback(callback, true, composer))
+                : (this.handler.handleCallback(callback, false, composer)
+                   || this.cascadeToHandler.handleCallback(callback, false, composer));
             if (!handled || greedy) {
                 handled = this.base(callback, greedy, composer) || handled;
             }
@@ -2189,7 +2233,7 @@ new function () { // closure
                         count   = _handlers.length;
                     for (var idx = 0; idx < count; ++idx) {
                         var handler = _handlers[idx];
-                        if (handler.handle(callback, greedy, composer)) {
+                        if (handler.handleCallback(callback, greedy, composer)) {
                             if (!greedy) {
                                 return true;
                             }
@@ -2334,7 +2378,7 @@ new function () { // closure
      * @constructor
      * @extends Base
      */
-    var InvocationSemantics = Base.extend(InternalCallback, {
+    var InvocationSemantics = Base.extend({
         constructor: function (options) {
             var _options   = options || InvocationOptions.None,
                 _specified = _options;
@@ -2381,11 +2425,14 @@ new function () { // closure
             delete spec.value;
         },
         handleCallback: function (callback, greedy, composer) {
+            if (callback instanceof Reentrant) {
+                callback = callback.getCallback();
+            }
             if (callback instanceof InvocationSemantics) {
                 this.semantics.mergeInto(callback);
                 return true;
             }
-            return this.handler.handle(callback, greedy, composer);
+            return this.handler.handleCallback(callback, greedy, composer);
         }
     });
 
@@ -2416,7 +2463,7 @@ new function () { // closure
     function _delegateInvocation(delegate, type, protocol, methodName, args, strict) {
         var handler   = delegate.handler, 
             semantics = new InvocationSemantics;
-        handler.handle(semantics, true);
+        handler.handle(new Reentrant(semantics), true);
         strict  = !!(strict | semantics.getOption(InvocationOptions.Strict));
         var broadcast    = semantics.getOption(InvocationOptions.Broadcast),
             bestEffort   = semantics.getOption(InvocationOptions.BestEffort),
@@ -2428,11 +2475,11 @@ new function () { // closure
     }
 
     CallbackHandler.implement({
-        strict: function () { return this.callOptions(InvocationOptions.Strict); },
-        broadcast: function () { return this.callOptions(InvocationOptions.Broadcast); },
-        bestEffort: function () { return this.callOptions(InvocationOptions.BestEffort); },
-        notify: function () { return this.callOptions(InvocationOptions.Notify); },
-        callOptions: function (options) { return new InvocationOptionsHandler(this, options); }
+        $strict: function () { return this.$callOptions(InvocationOptions.Strict); },
+        $broadcast: function () { return this.$callOptions(InvocationOptions.Broadcast); },
+        $bestEffort: function () { return this.$callOptions(InvocationOptions.BestEffort); },
+        $notify: function () { return this.$callOptions(InvocationOptions.Notify); },
+        $callOptions: function (options) { return new InvocationOptionsHandler(this, options); }
     });
 
     CallbackHandler.implement({
@@ -3251,10 +3298,10 @@ new function() { // closure
      * @protocol {Errors}
      */
     var Errors = Protocol.extend({
-        handleError:     function(error,     context) {},
-        handleException: function(exception, context) {},
-        reportError:     function(error,     context) {},
-        reportException: function(exception, context) {}
+        handleError:     function (error,     context) {},
+        handleException: function (exception, context) {},
+        reportError:     function (error,     context) {},
+        reportException: function (exception, context) {}
     });
 
     /**
@@ -3267,7 +3314,7 @@ new function() { // closure
          * @param   {Any}          [context]  - scope of error
          * @returns {Promise(Any)} the handled error.
          */
-        handleError: function(error, context) {
+        handleError: function (error, context) {
             var reportError = Errors($composer).reportError(error, context);
             return reportError === undefined
                  ? Promise.reject(error)
@@ -3279,7 +3326,7 @@ new function() { // closure
          * @param   {Any}          [context]  - scope of error
          * @returns {Promise(Any)} the handled exception.
          */
-        handleException: function(exception, context) {
+        handleException: function (exception, context) {
             var reportException = Errors($composer).reportException(exception, context);
             return reportException === undefined
                  ? Promise.reject(exception)
@@ -3291,7 +3338,7 @@ new function() { // closure
          * @param   {Any}          [context]  - scope of error
          * @returns {Promise(Any)} the reported error (could be a dialog).
          */
-        reportError: function(error, context) {
+        reportError: function (error, context) {
             console.error(error);
             return Promise.resolve();
         },
@@ -3301,7 +3348,7 @@ new function() { // closure
          * @param   {Any}          [context]  - scope of exception
          * @returns {Promise(Any)} the reported exception (could be a dialog).
          */
-        reportException: function(exception, context) {
+        reportException: function (exception, context) {
             console.error(exception);
             return Promise.resolve();
         }
@@ -3311,14 +3358,16 @@ new function() { // closure
      * Recoverable filter
      */
     CallbackHandler.implement({
-        recover: function (context) {
+        $recover: function (context) {
             return new CallbackHandlerFilter(this, function(callback, composer, proceed) {
                 try {
                     var promise,
                     handled = proceed();
                     if (handled && (promise = getEffectivePromise(callback))) {
-                        promise = promise.catch(function(error) {
-                            return Errors(composer).handleError(error, context);
+                        promise = promise.then(null, function (error) {
+                            return error instanceof RejectedError
+                                 ? Promise.reject(error)
+                                 : Errors(composer).handleError(error, context);
                         });
                         if (callback instanceof HandleMethod) {
                             callback.setReturnValue(promise);
@@ -3332,7 +3381,7 @@ new function() { // closure
             });
         },
 
-        recoverError: function (context) {
+        $recoverError: function (context) {
             return function (error) {
                 return Errors(this).handleError(error, context);
             }.bind(this);
@@ -3484,14 +3533,14 @@ new function () { // closure
                 break;
 
             default:
-                throw new Error("Unrecognized TraversingAxis " + axis + '.');
+                throw new Error(format("Unrecognized TraversingAxis %1.", axis));
             }
         }
     });
 
     function checkCircularity(visited, node) {
         if (visited.indexOf(node) !== -1) {
-            throw new Error('Circularity detected for node ' + node + '.');
+            throw new Error(format("Circularity detected for node %1", node));
         }
         visited.push(node);
         return node;
@@ -4996,7 +5045,7 @@ new function () { // closure
     var miruken = new base2.Package(this, {
         name:    "miruken",
         version: "1.0",
-        exports: "Enum,NullThenable,Variance,Protocol,StrictProtocol,Delegate,Miruken,MetaStep,MetaMacro,Disposing,DisposingMixin,Invoking,Parenting,Starting,Startup,Facet,Interceptor,InterceptorSelector,ProxyBuilder,Modifier,ArrayManager,IndexedList,$isProtocol,$isClass,$classOf,$ancestorOf,$isString,$isFunction,$isObject,$isPromise,$isSomething,$isNothing,$using,$lift,$eq,$use,$copy,$lazy,$eval,$every,$child,$optional,$promise,$instant,$createModifier,$properties,$inferProperties,$inheritStatic"
+        exports: "Enum,Variance,Protocol,StrictProtocol,Delegate,Miruken,MetaStep,MetaMacro,Disposing,DisposingMixin,Invoking,Parenting,Starting,Startup,Facet,Interceptor,InterceptorSelector,ProxyBuilder,Modifier,ArrayManager,IndexedList,$isProtocol,$isClass,$classOf,$ancestorOf,$isString,$isFunction,$isObject,$isPromise,$isNothing,$isSomething,$using,$lift,$debounce,$eq,$use,$copy,$lazy,$eval,$every,$child,$optional,$promise,$instant,$createModifier,$properties,$inferProperties,$inheritStatic"
     });
 
     eval(this.imports);
@@ -5038,14 +5087,6 @@ new function () { // closure
         }
     });
 
-    /**
-     * NullThenable
-     * Null pattern for thenable.
-     */
-    var NullThenable = Object.freeze({
-        then: Undefined
-    });
-    
     /**
      * Variance enum
      * @property Variance
@@ -6531,8 +6572,7 @@ new function () { // closure
                         return method.apply(_this, this.args);
                     }
                     throw new Error(format(
-                        "Interceptor cannot proceed without a class or delegate method '%1'.",
-                        key));
+                        "Interceptor cannot proceed without a class or delegate method '%1'.", key));
                 }
             };
             spec.value = key;
@@ -6696,16 +6736,6 @@ new function () { // closure
 
     /**
      * Description goes here
-     * @method $isSomething
-     * @param    {Any}     value  - value to test
-     * @returns  {boolean} true if value not null or undefined.
-     */
-    function $isSomething(value) {
-        return (value !== undefined && value !== null);
-    }
-
-    /**
-     * Description goes here
      * @method $isNothing
      * @param    {Any}     value  - value to test
      * @returns  {boolean} true if value null or undefined.
@@ -6716,14 +6746,53 @@ new function () { // closure
 
     /**
      * Description goes here
+     * @method $isSomething
+     * @param    {Any}     value  - value to test
+     * @returns  {boolean} true if value not null or undefined.
+     */
+    function $isSomething(value) {
+        return !$isNothing(value);
+    }
+
+    /**
+     * Description goes here
      * @method $lift
-     * @param    {Any} value  - any value
+     * @param    {Any}      value  - any value
      * @return   {Function} function that returns value.
      */
     function $lift(value) {
         return function() { return value; };
     }
 
+    /**
+     * Description goes here
+     * @method $lift
+     * @param    {Function} func                - function to throttle
+     * @param    {int}      wait                - time (ms) to throttle func
+     * @param    {boolean}  immediate           - if true, trigger func early
+     * @param    {Any}      defaultReturnValue  - value to return when throttled
+     * @return   {Function} throttled function 
+     */
+    function $debounce(func, wait, immediate, defaultReturnValue) {
+        var timeout;
+        return function () {
+            var context = this, args = arguments;
+            var later = function () {
+                timeout = null;
+                if (!immediate) {
+                    return func.apply(context, args);
+                }
+            };
+            var callNow = immediate && !timeout;
+            clearTimeout(timeout);
+            timeout = setTimeout(later, wait);
+            if (callNow) {
+                return func.apply(context, args);
+            }
+            return defaultReturnValue;
+        };
+    };
+    
     function _getPropertyDescriptor(object, key) {
         var source = object, descriptor;
         while (source && !(
@@ -7230,16 +7299,22 @@ new function () { // closure
     });
 
     CallbackHandler.implement({
-        validate: function (target, scope) {
-            //return this.aspect(function () {
-            //    return confirmed || (confirmed = confirm(message));
-            //});
+        $valid: function (target, scope) {
+            var composer = this;
+            return this.aspect(function () {
+                return Validator(composer).validate(target, scope).valid;
+            });
         },
-        validateAsync: function (target, scope) {
-
+        $validAsync: function (target, scope) {
+            var composer = this;
+            return this.aspect(function () {
+                return Validator(composer).validateAsync(target, scope).then(function (results) {
+                    return results.valid;
+                });
+            });
         }        
     });
-    
+
     /**
      * @class {$validateThat}
      * Metamacro to validate instances.
@@ -7252,7 +7327,7 @@ new function () { // closure
             }
             if (validateThat) {
                 var validators = {};
-                for (name in validateThat) {
+                for (var name in validateThat) {
                     var validator = validateThat[name];
                     if (validator instanceof Array) {
                         var dependencies = validator.slice(0);
@@ -7272,7 +7347,7 @@ new function () { // closure
                     if ($isFunction(validator)) {
                         name = 'validateThat' + name.charAt(0).toUpperCase() + name.slice(1);
                         validators[name] = validator;
-                    };
+                    }
                     if (step == MetaStep.Extend) {
                         target.extend(validators);
                     } else {
@@ -20475,7 +20550,7 @@ describe("CallbackHandler", function () {
                 blackjack  = new Activity('Blackjack'),
                 casino     = new Casino('Belagio')
                 .addHandlers(cashier, blackjack),
-            countMoney = new CountMoney();
+            countMoney = new CountMoney;
             cashier.transfer(50000, blackjack)
 
             expect(blackjack.getBalance()).to.equal(50000);
@@ -20995,8 +21070,8 @@ describe("CallbackHandler", function () {
         it("should cascade handlers using short syntax", function () {
             var guest    = new Guest(17),
                 baccarat = new Activity('Baccarat'),
-                level1   = new Level1Security(),
-                level2   = new Level2Security(),
+                level1   = new Level1Security,
+                level2   = new Level2Security,
                 security = CallbackHandler(level1).next(level2);
             expect(Security(security).admit(guest)).to.be.false;
             Security(security).trackActivity(baccarat);
@@ -21004,8 +21079,8 @@ describe("CallbackHandler", function () {
 
         it("should compose handlers using short syntax", function () {
             var baccarat = new Activity('Baccarat'),
-                level1   = new Level1Security(),
-                level2   = new Level2Security(),
+                level1   = new Level1Security,
+                level2   = new Level2Security,
                 compose  = CallbackHandler(level1).next(level2, baccarat),
             countMoney = new CountMoney();
             expect(compose.handle(countMoney)).to.be.true;
@@ -21139,8 +21214,8 @@ describe("CascadeCallbackHandler", function () {
         it("should cascade handlers", function () {
             var guest    = new Guest(17),
                 baccarat = new Activity('Baccarat'),
-                level1   = new Level1Security(),
-                level2   = new Level2Security(),
+                level1   = new Level1Security,
+                level2   = new Level2Security,
                 security = new CascadeCallbackHandler(level1, level2);
             expect(Security(security).admit(guest)).to.be.false;
             Security(security).trackActivity(baccarat);
@@ -21153,13 +21228,13 @@ describe("InvocationCallbackHandler", function () {
         it("should handle invocations", function () {
             var guest1 = new Guest(17),
                 guest2 = new Guest(21),
-                level1 = CallbackHandler(new Level1Security());
+                level1 = CallbackHandler(new Level1Security);
             expect(Security(level1).admit(guest1)).to.be.false;
             expect(Security(level1).admit(guest2)).to.be.true;
         });
         
         it("should handle async invocations", function (done) {
-            var level2 = CallbackHandler(new Level2Security());
+            var level2 = CallbackHandler(new Level2Security);
             Security(level2).scan().then(function () {
                 done();
             });
@@ -21179,7 +21254,7 @@ describe("InvocationCallbackHandler", function () {
 
         it("should fail missing methods", function () {
             var letItRide = new Activity('Let It Ride'),
-                level1    = new Level1Security(),
+                level1    = new Level1Security,
                 casino    = new Casino('Treasure Island')
                 .addHandlers(level1, letItRide);
 
@@ -21190,17 +21265,17 @@ describe("InvocationCallbackHandler", function () {
 
         it("can ignore missing methods", function () {
             var letItRide = new Activity('Let It Ride'),
-                level1    = new Level1Security(),
+                level1    = new Level1Security,
                 casino    = new Casino('Treasure Island')
                 .addHandlers(level1, letItRide);
-            expect(Security(casino.bestEffort()).trackActivity(letItRide)).to.be.undefined;
+            expect(Security(casino.$bestEffort()).trackActivity(letItRide)).to.be.undefined;
         });
 
         it("should require protocol conformance", function () {
             var gate  = new (CallbackHandler.extend(Security, {
                     admit: function (guest) { return true; }
                 }));
-            expect(Security(gate.strict()).admit(new Guest('Me'))).to.be.true;
+            expect(Security(gate.$strict()).admit(new Guest('Me'))).to.be.true;
         });
 
         it("should reject if no protocol conformance", function () {
@@ -21208,25 +21283,25 @@ describe("InvocationCallbackHandler", function () {
                     admit: function (guest) { return true; }
                 }));
             expect(function () {
-                Security(gate.strict()).admit(new Guest('Me'))
+                Security(gate.$strict()).admit(new Guest('Me'))
             }).to.throw(Error, /has no method 'admit'/);
         });
 
         it("can broadcast invocations", function () {
             var letItRide = new Activity('Let It Ride'),
-                level1    = new Level1Security(),
-                level2    = new Level2Security(),
+                level1    = new Level1Security,
+                level2    = new Level2Security,
                 casino    = new Casino('Treasure Island')
                 .addHandlers(level1, level2, letItRide);
-            Security(casino.broadcast()).trackActivity(letItRide);
+            Security(casino.$broadcast()).trackActivity(letItRide);
         });
 
         it("can notify invocations", function () {
             var letItRide = new Activity('Let It Ride'),
-                level1    = new Level1Security(),
+                level1    = new Level1Security,
                 casino    = new Casino('Treasure Island')
                 .addHandlers(level1, letItRide);
-            Security(casino.notify()).trackActivity(letItRide);
+            Security(casino.$notify()).trackActivity(letItRide);
         });
     })
 });
@@ -21243,7 +21318,7 @@ describe("AspectCallbackHandler", function () {
 
         it("should ignore invocation", function () {
             var guest = new Guest(21),
-                level = CallbackHandler(new Level1Security());
+                level = CallbackHandler(new Level1Security);
             expect(Security(level.aspect(False)).admit(guest)).to.be.undefined;
         });
 
@@ -21259,7 +21334,7 @@ describe("AspectCallbackHandler", function () {
         it("should invoke with side-effect", function () {
             var count = 0,
                 guest = new Guest(21),
-                level = CallbackHandler(new Level1Security());
+                level = CallbackHandler(new Level1Security);
             expect(Security(level.aspect(True, function () { ++count; }))
                             .admit(guest)).to.be.true;
             expect(count).to.equal(1);
@@ -21270,20 +21345,24 @@ describe("AspectCallbackHandler", function () {
                 casino     = new Casino('Venetian').addHandlers(cashier),
                 wireMoney  = new WireMoney(250000);
             Promise.resolve(casino.aspect(function () {
-                setTimeout(done, 2);
                 return Promise.resolve(false);
             }).defer(wireMoney)).then(function (handled) {
                 throw new Error("Should not get here");
+            }, function (error) {
+                expect(error).to.be.instanceOf(RejectedError);
+                done();
             });
         });
 
         it("should ignore async invocation", function (done) {
-            var level2 = CallbackHandler(new Level2Security());
+            var level2 = CallbackHandler(new Level2Security);
             Security(level2.aspect(function () {
-                setTimeout(done, 2);
                 return Promise.resolve(false);
             })).scan().then(function (scanned) {
                 throw new Error("Should not get here");
+            }, function (error) {
+                expect(error).to.be.instanceOf(RejectedError);
+                done();
             });
         });
 
@@ -21301,7 +21380,7 @@ describe("AspectCallbackHandler", function () {
         });
 
         it("should invoke async with side-effect", function (done) {
-            var level2 = CallbackHandler(new Level2Security());
+            var level2 = CallbackHandler(new Level2Security);
             Security(level2.aspect(True, function () {
                 done();
             })).scan().then(function (scanned) {
@@ -21319,7 +21398,7 @@ describe("AspectCallbackHandler", function () {
             }).to.throw(Error);
         });
 
-        it("should fail on rejection in before", function (done) {
+        it("should fail callback on rejection in before", function (done) {
             var cashier    = new Cashier(1000000.00),
                 casino     = new Casino('Belagio').addHandlers(cashier),
                 countMoney = new CountMoney;
@@ -21327,6 +21406,17 @@ describe("AspectCallbackHandler", function () {
                 setTimeout(done, 2);
                 return Promise.reject(new Error("Something bad"));
             }).defer(countMoney).catch(function (error) {
+                expect(error).to.be.instanceOf(Error);
+                expect(error.message).to.equal("Something bad");
+            });
+        });
+
+        it("should fail async invoke on rejection in before", function (done) {
+            var level2 = CallbackHandler(new Level2Security);
+            Security(level2.aspect(function () {
+                setTimeout(done, 2);
+                return Promise.reject(new Error("Something bad"));
+            })).scan().catch(function (error) {
                 expect(error).to.be.instanceOf(Error);
                 expect(error.message).to.equal("Something bad");
             });
@@ -21892,14 +21982,14 @@ describe("CallbackHandler", function () {
             var context      = new Context,
                 errorHandler = new ErrorCallbackHandler;
             context.addHandlers(new Paymentech, errorHandler);
-            Payments(context.recover()).validateCard({number:'1234'});
+            Payments(context.$recover()).validateCard({number:'1234'});
         });
 
         it("should implicitly recover from errors asynchronously", function (done) {
             var context      = new Context,
                 errorHandler = new ErrorCallbackHandler;
             context.addHandlers(new Paymentech, errorHandler); 
-            var pay = Payments(context.recover()).processPayment({amount:1000});
+            var pay = Payments(context.$recover()).processPayment({amount:1000});
             Promise.resolve(pay).then(function (result) {
                 expect(result).to.be.undefined;
                 done();
@@ -21915,7 +22005,7 @@ describe("CallbackHandler", function () {
                     return Promise.resolve('custom');
                 }
             });
-            var pay = Payments(customize.recover()).processPayment({amount:1000});
+            var pay = Payments(customize.$recover()).processPayment({amount:1000});
             Promise.resolve(pay).then(function (result) {
                 expect(result).to.equal('custom');
                 done();
@@ -21927,7 +22017,7 @@ describe("CallbackHandler", function () {
                 errorHandler = new ErrorCallbackHandler;
             context.addHandlers(new Paymentech, errorHandler);
             var pay = Payments(context).processPayment({amount:1000})
-                .catch(context.recoverError());
+                .catch(context.$recoverError());
             Promise.resolve(pay).then(function (result) {
                 expect(result).to.be.undefined;
                 done();
@@ -21944,7 +22034,7 @@ describe("CallbackHandler", function () {
                 }
             });
             var pay = Payments(context).processPayment({amount:1000})
-                .catch(customize.recoverError());
+                .catch(customize.$recoverError());
             Promise.resolve(pay).then(function (result) {
                 expect(result).to.equal('custom');
                 done();
@@ -23931,16 +24021,6 @@ describe("Enum", function () {
         expect(function () { 
             new Color(2);
         }).to.throw(Error, /Enums cannot be instantiated./);
-    });
-});
-
-describe("NullThenable", function () {
-    it("should ignore then", function () {
-        NullThenable.then(function () {
-            throw new Error("Should not be called");
-        }, function () {
-            throw new Error("Should not be called");
-        });
     });
 });
 
