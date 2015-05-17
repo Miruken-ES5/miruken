@@ -2427,7 +2427,7 @@ new function () { // closure
                         var accept = test.then(function (accepted) {
                             if (accepted !== false) {
                                 _aspectProceed(callback, composer, proceed);
-                                return isMethod ? method.getReturnValue() : true;
+                                return isMethod ? callback.getReturnValue() : true;
                             }
                             return Promise.reject(new RejectedError);
                         });
