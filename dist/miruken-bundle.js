@@ -2015,11 +2015,11 @@ new function () { // closure
 
     /**
      * Definition goes here
-     * @class ReentrantCallbackHandler
+     * @class ReentrantDecorator
      * @constructor
      * @extends CallbackHandler
      */
-    var ReentrantCallbackHandler = CallbackHandler.extend({
+    var ReentrantDecorator = CallbackHandler.extend({
         constructor: function _(handler) {
             this.extend({
                 handleCallback: function (callback, greedy, composer) {
@@ -2080,7 +2080,7 @@ new function () { // closure
                 return decoratee.handleCallback(callback, greedy, composer);
             }
             if (composer == this) {
-                composer = new ReentrantCallbackHandler(composer);
+                composer = new ReentrantDecorator(composer);
             }
             return this._filter(callback, composer, function () {
                 return decoratee.handleCallback(callback, greedy, composer);
@@ -3365,9 +3365,7 @@ new function() { // closure
                     handled = proceed();
                     if (handled && (promise = getEffectivePromise(callback))) {
                         promise = promise.then(null, function (error) {
-                            return error instanceof RejectedError
-                                 ? Promise.reject(error)
-                                 : Errors(composer).handleError(error, context);
+                            return Errors(composer).handleError(error, context);
                         });
                         if (callback instanceof HandleMethod) {
                             callback.setReturnValue(promise);
@@ -7052,14 +7050,12 @@ new function () { // closure
 
     CallbackHandler.implement({
         $valid: function (target, scope) {
-            var composer = this;
-            return this.aspect(function () {
+            return this.aspect(function (_, composer) {
                 return Validator(composer).validate(target, scope).valid;
             });
         },
         $validAsync: function (target, scope) {
-            var composer = this;
-            return this.aspect(function () {
+            return this.aspect(function (_, composer) {
                 return Validator(composer).validateAsync(target, scope).then(function (results) {
                     return results.valid;
                 });
