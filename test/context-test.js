@@ -180,7 +180,7 @@ describe("Context", function() {
         it("should wrap context", function() {
             var dog       = new Dog,
                 context   = new Context,
-                wrapped   = context.self(),
+                wrapped   = context.$self(),
                 decorated = wrapped.when(function(cb) { return true; });
             context.store(dog);
             expect(wrapped).to.not.equal(context);
@@ -195,8 +195,8 @@ describe("Context", function() {
                 context = new Context,
                 child   = context.newChild();
             context.store(dog);
-            expect(child.self().resolve(Dog)).to.be.undefined;
-            expect(context.self().resolve(Dog)).to.equal(dog);
+            expect(child.$self().resolve(Dog)).to.be.undefined;
+            expect(context.$self().resolve(Dog)).to.equal(dog);
         });
 
         it("should traverse root", function() {
@@ -204,9 +204,9 @@ describe("Context", function() {
                 root  = new Context,
                 child = root.newChild();
             child.store(dog);
-            expect(child.root().resolve(Dog)).to.be.undefined;
+            expect(child.$root().resolve(Dog)).to.be.undefined;
             root.store(dog);
-            expect(child.root().resolve(Dog)).to.equal(dog);
+            expect(child.$root().resolve(Dog)).to.equal(dog);
         });
 
         it("should traverse children", function() {
@@ -217,9 +217,9 @@ describe("Context", function() {
                 child3     = root.newChild(),
                 grandChild = child3.newChild();
             child2.store(dog);
-            expect(child2.child().resolve(Dog)).to.be.undefined;
-            expect(grandChild.child().resolve(Dog)).to.be.undefined;
-            expect(root.child().resolve(Dog)).to.equal(dog);
+            expect(child2.$child().resolve(Dog)).to.be.undefined;
+            expect(grandChild.$child().resolve(Dog)).to.be.undefined;
+            expect(root.$child().resolve(Dog)).to.equal(dog);
         });
 
         it("should traverse siblings", function() {
@@ -230,10 +230,10 @@ describe("Context", function() {
                 child3     = root.newChild(),
                 grandChild = child3.newChild();
             child3.store(dog);
-            expect(root.sibling().resolve(Dog)).to.be.undefined;
-            expect(child3.sibling().resolve(Dog)).to.be.undefined;
-            expect(grandChild.sibling().resolve(Dog)).to.be.undefined;
-            expect(child2.sibling().resolve(Dog)).to.equal(dog);
+            expect(root.$sibling().resolve(Dog)).to.be.undefined;
+            expect(child3.$sibling().resolve(Dog)).to.be.undefined;
+            expect(grandChild.$sibling().resolve(Dog)).to.be.undefined;
+            expect(child2.$sibling().resolve(Dog)).to.equal(dog);
         });
 
         it("should traverse children and self", function() {
@@ -244,10 +244,10 @@ describe("Context", function() {
                 child3     = root.newChild(),
                 grandChild = child3.newChild();
             child3.store(dog);
-            expect(child1.childOrSelf().resolve(Dog)).to.be.undefined;
-            expect(grandChild.childOrSelf().resolve(Dog)).to.be.undefined;
-            expect(child3.childOrSelf().resolve(Dog)).to.equal(dog);
-            expect(root.childOrSelf().resolve(Dog)).to.equal(dog);
+            expect(child1.$childOrSelf().resolve(Dog)).to.be.undefined;
+            expect(grandChild.$childOrSelf().resolve(Dog)).to.be.undefined;
+            expect(child3.$childOrSelf().resolve(Dog)).to.equal(dog);
+            expect(root.$childOrSelf().resolve(Dog)).to.equal(dog);
         });
 
         it("should traverse siblings and self", function() {
@@ -258,10 +258,10 @@ describe("Context", function() {
                 child3     = root.newChild(),
                 grandChild = child3.newChild();
             child3.store(dog);
-            expect(root.siblingOrSelf().resolve(Dog)).to.be.undefined;
-            expect(grandChild.siblingOrSelf().resolve(Dog)).to.be.undefined;
-            expect(child3.siblingOrSelf().resolve(Dog)).to.equal(dog);
-            expect(child2.siblingOrSelf().resolve(Dog)).to.equal(dog);
+            expect(root.$siblingOrSelf().resolve(Dog)).to.be.undefined;
+            expect(grandChild.$siblingOrSelf().resolve(Dog)).to.be.undefined;
+            expect(child3.$siblingOrSelf().resolve(Dog)).to.equal(dog);
+            expect(child2.$siblingOrSelf().resolve(Dog)).to.equal(dog);
         });
 
         it("should traverse ancestors", function() {
@@ -270,8 +270,8 @@ describe("Context", function() {
                 child      = root.newChild(),
                 grandChild = child.newChild();
             root.store(dog);
-            expect(root.ancestor().resolve(Dog)).to.be.undefined;
-            expect(grandChild.ancestor().resolve(Dog)).to.equal(dog);
+            expect(root.$ancestor().resolve(Dog)).to.be.undefined;
+            expect(grandChild.$ancestor().resolve(Dog)).to.equal(dog);
         });
 
         it("should traverse ancestors or self", function() {
@@ -280,8 +280,8 @@ describe("Context", function() {
                 child      = root.newChild(),
                 grandChild = child.newChild();
             root.store(dog);
-            expect(root.ancestorOrSelf().resolve(Dog)).to.equal(dog);
-            expect(grandChild.ancestorOrSelf().resolve(Dog)).to.equal(dog);
+            expect(root.$ancestorOrSelf().resolve(Dog)).to.equal(dog);
+            expect(grandChild.$ancestorOrSelf().resolve(Dog)).to.equal(dog);
         });
 
         it("should traverse descendants", function() {
@@ -292,10 +292,10 @@ describe("Context", function() {
                 child3     = root.newChild(),
                 grandChild = child3.newChild();
             grandChild.store(dog);
-            expect(grandChild.descendant().resolve(Dog)).to.be.undefined;
-            expect(child2.descendant().resolve(Dog)).to.be.undefined;
-            expect(child3.descendant().resolve(Dog)).to.equal(dog);
-            expect(root.descendant().resolve(Dog)).to.equal(dog);
+            expect(grandChild.$descendant().resolve(Dog)).to.be.undefined;
+            expect(child2.$descendant().resolve(Dog)).to.be.undefined;
+            expect(child3.$descendant().resolve(Dog)).to.equal(dog);
+            expect(root.$descendant().resolve(Dog)).to.equal(dog);
         });
 
         it("should traverse descendants or self", function() {
@@ -306,10 +306,10 @@ describe("Context", function() {
                 child3     = root.newChild(),
                 grandChild = child3.newChild();
             grandChild.store(dog);
-            expect(child2.descendantOrSelf().resolve(Dog)).to.be.undefined;
-            expect(grandChild.descendantOrSelf().resolve(Dog)).to.equal(dog);
-            expect(child3.descendantOrSelf().resolve(Dog)).to.equal(dog);
-            expect(root.descendantOrSelf().resolve(Dog)).to.equal(dog);
+            expect(child2.$descendantOrSelf().resolve(Dog)).to.be.undefined;
+            expect(grandChild.$descendantOrSelf().resolve(Dog)).to.equal(dog);
+            expect(child3.$descendantOrSelf().resolve(Dog)).to.equal(dog);
+            expect(root.$descendantOrSelf().resolve(Dog)).to.equal(dog);
         });
 
         it("should traverse ancestot, siblings or |self|", function() {
@@ -320,8 +320,8 @@ describe("Context", function() {
                 child3     = root.newChild(),
                 grandChild = child3.newChild();
             root.store(dog);
-            expect(child2.descendantOrSelf().resolve(Dog)).to.be.undefined;
-            expect(root.ancestorSiblingOrSelf().resolve(Dog)).to.equal(dog);
+            expect(child2.$descendantOrSelf().resolve(Dog)).to.be.undefined;
+            expect(root.$ancestorSiblingOrSelf().resolve(Dog)).to.equal(dog);
         });
 
         it("should traverse ancestor, |siblings| or self", function() {
@@ -332,8 +332,8 @@ describe("Context", function() {
                 child3     = root.newChild(),
                 grandChild = child3.newChild();
             child2.store(dog);
-            expect(grandChild.descendantOrSelf().resolve(Dog)).to.be.undefined;
-            expect(child3.ancestorSiblingOrSelf().resolve(Dog)).to.equal(dog);
+            expect(grandChild.$descendantOrSelf().resolve(Dog)).to.be.undefined;
+            expect(child3.$ancestorSiblingOrSelf().resolve(Dog)).to.equal(dog);
         });
 
         it("should traverse |ancestor|, siblings or self", function() {
@@ -344,7 +344,7 @@ describe("Context", function() {
                 child3     = root.newChild(),
                 grandChild = child3.newChild();
             child3.store(dog);
-            expect(grandChild.ancestorSiblingOrSelf().resolve(Dog)).to.equal(dog);
+            expect(grandChild.$ancestorSiblingOrSelf().resolve(Dog)).to.equal(dog);
         });
     });
 

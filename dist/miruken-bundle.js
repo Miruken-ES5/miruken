@@ -3166,44 +3166,24 @@ new function () { // closure
    /**
      * Context traversal
      */
-    Context.implement({
-        self: function () {
-            return _newContextTraversal(this, TraversingAxis.Self);
+    var axisControl = {
+            axis: function (axis) {
+                return _newContextTraversal(this, axis);   
+            }
         },
-        root: function () {
-            return _newContextTraversal(this, TraversingAxis.Root);   
-        },
-        child: function () {
-            return _newContextTraversal(this, TraversingAxis.Child);   
-        },
-        sibling: function () {
-            return _newContextTraversal(this, TraversingAxis.Sibling);   
-        },
-        childOrSelf: function () {
-            return _newContextTraversal(this, TraversingAxis.ChildOrSelf);   
-        },
-        siblingOrSelf: function () {
-            return _newContextTraversal(this, TraversingAxis.SiblingOrSelf);   
-        },
-        ancestor: function () {
-            return _newContextTraversal(this, TraversingAxis.Ancestor);   
-        },
-        ancestorOrSelf: function () {
-            return _newContextTraversal(this, TraversingAxis.AncestorOrSelf);   
-        },
-        descendant: function () {
-            return _newContextTraversal(this, TraversingAxis.Descendant);   
-        },
-        descendantOrSelf: function () {
-            return _newContextTraversal(this, TraversingAxis.DescendantOrSelf);   
-        },
-        ancestorSiblingOrSelf: function () {
-            return _newContextTraversal(this, TraversingAxis.AncestorSiblingOrSelf);   
-        },
-        axis: function (axis) {
-            return _newContextTraversal(this, axis);   
-        }
-    });
+        axisChoices = Array2.combine(TraversingAxis.names, TraversingAxis.values);
+
+    for (var name in axisChoices) {
+        var key  = '$' + name.charAt(0).toLowerCase() + name.slice(1),
+            axis = axisChoices[name];
+        axisControl[key] = function (axis) {
+            return function () {
+                return _newContextTraversal(this, axis);
+            };
+        }(axis);
+    }
+    
+    Context.implement(axisControl);
 
     function _newContextTraversal(context, axis) {
         function Traversal() {

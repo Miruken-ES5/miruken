@@ -352,7 +352,7 @@ describe("Controller", function () {
             controller.validate();
             var results = controller.$validation;
             expect(results.valid).to.be.false;
-            expect(results.errors.presence).to.eql([{
+            expect(results.errors.presence).to.deep.have.members([{
                 key: "person.firstName",
                 message: "First name can't be blank",
                 value:   undefined
