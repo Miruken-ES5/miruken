@@ -2244,9 +2244,11 @@ new function () { // closure
      */
     var Reentrant = Base.extend({
         constructor: function (callback) {
-            this.extend({
-                getCallback: function () { return callback; },
-            });
+            if (callback) {
+                this.extend({
+                    getCallback: function () { return callback; },
+                });
+            }
         }
     });
 
@@ -2310,7 +2312,8 @@ new function () { // closure
                 return method.invokeOn(this.delegate, composer) || method.invokeOn(this, composer);
             },
             Reentrant, function (reentrant, composer) {
-                return $handle.dispatch(this, reentrant.getCallback(), null, composer);
+                return $isFunction(reentrant.getCallback) &&
+                                   $handle.dispatch(this, reentrant.getCallback(), null, composer);
             }
         ],
         toDelegate: function () { return new InvocationDelegate(this); }
@@ -2320,25 +2323,6 @@ new function () { // closure
 
     Base.implement({
         toCallbackHandler: function () { return CallbackHandler(this); }
-    });
-
-    /**
-     * Definition goes here
-     * @class ReentrantDecorator
-     * @constructor
-     * @extends CallbackHandler
-     */
-    var ReentrantDecorator = CallbackHandler.extend({
-        constructor: function _(handler) {
-            this.extend({
-                handleCallback: function (callback, greedy, composer) {
-                    if (!(callback instanceof Reentrant)) {
-                        callback = new Reentrant(callback);
-                    }
-                    return handler.handleCallback(callback, greedy, composer);
-                }
-            });                        
-        }
     });
 
     /**
@@ -2366,6 +2350,25 @@ new function () { // closure
 
     /**
      * Definition goes here
+     * @class ReentrantDecorator
+     * @constructor
+     * @extends CallbackHandler
+     */
+    var ReentrantDecorator = CallbackHandler.extend({
+        constructor: function _(handler) {
+            this.extend({
+                handleCallback: function (callback, greedy, composer) {
+                    if (!(callback instanceof Reentrant)) {
+                        callback = new Reentrant(callback);
+                    }
+                    return handler.handleCallback(callback, greedy, composer);
+                }
+            });                        
+        }
+    });
+
+    /**
+     * Definition goes here
      * @class CallbackHandlerFilter
      * @constructor
      * @extends CallbackHandlerDecorator
@@ -2373,9 +2376,7 @@ new function () { // closure
     var CallbackHandlerFilter = CallbackHandlerDecorator.extend({
         constructor: function _(decoratee, filter) {
             this.base(decoratee);
-            if ($isNothing(filter)) {
-                throw new TypeError("No filter specified.");
-            } else if (!$isFunction(filter)) {
+            if (!$isFunction(filter)) {
                 throw new TypeError(format("Invalid filter: %1 is not a function.", filter));
             }
             var spec = _.spec || (_.spec = {});
@@ -2687,7 +2688,7 @@ new function () { // closure
      * @constructor
      * @extends Base
      */
-    var InvocationSemantics = Base.extend({
+    var InvocationSemantics = Reentrant.extend({
         constructor: function (options) {
             var _options   = options || InvocationOptions.None,
                 _specified = _options;
@@ -2734,9 +2735,6 @@ new function () { // closure
             delete spec.value;
         },
         handleCallback: function (callback, greedy, composer) {
-            if (callback instanceof Reentrant) {
-                callback = callback.getCallback();
-            }
             if (callback instanceof InvocationSemantics) {
                 this.semantics.mergeInto(callback);
                 return true;
@@ -2772,7 +2770,7 @@ new function () { // closure
     function _delegateInvocation(delegate, type, protocol, methodName, args, strict) {
         var handler   = delegate.handler, 
             semantics = new InvocationSemantics;
-        handler.handle(new Reentrant(semantics), true);
+        handler.handle(semantics, true);
         strict  = !!(strict | semantics.getOption(InvocationOptions.Strict));
         var broadcast    = semantics.getOption(InvocationOptions.Broadcast),
             bestEffort   = semantics.getOption(InvocationOptions.BestEffort),
@@ -2847,7 +2845,7 @@ new function () { // closure
             return [];
         },
         filter: function (filter) {
-            return new CallbackHandlerFilter(this, filter);
+            return $isNothing(filter) ? this : new CallbackHandlerFilter(this, filter);
         },
         aspect: function (before, after) {
             return new CallbackHandlerAspect(this, before, after);

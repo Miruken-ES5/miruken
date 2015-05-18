@@ -1443,7 +1443,40 @@ describe("InvocationCallbackHandler", function () {
     })
 });
 
-describe("AspectCallbackHandler", function () {
+describe("CallbackHandlerFilter", function () {
+    describe("#handle", function () {
+        it("should accept callback", function () {
+            var cashier    = new Cashier(1000000.00),
+                casino     = new Casino('Belagio').addHandlers(cashier),
+                countMoney = new CountMoney;
+            expect(casino.filter(function (cb, cm, proceed) { return proceed(); })
+                   .handle(countMoney)).to.be.true;
+            expect(countMoney.getTotal()).to.equal(1000000.00);
+        });
+
+        it("should reject callback", function () {
+            var cashier    = new Cashier(1000000.00),
+                casino     = new Casino('Belagio').addHandlers(cashier),
+                countMoney = new CountMoney;
+            expect(casino.filter(False).handle(countMoney)).to.be.false;
+        });
+
+        it("should ignore filter when reentrant", function () {
+            var cashier      = new Cashier(1000000.00),
+                casino       = new Casino('Belagio').addHandlers(cashier),
+                countMoney   = new CountMoney,
+                filterCalled = 0;
+            expect(casino.filter(function (cb, cm, proceed) {
+                ++filterCalled;
+                expect(cm.resolve(Cashier)).to.equal(cashier);
+                return proceed();
+            }).handle(countMoney)).to.be.true;
+            expect(filterCalled).to.equal(1);
+        });
+    });
+});
+
+describe("CallbackHandlerAspect", function () {
     describe("#handle", function () {
         it("should ignore callback", function () {
             var cashier    = new Cashier(1000000.00),
