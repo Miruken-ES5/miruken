@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
     <meta charset="utf-8">
-    <title>lib/miruken.js - miruken</title>
+    <title>lib\miruken.js - miruken</title>
     <link rel="stylesheet" href="http://yui.yahooapis.com/3.9.1/build/cssgrids/cssgrids-min.css">
     <link rel="stylesheet" href="../assets/vendor/prettify/prettify-min.css">
     <link rel="stylesheet" href="../assets/css/main.css" id="site_styles">
@@ -40,6 +40,7 @@
                             <ul id="api-classes" class="apis classes">
                                 <li><a href="../classes/miruken.$inferProperties.html">miruken.$inferProperties</a></li>
                                 <li><a href="../classes/miruken.$inhertStatic.html">miruken.$inhertStatic</a></li>
+                                <li><a href="../classes/miruken.$interceptMethods.html">miruken.$interceptMethods</a></li>
                                 <li><a href="../classes/miruken.$properties.html">miruken.$properties</a></li>
                                 <li><a href="../classes/miruken.$proxyProtocol.html">miruken.$proxyProtocol</a></li>
                                 <li><a href="../classes/miruken.ArrayManager.html">miruken.ArrayManager</a></li>
@@ -55,13 +56,15 @@
                                 <li><a href="../classes/miruken.callback.ConditionalCallbackHandler.html">miruken.callback.ConditionalCallbackHandler</a></li>
                                 <li><a href="../classes/miruken.callback.Deferred.html">miruken.callback.Deferred</a></li>
                                 <li><a href="../classes/miruken.callback.HandleMethod.html">miruken.callback.HandleMethod</a></li>
-                                <li><a href="../classes/miruken.callback.InternalCallback.html">miruken.callback.InternalCallback</a></li>
                                 <li><a href="../classes/miruken.callback.InvocationDelegate.html">miruken.callback.InvocationDelegate</a></li>
                                 <li><a href="../classes/miruken.callback.InvocationOptionsHandler.html">miruken.callback.InvocationOptionsHandler</a></li>
                                 <li><a href="../classes/miruken.callback.InvocationSemantics.html">miruken.callback.InvocationSemantics</a></li>
                                 <li><a href="../classes/miruken.callback.Lookup.html">miruken.callback.Lookup</a></li>
                                 <li><a href="../classes/miruken.callback.MethodCallbackHandler.html">miruken.callback.MethodCallbackHandler</a></li>
                                 <li><a href="../classes/miruken.callback.ProvidingCallbackHandler.html">miruken.callback.ProvidingCallbackHandler</a></li>
+                                <li><a href="../classes/miruken.callback.Reentrant.html">miruken.callback.Reentrant</a></li>
+                                <li><a href="../classes/miruken.callback.ReentrantDecorator.html">miruken.callback.ReentrantDecorator</a></li>
+                                <li><a href="../classes/miruken.callback.RejectedError.html">miruken.callback.RejectedError</a></li>
                                 <li><a href="../classes/miruken.callback.Resolution.html">miruken.callback.Resolution</a></li>
                                 <li><a href="../classes/miruken.ClassMeta.html">miruken.ClassMeta</a></li>
                                 <li><a href="../classes/miruken.context.{$contextual}
@@ -75,6 +78,9 @@
                                 <li><a href="../classes/miruken.DisposingMixin.html">miruken.DisposingMixin</a></li>
                                 <li><a href="../classes/miruken.Enum.html">miruken.Enum</a></li>
                                 <li><a href="../classes/miruken.error.{ErrorCallbackHandler}.html">miruken.error.{ErrorCallbackHandler}</a></li>
+                                <li><a href="../classes/miruken.graph.Traversal.html">miruken.graph.Traversal</a></li>
+                                <li><a href="../classes/miruken.graph.Traversing.html">miruken.graph.Traversing</a></li>
+                                <li><a href="../classes/miruken.graph.TraversingMixin.html">miruken.graph.TraversingMixin</a></li>
                                 <li><a href="../classes/miruken.IndexedList.html">miruken.IndexedList</a></li>
                                 <li><a href="../classes/miruken.InstanceMeta.html">miruken.InstanceMeta</a></li>
                                 <li><a href="../classes/miruken.Interceptor.html">miruken.Interceptor</a></li>
@@ -108,8 +114,9 @@
                                 <li><a href="../classes/miruken.Modifier.html">miruken.Modifier</a></li>
                                 <li><a href="../classes/miruken.mvc.{Controller}.html">miruken.mvc.{Controller}</a></li>
                                 <li><a href="../classes/miruken.mvc.{Model}.html">miruken.mvc.{Model}</a></li>
-                                <li><a href="../classes/miruken.ng.{Directive}.html">miruken.ng.{Directive}</a></li>
-                                <li><a href="../classes/miruken.ng.{Runner}.html">miruken.ng.{Runner}</a></li>
+                                <li><a href="../classes/miruken.ng.Directive.html">miruken.ng.Directive</a></li>
+                                <li><a href="../classes/miruken.ng.Runner.html">miruken.ng.Runner</a></li>
+                                <li><a href="../classes/miruken.ng.UseModelValidation.html">miruken.ng.UseModelValidation</a></li>
                                 <li><a href="../classes/miruken.ObjectDelegate.html">miruken.ObjectDelegate</a></li>
                                 <li><a href="../classes/miruken.Parenting.html">miruken.Parenting</a></li>
                                 <li><a href="../classes/miruken.Protocol.html">miruken.Protocol</a></li>
@@ -117,9 +124,6 @@
                                 <li><a href="../classes/miruken.Starting.html">miruken.Starting</a></li>
                                 <li><a href="../classes/miruken.Startup.html">miruken.Startup</a></li>
                                 <li><a href="../classes/miruken.StrictProtocol.html">miruken.StrictProtocol</a></li>
-                                <li><a href="../classes/miruken.Traversal.html">miruken.Traversal</a></li>
-                                <li><a href="../classes/miruken.Traversing.html">miruken.Traversing</a></li>
-                                <li><a href="../classes/miruken.TraversingMixin.html">miruken.TraversingMixin</a></li>
                                 <li><a href="../classes/miruken.validate.{$validateThat}
                 Metamacro to validate instances..html">miruken.validate.{$validateThat}
                 Metamacro to validate instances.</a></li>
@@ -167,7 +171,7 @@
             <div class="apidocs">
                 <div id="docs-main">
                     <div class="content">
-<h1 class="file-heading">File: lib/miruken.js</h1>
+<h1 class="file-heading">File: lib\miruken.js</h1>
 
 <div class="file">
     <pre class="code prettyprint linenums">
@@ -183,7 +187,7 @@ new function () { // closure
     var miruken = new base2.Package(this, {
         name:    &quot;miruken&quot;,
         version: &quot;1.0&quot;,
-        exports: &quot;Enum,Protocol,StrictProtocol,Delegate,Miruken,MetaStep,MetaMacro,Disposing,DisposingMixin,Invoking,Parenting,Starting,Startup,Facet,Interceptor,InterceptorSelector,ProxyBuilder,TraversingAxis,Traversing,TraversingMixin,Traversal,Variance,Modifier,ArrayManager,IndexedList,$isProtocol,$isClass,$classOf,$ancestorOf,$isString,$isFunction,$isObject,$isPromise,$isSomething,$isNothing,$using,$lift,$eq,$use,$copy,$lazy,$eval,$every,$child,$optional,$promise,$instant,$createModifier,$properties,$inferProperties,$inheritStatic&quot;
+        exports: &quot;Enum,Variance,Protocol,StrictProtocol,Delegate,Miruken,MetaStep,MetaMacro,Disposing,DisposingMixin,Invoking,Parenting,Starting,Startup,Facet,Interceptor,InterceptorSelector,ProxyBuilder,Modifier,ArrayManager,IndexedList,$isProtocol,$isClass,$classOf,$ancestorOf,$isString,$isFunction,$isObject,$isPromise,$isNothing,$isSomething,$using,$lift,$debounce,$eq,$use,$copy,$lazy,$eval,$every,$child,$optional,$promise,$instant,$createModifier,$properties,$inferProperties,$inheritStatic&quot;
     });
 
     eval(this.imports);
@@ -200,7 +204,7 @@ new function () { // closure
         $optional = $createModifier(),
         $promise  = $createModifier(),
         $instant  = $createModifier();
-
+    
     /**
      * Represents an enumeration
      * @class Enum
@@ -212,7 +216,16 @@ new function () { // closure
         }
     }, {
         coerce: function (choices) {
-            return Object.freeze(this.extend(null, choices));
+            var en     = this.extend(null, choices),
+                names  = Object.freeze(Object.keys(choices)),
+                values = Object.freeze(Array2.map(names, function (name) {
+                        return choices[name];
+                }));
+            Object.defineProperties(en, {
+                names:  { value: names },
+                values: { value: values }
+            });
+            return Object.freeze(en);
         }
     });
 
@@ -321,7 +334,7 @@ new function () { // closure
             }
         }
     });
-
+    
     /**
      * Description goes here
      * @class Protocol
@@ -336,7 +349,7 @@ new function () { // closure
                 if ($isFunction(delegate.toDelegate)) {
                     delegate = delegate.toDelegate();
                     if ((delegate instanceof Delegate) === false) {
-                        throw new TypeError(lang.format(
+                        throw new TypeError(format(
                             &quot;Invalid delegate: %1 is not a Delegate nor does it have a &#x27;toDelegate&#x27; method that returned one.&quot;, delegate));
                     }
                 } else {
@@ -385,7 +398,22 @@ new function () { // closure
      * @extends Base
      */
     var MetaMacro = Base.extend({
+        /**
+         * Description goes here
+         * @method apply
+         * @param {Step}           step        - definition
+         * @param {MetaData}       metadata    - definition
+         * @param {Target}         target      - definition
+         * @param {Definition}     definition  - definition
+         */
         apply: function (step, metadata, target, definition) {},
+        /**
+         * Description goes here
+         * @method protocolAdded
+         * @param {MetaData}       metadata    - definition
+         * @param {Protocol}       protocol    - definition
+         */
+        protocolAdded: function (metadata, protocol) {},
         shouldInherit: False,
         isActive: False,
     }, {
@@ -400,7 +428,8 @@ new function () { // closure
      */
     var MetaBase = MetaMacro.extend({
         constructor: function(parent)  {
-            var _protocols = [];
+            var _protocols   = [],
+                _descriptors;
             this.extend({
                 /**
                  * Description goes here
@@ -451,23 +480,20 @@ new function () { // closure
                         if ((protocol.prototype instanceof Protocol) 
                         &amp;&amp;  (_protocols.indexOf(protocol) === -1)) {
                             _protocols.push(protocol);
-                            this.protocolAdded(protocol);
+                            this.protocolAdded(this, protocol);
                         }
+                    }
+                },
+                protocolAdded: function (metadata, protocol) {
+                    if (parent) {
+                        parent.protocolAdded(metadata, protocol);
                     }
                 },
                 /**
                  * Description goes here
-                 * @method protocolAdded
-                 * @param  {Protocol}   protocol        - definition
-                 * @return {Protocol}   protocol        - definition
-                 */
-                protocolAdded: function (protocol) {
-                },
-                /**
-                 * Description goes here
                  * @method conformsTo
-                 * @params {Protocol}   protocol    - definition
-                 * @return {boolean}    bool        - definition
+                 * @params {Protocol}   protocol     - definition
+                 * @return {boolean}    bool         - definition
                  */
                 conformsTo: function (protocol) {
                     if (!(protocol &amp;&amp; (protocol.prototype instanceof Protocol))) {
@@ -481,14 +507,6 @@ new function () { // closure
                     }
                     return false;
                 },
-                /**
-                 * Description goes here
-                 * @method apply
-                 * @param {Step}           step        - definition
-                 * @param {MetaData}       metadata    - definition
-                 * @param {Target}         target      - definition
-                 * @param {Definition}     definition  - definition
-                 */
                 apply: function _(step, metadata, target, definition) {
                     if (parent) {
                         parent.apply(step, metadata, target, definition);
@@ -498,14 +516,90 @@ new function () { // closure
                 },
                 /**
                  * Description goes here
+                 * @method defineProperty
+                 * @param  {Object}     target      - definition
+                 * @param  {string}     name        - definition
+                 * @param  {Object}     spec        - definition
+                 * @param  {Object}     descriptor  - definition
+                 */
+                defineProperty: function(target, name, spec, descriptor) {
+                    descriptor = extend({}, descriptor);
+                    Object.defineProperty(target, name, spec);
+                    this.addDescriptor(name, descriptor);
+                },
+                /**
+                 * Description goes here
                  * @method getDescriptor
                  * @param  {Filter}     filter      - definition
                  * @return {Parent}     parent      - definition
                  */
                 getDescriptor: function (filter) {
-                    if (parent) {
-                        return parent.getDescriptor(filter);
+                    var descriptors;
+                    if ($isNothing(filter)) {
+                        if (parent) {
+                            descriptors = parent.getDescriptor(filter);
+                        }
+                        if (_descriptors) {
+                            descriptors = extend(descriptors || {}, _descriptors);
+                        }
+                    } else if ($isString(filter)) {
+                        return _descriptors[filter] || (parent &amp;&amp; parent.getDescriptor(filter));
+                    } else {
+                        if (parent) {
+                            descriptors = parent.getDescriptor(filter);
+                        }
+                        for (var key in _descriptors) {
+                            var descriptor = _descriptors[key];
+                            if (this.matchDescriptor(descriptor, filter)) {
+                                descriptors = extend(descriptors || {}, key, descriptor);
+                            }
+                        }
                     }
+                    return descriptors;
+                },
+                /**
+                 * Description goes here
+                 * @method addDescriptor
+                 * @param  {string}     name        - definition
+                 * @param  {Object}     descriptor  - definition
+                 */
+                addDescriptor: function (name, descriptor) {
+                    _descriptors = extend(_descriptors || {}, name, descriptor);
+                    return this;
+                },
+                /**
+                 * Description goes here
+                 * @method matchDescriptor
+                 * @param  {Object}     descriptor  - definition
+                 * @param  {Object}     filter      - definition
+                 */
+                matchDescriptor: function (descriptor, filter) {
+                    if (typeOf(descriptor) !== &#x27;object&#x27; || typeOf(filter) !== &#x27;object&#x27;) {
+                        return;
+                    }
+                    for (var key in filter) {
+                        var match = filter[key];
+                        if (match === undefined) {
+                            if (!(key in descriptor)) {
+                                return false;
+                            }
+                        } else {
+                            var value = descriptor[key];
+                            if (match instanceof Array) {
+                                if (!(value instanceof Array)) {
+                                    return false;
+                                }
+                                for (var i = 0; i &lt; match.length; ++i) {
+                                    if (value.indexOf(match[i]) &lt; 0) {
+                                        return false;
+                                    }
+                                }
+                            } else if (!(value === match || this.matchDescriptor(value, match))) {
+                                return false;
+                            }
+                        }
+                    }
+                    return true;
                 },
                 /**
                  * Description goes here
@@ -556,9 +650,16 @@ new function () { // closure
                     }
                     return protocols;
                 },
-                protocolAdded: function (protocol) {
-                    if (_isProtocol) {
-                        _liftMethods.call(subClass.prototype, protocol);
+                protocolAdded: function (metadata, protocol) {
+                    this.base(metadata, protocol);
+                    if (!_macros || _macros.length == 0) {
+                        return;
+                    }
+                    for (var i = 0; i &lt; _macros.length; ++i) {
+                        macro = _macros[i];
+                        if ($isFunction(macro.protocolAdded)) {
+                            macro.protocolAdded(metadata, protocol);
+                        }
                     }
                 },
                 conformsTo: function (protocol) {
@@ -611,7 +712,7 @@ new function () { // closure
         }
     });
 
-    var extend  = Base.extend;
+    var baseExtend  = Base.extend;
     Base.extend = Abstract.extend = function () {
         return (function (base, args) {
             var protocols, mixins, macros, 
@@ -642,7 +743,7 @@ new function () { // closure
             }
             var instanceDef = args.shift(),
                 staticDef   = args.shift(),
-                subclass    = extend.call(base, instanceDef, staticDef),
+                subclass    = baseExtend.call(base, instanceDef, staticDef),
                 metadata    = new ClassMeta(base, subclass, protocols, macros);
             Object.defineProperty(subclass, META, {
                 enumerable:   false,
@@ -739,6 +840,17 @@ new function () { // closure
                 clazz.adoptedBy = Protocol.adoptedBy;
             }
         },
+        protocolAdded: function (metadata, protocol) {
+            var source        = protocol.prototype,
+                target        = metadata.getClass().prototype,
+                protocolProto = Protocol.prototype;
+            for (var key in source) {
+                if (!((key in protocolProto) &amp;&amp; (key in this))) {
+                    var descriptor = _getPropertyDescriptor(source, key);
+                    Object.defineProperty(target, key, descriptor);
+                }
+            }
+        },
         shouldInherit: True,
         isActive: True
     });
@@ -775,8 +887,7 @@ new function () { // closure
             if ($isNothing(definition) || !definition.hasOwnProperty(this.tag)) {
                 return;
             }
-            var properties = definition[this.tag],
-                descriptors;
+            var properties = definition[this.tag];
             if ($isFunction(properties)) {
                 properties = properties();
             }
@@ -785,8 +896,11 @@ new function () { // closure
                     spec = _.spec || (_.spec = {
                         configurable: true,
                         enumerable:   true
-                    }),
-                    descriptor = false;
+                    });
+                if ($isNothing(property) || $isString(property) ||
+                    typeOf(property.length) == &quot;number&quot; || typeOf(property) !== &#x27;object&#x27;) {
+                    property = { value: property };
+                }
                 if (target instanceof Protocol) {
                     spec.get = function (get) {
                         return function () {
@@ -800,70 +914,38 @@ new function () { // closure
                     }(name);
                 } else {
                     spec.writable = true;
-                    if ($isNothing(property) || $isString(property) ||
-                        typeOf(property.length) == &quot;number&quot; || typeOf(property) !== &#x27;object&#x27;) {
-                        spec.value = property;
+                    if (property.get || property.set) {
+                        var methods = {},
+                            cname   = name.charAt(0).toUpperCase() + name.slice(1);
+                        if (property.get) {
+                            var get      = &#x27;get&#x27; + cname; 
+                            methods[get] = property.get;
+                            spec.get     = _makeGetter(get);
+                        }
+                        if (property.set) {
+                            var set      = &#x27;set&#x27; + cname 
+                            methods[set] = property.set;
+                            spec.set     = _makeSetter(set); 
+                        }
+                        if (step == MetaStep.Extend) {
+                            target.extend(methods);
+                        } else {
+                            metadata.getClass().implement(methods);
+                        }
+                        delete spec.writable;
                     } else {
-                        descriptor = true;
-                        if (property.get || property.set) {
-                            var methods = {},
-                                cname   = name.charAt(0).toUpperCase() + name.slice(1);
-                            if (property.get) {
-                                var get      = &#x27;get&#x27; + cname; 
-                                methods[get] = property.get;
-                                spec.get     = _makeGetter(get);
-                            }
-                            if (property.set) {
-                                var set      = &#x27;set&#x27; + cname 
-                                methods[set] = property.set;
-                                spec.set     = _makeSetter(set); 
-                            }
-                            if (step == MetaStep.Extend) {
-                                target.extend(methods);
-                            } else {
-                                metadata.getClass().implement(methods);
-                            }
-                            delete spec.writable;
-                        } else {
-                            spec.value = property.value;
-                        }
+                        spec.value = property.value;
                     }
                 }
-                this.defineProperty(metadata, target, name, spec);
-                if (descriptor) {
-                    _cleanDescriptor(property);
-                    Object.freeze(property);
-                    (descriptors || (descriptors = {}))[name] = property;
-                }
+                _cleanDescriptor(property);
+                this.defineProperty(metadata, target, name, spec, property);
                 _cleanDescriptor(spec);
-            }
-            if (descriptors) {
-                metadata.extend({
-                    getDescriptor: function (filter) {
-                        if ($isNothing(filter)) {
-                            return lang.extend(lang.extend({}, this.base(filter)), descriptors);
-                        }
-                        if ($isString(filter)) {
-                            return descriptors[filter] || this.base(filter);
-                        } else {
-                            var matches = this.base(filter);
-                            for (var key in descriptors) {
-                                var descriptor = descriptors[key];
-                                if (_matchDescriptor(descriptor, filter)) {
-                                    matches = matches || {};
-                                    lang.extend(matches, key, descriptor);
-                                }
-                            }
-                            return matches;
-                        }
-                    }
-                });
             }
             delete definition[this.tag];
             delete target[this.tag];
         },
-        defineProperty: function(metadata, target, name, spec) {
-            Object.defineProperty(target, name, spec);
+        defineProperty: function(metadata, target, name, spec, descriptor) {
+            metadata.defineProperty(target, name, spec, descriptor);
         },
         shouldInherit: True,
         isActive: True
@@ -886,35 +968,6 @@ new function () { // closure
                 return value;
             }
         };
-    }
-    
-    function _matchDescriptor(descriptor, filter) {
-        if (typeOf(descriptor) !== &#x27;object&#x27; || typeOf(filter) !== &#x27;object&#x27;) {
-            return false;
-        }
-        for (var key in filter) {
-            var match = filter[key];
-            if (match === undefined) {
-                if (!(key in descriptor)) {
-                    return false;
-                }
-            } else {
-                var value = descriptor[key];
-                if (match instanceof Array) {
-                    if (!(value instanceof Array)) {
-                        return false;
-                    }
-                    for (var i = 0; i &lt; match.length; ++i) {
-                        if (value.indexOf(match[i]) &lt; 0) {
-                            return false;
-                        }
-                    }
-                } else if (!(value === match || _matchDescriptor(value, match))) {
-                    return false;
-                }
-            }
-        }
-        return true;
     }
 
     function _cleanDescriptor(descriptor) {
@@ -954,13 +1007,13 @@ new function () { // closure
             }
         },
         defineProperty: function(metadata, target, name, spec) {
-            Object.defineProperty(target, name, spec);
+            metadata.defineProperty(target, name, spec);
         },
         shouldInherit: True,
         isActive: True
     });
 
-    var DEFAULT_GETTERS = [&#x27;get&#x27;, &#x27;is&#x27;, &#x27;can&#x27;];
+    var DEFAULT_GETTERS = [&#x27;get&#x27;, &#x27;is&#x27;];
 
     function _inferProperty(key, value, definition, spec) {
         for (var i = 0; i &lt; DEFAULT_GETTERS.length; ++i) {
@@ -1521,8 +1574,55 @@ new function () { // closure
             shouldProxy: options.shouldProxy
         });
         _proxyClass(proxy, protocols);
+        proxy.extend = proxy.implement = _throwProxiesSealedExeception;
         return proxy;
     }
+
+    function _throwProxiesSealedExeception()
+    {
+        throw new TypeError(&quot;Proxy classes are sealed and cannot be extended from.&quot;);
+    }
+
+    /**
+     * Metamacro to intercept proxied methods.
+     * @class $interceptMethods
+     * @extends MetaMacro
+     */
+    var $interceptMethods = MetaMacro.extend({
+        apply: function (step, metadata, target, definition) {
+            var proxy = metadata.getClass();
+            switch (step) {
+                case MetaStep.Subclass:
+                {
+                    for (key in target) {
+                        if (!(key in _noProxyMethods) &amp;&amp;
+                            (!proxy.shouldProxy || proxy.shouldProxy(key, proxy))) {
+                            var descriptor = _getPropertyDescriptor(sourceProto, key);
+                            if (&#x27;value&#x27; in descriptor) {
+                                var member = descriptor.value;
+                                if ($isNothing(member) || $isFunction(member)) {
+                                    target[key] = _proxyMethod(key, member, proxy);
+                                }
+                            }
+                        }
+                    }
+                    break;
+                }
+                case MetaStep.Implement:
+                {
+                    break;
+                }
+                case MetaStep.Extend:
+                {
+                    break;
+                }
+            }
+        },
+        protocolAdded: function (metadata, protocol) {
+        },
+        shouldInherit: True,
+        isActive: True
+    });
 
     function _proxyClass(proxy, protocols) {
         var sources    = [proxy].concat(protocols),
@@ -1535,10 +1635,7 @@ new function () { // closure
             for (key in sourceProto) {
                 if (!((key in proxied) || (key in _noProxyMethods))
                 &amp;&amp; (!proxy.shouldProxy || proxy.shouldProxy(key, source))) {
-                    var proto = sourceProto, descriptor;
-                    while (proto &amp;&amp; !(
-                        descriptor = Object.getOwnPropertyDescriptor(proto, key))
-                          ) proto = Object.getPrototypeOf(proto);
+                    var descriptor = _getPropertyDescriptor(sourceProto, key);
                     if (&#x27;value&#x27; in descriptor) {
                         var member = isProtocol ? undefined : descriptor.value;
                         if ($isNothing(member) || $isFunction(member)) {
@@ -1582,7 +1679,6 @@ new function () { // closure
                 }
             }
         }
-        proxy.extend = proxy.implement = _throwProxiesSealedExeception;
     }
     
     function _proxyMethod(key, method, source) {
@@ -1617,9 +1713,8 @@ new function () { // closure
                     } else if (method) {
                         return method.apply(_this, this.args);
                     }
-                    throw new Error(lang.format(
-                        &quot;Interceptor cannot proceed without a class or delegate method &#x27;%1&#x27;.&quot;,
-                        key));
+                    throw new Error(format(
+                        &quot;Interceptor cannot proceed without a class or delegate method &#x27;%1&#x27;.&quot;, key));
                 }
             };
             spec.value = key;
@@ -1663,11 +1758,6 @@ new function () { // closure
             }
         }
         return this;
-    }
-
-    function _throwProxiesSealedExeception()
-    {
-        throw new TypeError(&quot;Proxy classes are sealed and cannot be extended from.&quot;);
     }
 
     var _noProxyMethods = {
@@ -1788,16 +1878,6 @@ new function () { // closure
 
     /**
      * Description goes here
-     * @method $isSomething
-     * @param    {Any}     value  - value to test
-     * @returns  {boolean} true if value not null or undefined.
-     */
-    function $isSomething(value) {
-        return (value !== undefined &amp;&amp; value !== null);
-    }
-
-    /**
-     * Description goes here
      * @method $isNothing
      * @param    {Any}     value  - value to test
      * @returns  {boolean} true if value null or undefined.
@@ -1808,359 +1888,59 @@ new function () { // closure
 
     /**
      * Description goes here
+     * @method $isSomething
+     * @param    {Any}     value  - value to test
+     * @returns  {boolean} true if value not null or undefined.
+     */
+    function $isSomething(value) {
+        return !$isNothing(value);
+    }
+
+    /**
+     * Description goes here
      * @method $lift
-     * @param    {Any} value  - any value
+     * @param    {Any}      value  - any value
      * @return   {Function} function that returns value.
      */
     function $lift(value) {
         return function() { return value; };
     }
 
-    // =========================================================================
-    // Traversing
-    // =========================================================================
-
-    /**
-     * Traversing enum
-     * @property TraversingAxis
-     * @type Enum
-     */
-    var TraversingAxis = Enum({
-        Self:                    1,
-        Root:                    2,
-        Child:                   3,
-        Sibling:                 4,
-        Ancestor:                5,
-        Descendant:              6,
-        DescendantReverse:       7,
-        ChildOrSelf:             8,
-        SiblingOrSelf:           9,
-        AncestorOrSelf:          10,
-        DescendantOrSelf:        11,
-        DescendantOrSelfReverse: 12,
-        ParentSiblingOrSelf:     13
-    });
-
     /**
      * Description goes here
-     * @class Traversing
-     * @extends Protocol
+     * @method $lift
+     * @param    {Function} func                - function to throttle
+     * @param    {int}      wait                - time (ms) to throttle func
+     * @param    {boolean}  immediate           - if true, trigger func early
+     * @param    {Any}      defaultReturnValue  - value to return when throttled
+     * @return   {Function} throttled function 
      */
-    var Traversing = Protocol.extend({
-        /**
-         * Traverse a graph of objects.
-         * @method traverse
-         * @param {TraversingAxis} axis       - axis of traversal
-         * @param {Function}       visitor    - receives visited nodes
-         * @param {Object}         context    - visitor callback context
-         */
-        traverse: function (axis, visitor, context) {}
-    });
-
-    /**
-     * Traversing mixin
-     * @class TraversingMixin
-     * @extends Module
-     */
-    var TraversingMixin = Module.extend({
-        /**
-         * Traverse a graph of objects.
-         * @method traverse
-         * @param {Object}      object      -   axis of traversal
-         * @param {Axis}        axis        -   receives visited nodes
-         * @param {Visitor}     visitor     -   receives visited nodes
-         * @param {Object}      context     -   visitor callback context
-         */
-        traverse: function (object, axis, visitor, context) {
-            if ($isFunction(axis)) {
-                context = visitor;
-                visitor = axis;
-                axis    = TraversingAxis.Child;
-            }
-            if (!$isFunction(visitor)) return;
-            switch (axis) {
-            case TraversingAxis.Self:
-                _traverseSelf.call(object, visitor, context);
-                break;
-                
-            case TraversingAxis.Root:
-                _traverseRoot.call(object, visitor, context);
-                break;
-                
-            case TraversingAxis.Child:
-                _traverseChildren.call(object, visitor, false, context);
-                break;
-
-            case TraversingAxis.Sibling:
-                _traverseParentSiblingOrSelf.call(object, visitor, false, false, context);
-                break;
-                
-            case TraversingAxis.ChildOrSelf:
-                _traverseChildren.call(object, visitor, true, context);
-                break;
-
-            case TraversingAxis.SiblingOrSelf:
-                _traverseParentSiblingOrSelf.call(object, visitor, true, false, context);
-                break;
-                
-            case TraversingAxis.Ancestor:
-                _traverseAncestors.call(object, visitor, false, context);
-                break;
-                
-            case TraversingAxis.AncestorOrSelf:
-                _traverseAncestors.call(object, visitor, true, context);
-                break;
-                
-            case TraversingAxis.Descendant:
-                _traverseDescendants.call(object, visitor, false, context);
-                break;
-  
-            case TraversingAxis.DescendantReverse:
-                _traverseDescendantsReverse.call(object, visitor, false, context);
-                break;
-              
-            case TraversingAxis.DescendantOrSelf:
-                _traverseDescendants.call(object, visitor, true, context);
-                break;
-
-            case TraversingAxis.DescendantOrSelfReverse:
-                _traverseDescendantsReverse.call(object, visitor, true, context);
-                break;
-                
-            case TraversingAxis.ParentSiblingOrSelf:
-                _traverseParentSiblingOrSelf.call(object, visitor, true, true, context);
-                break;
-
-            default:
-                throw new Error(&quot;Unrecognized TraversingAxis &quot; + axis + &#x27;.&#x27;);
-            }
-        }
-    });
-
-    function checkCircularity(visited, node) {
-        if (visited.indexOf(node) !== -1) {
-            throw new Error(&#x27;Circularity detected for node &#x27; + node + &#x27;.&#x27;);
-        }
-        visited.push(node);
-        return node;
-    }
-
-    function _traverseSelf(visitor, context) {
-        visitor.call(context, this);
-    }
-
-    function _traverseRoot(visitor, context) {
-        var parent, root = this, visited = [this];
-        while ($isFunction(root.getParent) &amp;&amp; (parent = root.getParent())) {
-            checkCircularity(visited, parent);
-            root = parent;   
-        }
-        visitor.call(context, root);
-    }
-
-    function _traverseChildren(visitor, withSelf, context) {
-        if ((withSelf &amp;&amp; visitor.call(context, this)) || !$isFunction(this.getChildren)) {
-            return;
-        }
-        var children = this.getChildren();
-        for (var i = 0; i &lt; children.length; ++i) {
-            if (visitor.call(context, children[i])) {
-                return;
-            }
-        }
-    }
-
-    function _traverseAncestors(visitor, withSelf, context) {
-        var parent = this, visited = [this];
-        if (withSelf &amp;&amp; visitor.call(context, this)) {
-            return;
-        }
-        while ($isFunction(parent.getParent) &amp;&amp; (parent = parent.getParent()) &amp;&amp;
-               !visitor.call(context, parent)) {
-            checkCircularity(visited, parent);
-        }
-    }
-
-    function _traverseDescendants(visitor, withSelf, context) {
-        if (withSelf) {
-            Traversal.levelOrder(this, visitor, context);
-        } else {
-            var self = this;
-            Traversal.levelOrder(this, function (node) {
-                if (node != self) {
-                    return visitor.call(context, node);
+    function $debounce(func, wait, immediate, defaultReturnValue) {
+        var timeout;
+        return function () {
+            var context = this, args = arguments;
+            var later = function () {
+                timeout = null;
+                if (!immediate) {
+                    return func.apply(context, args);
                 }
-            }, context);
-        }
-    }
-
-    function _traverseDescendantsReverse(visitor, withSelf, context) {
-        if (withSelf) {
-            Traversal.reverseLevelOrder(this, visitor, context);
-        } else {
-            var self = this;
-            Traversal.reverseLevelOrder(this, function (node) {
-                if (node != self) {
-                    return visitor.call(context, node);
-                }
-            }, context);
-        }
-    }
-
-    function _traverseParentSiblingOrSelf(visitor, withSelf, withParent, context) {
-        if (withSelf &amp;&amp; visitor.call(context, this) || !$isFunction(this.getParent)) {
-            return;
-        }
-        var self = this, parent = this.getParent();
-        if (parent) {
-            if ($isFunction(parent.getChildren)) {
-                var children = parent.getChildren();
-                for (var i = 0; i &lt; children.length; ++i) {
-                    var sibling = children[i];
-                    if (sibling != self &amp;&amp; visitor.call(context, sibling)) {
-                        return;
-                    }
-                }
+            };
+            var callNow = immediate &amp;&amp; !timeout;
+            clearTimeout(timeout);
+            timeout = setTimeout(later, wait);
+            if (callNow) {
+                return func.apply(context, args);
             }
-            if (withParent) {
-                visitor.call(context, parent);
-            }
-        }
-    }
-
-    /**
-     * Description goes here
-     * @class Traversal
-     * @extends Abstract
-     */
-    var Traversal = Abstract.extend({}, {
-        /**
-         * Description goes here
-         * @method preOrder
-         * @param  {Node}       node       -   description
-         * @param  {Visitor}    visitor    -   description
-         * @param  {Context}    context    -   description
-         * @return {Array}      preOrder   -   description
-         */
-        preOrder: function (node, visitor, context) {
-            return _preOrder(node, visitor, context, []);
-        },
-        /**
-         * Description goes here
-         * @method postOrder
-         * @param  {Node}       node        -   description
-         * @param  {Visitor}    visitor     -   description
-         * @param  {Context}    context     -   description
-         * @return {Array}      postOrder   -   description
-         */
-        postOrder: function (node, visitor, context) {
-            return _postOrder(node, visitor, context, []);
-        },
-        /**
-         * Description goes here
-         * @method levelOrder
-         * @param  {Node}       node        -   description
-         * @param  {Visitor}    visitor     -   description
-         * @param  {Context}    context     -   description
-         * @return {Array}      levelOrder  -   description
-         */
-        levelOrder: function (node, visitor, context) {
-            return _levelOrder(node, visitor, context, []);
-        },
-        /**
-         * Description goes here
-         * @method reverseLevelOrder
-         * @param  {Node}       node                -   description
-         * @param  {Visitor}    visitor             -   description
-         * @param  {Context}    context             -   description
-         * @return {Array}      reverseLevelOrder   -   description
-         */
-        reverseLevelOrder: function (node, visitor, context) {
-            return _reverseLevelOrder(node, visitor, context, []);
-        }
-    });
-
-    function _preOrder(node, visitor, context, visited) {
-        checkCircularity(visited, node);
-        if (!node || !$isFunction(visitor) || visitor.call(context, node)) {
-            return true;
-        }
-        if ($isFunction(node.traverse))
-            node.traverse(function (child) {
-                return Traversal.preOrder(child, visitor, context);
-            });
-        return false;
-    }
-
-    function _postOrder(node, visitor, context, visited) {
-        checkCircularity(visited, node);
-        if (!node || !$isFunction(visitor)) {
-            return true;
-        }
-        if ($isFunction(node.traverse))
-            node.traverse(function (child) {
-                return Traversal.postOrder(child, visitor, context);
-            });
-        return visitor.call(context, node);
-    }
-
-    function _levelOrder(node, visitor, context, visited) {
-        if (!node || !$isFunction(visitor)) {
-            return;
-        }
-        var queue = [node];
-        while (queue.length &gt; 0) {
-            var next = queue.shift();
-            checkCircularity(visited, next);
-            if (visitor.call(context, next)) {
-                return;
-            }
-            if ($isFunction(next.traverse))
-                next.traverse(function (child) {
-                    if (child) queue.push(child);
-                });
-        }
-    }
-
-    function _reverseLevelOrder(node, visitor, context, visited) {
-        if (!node || !$isFunction(visitor)) {
-            return;
-        }
-        var queue = [node],
-            stack = [];
-        while (queue.length &gt; 0) {
-            var next = queue.shift();
-            checkCircularity(visited, next);
-            stack.push(next);
-            var level = [];
-            if ($isFunction(next.traverse))
-                next.traverse(function (child) {
-                    if (child) level.unshift(child);
-                });
-            queue.push.apply(queue, level);
-        }
-        while (stack.length &gt; 0) {
-            if (visitor.call(context, stack.pop())) {
-                return;
-            }
-        }
-    }
-
-    /**
-     * Description goes here
-     * @method      _liftMethods
-     * @param       {Object}   source  - object to lift
-     */
-    function _liftMethods(source) {
-        source = source.prototype;
-        for (var key in source) {
-            if (!(key in this)) {
-                var member = source[key];
-                if ($isFunction(member)) {
-                    this[key] = member;
-                }
-            }
-        }
+            return defaultReturnValue;
+        };
+    };
+    
+    function _getPropertyDescriptor(object, key) {
+        var source = object, descriptor;
+        while (source &amp;&amp; !(
+            descriptor = Object.getOwnPropertyDescriptor(source, key))
+              ) source = Object.getPrototypeOf(source);
+        return descriptor;
     }
 
     /**

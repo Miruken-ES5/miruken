@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
     <meta charset="utf-8">
-    <title>lib/angular/ng.js - miruken</title>
+    <title>lib\angular\ng.js - miruken</title>
     <link rel="stylesheet" href="http://yui.yahooapis.com/3.9.1/build/cssgrids/cssgrids-min.css">
     <link rel="stylesheet" href="../assets/vendor/prettify/prettify-min.css">
     <link rel="stylesheet" href="../assets/css/main.css" id="site_styles">
@@ -40,6 +40,7 @@
                             <ul id="api-classes" class="apis classes">
                                 <li><a href="../classes/miruken.$inferProperties.html">miruken.$inferProperties</a></li>
                                 <li><a href="../classes/miruken.$inhertStatic.html">miruken.$inhertStatic</a></li>
+                                <li><a href="../classes/miruken.$interceptMethods.html">miruken.$interceptMethods</a></li>
                                 <li><a href="../classes/miruken.$properties.html">miruken.$properties</a></li>
                                 <li><a href="../classes/miruken.$proxyProtocol.html">miruken.$proxyProtocol</a></li>
                                 <li><a href="../classes/miruken.ArrayManager.html">miruken.ArrayManager</a></li>
@@ -55,13 +56,15 @@
                                 <li><a href="../classes/miruken.callback.ConditionalCallbackHandler.html">miruken.callback.ConditionalCallbackHandler</a></li>
                                 <li><a href="../classes/miruken.callback.Deferred.html">miruken.callback.Deferred</a></li>
                                 <li><a href="../classes/miruken.callback.HandleMethod.html">miruken.callback.HandleMethod</a></li>
-                                <li><a href="../classes/miruken.callback.InternalCallback.html">miruken.callback.InternalCallback</a></li>
                                 <li><a href="../classes/miruken.callback.InvocationDelegate.html">miruken.callback.InvocationDelegate</a></li>
                                 <li><a href="../classes/miruken.callback.InvocationOptionsHandler.html">miruken.callback.InvocationOptionsHandler</a></li>
                                 <li><a href="../classes/miruken.callback.InvocationSemantics.html">miruken.callback.InvocationSemantics</a></li>
                                 <li><a href="../classes/miruken.callback.Lookup.html">miruken.callback.Lookup</a></li>
                                 <li><a href="../classes/miruken.callback.MethodCallbackHandler.html">miruken.callback.MethodCallbackHandler</a></li>
                                 <li><a href="../classes/miruken.callback.ProvidingCallbackHandler.html">miruken.callback.ProvidingCallbackHandler</a></li>
+                                <li><a href="../classes/miruken.callback.Reentrant.html">miruken.callback.Reentrant</a></li>
+                                <li><a href="../classes/miruken.callback.ReentrantDecorator.html">miruken.callback.ReentrantDecorator</a></li>
+                                <li><a href="../classes/miruken.callback.RejectedError.html">miruken.callback.RejectedError</a></li>
                                 <li><a href="../classes/miruken.callback.Resolution.html">miruken.callback.Resolution</a></li>
                                 <li><a href="../classes/miruken.ClassMeta.html">miruken.ClassMeta</a></li>
                                 <li><a href="../classes/miruken.context.{$contextual}
@@ -75,6 +78,9 @@
                                 <li><a href="../classes/miruken.DisposingMixin.html">miruken.DisposingMixin</a></li>
                                 <li><a href="../classes/miruken.Enum.html">miruken.Enum</a></li>
                                 <li><a href="../classes/miruken.error.{ErrorCallbackHandler}.html">miruken.error.{ErrorCallbackHandler}</a></li>
+                                <li><a href="../classes/miruken.graph.Traversal.html">miruken.graph.Traversal</a></li>
+                                <li><a href="../classes/miruken.graph.Traversing.html">miruken.graph.Traversing</a></li>
+                                <li><a href="../classes/miruken.graph.TraversingMixin.html">miruken.graph.TraversingMixin</a></li>
                                 <li><a href="../classes/miruken.IndexedList.html">miruken.IndexedList</a></li>
                                 <li><a href="../classes/miruken.InstanceMeta.html">miruken.InstanceMeta</a></li>
                                 <li><a href="../classes/miruken.Interceptor.html">miruken.Interceptor</a></li>
@@ -108,8 +114,9 @@
                                 <li><a href="../classes/miruken.Modifier.html">miruken.Modifier</a></li>
                                 <li><a href="../classes/miruken.mvc.{Controller}.html">miruken.mvc.{Controller}</a></li>
                                 <li><a href="../classes/miruken.mvc.{Model}.html">miruken.mvc.{Model}</a></li>
-                                <li><a href="../classes/miruken.ng.{Directive}.html">miruken.ng.{Directive}</a></li>
-                                <li><a href="../classes/miruken.ng.{Runner}.html">miruken.ng.{Runner}</a></li>
+                                <li><a href="../classes/miruken.ng.Directive.html">miruken.ng.Directive</a></li>
+                                <li><a href="../classes/miruken.ng.Runner.html">miruken.ng.Runner</a></li>
+                                <li><a href="../classes/miruken.ng.UseModelValidation.html">miruken.ng.UseModelValidation</a></li>
                                 <li><a href="../classes/miruken.ObjectDelegate.html">miruken.ObjectDelegate</a></li>
                                 <li><a href="../classes/miruken.Parenting.html">miruken.Parenting</a></li>
                                 <li><a href="../classes/miruken.Protocol.html">miruken.Protocol</a></li>
@@ -117,9 +124,6 @@
                                 <li><a href="../classes/miruken.Starting.html">miruken.Starting</a></li>
                                 <li><a href="../classes/miruken.Startup.html">miruken.Startup</a></li>
                                 <li><a href="../classes/miruken.StrictProtocol.html">miruken.StrictProtocol</a></li>
-                                <li><a href="../classes/miruken.Traversal.html">miruken.Traversal</a></li>
-                                <li><a href="../classes/miruken.Traversing.html">miruken.Traversing</a></li>
-                                <li><a href="../classes/miruken.TraversingMixin.html">miruken.TraversingMixin</a></li>
                                 <li><a href="../classes/miruken.validate.{$validateThat}
                 Metamacro to validate instances..html">miruken.validate.{$validateThat}
                 Metamacro to validate instances.</a></li>
@@ -167,7 +171,7 @@
             <div class="apidocs">
                 <div id="docs-main">
                     <div class="content">
-<h1 class="file-heading">File: lib/angular/ng.js</h1>
+<h1 class="file-heading">File: lib\angular\ng.js</h1>
 
 <div class="file">
     <pre class="code prettyprint linenums">
@@ -187,8 +191,8 @@ new function () { // closure
         name:    &quot;ng&quot;,
         version: miruken.version,
         parent:  miruken,
-        imports: &quot;miruken,miruken.callback,miruken.context,miruken.ioc,miruken.mvc&quot;,
-        exports: &quot;Runner,Directive,$rootContext&quot;
+        imports: &quot;miruken,miruken.callback,miruken.context,miruken.validate,miruken.ioc,miruken.mvc&quot;,
+        exports: &quot;Runner,Directive,UseModelValidation,$rootContext&quot;
     });
 
     eval(this.imports);
@@ -203,19 +207,45 @@ new function () { // closure
     
     angular.module(&#x27;ng&#x27;).run([&#x27;$rootScope&#x27;, &#x27;$injector&#x27;, _instrumentScopes]);
 
-
     /**
-     * @class {Runner}
+     * Description goes here
+     * @class Runner
+     * @constructor
+     * @extends Base     
      */
     var Runner = Base.extend({
         run: function () {}
     });
 
     /**
-     * @class {Directive}
+     * Description goes here
+     * @class Directive
+     * @constructor
+     * @extends Base     
      */
     var Directive = Base.extend();
 
+    /**
+     * Description goes here
+     * @class UseModelValidation
+     * @constructor
+     * @extends Directive     
+     */
+    var UseModelValidation = Directive.extend({
+        restrict: &#x27;A&#x27;,
+        require:  &#x27;ngModel&#x27;,
+        link: function (scope, elm, attrs, ctrl) {
+            var context   = scope.context,
+                modelExpr = attrs[&#x27;useModelValidation&#x27;];
+            ctrl.$validators.modelValidationHook = $debounce(function () {
+                var model = modelExpr ? scope.$eval(modelExpr) : undefined;
+                Validating(context).validateAsync(model)
+                    .finally(scope.$apply.bind(scope));
+                return true;
+            }, 100, false, true);
+        }
+    });
+    
     Package.implement({
         init: function () {
             this.base();
@@ -255,7 +285,7 @@ new function () { // closure
                    $q.when(container.resolveAll(Starting)).then(function (starters) {
                        Array2.invoke(starters, &quot;start&quot;);
                    }, function (error) {
-                       $log.error(lang.format(&quot;Startup for package %1 failed: %2&quot;, package, error.message));
+                       $log.error(format(&quot;Startup for package %1 failed: %2&quot;, package, error.message));
                    });
               }]);
             }
@@ -311,7 +341,7 @@ new function () { // closure
                 var directive = new ComponentModel;
                 directive.setKey(member);
                 container.addComponent(directive);
-                var deps = _angularDependencies(directive);
+                var deps = _ngDependencies(directive);
                 deps.unshift(&#x27;$rootScope&#x27;);
                 deps.push(Shim(member, deps.slice()));
                 name = name.charAt(0).toLowerCase() + name.slice(1);
@@ -321,7 +351,7 @@ new function () { // closure
                 controller.setKey(member);
                 controller.setLifestyle(new ContextualLifestyle);
                 container.addComponent(controller);
-                var deps = _angularDependencies(controller);
+                var deps = _ngDependencies(controller);
                 deps.unshift(&#x27;$scope&#x27;, &#x27;$injector&#x27;);
                 deps.push(Shim(member, deps.slice()));
                 module.controller(name, deps);
@@ -390,7 +420,14 @@ new function () { // closure
             if ($injector) {
                 _provideInjector(context, $injector);
             }
-            return context.resolve($instant(component));
+            var instance = context.resolve($instant(component));
+            for (var key in $scope) {
+                if ($scope[key] === this) {
+                    $scope[key] = instance;
+                    break;
+                }
+            }
+            return instance;
         };
     }
 
@@ -423,12 +460,12 @@ new function () { // closure
     }
 
     /**
-     * @function _angularDependencies
+     * @function _ngDependencies
      * Extracts the string dependencies for the component.
      * @param    {Function}  controller  - controller class
      * @returns  {Array} angular dependencies
      */
-    function _angularDependencies(componentModel) {
+    function _ngDependencies(componentModel) {
         var deps = componentModel.getDependencies();
         return deps ? Array2.filter(Array2.map(deps,
                           function (dep) { return dep.dependency; }),

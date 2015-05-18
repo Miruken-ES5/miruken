@@ -40,6 +40,7 @@
                             <ul id="api-classes" class="apis classes">
                                 <li><a href="../classes/miruken.$inferProperties.html">miruken.$inferProperties</a></li>
                                 <li><a href="../classes/miruken.$inhertStatic.html">miruken.$inhertStatic</a></li>
+                                <li><a href="../classes/miruken.$interceptMethods.html">miruken.$interceptMethods</a></li>
                                 <li><a href="../classes/miruken.$properties.html">miruken.$properties</a></li>
                                 <li><a href="../classes/miruken.$proxyProtocol.html">miruken.$proxyProtocol</a></li>
                                 <li><a href="../classes/miruken.ArrayManager.html">miruken.ArrayManager</a></li>
@@ -55,13 +56,15 @@
                                 <li><a href="../classes/miruken.callback.ConditionalCallbackHandler.html">miruken.callback.ConditionalCallbackHandler</a></li>
                                 <li><a href="../classes/miruken.callback.Deferred.html">miruken.callback.Deferred</a></li>
                                 <li><a href="../classes/miruken.callback.HandleMethod.html">miruken.callback.HandleMethod</a></li>
-                                <li><a href="../classes/miruken.callback.InternalCallback.html">miruken.callback.InternalCallback</a></li>
                                 <li><a href="../classes/miruken.callback.InvocationDelegate.html">miruken.callback.InvocationDelegate</a></li>
                                 <li><a href="../classes/miruken.callback.InvocationOptionsHandler.html">miruken.callback.InvocationOptionsHandler</a></li>
                                 <li><a href="../classes/miruken.callback.InvocationSemantics.html">miruken.callback.InvocationSemantics</a></li>
                                 <li><a href="../classes/miruken.callback.Lookup.html">miruken.callback.Lookup</a></li>
                                 <li><a href="../classes/miruken.callback.MethodCallbackHandler.html">miruken.callback.MethodCallbackHandler</a></li>
                                 <li><a href="../classes/miruken.callback.ProvidingCallbackHandler.html">miruken.callback.ProvidingCallbackHandler</a></li>
+                                <li><a href="../classes/miruken.callback.Reentrant.html">miruken.callback.Reentrant</a></li>
+                                <li><a href="../classes/miruken.callback.ReentrantDecorator.html">miruken.callback.ReentrantDecorator</a></li>
+                                <li><a href="../classes/miruken.callback.RejectedError.html">miruken.callback.RejectedError</a></li>
                                 <li><a href="../classes/miruken.callback.Resolution.html">miruken.callback.Resolution</a></li>
                                 <li><a href="../classes/miruken.ClassMeta.html">miruken.ClassMeta</a></li>
                                 <li><a href="../classes/miruken.context.{$contextual}
@@ -75,6 +78,9 @@
                                 <li><a href="../classes/miruken.DisposingMixin.html">miruken.DisposingMixin</a></li>
                                 <li><a href="../classes/miruken.Enum.html">miruken.Enum</a></li>
                                 <li><a href="../classes/miruken.error.{ErrorCallbackHandler}.html">miruken.error.{ErrorCallbackHandler}</a></li>
+                                <li><a href="../classes/miruken.graph.Traversal.html">miruken.graph.Traversal</a></li>
+                                <li><a href="../classes/miruken.graph.Traversing.html">miruken.graph.Traversing</a></li>
+                                <li><a href="../classes/miruken.graph.TraversingMixin.html">miruken.graph.TraversingMixin</a></li>
                                 <li><a href="../classes/miruken.IndexedList.html">miruken.IndexedList</a></li>
                                 <li><a href="../classes/miruken.InstanceMeta.html">miruken.InstanceMeta</a></li>
                                 <li><a href="../classes/miruken.Interceptor.html">miruken.Interceptor</a></li>
@@ -108,8 +114,9 @@
                                 <li><a href="../classes/miruken.Modifier.html">miruken.Modifier</a></li>
                                 <li><a href="../classes/miruken.mvc.{Controller}.html">miruken.mvc.{Controller}</a></li>
                                 <li><a href="../classes/miruken.mvc.{Model}.html">miruken.mvc.{Model}</a></li>
-                                <li><a href="../classes/miruken.ng.{Directive}.html">miruken.ng.{Directive}</a></li>
-                                <li><a href="../classes/miruken.ng.{Runner}.html">miruken.ng.{Runner}</a></li>
+                                <li><a href="../classes/miruken.ng.Directive.html">miruken.ng.Directive</a></li>
+                                <li><a href="../classes/miruken.ng.Runner.html">miruken.ng.Runner</a></li>
+                                <li><a href="../classes/miruken.ng.UseModelValidation.html">miruken.ng.UseModelValidation</a></li>
                                 <li><a href="../classes/miruken.ObjectDelegate.html">miruken.ObjectDelegate</a></li>
                                 <li><a href="../classes/miruken.Parenting.html">miruken.Parenting</a></li>
                                 <li><a href="../classes/miruken.Protocol.html">miruken.Protocol</a></li>
@@ -117,9 +124,6 @@
                                 <li><a href="../classes/miruken.Starting.html">miruken.Starting</a></li>
                                 <li><a href="../classes/miruken.Startup.html">miruken.Startup</a></li>
                                 <li><a href="../classes/miruken.StrictProtocol.html">miruken.StrictProtocol</a></li>
-                                <li><a href="../classes/miruken.Traversal.html">miruken.Traversal</a></li>
-                                <li><a href="../classes/miruken.Traversing.html">miruken.Traversing</a></li>
-                                <li><a href="../classes/miruken.TraversingMixin.html">miruken.TraversingMixin</a></li>
                                 <li><a href="../classes/miruken.validate.{$validateThat}
                 Metamacro to validate instances..html">miruken.validate.{$validateThat}
                 Metamacro to validate instances.</a></li>
@@ -175,7 +179,7 @@
         </div>
 
         <div class="foundat">
-            Defined in: <a href="../files/lib_miruken.js.html#l1292"><code>lib&#x2F;miruken.js:1292</code></a>
+            Defined in: <a href="../files/lib_miruken.js.html#l1341"><code>lib\miruken.js:1341</code></a>
         </div>
 
             Module: <a href="../modules/miruken.html">miruken</a>
@@ -194,7 +198,6 @@
         <li class="api-class-tab index"><a href="#index">Index</a></li>
 
             <li class="api-class-tab methods"><a href="#methods">Methods</a></li>
-            <li class="api-class-tab properties"><a href="#properties">Properties</a></li>
     </ul>
 
     <div>
@@ -206,66 +209,12 @@
 
                     <ul class="index-list methods extends">
                             <li class="index-item method">
-                                <a href="#method_$ancestorOf">$ancestorOf</a>
-
-                            </li>
-                            <li class="index-item method">
-                                <a href="#method_$classOf">$classOf</a>
-
-                            </li>
-                            <li class="index-item method">
-                                <a href="#method_$isClass">$isClass</a>
-
-                            </li>
-                            <li class="index-item method">
-                                <a href="#method_$isFunction">$isFunction</a>
-
-                            </li>
-                            <li class="index-item method">
-                                <a href="#method_$isNothing">$isNothing</a>
-
-                            </li>
-                            <li class="index-item method">
-                                <a href="#method_$isObject">$isObject</a>
-
-                            </li>
-                            <li class="index-item method">
-                                <a href="#method_$isPromise">$isPromise</a>
-
-                            </li>
-                            <li class="index-item method">
-                                <a href="#method_$isProtocol">$isProtocol</a>
-
-                            </li>
-                            <li class="index-item method">
-                                <a href="#method_$isSomething">$isSomething</a>
-
-                            </li>
-                            <li class="index-item method">
-                                <a href="#method_$isString">$isString</a>
-
-                            </li>
-                            <li class="index-item method">
-                                <a href="#method_$lift">$lift</a>
-
-                            </li>
-                            <li class="index-item method">
                                 <a href="#method_buildProxy">buildProxy</a>
 
                             </li>
                     </ul>
                 </div>
 
-                <div class="index-section properties">
-                    <h3>Properties</h3>
-
-                    <ul class="index-list properties extends">
-                            <li class="index-item property">
-                                <a href="#property_TraversingAxis">TraversingAxis</a>
-
-                            </li>
-                    </ul>
-                </div>
 
 
         </div>
@@ -273,754 +222,6 @@
             <div id="methods" class="api-class-tabpanel">
                 <h2 class="off-left">Methods</h2>
 
-<div id="method_$ancestorOf" class="method item">
-    <h3 class="name"><code>$ancestorOf</code></h3>
-
-        <div class="args">
-            <span class="paren">(</span><ul class="args-list inline commas">
-                <li class="arg">
-                        <code>clazz</code>
-                </li>
-            </ul><span class="paren">)</span>
-        </div>
-
-        <span class="returns-inline">
-            <span class="type">Function</span>
-        </span>
-
-
-
-
-
-
-
-    <div class="meta">
-                <p>
-                Defined in
-        <a href="../files/lib_miruken.js.html#l1566"><code>lib&#x2F;miruken.js:1566</code></a>
-        </p>
-
-
-
-    </div>
-
-    <div class="description">
-        <p>Description goes here</p>
-
-    </div>
-
-        <div class="params">
-            <h4>Parameters:</h4>
-
-            <ul class="params-list">
-                <li class="param">
-                        <code class="param-name">clazz</code>
-                        <span class="type">Function</span>
-
-
-                    <div class="param-description">
-                        <ul>
-<li>clazz</li>
-</ul>
-
-                    </div>
-
-                </li>
-            </ul>
-        </div>
-
-        <div class="returns">
-            <h4>Returns:</h4>
-
-            <div class="returns-description">
-                        <span class="type">Function</span>:
-                    <p>ancestor of class.</p>
-
-            </div>
-        </div>
-
-
-</div>
-<div id="method_$classOf" class="method item">
-    <h3 class="name"><code>$classOf</code></h3>
-
-        <div class="args">
-            <span class="paren">(</span><ul class="args-list inline commas">
-                <li class="arg">
-                        <code>instance</code>
-                </li>
-            </ul><span class="paren">)</span>
-        </div>
-
-        <span class="returns-inline">
-            <span class="type">Function</span>
-        </span>
-
-
-
-
-
-
-
-    <div class="meta">
-                <p>
-                Defined in
-        <a href="../files/lib_miruken.js.html#l1556"><code>lib&#x2F;miruken.js:1556</code></a>
-        </p>
-
-
-
-    </div>
-
-    <div class="description">
-        <p>Description goes here</p>
-
-    </div>
-
-        <div class="params">
-            <h4>Parameters:</h4>
-
-            <ul class="params-list">
-                <li class="param">
-                        <code class="param-name">instance</code>
-                        <span class="type">Object</span>
-
-
-                    <div class="param-description">
-                        <ul>
-<li>object</li>
-</ul>
-
-                    </div>
-
-                </li>
-            </ul>
-        </div>
-
-        <div class="returns">
-            <h4>Returns:</h4>
-
-            <div class="returns-description">
-                        <span class="type">Function</span>:
-                    <p>class of instance.</p>
-
-            </div>
-        </div>
-
-
-</div>
-<div id="method_$isClass" class="method item">
-    <h3 class="name"><code>$isClass</code></h3>
-
-        <div class="args">
-            <span class="paren">(</span><ul class="args-list inline commas">
-                <li class="arg">
-                        <code>clazz</code>
-                </li>
-            </ul><span class="paren">)</span>
-        </div>
-
-        <span class="returns-inline">
-            <span class="type">Boolean</span>
-        </span>
-
-
-
-
-
-
-
-    <div class="meta">
-                <p>
-                Defined in
-        <a href="../files/lib_miruken.js.html#l1546"><code>lib&#x2F;miruken.js:1546</code></a>
-        </p>
-
-
-
-    </div>
-
-    <div class="description">
-        <p>Description goes here</p>
-
-    </div>
-
-        <div class="params">
-            <h4>Parameters:</h4>
-
-            <ul class="params-list">
-                <li class="param">
-                        <code class="param-name">clazz</code>
-                        <span class="type">Any</span>
-
-
-                    <div class="param-description">
-                        <ul>
-<li>class to test</li>
-</ul>
-
-                    </div>
-
-                </li>
-            </ul>
-        </div>
-
-        <div class="returns">
-            <h4>Returns:</h4>
-
-            <div class="returns-description">
-                        <span class="type">Boolean</span>:
-                    <p>true if a class (and not a protocol).</p>
-
-            </div>
-        </div>
-
-
-</div>
-<div id="method_$isFunction" class="method item">
-    <h3 class="name"><code>$isFunction</code></h3>
-
-        <div class="args">
-            <span class="paren">(</span><ul class="args-list inline commas">
-                <li class="arg">
-                        <code>fn</code>
-                </li>
-            </ul><span class="paren">)</span>
-        </div>
-
-        <span class="returns-inline">
-            <span class="type">Boolean</span>
-        </span>
-
-
-
-
-
-
-
-    <div class="meta">
-                <p>
-                Defined in
-        <a href="../files/lib_miruken.js.html#l1586"><code>lib&#x2F;miruken.js:1586</code></a>
-        </p>
-
-
-
-    </div>
-
-    <div class="description">
-        <p>Description goes here</p>
-
-    </div>
-
-        <div class="params">
-            <h4>Parameters:</h4>
-
-            <ul class="params-list">
-                <li class="param">
-                        <code class="param-name">fn</code>
-                        <span class="type">Any</span>
-
-
-                    <div class="param-description">
-                        <ul>
-<li>function to test</li>
-</ul>
-
-                    </div>
-
-                </li>
-            </ul>
-        </div>
-
-        <div class="returns">
-            <h4>Returns:</h4>
-
-            <div class="returns-description">
-                        <span class="type">Boolean</span>:
-                    <p>true if a function.</p>
-
-            </div>
-        </div>
-
-
-</div>
-<div id="method_$isNothing" class="method item">
-    <h3 class="name"><code>$isNothing</code></h3>
-
-        <div class="args">
-            <span class="paren">(</span><ul class="args-list inline commas">
-                <li class="arg">
-                        <code>value</code>
-                </li>
-            </ul><span class="paren">)</span>
-        </div>
-
-        <span class="returns-inline">
-            <span class="type">Boolean</span>
-        </span>
-
-
-
-
-
-
-
-    <div class="meta">
-                <p>
-                Defined in
-        <a href="../files/lib_miruken.js.html#l1626"><code>lib&#x2F;miruken.js:1626</code></a>
-        </p>
-
-
-
-    </div>
-
-    <div class="description">
-        <p>Description goes here</p>
-
-    </div>
-
-        <div class="params">
-            <h4>Parameters:</h4>
-
-            <ul class="params-list">
-                <li class="param">
-                        <code class="param-name">value</code>
-                        <span class="type">Any</span>
-
-
-                    <div class="param-description">
-                        <ul>
-<li>value to test</li>
-</ul>
-
-                    </div>
-
-                </li>
-            </ul>
-        </div>
-
-        <div class="returns">
-            <h4>Returns:</h4>
-
-            <div class="returns-description">
-                        <span class="type">Boolean</span>:
-                    <p>true if value null or undefined.</p>
-
-            </div>
-        </div>
-
-
-</div>
-<div id="method_$isObject" class="method item">
-    <h3 class="name"><code>$isObject</code></h3>
-
-        <div class="args">
-            <span class="paren">(</span><ul class="args-list inline commas">
-                <li class="arg">
-                        <code>obj</code>
-                </li>
-            </ul><span class="paren">)</span>
-        </div>
-
-        <span class="returns-inline">
-            <span class="type">Boolean</span>
-        </span>
-
-
-
-
-
-
-
-    <div class="meta">
-                <p>
-                Defined in
-        <a href="../files/lib_miruken.js.html#l1596"><code>lib&#x2F;miruken.js:1596</code></a>
-        </p>
-
-
-
-    </div>
-
-    <div class="description">
-        <p>Description goes here</p>
-
-    </div>
-
-        <div class="params">
-            <h4>Parameters:</h4>
-
-            <ul class="params-list">
-                <li class="param">
-                        <code class="param-name">obj</code>
-                        <span class="type">Any</span>
-
-
-                    <div class="param-description">
-                        <ul>
-<li>object to test</li>
-</ul>
-
-                    </div>
-
-                </li>
-            </ul>
-        </div>
-
-        <div class="returns">
-            <h4>Returns:</h4>
-
-            <div class="returns-description">
-                        <span class="type">Boolean</span>:
-                    <p>true if an object.</p>
-
-            </div>
-        </div>
-
-
-</div>
-<div id="method_$isPromise" class="method item">
-    <h3 class="name"><code>$isPromise</code></h3>
-
-        <div class="args">
-            <span class="paren">(</span><ul class="args-list inline commas">
-                <li class="arg">
-                        <code>promise</code>
-                </li>
-            </ul><span class="paren">)</span>
-        </div>
-
-        <span class="returns-inline">
-            <span class="type">Boolean</span>
-        </span>
-
-
-
-
-
-
-
-    <div class="meta">
-                <p>
-                Defined in
-        <a href="../files/lib_miruken.js.html#l1606"><code>lib&#x2F;miruken.js:1606</code></a>
-        </p>
-
-
-
-    </div>
-
-    <div class="description">
-        <p>Description goes here</p>
-
-    </div>
-
-        <div class="params">
-            <h4>Parameters:</h4>
-
-            <ul class="params-list">
-                <li class="param">
-                        <code class="param-name">promise</code>
-                        <span class="type">Any</span>
-
-
-                    <div class="param-description">
-                        <ul>
-<li>promise to test</li>
-</ul>
-
-                    </div>
-
-                </li>
-            </ul>
-        </div>
-
-        <div class="returns">
-            <h4>Returns:</h4>
-
-            <div class="returns-description">
-                        <span class="type">Boolean</span>:
-                    <p>true if a promise.</p>
-
-            </div>
-        </div>
-
-
-</div>
-<div id="method_$isProtocol" class="method item">
-    <h3 class="name"><code>$isProtocol</code></h3>
-
-        <div class="args">
-            <span class="paren">(</span><ul class="args-list inline commas">
-                <li class="arg">
-                        <code>protocol</code>
-                </li>
-            </ul><span class="paren">)</span>
-        </div>
-
-        <span class="returns-inline">
-            <span class="type">Boolean</span>
-        </span>
-
-
-
-
-
-
-
-    <div class="meta">
-                <p>
-                Defined in
-        <a href="../files/lib_miruken.js.html#l1538"><code>lib&#x2F;miruken.js:1538</code></a>
-        </p>
-
-
-
-    </div>
-
-    <div class="description">
-        <p>Description goes here</p>
-
-    </div>
-
-        <div class="params">
-            <h4>Parameters:</h4>
-
-            <ul class="params-list">
-                <li class="param">
-                        <code class="param-name">protocol</code>
-                        <span class="type">Any</span>
-
-
-                    <div class="param-description">
-                        <ul>
-<li>protocol to test</li>
-</ul>
-
-                    </div>
-
-                </li>
-            </ul>
-        </div>
-
-        <div class="returns">
-            <h4>Returns:</h4>
-
-            <div class="returns-description">
-                        <span class="type">Boolean</span>:
-                    <p>true if a protocol.</p>
-
-            </div>
-        </div>
-
-
-</div>
-<div id="method_$isSomething" class="method item">
-    <h3 class="name"><code>$isSomething</code></h3>
-
-        <div class="args">
-            <span class="paren">(</span><ul class="args-list inline commas">
-                <li class="arg">
-                        <code>value</code>
-                </li>
-            </ul><span class="paren">)</span>
-        </div>
-
-        <span class="returns-inline">
-            <span class="type">Boolean</span>
-        </span>
-
-
-
-
-
-
-
-    <div class="meta">
-                <p>
-                Defined in
-        <a href="../files/lib_miruken.js.html#l1616"><code>lib&#x2F;miruken.js:1616</code></a>
-        </p>
-
-
-
-    </div>
-
-    <div class="description">
-        <p>Description goes here</p>
-
-    </div>
-
-        <div class="params">
-            <h4>Parameters:</h4>
-
-            <ul class="params-list">
-                <li class="param">
-                        <code class="param-name">value</code>
-                        <span class="type">Any</span>
-
-
-                    <div class="param-description">
-                        <ul>
-<li>value to test</li>
-</ul>
-
-                    </div>
-
-                </li>
-            </ul>
-        </div>
-
-        <div class="returns">
-            <h4>Returns:</h4>
-
-            <div class="returns-description">
-                        <span class="type">Boolean</span>:
-                    <p>true if value not null or undefined.</p>
-
-            </div>
-        </div>
-
-
-</div>
-<div id="method_$isString" class="method item">
-    <h3 class="name"><code>$isString</code></h3>
-
-        <div class="args">
-            <span class="paren">(</span><ul class="args-list inline commas">
-                <li class="arg">
-                        <code>str</code>
-                </li>
-            </ul><span class="paren">)</span>
-        </div>
-
-        <span class="returns-inline">
-            <span class="type">Boolean</span>
-        </span>
-
-
-
-
-
-
-
-    <div class="meta">
-                <p>
-                Defined in
-        <a href="../files/lib_miruken.js.html#l1576"><code>lib&#x2F;miruken.js:1576</code></a>
-        </p>
-
-
-
-    </div>
-
-    <div class="description">
-        <p>Description goes here</p>
-
-    </div>
-
-        <div class="params">
-            <h4>Parameters:</h4>
-
-            <ul class="params-list">
-                <li class="param">
-                        <code class="param-name">str</code>
-                        <span class="type">Any</span>
-
-
-                    <div class="param-description">
-                        <ul>
-<li>string to test</li>
-</ul>
-
-                    </div>
-
-                </li>
-            </ul>
-        </div>
-
-        <div class="returns">
-            <h4>Returns:</h4>
-
-            <div class="returns-description">
-                        <span class="type">Boolean</span>:
-                    <p>true if a string.</p>
-
-            </div>
-        </div>
-
-
-</div>
-<div id="method_$lift" class="method item">
-    <h3 class="name"><code>$lift</code></h3>
-
-        <div class="args">
-            <span class="paren">(</span><ul class="args-list inline commas">
-                <li class="arg">
-                        <code>value</code>
-                </li>
-            </ul><span class="paren">)</span>
-        </div>
-
-        <span class="returns-inline">
-            <span class="type">Function</span>
-        </span>
-
-
-
-
-
-
-
-    <div class="meta">
-                <p>
-                Defined in
-        <a href="../files/lib_miruken.js.html#l1636"><code>lib&#x2F;miruken.js:1636</code></a>
-        </p>
-
-
-
-    </div>
-
-    <div class="description">
-        <p>Description goes here</p>
-
-    </div>
-
-        <div class="params">
-            <h4>Parameters:</h4>
-
-            <ul class="params-list">
-                <li class="param">
-                        <code class="param-name">value</code>
-                        <span class="type">Any</span>
-
-
-                    <div class="param-description">
-                        <ul>
-<li>any value</li>
-</ul>
-
-                    </div>
-
-                </li>
-            </ul>
-        </div>
-
-        <div class="returns">
-            <h4>Returns:</h4>
-
-            <div class="returns-description">
-                        <span class="type">Function</span>:
-                    <p>function that returns value.</p>
-
-            </div>
-        </div>
-
-
-</div>
 <div id="method_buildProxy" class="method item">
     <h3 class="name"><code>buildProxy</code></h3>
 
@@ -1048,7 +249,7 @@
     <div class="meta">
                 <p>
                 Defined in
-        <a href="../files/lib_miruken.js.html#l1298"><code>lib&#x2F;miruken.js:1298</code></a>
+        <a href="../files/lib_miruken.js.html#l1347"><code>lib\miruken.js:1347</code></a>
         </p>
 
 
@@ -1107,35 +308,6 @@
 </div>
             </div>
 
-            <div id="properties" class="api-class-tabpanel">
-                <h2 class="off-left">Properties</h2>
-
-                    <div id="property_TraversingAxis" class="property item">
-                        <h3 class="name"><code>TraversingAxis</code></h3>
-                        <span class="type">Enum</span>
-                    
-                    
-                    
-                    
-                    
-                        <div class="meta">
-                                    <p>
-                                    Defined in
-                            <a href="../files/lib_miruken.js.html#l1650"><code>lib&#x2F;miruken.js:1650</code></a>
-                            </p>
-                    
-                    
-                        </div>
-                    
-                        <div class="description">
-                            <p>Traversing enum</p>
-                    
-                        </div>
-                    
-                    
-                    
-                    </div>
-            </div>
 
 
     </div>
