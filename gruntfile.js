@@ -106,7 +106,7 @@ module.exports = function(grunt) {
 
   //Test task.
   grunt.registerTask('test',   ['concurrent:test']);
-  grunt.registerTask('build',  ['minify','copy:main', 'karma:dist']);
+  grunt.registerTask('build',  ['minify','copy:main', 'karma:dist', 'yuidoc']);
   grunt.registerTask('debug',  ['browserify:debug','karma:debug']);
   grunt.registerTask("minify", ['browserify:dist', 'uglify']);
   grunt.registerTask("docs",   ['yuidoc']);
