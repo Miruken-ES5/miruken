@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
     <meta charset="utf-8">
-    <title>lib/error.js - miruken</title>
+    <title>lib\error.js - miruken</title>
     <link rel="stylesheet" href="http://yui.yahooapis.com/3.9.1/build/cssgrids/cssgrids-min.css">
     <link rel="stylesheet" href="../assets/vendor/prettify/prettify-min.css">
     <link rel="stylesheet" href="../assets/css/main.css" id="site_styles">
@@ -40,6 +40,7 @@
                             <ul id="api-classes" class="apis classes">
                                 <li><a href="../classes/miruken.$inferProperties.html">miruken.$inferProperties</a></li>
                                 <li><a href="../classes/miruken.$inhertStatic.html">miruken.$inhertStatic</a></li>
+                                <li><a href="../classes/miruken.$interceptMethods.html">miruken.$interceptMethods</a></li>
                                 <li><a href="../classes/miruken.$properties.html">miruken.$properties</a></li>
                                 <li><a href="../classes/miruken.$proxyProtocol.html">miruken.$proxyProtocol</a></li>
                                 <li><a href="../classes/miruken.ArrayManager.html">miruken.ArrayManager</a></li>
@@ -55,13 +56,15 @@
                                 <li><a href="../classes/miruken.callback.ConditionalCallbackHandler.html">miruken.callback.ConditionalCallbackHandler</a></li>
                                 <li><a href="../classes/miruken.callback.Deferred.html">miruken.callback.Deferred</a></li>
                                 <li><a href="../classes/miruken.callback.HandleMethod.html">miruken.callback.HandleMethod</a></li>
-                                <li><a href="../classes/miruken.callback.InternalCallback.html">miruken.callback.InternalCallback</a></li>
                                 <li><a href="../classes/miruken.callback.InvocationDelegate.html">miruken.callback.InvocationDelegate</a></li>
                                 <li><a href="../classes/miruken.callback.InvocationOptionsHandler.html">miruken.callback.InvocationOptionsHandler</a></li>
                                 <li><a href="../classes/miruken.callback.InvocationSemantics.html">miruken.callback.InvocationSemantics</a></li>
                                 <li><a href="../classes/miruken.callback.Lookup.html">miruken.callback.Lookup</a></li>
                                 <li><a href="../classes/miruken.callback.MethodCallbackHandler.html">miruken.callback.MethodCallbackHandler</a></li>
                                 <li><a href="../classes/miruken.callback.ProvidingCallbackHandler.html">miruken.callback.ProvidingCallbackHandler</a></li>
+                                <li><a href="../classes/miruken.callback.Reentrant.html">miruken.callback.Reentrant</a></li>
+                                <li><a href="../classes/miruken.callback.ReentrantDecorator.html">miruken.callback.ReentrantDecorator</a></li>
+                                <li><a href="../classes/miruken.callback.RejectedError.html">miruken.callback.RejectedError</a></li>
                                 <li><a href="../classes/miruken.callback.Resolution.html">miruken.callback.Resolution</a></li>
                                 <li><a href="../classes/miruken.ClassMeta.html">miruken.ClassMeta</a></li>
                                 <li><a href="../classes/miruken.context.{$contextual}
@@ -75,6 +78,9 @@
                                 <li><a href="../classes/miruken.DisposingMixin.html">miruken.DisposingMixin</a></li>
                                 <li><a href="../classes/miruken.Enum.html">miruken.Enum</a></li>
                                 <li><a href="../classes/miruken.error.{ErrorCallbackHandler}.html">miruken.error.{ErrorCallbackHandler}</a></li>
+                                <li><a href="../classes/miruken.graph.Traversal.html">miruken.graph.Traversal</a></li>
+                                <li><a href="../classes/miruken.graph.Traversing.html">miruken.graph.Traversing</a></li>
+                                <li><a href="../classes/miruken.graph.TraversingMixin.html">miruken.graph.TraversingMixin</a></li>
                                 <li><a href="../classes/miruken.IndexedList.html">miruken.IndexedList</a></li>
                                 <li><a href="../classes/miruken.InstanceMeta.html">miruken.InstanceMeta</a></li>
                                 <li><a href="../classes/miruken.Interceptor.html">miruken.Interceptor</a></li>
@@ -108,8 +114,9 @@
                                 <li><a href="../classes/miruken.Modifier.html">miruken.Modifier</a></li>
                                 <li><a href="../classes/miruken.mvc.{Controller}.html">miruken.mvc.{Controller}</a></li>
                                 <li><a href="../classes/miruken.mvc.{Model}.html">miruken.mvc.{Model}</a></li>
-                                <li><a href="../classes/miruken.ng.{Directive}.html">miruken.ng.{Directive}</a></li>
-                                <li><a href="../classes/miruken.ng.{Runner}.html">miruken.ng.{Runner}</a></li>
+                                <li><a href="../classes/miruken.ng.Directive.html">miruken.ng.Directive</a></li>
+                                <li><a href="../classes/miruken.ng.Runner.html">miruken.ng.Runner</a></li>
+                                <li><a href="../classes/miruken.ng.UseModelValidation.html">miruken.ng.UseModelValidation</a></li>
                                 <li><a href="../classes/miruken.ObjectDelegate.html">miruken.ObjectDelegate</a></li>
                                 <li><a href="../classes/miruken.Parenting.html">miruken.Parenting</a></li>
                                 <li><a href="../classes/miruken.Protocol.html">miruken.Protocol</a></li>
@@ -117,9 +124,6 @@
                                 <li><a href="../classes/miruken.Starting.html">miruken.Starting</a></li>
                                 <li><a href="../classes/miruken.Startup.html">miruken.Startup</a></li>
                                 <li><a href="../classes/miruken.StrictProtocol.html">miruken.StrictProtocol</a></li>
-                                <li><a href="../classes/miruken.Traversal.html">miruken.Traversal</a></li>
-                                <li><a href="../classes/miruken.Traversing.html">miruken.Traversing</a></li>
-                                <li><a href="../classes/miruken.TraversingMixin.html">miruken.TraversingMixin</a></li>
                                 <li><a href="../classes/miruken.validate.{$validateThat}
                 Metamacro to validate instances..html">miruken.validate.{$validateThat}
                 Metamacro to validate instances.</a></li>
@@ -167,14 +171,13 @@
             <div class="apidocs">
                 <div id="docs-main">
                     <div class="content">
-<h1 class="file-heading">File: lib/error.js</h1>
+<h1 class="file-heading">File: lib\error.js</h1>
 
 <div class="file">
     <pre class="code prettyprint linenums">
-var miruken    = require(&#x27;./miruken.js&#x27;),
-    prettyjson = require(&#x27;prettyjson&#x27;),
-    Promise    = require(&#x27;bluebird&#x27;);
-                 require(&#x27;./callback.js&#x27;),
+var miruken = require(&#x27;./miruken.js&#x27;),
+    Promise = require(&#x27;bluebird&#x27;);
+              require(&#x27;./callback.js&#x27;);
 
 new function() { // closure
 
@@ -195,52 +198,58 @@ new function() { // closure
      * @protocol {Errors}
      */
     var Errors = Protocol.extend({
-        handleError:     function(error,     context) {},
-        handleException: function(exception, context) {},
-        reportError:     function(error,     context) {},
-        reportException: function(exception, context) {}
+        handleError:     function (error,     context) {},
+        handleException: function (exception, context) {},
+        reportError:     function (error,     context) {},
+        reportException: function (exception, context) {}
     });
 
     /**
      * @class {ErrorCallbackHandler}
      */
     var ErrorCallbackHandler = CallbackHandler.extend({
-    /**
-     * Handles the error.
-     * @param   {Any}          error      - error (usually Error)
-     * @param   {Any}          [context]  - scope of error
-     * @returns {Promise(Any)} the handled error.
-     */
-        handleError: function(error, context) {
-            return Promise.resolve(Errors($composer).reportError(error, context));
+        /**
+         * Handles the error.
+         * @param   {Any}          error      - error (usually Error)
+         * @param   {Any}          [context]  - scope of error
+         * @returns {Promise(Any)} the handled error.
+         */
+        handleError: function (error, context) {
+            var reportError = Errors($composer).reportError(error, context);
+            return reportError === undefined
+                 ? Promise.reject(error)
+                 : Promise.resolve(reportError);
         },
-    /**
-     * Handles the exception.
-     * @param   {Exception}    excption   - exception
-     * @param   {Any}          [context]  - scope of error
-     * @returns {Promise(Any)} the handled exception.
-     */
-        handleException: function(exception, context) {
-            return Promise.resolve(Errors($composer).reportException(exception, context));
-        },
-    /**
-     * Reports the error. i.e. to the console.
-     * @param   {Any}          error      - error (usually Error)
-     * @param   {Any}          [context]  - scope of error
-     * @returns {Promise(Any)} the reported error (could be a dialog).
-     */
-        reportError: function(error, context) {
-            console.error(formatJson(error));
+        /**
+         * Handles the exception.
+         * @param   {Exception}    excption   - exception
+         * @param   {Any}          [context]  - scope of error
+         * @returns {Promise(Any)} the handled exception.
+         */
+        handleException: function (exception, context) {
+            var reportException = Errors($composer).reportException(exception, context);
+            return reportException === undefined
+                 ? Promise.reject(exception)
+                 : Promise.resolve(reportException);
+        },                                                      
+        /**
+         * Reports the error. i.e. to the console.
+         * @param   {Any}          error      - error (usually Error)
+         * @param   {Any}          [context]  - scope of error
+         * @returns {Promise(Any)} the reported error (could be a dialog).
+         */
+        reportError: function (error, context) {
+            console.error(error);
             return Promise.resolve();
         },
-    /**
-     * Reports the excepion. i.e. to the console.
-     * @param   {Exception}    exception  - exception
-     * @param   {Any}          [context]  - scope of exception
-     * @returns {Promise(Any)} the reported exception (could be a dialog).
-     */
-        reportException: function(exception, context) {
-            console.error(formatJson(exception));
+        /**
+         * Reports the excepion. i.e. to the console.
+         * @param   {Exception}    exception  - exception
+         * @param   {Any}          [context]  - scope of exception
+         * @returns {Promise(Any)} the reported exception (could be a dialog).
+         */
+        reportException: function (exception, context) {
+            console.error(exception);
             return Promise.resolve();
         }
     });
@@ -249,13 +258,13 @@ new function() { // closure
      * Recoverable filter
      */
     CallbackHandler.implement({
-        recoverable: function(context) {
+        $recover: function (context) {
             return new CallbackHandlerFilter(this, function(callback, composer, proceed) {
                 try {
                     var promise,
                     handled = proceed();
                     if (handled &amp;&amp; (promise = getEffectivePromise(callback))) {
-                        promise = promise.caught(function(error) {
+                        promise = promise.then(null, function (error) {
                             return Errors(composer).handleError(error, context);
                         });
                         if (callback instanceof HandleMethod) {
@@ -270,18 +279,12 @@ new function() { // closure
             });
         },
 
-        recover: function(context) {
-            return function(error) {
+        $recoverError: function (context) {
+            return function (error) {
                 return Errors(this).handleError(error, context);
             }.bind(this);
         }
     });
-
-    function formatJson(object) {
-        var json = prettyjson.render(object);
-        json = json.split(&#x27;\n&#x27;).join(&#x27;\n    &#x27;);
-        return &#x27;    &#x27; + json;
-    }
 
     if (typeof module !== &#x27;undefined&#x27; &amp;&amp; module.exports) {
         module.exports = exports = error;

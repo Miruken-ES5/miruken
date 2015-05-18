@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
     <meta charset="utf-8">
-    <title>lib/callback.js - miruken</title>
+    <title>lib\callback.js - miruken</title>
     <link rel="stylesheet" href="http://yui.yahooapis.com/3.9.1/build/cssgrids/cssgrids-min.css">
     <link rel="stylesheet" href="../assets/vendor/prettify/prettify-min.css">
     <link rel="stylesheet" href="../assets/css/main.css" id="site_styles">
@@ -40,6 +40,7 @@
                             <ul id="api-classes" class="apis classes">
                                 <li><a href="../classes/miruken.$inferProperties.html">miruken.$inferProperties</a></li>
                                 <li><a href="../classes/miruken.$inhertStatic.html">miruken.$inhertStatic</a></li>
+                                <li><a href="../classes/miruken.$interceptMethods.html">miruken.$interceptMethods</a></li>
                                 <li><a href="../classes/miruken.$properties.html">miruken.$properties</a></li>
                                 <li><a href="../classes/miruken.$proxyProtocol.html">miruken.$proxyProtocol</a></li>
                                 <li><a href="../classes/miruken.ArrayManager.html">miruken.ArrayManager</a></li>
@@ -55,13 +56,15 @@
                                 <li><a href="../classes/miruken.callback.ConditionalCallbackHandler.html">miruken.callback.ConditionalCallbackHandler</a></li>
                                 <li><a href="../classes/miruken.callback.Deferred.html">miruken.callback.Deferred</a></li>
                                 <li><a href="../classes/miruken.callback.HandleMethod.html">miruken.callback.HandleMethod</a></li>
-                                <li><a href="../classes/miruken.callback.InternalCallback.html">miruken.callback.InternalCallback</a></li>
                                 <li><a href="../classes/miruken.callback.InvocationDelegate.html">miruken.callback.InvocationDelegate</a></li>
                                 <li><a href="../classes/miruken.callback.InvocationOptionsHandler.html">miruken.callback.InvocationOptionsHandler</a></li>
                                 <li><a href="../classes/miruken.callback.InvocationSemantics.html">miruken.callback.InvocationSemantics</a></li>
                                 <li><a href="../classes/miruken.callback.Lookup.html">miruken.callback.Lookup</a></li>
                                 <li><a href="../classes/miruken.callback.MethodCallbackHandler.html">miruken.callback.MethodCallbackHandler</a></li>
                                 <li><a href="../classes/miruken.callback.ProvidingCallbackHandler.html">miruken.callback.ProvidingCallbackHandler</a></li>
+                                <li><a href="../classes/miruken.callback.Reentrant.html">miruken.callback.Reentrant</a></li>
+                                <li><a href="../classes/miruken.callback.ReentrantDecorator.html">miruken.callback.ReentrantDecorator</a></li>
+                                <li><a href="../classes/miruken.callback.RejectedError.html">miruken.callback.RejectedError</a></li>
                                 <li><a href="../classes/miruken.callback.Resolution.html">miruken.callback.Resolution</a></li>
                                 <li><a href="../classes/miruken.ClassMeta.html">miruken.ClassMeta</a></li>
                                 <li><a href="../classes/miruken.context.{$contextual}
@@ -75,6 +78,9 @@
                                 <li><a href="../classes/miruken.DisposingMixin.html">miruken.DisposingMixin</a></li>
                                 <li><a href="../classes/miruken.Enum.html">miruken.Enum</a></li>
                                 <li><a href="../classes/miruken.error.{ErrorCallbackHandler}.html">miruken.error.{ErrorCallbackHandler}</a></li>
+                                <li><a href="../classes/miruken.graph.Traversal.html">miruken.graph.Traversal</a></li>
+                                <li><a href="../classes/miruken.graph.Traversing.html">miruken.graph.Traversing</a></li>
+                                <li><a href="../classes/miruken.graph.TraversingMixin.html">miruken.graph.TraversingMixin</a></li>
                                 <li><a href="../classes/miruken.IndexedList.html">miruken.IndexedList</a></li>
                                 <li><a href="../classes/miruken.InstanceMeta.html">miruken.InstanceMeta</a></li>
                                 <li><a href="../classes/miruken.Interceptor.html">miruken.Interceptor</a></li>
@@ -108,8 +114,9 @@
                                 <li><a href="../classes/miruken.Modifier.html">miruken.Modifier</a></li>
                                 <li><a href="../classes/miruken.mvc.{Controller}.html">miruken.mvc.{Controller}</a></li>
                                 <li><a href="../classes/miruken.mvc.{Model}.html">miruken.mvc.{Model}</a></li>
-                                <li><a href="../classes/miruken.ng.{Directive}.html">miruken.ng.{Directive}</a></li>
-                                <li><a href="../classes/miruken.ng.{Runner}.html">miruken.ng.{Runner}</a></li>
+                                <li><a href="../classes/miruken.ng.Directive.html">miruken.ng.Directive</a></li>
+                                <li><a href="../classes/miruken.ng.Runner.html">miruken.ng.Runner</a></li>
+                                <li><a href="../classes/miruken.ng.UseModelValidation.html">miruken.ng.UseModelValidation</a></li>
                                 <li><a href="../classes/miruken.ObjectDelegate.html">miruken.ObjectDelegate</a></li>
                                 <li><a href="../classes/miruken.Parenting.html">miruken.Parenting</a></li>
                                 <li><a href="../classes/miruken.Protocol.html">miruken.Protocol</a></li>
@@ -117,9 +124,6 @@
                                 <li><a href="../classes/miruken.Starting.html">miruken.Starting</a></li>
                                 <li><a href="../classes/miruken.Startup.html">miruken.Startup</a></li>
                                 <li><a href="../classes/miruken.StrictProtocol.html">miruken.StrictProtocol</a></li>
-                                <li><a href="../classes/miruken.Traversal.html">miruken.Traversal</a></li>
-                                <li><a href="../classes/miruken.Traversing.html">miruken.Traversing</a></li>
-                                <li><a href="../classes/miruken.TraversingMixin.html">miruken.TraversingMixin</a></li>
                                 <li><a href="../classes/miruken.validate.{$validateThat}
                 Metamacro to validate instances..html">miruken.validate.{$validateThat}
                 Metamacro to validate instances.</a></li>
@@ -167,7 +171,7 @@
             <div class="apidocs">
                 <div id="docs-main">
                     <div class="content">
-<h1 class="file-heading">File: lib/callback.js</h1>
+<h1 class="file-heading">File: lib\callback.js</h1>
 
 <div class="file">
     <pre class="code prettyprint linenums">
@@ -187,7 +191,7 @@ new function () { // closure
         version: miruken.version,
         parent:  miruken,
         imports: &quot;miruken&quot;,
-        exports: &quot;CallbackHandler,CallbackHandlerDecorator,CallbackHandlerFilter,CallbackHandlerAspect,CascadeCallbackHandler,CompositeCallbackHandler,ConditionalCallbackHandler,AcceptingCallbackHandler,ProvidingCallbackHandler,MethodCallbackHandler,InvocationOptions,Resolution,HandleMethod,getEffectivePromise,$handle,$callbacks,$define,$provide,$lookup,$NOT_HANDLED&quot;
+        exports: &quot;CallbackHandler,CallbackHandlerDecorator,CallbackHandlerFilter,CallbackHandlerAspect,CascadeCallbackHandler,CompositeCallbackHandler,ConditionalCallbackHandler,AcceptingCallbackHandler,ProvidingCallbackHandler,MethodCallbackHandler,InvocationOptions,Resolution,HandleMethod,RejectedError,getEffectivePromise,$handle,$callbacks,$define,$provide,$lookup,$NOT_HANDLED&quot;
     });
 
     eval(this.imports);
@@ -197,12 +201,6 @@ new function () { // closure
         $provide     = $define(&#x27;$provide&#x27;, Variance.Covariant),
         $lookup      = $define(&#x27;$lookup&#x27; , Variance.Invariant),
         $NOT_HANDLED = {};
-
-    /**
-     * Definition goes here {Protocol}
-     * @class InternalCallback
-     */
-    var InternalCallback = Protocol.extend();
 
     /**
      * Metamacro to register callback definitions.
@@ -235,7 +233,7 @@ new function () { // closure
                 for (var idx = 0; idx &lt; list.length; ++idx) {
                     var constraint = list[idx];
                     if (++idx &gt;= list.length) {
-                        throw new Error(lang.format(
+                        throw new Error(format(
                             &quot;Incomplete &#x27;%1&#x27; definition: missing handler for constraint %2.&quot;,
                             tag, constraint));
                         }
@@ -267,6 +265,7 @@ new function () { // closure
                 getReturnValue: function () { return _returnValue; },
                 setReturnValue: function (value) { _returnValue = value; },
                 getException:   function () { return _exception; },
+                setException:   function (exception) { _exception = exception; },
                 invokeOn:       function (target, composer) {
                     if (!target || (strict &amp;&amp; protocol &amp;&amp; !protocol.adoptedBy(target))) {
                         return false;
@@ -295,13 +294,9 @@ new function () { // closure
                         if (result === $NOT_HANDLED) {
                             return false;
                         }
-                        if (_returnValue === undefined) {
-                            _returnValue = result;
-                        }
-                    } catch(exception) {
-                        if (_returnValue === undefined &amp;&amp; _exception === undefined) {
-                            _exception = exception;
-                        }
+                        _returnValue = result;
+                    } catch (exception) {
+                        _exception = exception;
                         throw exception;
                     } finally {
                         if (oldComposer) {
@@ -405,6 +400,22 @@ new function () { // closure
 
     /**
      * Definition goes here
+     * @class Reentrant
+     * @constructor
+     * @extends Base
+     */
+    var Reentrant = Base.extend({
+        constructor: function (callback) {
+            if (callback) {
+                this.extend({
+                    getCallback: function () { return callback; },
+                });
+            }
+        }
+    });
+
+    /**
+     * Definition goes here
      * @class CallbackHandler
      * @constructor
      * @extends Base
@@ -461,6 +472,10 @@ new function () { // closure
             },
             HandleMethod, function (method, composer) {
                 return method.invokeOn(this.delegate, composer) || method.invokeOn(this, composer);
+            },
+            Reentrant, function (reentrant, composer) {
+                return $isFunction(reentrant.getCallback) &amp;&amp;
+                                   $handle.dispatch(this, reentrant.getCallback(), null, composer);
             }
         ],
         toDelegate: function () { return new InvocationDelegate(this); }
@@ -490,8 +505,27 @@ new function () { // closure
             this.decoratee = decoratee;
         },
         handleCallback: function (callback, greedy, composer) {
-            return this.decoratee.handle(callback, greedy, composer)
+            return this.decoratee.handleCallback(callback, greedy, composer)
                 || this.base(callback, greedy, composer);
+        }
+    });
+
+    /**
+     * Definition goes here
+     * @class ReentrantDecorator
+     * @constructor
+     * @extends CallbackHandler
+     */
+    var ReentrantDecorator = CallbackHandler.extend({
+        constructor: function _(handler) {
+            this.extend({
+                handleCallback: function (callback, greedy, composer) {
+                    if (!(callback instanceof Reentrant)) {
+                        callback = new Reentrant(callback);
+                    }
+                    return handler.handleCallback(callback, greedy, composer);
+                }
+            });                        
         }
     });
 
@@ -504,10 +538,8 @@ new function () { // closure
     var CallbackHandlerFilter = CallbackHandlerDecorator.extend({
         constructor: function _(decoratee, filter) {
             this.base(decoratee);
-            if ($isNothing(filter)) {
-                throw new TypeError(&quot;No filter specified.&quot;);
-            } else if (!$isFunction(filter)) {
-                throw new TypeError(lang.format(&quot;Invalid filter: %1 is not a function.&quot;, filter));
+            if (!$isFunction(filter)) {
+                throw new TypeError(format(&quot;Invalid filter: %1 is not a function.&quot;, filter));
             }
             var spec = _.spec || (_.spec = {});
             spec.value = filter;
@@ -516,17 +548,31 @@ new function () { // closure
         },
         handleCallback: function (callback, greedy, composer) {
             var decoratee = this.decoratee;
-            if (InternalCallback.adoptedBy(callback)) {
-                return decoratee.handle(callback, greedy);
+            if (callback instanceof Reentrant) {
+                return decoratee.handleCallback(callback, greedy, composer);
             }
             if (composer == this) {
-                composer = decoratee;
+                composer = new ReentrantDecorator(composer);
             }
             return this._filter(callback, composer, function () {
-                    return decoratee.handle(callback, greedy);
+                return decoratee.handleCallback(callback, greedy, composer);
             })
         }
-    });
+    });                                                                   
+
+    /**
+     * Definition goes here
+     * @class RejectedError
+     */
+    function RejectedError() {
+        if (Error.captureStackTrace) {
+            Error.captureStackTrace(this, this.constructor);
+        } else {
+            Error.call(this);
+        }
+    }
+    RejectedError.prototype             = new Error;
+    RejectedError.prototype.constructor = RejectedError;
 
     /**
      * Definition goes here
@@ -537,33 +583,55 @@ new function () { // closure
     var CallbackHandlerAspect = CallbackHandlerFilter.extend({
         constructor: function (decoratee, before, after) {
             this.base(decoratee, function (callback, composer, proceed) {
-                var promise;
-                if ($isFunction(before) &amp;&amp; before(callback, composer) === false) {
-                    return true;
-                }
-                try {
-                    var handled = proceed();
-                    if (handled &amp;&amp; (promise = getEffectivePromise(callback))) {
-                        // Use &#x27;fulfilled&#x27; or &#x27;rejected&#x27; handlers instead of &#x27;finally&#x27; to ensure
-                        // aspect boundary is consistent with synchronous invocations and avoid
-                        // reentrancy issues.
-                        if ($isFunction(after))
-                            promise.then(function (result) {
-                                after(callback, composer);
-                            }, function (error) {
-                                after(callback, composer);
-                            });
-                        return handled;
-                    }
-                } finally {
-                    if (!promise &amp;&amp; $isFunction(after)) {
-                        after(callback, composer);
+                if ($isFunction(before)) {
+                    var test     = before(callback, composer),
+                        isMethod = callback instanceof HandleMethod;
+                    if ($isPromise(test)) {
+                        var accept = test.then(function (accepted) {
+                            if (accepted !== false) {
+                                _aspectProceed(callback, composer, proceed);
+                                return isMethod ? callback.getReturnValue() : true;
+                            }
+                            return Promise.reject(new RejectedError);
+                        });
+                        if (isMethod) {
+                            callback.setReturnValue(accept);
+                        } else if (callback instanceof Deferred) {
+                            callback.track(accept);
+                        }
+                        return true;
+                    } else if (test === false) {
+                        return true;
                     }
                 }
+                return _aspectProceed(callback, composer, proceed, after);
             });
         }
     });
 
+    function _aspectProceed(callback, composer, proceed, after) {
+        var promise;
+        try {
+            var handled = proceed();
+            if (handled &amp;&amp; (promise = getEffectivePromise(callback))) {
+                // Use &#x27;fulfilled&#x27; or &#x27;rejected&#x27; handlers instead of &#x27;finally&#x27; to ensure
+                // aspect boundary is consistent with synchronous invocations and avoid
+                // reentrancy issues.
+                if ($isFunction(after))
+                    promise.then(function (result) {
+                        after(callback, composer);
+                    }, function (error) {
+                        after(callback, composer);
+                    });
+            }
+            return handled;
+        } finally {
+            if (!promise &amp;&amp; $isFunction(after)) {
+                after(callback, composer);
+            }
+        }
+    }
+    
     /**
      * Definition goes here
      * @class CascadeCallbackHandler
@@ -586,10 +654,10 @@ new function () { // closure
         },
         handleCallback: function (callback, greedy, composer) {
             var handled = greedy
-                ? (this.handler.handle(callback, true, composer)
-                   | this.cascadeToHandler.handle(callback, true, composer))
-                : (this.handler.handle(callback, false, composer)
-                   || this.cascadeToHandler.handle(callback, false, composer));
+                ? (this.handler.handleCallback(callback, true, composer)
+                   | this.cascadeToHandler.handleCallback(callback, true, composer))
+                : (this.handler.handleCallback(callback, false, composer)
+                   || this.cascadeToHandler.handleCallback(callback, false, composer));
             if (!handled || greedy) {
                 handled = this.base(callback, greedy, composer) || handled;
             }
@@ -637,7 +705,7 @@ new function () { // closure
                         count   = _handlers.length;
                     for (var idx = 0; idx &lt; count; ++idx) {
                         var handler = _handlers[idx];
-                        if (handler.handle(callback, greedy, composer)) {
+                        if (handler.handleCallback(callback, greedy, composer)) {
                             if (!greedy) {
                                 return true;
                             }
@@ -666,7 +734,7 @@ new function () { // closure
             if ($isNothing(condition)) {
                 throw new TypeError(&quot;No condition specified.&quot;);
             } else if (!$isFunction(condition)) {
-                throw new TypeError(lang.format(
+                throw new TypeError(format(
                     &quot;Invalid condition: %1 is not a function.&quot;, condition));
             }
             var spec = _.spec || (_.spec = {});
@@ -734,7 +802,7 @@ new function () { // closure
             if (!$isString(methodName) || methodName.length === 0 || !methodName.trim()) {
                 throw new TypeError(&quot;No methodName specified.&quot;);
             } else if (!$isFunction(method)) {
-                throw new TypeError(lang.format(&quot;Invalid method: %1 is not a function.&quot;, method));
+                throw new TypeError(format(&quot;Invalid method: %1 is not a function.&quot;, method));
             }
             var spec = _.spec || (_.spec = {});
             spec.value = methodName;
@@ -782,7 +850,7 @@ new function () { // closure
      * @constructor
      * @extends Base
      */
-    var InvocationSemantics = Base.extend(InternalCallback, {
+    var InvocationSemantics = Reentrant.extend({
         constructor: function (options) {
             var _options   = options || InvocationOptions.None,
                 _specified = _options;
@@ -833,7 +901,7 @@ new function () { // closure
                 this.semantics.mergeInto(callback);
                 return true;
             }
-            return this.handler.handle(callback, greedy, composer);
+            return this.handler.handleCallback(callback, greedy, composer);
         }
     });
 
@@ -870,18 +938,17 @@ new function () { // closure
             bestEffort   = semantics.getOption(InvocationOptions.BestEffort),
             handleMethod = new HandleMethod(type, protocol, methodName, args, strict);
         if (handler.handle(handleMethod, !!broadcast) === false &amp;&amp; !bestEffort) {
-            throw new TypeError(lang.format(
-                &quot;Object %1 has no method &#x27;%2&#x27;&quot;, handler, methodName));
+            throw new TypeError(format(&quot;Object %1 has no method &#x27;%2&#x27;&quot;, handler, methodName));
         }
         return handleMethod.getReturnValue();
     }
 
     CallbackHandler.implement({
-        strict: function () { return this.callOptions(InvocationOptions.Strict); },
-        broadcast: function () { return this.callOptions(InvocationOptions.Broadcast); },
-        bestEffort: function () { return this.callOptions(InvocationOptions.BestEffort); },
-        notify: function () { return this.callOptions(InvocationOptions.Notify); },
-        callOptions: function (options) { return new InvocationOptionsHandler(this, options); }
+        $strict: function () { return this.$callOptions(InvocationOptions.Strict); },
+        $broadcast: function () { return this.$callOptions(InvocationOptions.Broadcast); },
+        $bestEffort: function () { return this.$callOptions(InvocationOptions.BestEffort); },
+        $notify: function () { return this.$callOptions(InvocationOptions.Notify); },
+        $callOptions: function (options) { return new InvocationOptionsHandler(this, options); }
     });
 
     CallbackHandler.implement({
@@ -940,7 +1007,7 @@ new function () { // closure
             return [];
         },
         filter: function (filter) {
-            return new CallbackHandlerFilter(this, filter);
+            return $isNothing(filter) ? this : new CallbackHandlerFilter(this, filter);
         },
         aspect: function (before, after) {
             return new CallbackHandlerAspect(this, before, after);
@@ -978,7 +1045,7 @@ new function () { // closure
         if (!$isString(tag) || tag.length === 0 || /\s/.test(tag)) {
             throw new TypeError(&quot;The tag must be a non-empty string with no whitespace.&quot;);
         } else if (_definitions[tag]) {
-            throw new TypeError(lang.format(&quot;&#x27;%1&#x27; is already defined.&quot;, tag));
+            throw new TypeError(format(&quot;&#x27;%1&#x27; is already defined.&quot;, tag));
         }
 
         var handled, comparer;
@@ -1020,7 +1087,7 @@ new function () { // closure
                 constraint = $classOf(Modifier.unwrap(constraint));
             }
             if ($isNothing(handler)) {
-                throw new TypeError(lang.format(
+                throw new TypeError(format(
                     &quot;Incomplete &#x27;%1&#x27; definition: missing handler for constraint %2.&quot;,
                     tag, constraint));
             } else if (removed &amp;&amp; !$isFunction(removed)) {

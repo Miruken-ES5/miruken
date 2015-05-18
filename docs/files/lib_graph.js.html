@@ -2,8 +2,7 @@
 <html lang="en">
 <head>
     <meta charset="utf-8">
-    <title>miruken.validate.{$validateThat}
-Metamacro to validate instances. - miruken</title>
+    <title>lib\graph.js - miruken</title>
     <link rel="stylesheet" href="http://yui.yahooapis.com/3.9.1/build/cssgrids/cssgrids-min.css">
     <link rel="stylesheet" href="../assets/vendor/prettify/prettify-min.css">
     <link rel="stylesheet" href="../assets/css/main.css" id="site_styles">
@@ -41,6 +40,7 @@ Metamacro to validate instances. - miruken</title>
                             <ul id="api-classes" class="apis classes">
                                 <li><a href="../classes/miruken.$inferProperties.html">miruken.$inferProperties</a></li>
                                 <li><a href="../classes/miruken.$inhertStatic.html">miruken.$inhertStatic</a></li>
+                                <li><a href="../classes/miruken.$interceptMethods.html">miruken.$interceptMethods</a></li>
                                 <li><a href="../classes/miruken.$properties.html">miruken.$properties</a></li>
                                 <li><a href="../classes/miruken.$proxyProtocol.html">miruken.$proxyProtocol</a></li>
                                 <li><a href="../classes/miruken.ArrayManager.html">miruken.ArrayManager</a></li>
@@ -56,13 +56,15 @@ Metamacro to validate instances. - miruken</title>
                                 <li><a href="../classes/miruken.callback.ConditionalCallbackHandler.html">miruken.callback.ConditionalCallbackHandler</a></li>
                                 <li><a href="../classes/miruken.callback.Deferred.html">miruken.callback.Deferred</a></li>
                                 <li><a href="../classes/miruken.callback.HandleMethod.html">miruken.callback.HandleMethod</a></li>
-                                <li><a href="../classes/miruken.callback.InternalCallback.html">miruken.callback.InternalCallback</a></li>
                                 <li><a href="../classes/miruken.callback.InvocationDelegate.html">miruken.callback.InvocationDelegate</a></li>
                                 <li><a href="../classes/miruken.callback.InvocationOptionsHandler.html">miruken.callback.InvocationOptionsHandler</a></li>
                                 <li><a href="../classes/miruken.callback.InvocationSemantics.html">miruken.callback.InvocationSemantics</a></li>
                                 <li><a href="../classes/miruken.callback.Lookup.html">miruken.callback.Lookup</a></li>
                                 <li><a href="../classes/miruken.callback.MethodCallbackHandler.html">miruken.callback.MethodCallbackHandler</a></li>
                                 <li><a href="../classes/miruken.callback.ProvidingCallbackHandler.html">miruken.callback.ProvidingCallbackHandler</a></li>
+                                <li><a href="../classes/miruken.callback.Reentrant.html">miruken.callback.Reentrant</a></li>
+                                <li><a href="../classes/miruken.callback.ReentrantDecorator.html">miruken.callback.ReentrantDecorator</a></li>
+                                <li><a href="../classes/miruken.callback.RejectedError.html">miruken.callback.RejectedError</a></li>
                                 <li><a href="../classes/miruken.callback.Resolution.html">miruken.callback.Resolution</a></li>
                                 <li><a href="../classes/miruken.ClassMeta.html">miruken.ClassMeta</a></li>
                                 <li><a href="../classes/miruken.context.{$contextual}
@@ -76,6 +78,9 @@ Metamacro to validate instances. - miruken</title>
                                 <li><a href="../classes/miruken.DisposingMixin.html">miruken.DisposingMixin</a></li>
                                 <li><a href="../classes/miruken.Enum.html">miruken.Enum</a></li>
                                 <li><a href="../classes/miruken.error.{ErrorCallbackHandler}.html">miruken.error.{ErrorCallbackHandler}</a></li>
+                                <li><a href="../classes/miruken.graph.Traversal.html">miruken.graph.Traversal</a></li>
+                                <li><a href="../classes/miruken.graph.Traversing.html">miruken.graph.Traversing</a></li>
+                                <li><a href="../classes/miruken.graph.TraversingMixin.html">miruken.graph.TraversingMixin</a></li>
                                 <li><a href="../classes/miruken.IndexedList.html">miruken.IndexedList</a></li>
                                 <li><a href="../classes/miruken.InstanceMeta.html">miruken.InstanceMeta</a></li>
                                 <li><a href="../classes/miruken.Interceptor.html">miruken.Interceptor</a></li>
@@ -109,8 +114,9 @@ Metamacro to validate instances. - miruken</title>
                                 <li><a href="../classes/miruken.Modifier.html">miruken.Modifier</a></li>
                                 <li><a href="../classes/miruken.mvc.{Controller}.html">miruken.mvc.{Controller}</a></li>
                                 <li><a href="../classes/miruken.mvc.{Model}.html">miruken.mvc.{Model}</a></li>
-                                <li><a href="../classes/miruken.ng.{Directive}.html">miruken.ng.{Directive}</a></li>
-                                <li><a href="../classes/miruken.ng.{Runner}.html">miruken.ng.{Runner}</a></li>
+                                <li><a href="../classes/miruken.ng.Directive.html">miruken.ng.Directive</a></li>
+                                <li><a href="../classes/miruken.ng.Runner.html">miruken.ng.Runner</a></li>
+                                <li><a href="../classes/miruken.ng.UseModelValidation.html">miruken.ng.UseModelValidation</a></li>
                                 <li><a href="../classes/miruken.ObjectDelegate.html">miruken.ObjectDelegate</a></li>
                                 <li><a href="../classes/miruken.Parenting.html">miruken.Parenting</a></li>
                                 <li><a href="../classes/miruken.Protocol.html">miruken.Protocol</a></li>
@@ -118,9 +124,6 @@ Metamacro to validate instances. - miruken</title>
                                 <li><a href="../classes/miruken.Starting.html">miruken.Starting</a></li>
                                 <li><a href="../classes/miruken.Startup.html">miruken.Startup</a></li>
                                 <li><a href="../classes/miruken.StrictProtocol.html">miruken.StrictProtocol</a></li>
-                                <li><a href="../classes/miruken.Traversal.html">miruken.Traversal</a></li>
-                                <li><a href="../classes/miruken.Traversing.html">miruken.Traversing</a></li>
-                                <li><a href="../classes/miruken.TraversingMixin.html">miruken.TraversingMixin</a></li>
                                 <li><a href="../classes/miruken.validate.{$validateThat}
                 Metamacro to validate instances..html">miruken.validate.{$validateThat}
                 Metamacro to validate instances.</a></li>
@@ -168,44 +171,365 @@ Metamacro to validate instances. - miruken</title>
             <div class="apidocs">
                 <div id="docs-main">
                     <div class="content">
-<h1>miruken.validate.{$validateThat}
-Metamacro to validate instances. Class</h1>
-<div class="box meta">
+<h1 class="file-heading">File: lib\graph.js</h1>
 
+<div class="file">
+    <pre class="code prettyprint linenums">
+var miruken = require(&#x27;./miruken.js&#x27;);
 
-        <div class="foundat">
-            Defined in: <a href="../files/lib_validate_validate.js.html#l216"><code>lib&#x2F;validate&#x2F;validate.js:216</code></a>
-        </div>
+new function () { // closure
 
-            Module: <a href="../modules/miruken.html">miruken</a>
+    /**
+     * Definition goes here
+     * @module miruken
+     * @submodule callback
+     * @namespace miruken.graph
+     */
+    var grpah = new base2.Package(this, {
+        name:    &quot;graph&quot;,
+        version: miruken.version,
+        parent:  miruken,
+        imports: &quot;miruken&quot;,
+        exports: &quot;TraversingAxis,Traversing,TraversingMixin,Traversal&quot;
+    });
 
-</div>
+    eval(this.imports);
 
+    // =========================================================================
+    // Traversing
+    // =========================================================================
 
-<div class="box intro">
-    
-</div>
+    /**
+     * Traversing enum
+     * @property TraversingAxis
+     * @type Enum
+     */
+    var TraversingAxis = Enum({
+        Self:                    1,
+        Root:                    2,
+        Child:                   3,
+        Sibling:                 4,
+        Ancestor:                5,
+        Descendant:              6,
+        DescendantReverse:       7,
+        ChildOrSelf:             8,
+        SiblingOrSelf:           9,
+        AncestorOrSelf:          10,
+        DescendantOrSelf:        11,
+        DescendantOrSelfReverse: 12,
+        AncestorSiblingOrSelf:   13
+    });
 
+    /**
+     * Description goes here
+     * @class Traversing
+     * @extends Protocol
+     */
+    var Traversing = Protocol.extend({
+        /**
+         * Traverse a graph of objects.
+         * @method traverse
+         * @param {TraversingAxis} axis       - axis of traversal
+         * @param {Function}       visitor    - receives visited nodes
+         * @param {Object}         context    - visitor callback context
+         */
+        traverse: function (axis, visitor, context) {}
+    });
 
-<div id="classdocs" class="tabview">
-    <ul class="api-class-tabs">
-        <li class="api-class-tab index"><a href="#index">Index</a></li>
+    /**
+     * Traversing mixin
+     * @class TraversingMixin
+     * @extends Module
+     */
+    var TraversingMixin = Module.extend({
+        /**
+         * Traverse a graph of objects.
+         * @method traverse
+         * @param {Object}      object      -   axis of traversal
+         * @param {Axis}        axis        -   receives visited nodes
+         * @param {Visitor}     visitor     -   receives visited nodes
+         * @param {Object}      context     -   visitor callback context
+         */
+        traverse: function (object, axis, visitor, context) {
+            if ($isFunction(axis)) {
+                context = visitor;
+                visitor = axis;
+                axis    = TraversingAxis.Child;
+            }
+            if (!$isFunction(visitor)) return;
+            switch (axis) {
+            case TraversingAxis.Self:
+                _traverseSelf.call(object, visitor, context);
+                break;
+                
+            case TraversingAxis.Root:
+                _traverseRoot.call(object, visitor, context);
+                break;
+                
+            case TraversingAxis.Child:
+                _traverseChildren.call(object, visitor, false, context);
+                break;
 
-    </ul>
+            case TraversingAxis.Sibling:
+                _traverseAncestorSiblingOrSelf.call(object, visitor, false, false, context);
+                break;
+                
+            case TraversingAxis.ChildOrSelf:
+                _traverseChildren.call(object, visitor, true, context);
+                break;
 
-    <div>
-        <div id="index" class="api-class-tabpanel index">
-            <h2 class="off-left">Item Index</h2>
+            case TraversingAxis.SiblingOrSelf:
+                _traverseAncestorSiblingOrSelf.call(object, visitor, true, false, context);
+                break;
+                
+            case TraversingAxis.Ancestor:
+                _traverseAncestors.call(object, visitor, false, context);
+                break;
+                
+            case TraversingAxis.AncestorOrSelf:
+                _traverseAncestors.call(object, visitor, true, context);
+                break;
+                
+            case TraversingAxis.Descendant:
+                _traverseDescendants.call(object, visitor, false, context);
+                break;
+  
+            case TraversingAxis.DescendantReverse:
+                _traverseDescendantsReverse.call(object, visitor, false, context);
+                break;
+              
+            case TraversingAxis.DescendantOrSelf:
+                _traverseDescendants.call(object, visitor, true, context);
+                break;
 
+            case TraversingAxis.DescendantOrSelfReverse:
+                _traverseDescendantsReverse.call(object, visitor, true, context);
+                break;
+                
+            case TraversingAxis.AncestorSiblingOrSelf:
+                _traverseAncestorSiblingOrSelf.call(object, visitor, true, true, context);
+                break;
 
+            default:
+                throw new Error(format(&quot;Unrecognized TraversingAxis %1.&quot;, axis));
+            }
+        }
+    });
 
+    function checkCircularity(visited, node) {
+        if (visited.indexOf(node) !== -1) {
+            throw new Error(format(&quot;Circularity detected for node %1&quot;, node));
+        }
+        visited.push(node);
+        return node;
+    }
 
-        </div>
+    function _traverseSelf(visitor, context) {
+        visitor.call(context, this);
+    }
 
+    function _traverseRoot(visitor, context) {
+        var parent, root = this, visited = [this];
+        while ($isFunction(root.getParent) &amp;&amp; (parent = root.getParent())) {
+            checkCircularity(visited, parent);
+            root = parent;   
+        }
+        visitor.call(context, root);
+    }
 
+    function _traverseChildren(visitor, withSelf, context) {
+        if ((withSelf &amp;&amp; visitor.call(context, this)) || !$isFunction(this.getChildren)) {
+            return;
+        }
+        var children = this.getChildren();
+        for (var i = 0; i &lt; children.length; ++i) {
+            if (visitor.call(context, children[i])) {
+                return;
+            }
+        }
+    }
 
+    function _traverseAncestors(visitor, withSelf, context) {
+        var parent = this, visited = [this];
+        if (withSelf &amp;&amp; visitor.call(context, this)) {
+            return;
+        }
+        while ($isFunction(parent.getParent) &amp;&amp; (parent = parent.getParent()) &amp;&amp;
+               !visitor.call(context, parent)) {
+            checkCircularity(visited, parent);
+        }
+    }
 
-    </div>
+    function _traverseDescendants(visitor, withSelf, context) {
+        if (withSelf) {
+            Traversal.levelOrder(this, visitor, context);
+        } else {
+            var self = this;
+            Traversal.levelOrder(this, function (node) {
+                if (node != self) {
+                    return visitor.call(context, node);
+                }
+            }, context);
+        }
+    }
+
+    function _traverseDescendantsReverse(visitor, withSelf, context) {
+        if (withSelf) {
+            Traversal.reverseLevelOrder(this, visitor, context);
+        } else {
+            var self = this;
+            Traversal.reverseLevelOrder(this, function (node) {
+                if (node != self) {
+                    return visitor.call(context, node);
+                }
+            }, context);
+        }
+    }
+
+    function _traverseAncestorSiblingOrSelf(visitor, withSelf, withAncestor, context) {
+        if (withSelf &amp;&amp; visitor.call(context, this) || !$isFunction(this.getParent)) {
+            return;
+        }
+        var self = this, parent = this.getParent();
+        if (parent) {
+            if ($isFunction(parent.getChildren)) {
+                var children = parent.getChildren();
+                for (var i = 0; i &lt; children.length; ++i) {
+                    var sibling = children[i];
+                    if (sibling != self &amp;&amp; visitor.call(context, sibling)) {
+                        return;
+                    }
+                }
+            }
+            if (withAncestor) {
+                _traverseAncestors.call(parent, visitor, true, context);
+            }
+        }
+    }
+
+    /**
+     * Description goes here
+     * @class Traversal
+     * @extends Abstract
+     */
+    var Traversal = Abstract.extend({}, {
+        /**
+         * Description goes here
+         * @method preOrder
+         * @param  {Node}       node       -   description
+         * @param  {Visitor}    visitor    -   description
+         * @param  {Context}    context    -   description
+         * @return {Array}      preOrder   -   description
+         */
+        preOrder: function (node, visitor, context) {
+            return _preOrder(node, visitor, context, []);
+        },
+        /**
+         * Description goes here
+         * @method postOrder
+         * @param  {Node}       node        -   description
+         * @param  {Visitor}    visitor     -   description
+         * @param  {Context}    context     -   description
+         * @return {Array}      postOrder   -   description
+         */
+        postOrder: function (node, visitor, context) {
+            return _postOrder(node, visitor, context, []);
+        },
+        /**
+         * Description goes here
+         * @method levelOrder
+         * @param  {Node}       node        -   description
+         * @param  {Visitor}    visitor     -   description
+         * @param  {Context}    context     -   description
+         * @return {Array}      levelOrder  -   description
+         */
+        levelOrder: function (node, visitor, context) {
+            return _levelOrder(node, visitor, context, []);
+        },
+        /**
+         * Description goes here
+         * @method reverseLevelOrder
+         * @param  {Node}       node                -   description
+         * @param  {Visitor}    visitor             -   description
+         * @param  {Context}    context             -   description
+         * @return {Array}      reverseLevelOrder   -   description
+         */
+        reverseLevelOrder: function (node, visitor, context) {
+            return _reverseLevelOrder(node, visitor, context, []);
+        }
+    });
+
+    function _preOrder(node, visitor, context, visited) {
+        checkCircularity(visited, node);
+        if (!node || !$isFunction(visitor) || visitor.call(context, node)) {
+            return true;
+        }
+        if ($isFunction(node.traverse))
+            node.traverse(function (child) {
+                return Traversal.preOrder(child, visitor, context);
+            });
+        return false;
+    }
+
+    function _postOrder(node, visitor, context, visited) {
+        checkCircularity(visited, node);
+        if (!node || !$isFunction(visitor)) {
+            return true;
+        }
+        if ($isFunction(node.traverse))
+            node.traverse(function (child) {
+                return Traversal.postOrder(child, visitor, context);
+            });
+        return visitor.call(context, node);
+    }
+
+    function _levelOrder(node, visitor, context, visited) {
+        if (!node || !$isFunction(visitor)) {
+            return;
+        }
+        var queue = [node];
+        while (queue.length &gt; 0) {
+            var next = queue.shift();
+            checkCircularity(visited, next);
+            if (visitor.call(context, next)) {
+                return;
+            }
+            if ($isFunction(next.traverse))
+                next.traverse(function (child) {
+                    if (child) queue.push(child);
+                });
+        }
+    }
+
+    function _reverseLevelOrder(node, visitor, context, visited) {
+        if (!node || !$isFunction(visitor)) {
+            return;
+        }
+        var queue = [node],
+            stack = [];
+        while (queue.length &gt; 0) {
+            var next = queue.shift();
+            checkCircularity(visited, next);
+            stack.push(next);
+            var level = [];
+            if ($isFunction(next.traverse))
+                next.traverse(function (child) {
+                    if (child) level.unshift(child);
+                });
+            queue.push.apply(queue, level);
+        }
+        while (stack.length &gt; 0) {
+            if (visitor.call(context, stack.pop())) {
+                return;
+            }
+        }
+    }
+
+    eval(this.exports);
+
+}
+
+    </pre>
 </div>
                     </div>
                 </div>

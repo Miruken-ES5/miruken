@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
     <meta charset="utf-8">
-    <title>miruken.ObjectDelegate - miruken</title>
+    <title>miruken.ng.UseModelValidation - miruken</title>
     <link rel="stylesheet" href="http://yui.yahooapis.com/3.9.1/build/cssgrids/cssgrids-min.css">
     <link rel="stylesheet" href="../assets/vendor/prettify/prettify-min.css">
     <link rel="stylesheet" href="../assets/css/main.css" id="site_styles">
@@ -171,15 +171,15 @@
             <div class="apidocs">
                 <div id="docs-main">
                     <div class="content">
-<h1>miruken.ObjectDelegate Class</h1>
+<h1>miruken.ng.UseModelValidation Class</h1>
 <div class="box meta">
 
         <div class="extends">
-            Extends Delegate
+            Extends Directive
         </div>
 
         <div class="foundat">
-            Defined in: <a href="../files/lib_miruken.js.html#l102"><code>lib\miruken.js:102</code></a>
+            Defined in: <a href="../files/lib_angular_ng.js.html#l51"><code>lib\angular\ng.js:51</code></a>
         </div>
 
             Module: <a href="../modules/miruken.html">miruken</a>
@@ -188,13 +188,14 @@
 
 
 <div class="box intro">
-    
+    <p>Description goes here</p>
+
 </div>
 
     <div class="constructor">
         <h2>Constructor</h2>
-        <div id="method_miruken.ObjectDelegate" class="method item">
-            <h3 class="name"><code>miruken.ObjectDelegate</code></h3>
+        <div id="method_miruken.ng.UseModelValidation" class="method item">
+            <h3 class="name"><code>miruken.ng.UseModelValidation</code></h3>
         
                 <span class="paren">()</span>
         
@@ -208,7 +209,7 @@
             <div class="meta">
                         <p>
                         Defined in
-                <a href="../files/lib_miruken.js.html#l102"><code>lib\miruken.js:102</code></a>
+                <a href="../files/lib_angular_ng.js.html#l51"><code>lib\angular\ng.js:51</code></a>
                 </p>
         
         
@@ -241,15 +242,45 @@
 
                     <ul class="index-list methods extends">
                             <li class="index-item method">
-                                <a href="#method_get">get</a>
+                                <a href="#method__installPackage
+Registers the package Installers, Runners and Starters.">_installPackage
+Registers the package Installers, Runners and Starters.</a>
 
                             </li>
                             <li class="index-item method">
-                                <a href="#method_invoke">invoke</a>
+                                <a href="#method__instrumentScopes
+Instruments angular scopes with miruken contexts.">_instrumentScopes
+Instruments angular scopes with miruken contexts.</a>
 
                             </li>
                             <li class="index-item method">
-                                <a href="#method_set">set</a>
+                                <a href="#method__ngDependencies
+Extracts the string dependencies for the component.">_ngDependencies
+Extracts the string dependencies for the component.</a>
+
+                            </li>
+                            <li class="index-item method">
+                                <a href="#method__provideInjector
+Attaches the supplied injector to owners $providers.">_provideInjector
+Attaches the supplied injector to owners $providers.</a>
+
+                            </li>
+                            <li class="index-item method">
+                                <a href="#method__provideLiteral
+Provides all keys from the object literal.">_provideLiteral
+Provides all keys from the object literal.</a>
+
+                            </li>
+                            <li class="index-item method">
+                                <a href="#method__registerControllersAndDirectives
+Registers the package controllers and directives.">_registerControllersAndDirectives
+Registers the package controllers and directives.</a>
+
+                            </li>
+                            <li class="index-item method">
+                                <a href="#method_Shim
+Resolves the component from the container.">Shim
+Resolves the component from the container.</a>
 
                             </li>
                     </ul>
@@ -262,26 +293,34 @@
             <div id="methods" class="api-class-tabpanel">
                 <h2 class="off-left">Methods</h2>
 
-<div id="method_get" class="method item">
-    <h3 class="name"><code>get</code></h3>
+<div id="method__installPackage
+Registers the package Installers, Runners and Starters." class="method item">
+    <h3 class="name"><code>_installPackage
+Registers the package Installers, Runners and Starters.</code></h3>
 
         <div class="args">
             <span class="paren">(</span><ul class="args-list inline commas">
                 <li class="arg">
-                        <code>protocol</code>
+                        <code>package</code>
                 </li>
                 <li class="arg">
-                        <code>propertyName</code>
+                        <code>module</code>
                 </li>
                 <li class="arg">
-                        <code>strict</code>
+                        <code>exports</code>
+                </li>
+                <li class="arg">
+                        <code>injector</code>
+                </li>
+                <li class="arg">
+                        <code>runners</code>
+                </li>
+                <li class="arg">
+                        <code>starters</code>
                 </li>
             </ul><span class="paren">)</span>
         </div>
 
-        <span class="returns-inline">
-            <span class="type">Object</span>
-        </span>
 
 
 
@@ -292,7 +331,7 @@
     <div class="meta">
                 <p>
                 Defined in
-        <a href="../files/lib_miruken.js.html#l114"><code>lib\miruken.js:114</code></a>
+        <a href="../files/lib_angular_ng.js.html#l185"><code>lib\angular\ng.js:185</code></a>
         </p>
 
 
@@ -300,8 +339,7 @@
     </div>
 
     <div class="description">
-        <p>Description goes here</p>
-
+        
     </div>
 
         <div class="params">
@@ -309,155 +347,78 @@
 
             <ul class="params-list">
                 <li class="param">
-                        <code class="param-name">protocol</code>
-                        <span class="type">Protocol</span>
+                        <code class="param-name">package</code>
+                        <span class="type">Package</span>
 
 
                     <div class="param-description">
                         <ul>
-<li>definition</li>
+<li>module package</li>
 </ul>
 
                     </div>
 
                 </li>
                 <li class="param">
-                        <code class="param-name">propertyName</code>
-                        <span class="type">String</span>
+                        <code class="param-name">module</code>
+                        <span class="type">Module</span>
 
 
                     <div class="param-description">
                         <ul>
-<li>definition</li>
+<li>angular module</li>
 </ul>
 
                     </div>
 
                 </li>
                 <li class="param">
-                        <code class="param-name">strict</code>
-                        <span class="type">Boolean</span>
-
-
-                    <div class="param-description">
-                        <ul>
-<li>definition</li>
-</ul>
-
-                    </div>
-
-                </li>
-            </ul>
-        </div>
-
-        <div class="returns">
-            <h4>Returns:</h4>
-
-            <div class="returns-description">
-                        <span class="type">Object</span>:
-                    <p>object          - definition</p>
-
-            </div>
-        </div>
-
-
-</div>
-<div id="method_invoke" class="method item">
-    <h3 class="name"><code>invoke</code></h3>
-
-        <div class="args">
-            <span class="paren">(</span><ul class="args-list inline commas">
-                <li class="arg">
-                        <code>protocol</code>
-                </li>
-                <li class="arg">
-                        <code>methodName</code>
-                </li>
-                <li class="arg">
-                        <code>args</code>
-                </li>
-                <li class="arg">
-                        <code>strict</code>
-                </li>
-            </ul><span class="paren">)</span>
-        </div>
-
-        <span class="returns-inline">
-            <span class="type">Method</span>
-        </span>
-
-
-
-
-
-
-
-    <div class="meta">
-                <p>
-                Defined in
-        <a href="../files/lib_miruken.js.html#l143"><code>lib\miruken.js:143</code></a>
-        </p>
-
-
-
-    </div>
-
-    <div class="description">
-        <p>Description goes here</p>
-
-    </div>
-
-        <div class="params">
-            <h4>Parameters:</h4>
-
-            <ul class="params-list">
-                <li class="param">
-                        <code class="param-name">protocol</code>
-                        <span class="type">Protocol</span>
-
-
-                    <div class="param-description">
-                        <ul>
-<li>definition</li>
-</ul>
-
-                    </div>
-
-                </li>
-                <li class="param">
-                        <code class="param-name">methodName</code>
-                        <span class="type">String</span>
-
-
-                    <div class="param-description">
-                        <ul>
-<li>definition</li>
-</ul>
-
-                    </div>
-
-                </li>
-                <li class="param">
-                        <code class="param-name">args</code>
+                        <code class="param-name">exports</code>
                         <span class="type">Array</span>
 
 
                     <div class="param-description">
                         <ul>
-<li>definition</li>
+<li>exported members</li>
 </ul>
 
                     </div>
 
                 </li>
                 <li class="param">
-                        <code class="param-name">strict</code>
-                        <span class="type">Boolean</span>
+                        <code class="param-name">injector</code>
+                        <span class="type">Injector</span>
 
 
                     <div class="param-description">
                         <ul>
-<li>definition</li>
+<li>module injector</li>
+</ul>
+
+                    </div>
+
+                </li>
+                <li class="param">
+                        <code class="param-name">runners</code>
+                        <span class="type">Array</span>
+
+
+                    <div class="param-description">
+                        <ul>
+<li>collects runners</li>
+</ul>
+
+                    </div>
+
+                </li>
+                <li class="param">
+                        <code class="param-name">starters</code>
+                        <span class="type">Array</span>
+
+
+                    <div class="param-description">
+                        <ul>
+<li>collects starters</li>
 </ul>
 
                     </div>
@@ -466,40 +427,97 @@
             </ul>
         </div>
 
-        <div class="returns">
-            <h4>Returns:</h4>
-
-            <div class="returns-description">
-                        <span class="type">Method</span>:
-                    <p>method          - definition</p>
-
-            </div>
-        </div>
 
 
 </div>
-<div id="method_set" class="method item">
-    <h3 class="name"><code>set</code></h3>
+<div id="method__instrumentScopes
+Instruments angular scopes with miruken contexts." class="method item">
+    <h3 class="name"><code>_instrumentScopes
+Instruments angular scopes with miruken contexts.</code></h3>
 
         <div class="args">
             <span class="paren">(</span><ul class="args-list inline commas">
                 <li class="arg">
-                        <code>protocol</code>
+                        <code>$rootScope</code>
                 </li>
                 <li class="arg">
-                        <code>propertyName</code>
+                        <code>$injector</code>
                 </li>
-                <li class="arg">
-                        <code>propertyValue</code>
+            </ul><span class="paren">)</span>
+        </div>
+
+
+
+
+
+
+
+
+    <div class="meta">
+                <p>
+                Defined in
+        <a href="../files/lib_angular_ng.js.html#l118"><code>lib\angular\ng.js:118</code></a>
+        </p>
+
+
+
+    </div>
+
+    <div class="description">
+        
+    </div>
+
+        <div class="params">
+            <h4>Parameters:</h4>
+
+            <ul class="params-list">
+                <li class="param">
+                        <code class="param-name">$rootScope</code>
+                        <span class="type">Scope</span>
+
+
+                    <div class="param-description">
+                        <ul>
+<li>angular&#39;s root scope</li>
+</ul>
+
+                    </div>
+
                 </li>
+                <li class="param">
+                        <code class="param-name">$injector</code>
+                        <span class="type">Scope</span>
+
+
+                    <div class="param-description">
+                        <ul>
+<li>angular&#39;s ng injector</li>
+</ul>
+
+                    </div>
+
+                </li>
+            </ul>
+        </div>
+
+
+
+</div>
+<div id="method__ngDependencies
+Extracts the string dependencies for the component." class="method item">
+    <h3 class="name"><code>_ngDependencies
+Extracts the string dependencies for the component.</code></h3>
+
+        <div class="args">
+            <span class="paren">(</span><ul class="args-list inline commas">
                 <li class="arg">
-                        <code>strict</code>
+                        <code>controller</code>
                 </li>
             </ul><span class="paren">)</span>
         </div>
 
         <span class="returns-inline">
-            <span class="type">Object</span>
+            <span class="type">Array</span>
         </span>
 
 
@@ -511,7 +529,7 @@
     <div class="meta">
                 <p>
                 Defined in
-        <a href="../files/lib_miruken.js.html#l128"><code>lib\miruken.js:128</code></a>
+        <a href="../files/lib_angular_ng.js.html#l285"><code>lib\angular\ng.js:285</code></a>
         </p>
 
 
@@ -519,8 +537,7 @@
     </div>
 
     <div class="description">
-        <p>Description goes here</p>
-
+        
     </div>
 
         <div class="params">
@@ -528,52 +545,13 @@
 
             <ul class="params-list">
                 <li class="param">
-                        <code class="param-name">protocol</code>
-                        <span class="type">Protocol</span>
+                        <code class="param-name">controller</code>
+                        <span class="type">Function</span>
 
 
                     <div class="param-description">
                         <ul>
-<li>definition</li>
-</ul>
-
-                    </div>
-
-                </li>
-                <li class="param">
-                        <code class="param-name">propertyName</code>
-                        <span class="type">String</span>
-
-
-                    <div class="param-description">
-                        <ul>
-<li>definition</li>
-</ul>
-
-                    </div>
-
-                </li>
-                <li class="param">
-                        <code class="param-name">propertyValue</code>
-                        <span class="type">String</span>
-
-
-                    <div class="param-description">
-                        <ul>
-<li>definition</li>
-</ul>
-
-                    </div>
-
-                </li>
-                <li class="param">
-                        <code class="param-name">strict</code>
-                        <span class="type">Boolean</span>
-
-
-                    <div class="param-description">
-                        <ul>
-<li>definition</li>
+<li>controller class</li>
 </ul>
 
                     </div>
@@ -586,8 +564,328 @@
             <h4>Returns:</h4>
 
             <div class="returns-description">
-                        <span class="type">Object</span>:
-                    <p>object          - definition</p>
+                        <span class="type">Array</span>:
+                    <p>angular dependencies</p>
+
+            </div>
+        </div>
+
+
+</div>
+<div id="method__provideInjector
+Attaches the supplied injector to owners $providers." class="method item">
+    <h3 class="name"><code>_provideInjector
+Attaches the supplied injector to owners $providers.</code></h3>
+
+        <div class="args">
+            <span class="paren">(</span><ul class="args-list inline commas">
+                <li class="arg">
+                        <code>owner</code>
+                </li>
+                <li class="arg">
+                        <code>injector</code>
+                </li>
+            </ul><span class="paren">)</span>
+        </div>
+
+
+
+
+
+
+
+
+    <div class="meta">
+                <p>
+                Defined in
+        <a href="../files/lib_angular_ng.js.html#l270"><code>lib\angular\ng.js:270</code></a>
+        </p>
+
+
+
+    </div>
+
+    <div class="description">
+        
+    </div>
+
+        <div class="params">
+            <h4>Parameters:</h4>
+
+            <ul class="params-list">
+                <li class="param">
+                        <code class="param-name">owner</code>
+                        <span class="type">Object</span>
+
+
+                    <div class="param-description">
+                        <ul>
+<li>owning instance</li>
+</ul>
+
+                    </div>
+
+                </li>
+                <li class="param">
+                        <code class="param-name">injector</code>
+                        <span class="type">Injector</span>
+
+
+                    <div class="param-description">
+                        <ul>
+<li>angular injector</li>
+</ul>
+
+                    </div>
+
+                </li>
+            </ul>
+        </div>
+
+
+
+</div>
+<div id="method__provideLiteral
+Provides all keys from the object literal." class="method item">
+    <h3 class="name"><code>_provideLiteral
+Provides all keys from the object literal.</code></h3>
+
+        <div class="args">
+            <span class="paren">(</span><ul class="args-list inline commas">
+                <li class="arg">
+                        <code>owner</code>
+                </li>
+                <li class="arg">
+                        <code>literal</code>
+                </li>
+            </ul><span class="paren">)</span>
+        </div>
+
+
+
+
+
+
+
+
+    <div class="meta">
+                <p>
+                Defined in
+        <a href="../files/lib_angular_ng.js.html#l257"><code>lib\angular\ng.js:257</code></a>
+        </p>
+
+
+
+    </div>
+
+    <div class="description">
+        
+    </div>
+
+        <div class="params">
+            <h4>Parameters:</h4>
+
+            <ul class="params-list">
+                <li class="param">
+                        <code class="param-name">owner</code>
+                        <span class="type">Object</span>
+
+
+                    <div class="param-description">
+                        <ul>
+<li>owning instance</li>
+</ul>
+
+                    </div>
+
+                </li>
+                <li class="param">
+                        <code class="param-name">literal</code>
+                        <span class="type">Object</span>
+
+
+                    <div class="param-description">
+                        <ul>
+<li>object literal</li>
+</ul>
+
+                    </div>
+
+                </li>
+            </ul>
+        </div>
+
+
+
+</div>
+<div id="method__registerControllersAndDirectives
+Registers the package controllers and directives." class="method item">
+    <h3 class="name"><code>_registerControllersAndDirectives
+Registers the package controllers and directives.</code></h3>
+
+        <div class="args">
+            <span class="paren">(</span><ul class="args-list inline commas">
+                <li class="arg">
+                        <code>package</code>
+                </li>
+                <li class="arg">
+                        <code>module</code>
+                </li>
+                <li class="arg">
+                        <code>exports</code>
+                </li>
+            </ul><span class="paren">)</span>
+        </div>
+
+
+
+
+
+
+
+
+    <div class="meta">
+                <p>
+                Defined in
+        <a href="../files/lib_angular_ng.js.html#l149"><code>lib\angular\ng.js:149</code></a>
+        </p>
+
+
+
+    </div>
+
+    <div class="description">
+        
+    </div>
+
+        <div class="params">
+            <h4>Parameters:</h4>
+
+            <ul class="params-list">
+                <li class="param">
+                        <code class="param-name">package</code>
+                        <span class="type">Package</span>
+
+
+                    <div class="param-description">
+                        <ul>
+<li>module package</li>
+</ul>
+
+                    </div>
+
+                </li>
+                <li class="param">
+                        <code class="param-name">module</code>
+                        <span class="type">Module</span>
+
+
+                    <div class="param-description">
+                        <ul>
+<li>angular module</li>
+</ul>
+
+                    </div>
+
+                </li>
+                <li class="param">
+                        <code class="param-name">exports</code>
+                        <span class="type">Array</span>
+
+
+                    <div class="param-description">
+                        <ul>
+<li>exported members</li>
+</ul>
+
+                    </div>
+
+                </li>
+            </ul>
+        </div>
+
+
+
+</div>
+<div id="method_Shim
+Resolves the component from the container." class="method item">
+    <h3 class="name"><code>Shim
+Resolves the component from the container.</code></h3>
+
+        <div class="args">
+            <span class="paren">(</span><ul class="args-list inline commas">
+                <li class="arg">
+                        <code>component</code>
+                </li>
+                <li class="arg">
+                        <code>deps</code>
+                </li>
+            </ul><span class="paren">)</span>
+        </div>
+
+        <span class="returns-inline">
+            <span class="type">Function</span>
+        </span>
+
+
+
+
+
+
+
+    <div class="meta">
+                <p>
+                Defined in
+        <a href="../files/lib_angular_ng.js.html#l231"><code>lib\angular\ng.js:231</code></a>
+        </p>
+
+
+
+    </div>
+
+    <div class="description">
+        
+    </div>
+
+        <div class="params">
+            <h4>Parameters:</h4>
+
+            <ul class="params-list">
+                <li class="param">
+                        <code class="param-name">component</code>
+                        <span class="type">Function</span>
+
+
+                    <div class="param-description">
+                        <ul>
+<li>component key</li>
+</ul>
+
+                    </div>
+
+                </li>
+                <li class="param">
+                        <code class="param-name">deps</code>
+                        <span class="type">Array</span>
+
+
+                    <div class="param-description">
+                        <ul>
+<li>angular dependency keys</li>
+</ul>
+
+                    </div>
+
+                </li>
+            </ul>
+        </div>
+
+        <div class="returns">
+            <h4>Returns:</h4>
+
+            <div class="returns-description">
+                        <span class="type">Function</span>:
+                    <p>component constructor shim.</p>
 
             </div>
         </div>
