@@ -2041,11 +2041,11 @@ new function () { // closure
 
     /**
      * Definition goes here
-     * @class ReentrantDecorator
+     * @class ReentrantScope
      * @constructor
      * @extends CallbackHandler
      */
-    var ReentrantDecorator = CallbackHandler.extend({
+    var ReentrantScope = CallbackHandler.extend({
         constructor: function _(handler) {
             this.extend({
                 handleCallback: function (callback, greedy, composer) {
@@ -2081,7 +2081,7 @@ new function () { // closure
                 return decoratee.handleCallback(callback, greedy, composer);
             }
             if (composer == this) {
-                composer = new ReentrantDecorator(composer);
+                composer = new ReentrantScope(composer);
             }
             return this._filter(callback, composer, function () {
                 return decoratee.handleCallback(callback, greedy, composer);
@@ -5122,44 +5122,18 @@ new function () { // closure
             }
             Object.defineProperty(this, 'object', { value: object });
         },
-        /**
-         * Description goes here
-         * @method get
-         * @params {Protocol}    protocol        - definition
-         * @params {string}      propertyName    - definition
-         * @params {boolean}     strict          - definition
-         * @return {Object}      object          - definition
-         */
         get: function (protocol, propertyName, strict) {
             var object = this.object;
             if (!strict || protocol.adoptedBy(object)) {
                 return object[propertyName];
             }
         },
-        /**
-         * Description goes here
-         * @method set
-         * @params {Protocol}    protocol        - definition
-         * @params {string}      propertyName    - definition
-         * @params {string}      propertyValue   - definition
-         * @params {boolean}     strict          - definition
-         * @return {Object}      object          - definition
-         */
         set: function (protocol, propertyName, propertyValue, strict) {
             var object = this.object;
             if (!strict || protocol.adoptedBy(object)) {
                 return object[propertyName] = propertyValue;
             }
         },
-        /**
-         * Description goes here
-         * @method invoke
-         * @params {Protocol}    protocol        - definition
-         * @params {string}      methodName      - definition
-         * @params {Array}       args            - definition
-         * @params {boolean}     strict          - definition
-         * @return {Method}      method          - definition
-         */
         invoke: function (protocol, methodName, args, strict) {
             var object = this.object,
                 method = object[methodName];
@@ -5170,7 +5144,7 @@ new function () { // closure
     });
     
     /**
-     * Description goes here
+     * Declares methods and properties independent of class.
      * @class Protocol
      * @constructor
      * @extends Base
@@ -5203,15 +5177,33 @@ new function () { // closure
             return this.delegate.invoke(this.constructor, methodName, args, this.strict);
         }
     }, {
+        /**
+         * Determines if the target is a protocol.
+         * @method isProtocol
+         * @param   {Any}      target    - target to test
+         * @returns {boolean}  true if the target is a Protocol.
+         */
         isProtocol: function (target) {
             return target && (target.prototype instanceof Protocol);
         },
         conformsTo: False,
-        adoptedBy:  function (target) {
+        /**
+         * Determines if the target conforms to this protocol.
+         * @method conformsTo
+         * @param   {Any}      target    - target to test
+         * @returns {boolean}  true if the target conforms to this Protocol.
+         */
+        adoptedBy: function (target) {
             return target && $isFunction(target.conformsTo)
                  ? target.conformsTo(this)
                  : false;
         },
+        /**
+         * Creates a protocol binding over the object.
+         * @method coerce
+         * @param   {Object}   object    - object delegate
+         * @returns {Object}   a Protocol instance delegating to object. 
+         */
         coerce: function (object, strict) { return new this(object, strict); }
     });
 
@@ -5221,31 +5213,40 @@ new function () { // closure
      * @type Enum
      */
     var MetaStep = Enum({
+        /**
+         * Triggered when a new class is derived
+         */
         Subclass:  1,
+        /**
+         * Triggered when an existing class is extended
+         */
         Implement: 2,
+        /**
+         * Triggered when an instance is extended
+         */
         Extend:    3
         });
 
     /**
-     * Description goes here
+     * Provides a method to modify a class definition at runtime.
      * @class MetaMacro
      * @extends Base
      */
     var MetaMacro = Base.extend({
         /**
-         * Description goes here
+         * Executes the macro for the given step.
          * @method apply
-         * @param {Step}           step        - definition
-         * @param {MetaData}       metadata    - definition
-         * @param {Target}         target      - definition
-         * @param {Definition}     definition  - definition
+         * @param  {Step}       step        - meta step
+         * @param  {MetaData}   metadata    - effective metadata
+         * @param  {Object}     target      - target macro applied to 
+         * @param  {Object}     definition  - literal containing changes
          */
         apply: function (step, metadata, target, definition) {},
         /**
-         * Description goes here
+         * Triggered when a protocol is added to metadata.
          * @method protocolAdded
-         * @param {MetaData}       metadata    - definition
-         * @param {Protocol}       protocol    - definition
+         * @param {MetaData}    metadata    - effective metadata
+         * @param {Protocol}    protocol    - protocol added
          */
         protocolAdded: function (metadata, protocol) {},
         shouldInherit: False,
@@ -5255,7 +5256,7 @@ new function () { // closure
     });
 
     /**
-     * Description goes here
+     * Base class for all metadata.
      * @class MetaBase
      * @constructor
      * @extends MetaMacro
@@ -5266,21 +5267,21 @@ new function () { // closure
                 _descriptors;
             this.extend({
                 /**
-                 * Description goes here
+                 * Gets the parent metadata.
                  * @method getParent
-                 * @return {Parent}     parent          - definition
+                 * @returns {MetaBase} parent metadata if present.
                  */
                 getParent: function () { return parent; },
                 /**
-                 * Description goes here
+                 * Gets the declared protocols.
                  * @method getProtocols
-                 * @return {Protocols}     protocols    - definition
+                 * @returns {Array} of declared protocols.
                  */
                 getProtocols: function () { return _protocols.slice(0) },
                 /**
-                 * Description goes here
+                 * Gets all conforming protocools.
                  * @method getAllProtocols
-                 * @return {Array}     protocols        - definition
+                 * @returns {Array} of conforming protocols.
                  */
                 getAllProtocols: function () {
                     var protocols = this.getProtocols(),
@@ -5297,10 +5298,9 @@ new function () { // closure
                     return protocols;
                 },
                 /**
-                 * Description goes here
+                 * Adds one or more protocols to the metadata.
                  * @method addProtocol
-                 * @param  {Array}     protocols        - definition
-                 * @return {Array}     protocols        - definition
+                 * @param  {Array}   protocols  - protocols to add
                  */
                 addProtocol: function (protocols) {
                     if ($isNothing(protocols)) {
@@ -5324,10 +5324,9 @@ new function () { // closure
                     }
                 },
                 /**
-                 * Description goes here
+                 * Determines if the metadata conforms to the protocol.
                  * @method conformsTo
-                 * @params {Protocol}   protocol     - definition
-                 * @return {boolean}    bool         - definition
+                 * @returns {boolean}  true if the metadata conforms to the protocol.
                  */
                 conformsTo: function (protocol) {
                     if (!(protocol && (protocol.prototype instanceof Protocol))) {
@@ -5349,12 +5348,12 @@ new function () { // closure
                     }
                 },
                 /**
-                 * Description goes here
+                 * Defines a property on the metadata.
                  * @method defineProperty
-                 * @param  {Object}     target      - definition
-                 * @param  {string}     name        - definition
-                 * @param  {Object}     spec        - definition
-                 * @param  {Object}     descriptor  - definition
+                 * @param  {Object}   target      - target receiving property
+                 * @param  {string}   name        - name of the property
+                 * @param  {Object}   spec        - property specification
+                 * @param  {Object}   descriptor  - property descriptor
                  */
                 defineProperty: function(target, name, spec, descriptor) {
                     descriptor = extend({}, descriptor);
@@ -5362,10 +5361,10 @@ new function () { // closure
                     this.addDescriptor(name, descriptor);
                 },
                 /**
-                 * Description goes here
+                 * Gets the descriptor for one or more properties.
                  * @method getDescriptor
-                 * @param  {Filter}     filter      - definition
-                 * @return {Parent}     parent      - definition
+                 * @param    {Filter}   filter      - property selector
+                 * @returns  {Object}   aggregated property descriptor.
                  */
                 getDescriptor: function (filter) {
                     var descriptors;
@@ -5392,24 +5391,26 @@ new function () { // closure
                     return descriptors;
                 },
                 /**
-                 * Description goes here
+                 * Sets the descriptor for a property.
                  * @method addDescriptor
-                 * @param  {string}     name        - definition
-                 * @param  {Object}     descriptor  - definition
+                 * @param    {string}   name        - property name
+                 * @param    {Object}   descriptor  - property descriptor
+                 * @returns  {MetaBase} current metadata.
                  */
                 addDescriptor: function (name, descriptor) {
                     _descriptors = extend(_descriptors || {}, name, descriptor);
                     return this;
                 },
                 /**
-                 * Description goes here
+                 * Determines if the property descriptor matches the filter.
                  * @method matchDescriptor
-                 * @param  {Object}     descriptor  - definition
-                 * @param  {Object}     filter      - definition
+                 * @param    {Object}   descriptor  - property descriptor
+                 * @param    {Object}   filter      - matching filter
+                 * @returns  {boolean}  true if the descriptor matches, false otherwise.
                  */
                 matchDescriptor: function (descriptor, filter) {
                     if (typeOf(descriptor) !== 'object' || typeOf(filter) !== 'object') {
-                        return;
+                        return false;
                     }
                     for (var key in filter) {
                         var match = filter[key];
@@ -5436,10 +5437,10 @@ new function () { // closure
                     return true;
                 },
                 /**
-                 * Description goes here
+                 * Binds a method to the parent if not present.
                  * @method linkBase
-                 * @param  {Method}     method      - definition
-                 * @return {Method}     method      - definition
+                 * @param    {Function}  method - method name
+                 * @returns  {MetaBase}  current metadata.
                  */
                 linkBase: function (method) {
                     if (!this[method]) {
@@ -5457,14 +5458,15 @@ new function () { // closure
     });
 
     /**
-     * Description goes here
+     * Represents metadata describing a class.
      * @class ClassMeta
      * @constructor
      * @extends MetaBase
      */
     var ClassMeta = MetaBase.extend({
         constructor: function(baseClass, subClass, protocols, macros)  {
-            var _isProtocol = (subClass === Protocol) || (subClass.prototype instanceof Protocol),
+            var _isProtocol = (subClass === Protocol)
+                           || (subClass.prototype instanceof Protocol),
                 _macros     = macros ? macros.slice(0) : undefined;
             this.base(baseClass.$meta, protocols);
             this.extend({
@@ -5530,7 +5532,7 @@ new function () { // closure
     });
 
     /**
-     * Description goes here
+     * Represents metadata describing an instance.
      * @class InstanceMeta
      * @constructor
      * @extends MetaBase
@@ -5645,7 +5647,7 @@ new function () { // closure
     }
 
     /**
-     * Metamacro to proxy protocol methods through delegate.
+     * Metamacro to proxy protocol methods through a delegate.
      * @class $proxyProtocol
      * @extends MetaMacro
      */
@@ -5694,7 +5696,7 @@ new function () { // closure
     Protocol.$meta.apply(MetaStep.Subclass, Protocol.$meta, Protocol.prototype);
 
     /**
-     * Description goes here
+     * Protocol base requiring conformance to match methods.
      * @class StrictProtocol
      * @constructor
      * @extends Protocol     
@@ -5706,7 +5708,7 @@ new function () { // closure
     });
 
     /**
-     * Metamacro to create properties.
+     * Metamacro to define custom properties.
      * @class $properties
      * @constructor
      * @extends MetaMacro
@@ -5813,6 +5815,7 @@ new function () { // closure
 
     /**
      * Metamacro to derive properties from existng methods.
+     * Currently getXYZ, isXYZ and setXYZ conventions are recognized.
      * @class $inferProperties
      * @extends MetaMacro
      */
@@ -5847,11 +5850,11 @@ new function () { // closure
         isActive: True
     });
 
-    var DEFAULT_GETTERS = ['get', 'is'];
+    var GETTER_CONVENTIONS = ['get', 'is'];
 
     function _inferProperty(key, value, definition, spec) {
-        for (var i = 0; i < DEFAULT_GETTERS.length; ++i) {
-            var prefix = DEFAULT_GETTERS[i];
+        for (var i = 0; i < GETTER_CONVENTIONS.length; ++i) {
+            var prefix = GETTER_CONVENTIONS[i];
             if (key.lastIndexOf(prefix, 0) == 0) {
                 if (value.length === 0) {  // no arguments
                     var name  = key.substring(prefix.length);
@@ -5874,7 +5877,7 @@ new function () { // closure
     }
 
     /**
-     * Metamacro to inherit static members in subclass.
+     * Metamacro to inherit static members in subclasses.
      * @class $inhertStatic
      * @constructor
      * @extends MetaMacro
@@ -5912,6 +5915,7 @@ new function () { // closure
 
     /**
      * Base class to prefer coercion over casting.
+     * By default, Type(target) will cast target to the type.
      * @class Miruken
      * @extends Base
      */
@@ -5920,20 +5924,20 @@ new function () { // closure
     });
 
     /**
-     * Protocol for Disposing
+     * Protocol for targets that manage disposal lifecycle.
      * @class Disposing
      * @extends Protocol
      */
     var Disposing = Protocol.extend({
         /**
-         * Releases the object.
+         * Releases any resources managed by the receiver.
          * @method dispose
          */
         dispose: function () {}
     });
 
     /**
-     * Description goes here
+     * Mixin for Disposing implementation.
      * @class DisposingMixin
      * @extends Module
      */
@@ -5947,7 +5951,7 @@ new function () { // closure
     });
 
     /**
-     * Description goes here
+     * Protocol for targets that can execute functions.
      * @class Invoking
      * @extends StrictProtocol
      * @constructor
@@ -5955,16 +5959,16 @@ new function () { // closure
     var Invoking = StrictProtocol.extend({
         /**
          * Invokes the function with dependencies.
-         * @param   {Function} fn           - function to invoke
-         * @param   {Array}    dependencies - function dependencies
-         * @param   {Object}   ctx          - function context
-         * @return {Object} result of function.
+         * @param    {Function} fn           - function to invoke
+         * @param    {Array}    dependencies - function dependencies
+         * @param    {Object}   ctx          - function context
+         * @returns  {Any}      result of the function.
          */
         invoke: function (fn, dependencies, ctx) {}
     });
 
     /**
-     * Description goes here
+     * Protocol for targets that have parent/child relationships.
      * @class Parenting
      * @extends Protocol
      */
@@ -5972,13 +5976,13 @@ new function () { // closure
         /**
          * Creates a new child of the parent.
          * @method newChild
-         * @return {Any} the new child.
+         * @returns  {Object} the new child.
          */
         newChild: function () {}
     });
 
     /**
-     * Description goes here
+     * Protocol for targets that can be started.
      * @class Starting
      * @extends Protocol
      */
@@ -5987,7 +5991,7 @@ new function () { // closure
     });
 
     /**
-     * Description goes here
+     * Base class for startable targets.
      * @class Startup
      * @extends Base
      */
@@ -6001,7 +6005,7 @@ new function () { // closure
      * @param    {Disposing}           disposing  - object to dispose
      * @param    {Function | Promise}  action     - block or Promise
      * @param    {Object}              context    - block context
-     * @return   {Any} result of executing action in context.
+     * @returns  {Any} result of executing the action in context.
      */
     function $using(disposing, action, context) {
         if (disposing && $isFunction(disposing.dispose)) {
@@ -6026,7 +6030,8 @@ new function () { // closure
     }
 
     /**
-     * Description goes here
+     * Class for annotating targets.
+     * This is an alternative for the absence of true annotations.
      * @class Modifier
      */
     function Modifier() {}
@@ -6071,7 +6076,7 @@ new function () { // closure
     }
 
     /**
-     * Description goes here
+     * Helper class to simplify array manipulation.
      * @class ArrayManager
      * @extends Base
      */
@@ -6080,15 +6085,16 @@ new function () { // closure
             var _items = [];
             this.extend({
                 /** 
-                 * Description goes here
+                 * Gets the array.
                  * @method getItems
-                 * @return {Object} item
+                 * @returns  {Array} array.
                  */
                 getItems: function () { return _items; },
                 /** 
-                 * Description goes here
+                 * Gets the item at array index.
                  * @method getIndex
-                 * @return {Object} item
+                 * @param    {number}  index - index of item
+                 * @returns  {Any} item at index.
                  */
                 getIndex: function (index) {
                     if (_items.length > index) {
@@ -6096,11 +6102,11 @@ new function () { // closure
                     }
                 },
                 /** 
-                 * Description goes here
-                 * @method getIndex
-                 * @param  {Index}      index - description
-                 * @param  {Item}       item  - description
-                 * @return {Object}     item
+                 * Sets the item at array index if empty.
+                 * @method setIndex
+                 * @param    {number}  index - index of item
+                 * @param    {Any}     item  - item to set
+                 * @returns  {ArrayManager} array manager.
                  */
                 setIndex: function (index, item) {
                     if ((_items.length <= index) ||
@@ -6110,32 +6116,32 @@ new function () { // closure
                     return this;
                 },
                 /** 
-                 * Description goes here
+                 * Inserts the item at array index.
                  * @method insertIndex
-                 * @param  {Index}      index - description
-                 * @param  {Item}       item  - description
-                 * @return {Object}     item
+                 * @param    {number}   index - index of item
+                 * @param    {Item}     item  - item to insert
+                 * @returns  {ArrayManager} array manager.
                  */
                 insertIndex: function (index, item) {
                     _items.splice(index, 0, this.mapItem(item));
                     return this;
                 },
                 /** 
-                 * Description goes here
+                 * Replaces the item at array index.
                  * @method replaceIndex
-                 * @param  {Index}      index - description
-                 * @param  {Item}       item  - description
-                 * @return {Object}     item
+                 * @param    {number}   index - index of item
+                 * @param    {Item}     item  - item to replace
+                 * @returns  {ArrayManager} array manager.
                  */
                 replaceIndex: function (index, item) {
                     _items[index] = this.mapItem(item);
                     return this;
                 },
                 /** 
-                 * Description goes here
+                 * Removes the item at array index.
                  * @method removeIndex
-                 * @param  {Index}      index - description
-                 * @return {Object}     item
+                 * @param    {number}   index - index of item
+                 * @returns  {ArrayManager} array manager.
                  */
                 removeIndex: function (index) {
                     if (_items.length > index) {
@@ -6144,10 +6150,9 @@ new function () { // closure
                     return this;
                 },
                 /** 
-                 * Description goes here
+                 * Appends one or more items to the end of the array.
                  * @method append
-                 * @param  {Items}      items - description
-                 * @return {Object}     this  - description
+                 * @returns  {ArrayManager} array manager.
                  */
                 append: function (/* items */) {
                     var newItems;
@@ -6164,10 +6169,10 @@ new function () { // closure
                     return this;
                 },
                 /** 
-                 * Description goes here
+                 * Merges the items into the array.
                  * @method merge
-                 * @param  {Array}      items - description
-                 * @return {This}       this  - description
+                 * @param    {Array}  items - items to merge from
+                 * @returns  {ArrayManager} array manager.
                  */
                 merge: function (items) {
                     for (var index = 0; index < items.length; ++index) {
@@ -6184,10 +6189,10 @@ new function () { // closure
             }
         },
         /** 
-         * Description goes here
+         * Optional mapping for items before adding to the array.
          * @method mapItem
-         * @param  {Object}     item - description
-         * @return {Object}     item - description
+         * @param    {Any}  item - item to map
+         * @returns  {Any}  mapped item.
          */
         mapItem: function (item) { return item; }
     });
@@ -6204,27 +6209,27 @@ new function () { // closure
             var _index = {};
             this.extend({
                 /** 
-                 * Description goes here
+                 * Determines if list is empty.
                  * @method isEmpty
-                 * @return {Object}     this - description
+                 * @returns  {boolean}  true if list is empty, false otherwise.
                  */
                 isEmpty: function () {
                     return !this.head;
                 },
                 /** 
-                 * Description goes here
+                 * Gets the node at an index.
                  * @method getIndex
-                 * @param  {Index}      index - description
-                 * @return {Index}      index - description
+                 * @param  {number} index - index of node
+                 * @returns  {Any}  the node at index.
                  */
                 getIndex: function (index) {
                     return index && _index[index];
                 },
                 /** 
-                 * Description goes here
+                 * Inserts the node at an index.
                  * @method insert
-                 * @param  {Node}       node    - description
-                 * @param  {Index}      index   - description
+                 * @param  {Any}     node   - node to insert
+                 * @param  {number}  index  - index to insert at
                  */
                 insert: function (node, index) {
                     var indexedNode = this.getIndex(index),
@@ -6266,9 +6271,9 @@ new function () { // closure
                     }
                 },
                 /** 
-                 * Description goes here
+                 * Removes the node from the list.
                  * @method remove
-                 * @param  {Node}       node    - description
+                 * @param  {Any}  node  - node to remove
                  */
                 remove: function (node) {
                     var prev = node.prev,
@@ -6322,8 +6327,8 @@ new function () { // closure
     var Interceptor = Base.extend({
         /**
          * @method intercept
-         * @param  {Invocation} invocation
-         * @return {Invocation} invocation
+         * @param    {Invocation} invocation
+         * @returns  {Invocation} invocation
          */
         intercept: function (invocation) {
             return invocation.proceed();
@@ -6331,7 +6336,7 @@ new function () { // closure
     });
 
     /**
-     * Description goes here
+     * Responsible for selecting which interceptors to apply.
      * @class InterceptorSelector
      * @extends Base
      */
@@ -6339,10 +6344,10 @@ new function () { // closure
         /**
          * Description goes here
          * @method selectInterceptors
-         * @param  {Type}           type
-         * @param  {Method}         method
-         * @param  {Interceptors}   interceptors
-         * @return {Interceptors}   interceptors
+         * @param    {Type}    type being intercepted
+         * @param    {string}  method name
+         * @param    {Array}   available interceptors
+         * @returns  {Array}   effective interceptors
          */
         selectInterceptors: function (type, method, interceptors) {
             return interceptors;
@@ -6350,17 +6355,17 @@ new function () { // closure
     });
 
     /**
-     * Description goes here
+     * Builds proxy classes for interception.
      * @class ProxyBuilder
      * @extends Base
      */
     var ProxyBuilder = Base.extend({
         /**
-         * Description goes here
+         * Builds a proxy class for the supplied types.
          * @method buildProxy
-         * @param  {Array}          types           - description
-         * @param  {Options}        options         - description
-         * @return {Object}         buildProxy      - description
+         * @param    {Array}    types       - classes and protocols
+         * @param    {Object}   options     - literal options
+         * @returns  {Class}    proxy class.
          */
         buildProxy: function(types, options) {
             if (!(types instanceof Array)) {
@@ -6416,47 +6421,6 @@ new function () { // closure
     {
         throw new TypeError("Proxy classes are sealed and cannot be extended from.");
     }
-
-    /**
-     * Metamacro to intercept proxied methods.
-     * @class $interceptMethods
-     * @extends MetaMacro
-     */
-    var $interceptMethods = MetaMacro.extend({
-        apply: function (step, metadata, target, definition) {
-            var proxy = metadata.getClass();
-            switch (step) {
-                case MetaStep.Subclass:
-                {
-                    for (key in target) {
-                        if (!(key in _noProxyMethods) &&
-                            (!proxy.shouldProxy || proxy.shouldProxy(key, proxy))) {
-                            var descriptor = _getPropertyDescriptor(sourceProto, key);
-                            if ('value' in descriptor) {
-                                var member = descriptor.value;
-                                if ($isNothing(member) || $isFunction(member)) {
-                                    target[key] = _proxyMethod(key, member, proxy);
-                                }
-                            }
-                        }
-                    }
-                    break;
-                }
-                case MetaStep.Implement:
-                {
-                    break;
-                }
-                case MetaStep.Extend:
-                {
-                    break;
-                }
-            }
-        },
-        protocolAdded: function (metadata, protocol) {
-        },
-        shouldInherit: True,
-        isActive: True
-    });
 
     function _proxyClass(proxy, protocols) {
         var sources    = [proxy].concat(protocols),
@@ -6633,15 +6597,15 @@ new function () { // closure
     }
 
     /**
-     * Description goes here
+     * Determines if target is a protocol.
      * @method $isProtocol
-     * @param    {Any}     protocol  - protocol to test
+     * @param    {Any}     protocol  - target to test
      * @returns  {boolean} true if a protocol.
      */
     var $isProtocol = Protocol.isProtocol;
 
     /**
-     * Description goes here
+     * Determines if target is a class.
      * @method $isClass
      * @param    {Any}     clazz  - class to test
      * @returns  {boolean} true if a class (and not a protocol).
@@ -6651,27 +6615,27 @@ new function () { // closure
     }
 
     /**
-     * Description goes here
+     * Gets the class the instance belongs to.
      * @method $classOf
      * @param    {Object}  instance  - object
-     * @return   {Function} class of instance. 
+     * @returns  {Function} class of instance. 
      */
     function $classOf(instance) {
         return instance && instance.constructor;
     }
 
     /**
-     * Description goes here
+     * Gets the classes superclass.
      * @method $ancestorOf
-     * @param    {Function} clazz  - clazz
-     * @return   {Function} ancestor of class. 
+     * @param    {Function} clazz  - class
+     * @returns  {Function} ancestor of class. 
      */
     function $ancestorOf(clazz) {
         return clazz && clazz.ancestor;
     }
 
     /**
-     * Description goes here
+     * Determines if target is a string.
      * @method $isString
      * @param    {Any}     str  - string to test
      * @returns  {boolean} true if a string.
@@ -6681,7 +6645,7 @@ new function () { // closure
     }
 
     /**
-     * Description goes here
+     * Determines if the target is a function.
      * @method $isFunction
      * @param    {Any}     fn  - function to test
      * @returns  {boolean} true if a function.
@@ -6691,7 +6655,7 @@ new function () { // closure
     }
 
     /**
-     * Description goes here
+     * Determines if target is an object.
      * @method $isObject
      * @param    {Any}     obj  - object to test
      * @returns  {boolean} true if an object.
@@ -6701,7 +6665,7 @@ new function () { // closure
     }
 
     /**
-     * Description goes here
+     * Determines if target is a promise.
      * @method $isPromise
      * @param    {Any}     promise  - promise to test
      * @returns  {boolean} true if a promise. 
@@ -6711,7 +6675,7 @@ new function () { // closure
     }
 
     /**
-     * Description goes here
+     * Determines if value is null or undefined.
      * @method $isNothing
      * @param    {Any}     value  - value to test
      * @returns  {boolean} true if value null or undefined.
@@ -6731,23 +6695,23 @@ new function () { // closure
     }
 
     /**
-     * Description goes here
+     * Returns a function that returns value.
      * @method $lift
      * @param    {Any}      value  - any value
-     * @return   {Function} function that returns value.
+     * @returns  {Function} function that returns value.
      */
     function $lift(value) {
         return function() { return value; };
     }
 
     /**
-     * Description goes here
-     * @method $lift
+     * Throttles a function over a time period.
+     * @method $debounce
      * @param    {Function} func                - function to throttle
      * @param    {int}      wait                - time (ms) to throttle func
      * @param    {boolean}  immediate           - if true, trigger func early
      * @param    {Any}      defaultReturnValue  - value to return when throttled
-     * @return   {Function} throttled function 
+     * @returns  {Function} throttled function
      */
     function $debounce(func, wait, immediate, defaultReturnValue) {
         var timeout;
@@ -6778,7 +6742,7 @@ new function () { // closure
     }
 
     /**
-     * Description goes here
+     * Enhances Functions to expose new as a function.
      * @method new
      */
     if (Function.prototype.new === undefined)
@@ -6794,9 +6758,6 @@ new function () { // closure
         module.exports = exports = miruken;
     }
 
-    /**
-     * Add miruken and Miruken to the global namespace
-     */
     global.miruken = miruken;
     global.Miruken = Miruken;
 

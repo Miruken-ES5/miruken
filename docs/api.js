@@ -3,7 +3,6 @@ YUI.add("yuidoc-meta", function(Y) {
     "classes": [
         "miruken.$inferProperties",
         "miruken.$inhertStatic",
-        "miruken.$interceptMethods",
         "miruken.$properties",
         "miruken.$proxyProtocol",
         "miruken.ArrayManager",
@@ -46,7 +45,7 @@ YUI.add("yuidoc-meta", function(Y) {
         "miruken.callback.MethodCallbackHandler",
         "miruken.callback.ProvidingCallbackHandler",
         "miruken.callback.Reentrant",
-        "miruken.callback.ReentrantDecorator",
+        "miruken.callback.ReentrantScope",
         "miruken.callback.RejectedError",
         "miruken.callback.Resolution",
         "miruken.callback._Node",

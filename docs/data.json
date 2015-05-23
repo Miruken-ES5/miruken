@@ -115,7 +115,7 @@
                 "miruken.callback.Reentrant": 1,
                 "miruken.callback.CallbackHandler": 1,
                 "miruken.callback.CallbackHandlerDecorator": 1,
-                "miruken.callback.ReentrantDecorator": 1,
+                "miruken.callback.ReentrantScope": 1,
                 "miruken.callback.CallbackHandlerFilter": 1,
                 "miruken.callback.RejectedError": 1,
                 "miruken.callback.CallbackHandlerAspect": 1,
@@ -204,8 +204,7 @@
                 "miruken.IndexedList": 1,
                 "miruken.Interceptor": 1,
                 "miruken.InterceptorSelector": 1,
-                "miruken.ProxyBuilder": 1,
-                "miruken.$interceptMethods": 1
+                "miruken.ProxyBuilder": 1
             },
             "fors": {},
             "namespaces": {
@@ -262,7 +261,7 @@
                 "miruken.callback.Reentrant": 1,
                 "miruken.callback.CallbackHandler": 1,
                 "miruken.callback.CallbackHandlerDecorator": 1,
-                "miruken.callback.ReentrantDecorator": 1,
+                "miruken.callback.ReentrantScope": 1,
                 "miruken.callback.CallbackHandlerFilter": 1,
                 "miruken.callback.RejectedError": 1,
                 "miruken.callback.CallbackHandlerAspect": 1,
@@ -309,8 +308,7 @@
                 "miruken.IndexedList": 1,
                 "miruken.Interceptor": 1,
                 "miruken.InterceptorSelector": 1,
-                "miruken.ProxyBuilder": 1,
-                "miruken.$interceptMethods": 1
+                "miruken.ProxyBuilder": 1
             },
             "fors": {},
             "namespaces": {
@@ -325,7 +323,7 @@
             },
             "tag": "module",
             "file": "lib/miruken.js",
-            "line": 1409,
+            "line": 1346,
             "description": "Definition goes here"
         },
         "ioc": {
@@ -373,7 +371,7 @@
                 "miruken.callback.Reentrant": 1,
                 "miruken.callback.CallbackHandler": 1,
                 "miruken.callback.CallbackHandlerDecorator": 1,
-                "miruken.callback.ReentrantDecorator": 1,
+                "miruken.callback.ReentrantScope": 1,
                 "miruken.callback.CallbackHandlerFilter": 1,
                 "miruken.callback.RejectedError": 1,
                 "miruken.callback.CallbackHandlerAspect": 1,
@@ -1064,9 +1062,9 @@
             "is_constructor": 1,
             "extends": "CallbackHandler"
         },
-        "miruken.callback.ReentrantDecorator": {
-            "name": "miruken.callback.ReentrantDecorator",
-            "shortname": "ReentrantDecorator",
+        "miruken.callback.ReentrantScope": {
+            "name": "miruken.callback.ReentrantScope",
+            "shortname": "ReentrantScope",
             "classitems": [],
             "plugins": [],
             "extensions": [],
@@ -1486,8 +1484,8 @@
             "module": "miruken",
             "namespace": "miruken",
             "file": "lib/miruken.js",
-            "line": 161,
-            "description": "Description goes here",
+            "line": 135,
+            "description": "Declares methods and properties independent of class.",
             "is_constructor": 1,
             "extends": "Base"
         },
@@ -1502,8 +1500,8 @@
             "module": "miruken",
             "namespace": "miruken",
             "file": "lib/miruken.js",
-            "line": 218,
-            "description": "Description goes here",
+            "line": 219,
+            "description": "Provides a method to modify a class definition at runtime.",
             "extends": "Base"
         },
         "miruken.MetaBase": {
@@ -1517,8 +1515,8 @@
             "module": "miruken",
             "namespace": "miruken",
             "file": "lib/miruken.js",
-            "line": 246,
-            "description": "Description goes here",
+            "line": 247,
+            "description": "Base class for all metadata.",
             "is_constructor": 1,
             "extends": "MetaMacro"
         },
@@ -1533,8 +1531,8 @@
             "module": "miruken",
             "namespace": "miruken",
             "file": "lib/miruken.js",
-            "line": 448,
-            "description": "Description goes here",
+            "line": 449,
+            "description": "Represents metadata describing a class.",
             "is_constructor": 1,
             "extends": "MetaBase"
         },
@@ -1549,8 +1547,8 @@
             "module": "miruken",
             "namespace": "miruken",
             "file": "lib/miruken.js",
-            "line": 521,
-            "description": "Description goes here",
+            "line": 523,
+            "description": "Represents metadata describing an instance.",
             "is_constructor": 1,
             "extends": "MetaBase"
         },
@@ -1565,8 +1563,8 @@
             "module": "miruken",
             "namespace": "miruken",
             "file": "lib/miruken.js",
-            "line": 636,
-            "description": "Metamacro to proxy protocol methods through delegate.",
+            "line": 638,
+            "description": "Metamacro to proxy protocol methods through a delegate.",
             "extends": "MetaMacro"
         },
         "miruken.StrictProtocol": {
@@ -1580,8 +1578,8 @@
             "module": "miruken",
             "namespace": "miruken",
             "file": "lib/miruken.js",
-            "line": 685,
-            "description": "Description goes here",
+            "line": 687,
+            "description": "Protocol base requiring conformance to match methods.",
             "is_constructor": 1,
             "extends": "Protocol"
         },
@@ -1596,8 +1594,8 @@
             "module": "miruken",
             "namespace": "miruken",
             "file": "lib/miruken.js",
-            "line": 697,
-            "description": "Metamacro to create properties.",
+            "line": 699,
+            "description": "Metamacro to define custom properties.",
             "is_constructor": 1,
             "extends": "MetaMacro"
         },
@@ -1612,8 +1610,8 @@
             "module": "miruken",
             "namespace": "miruken",
             "file": "lib/miruken.js",
-            "line": 803,
-            "description": "Metamacro to derive properties from existng methods.",
+            "line": 805,
+            "description": "Metamacro to derive properties from existng methods.\nCurrently getXYZ, isXYZ and setXYZ conventions are recognized.",
             "extends": "MetaMacro"
         },
         "miruken.$inhertStatic": {
@@ -1627,8 +1625,8 @@
             "module": "miruken",
             "namespace": "miruken",
             "file": "lib/miruken.js",
-            "line": 865,
-            "description": "Metamacro to inherit static members in subclass.",
+            "line": 868,
+            "description": "Metamacro to inherit static members in subclasses.",
             "is_constructor": 1,
             "extends": "MetaMacro"
         },
@@ -1643,8 +1641,8 @@
             "module": "miruken",
             "namespace": "miruken",
             "file": "lib/miruken.js",
-            "line": 902,
-            "description": "Base class to prefer coercion over casting.",
+            "line": 905,
+            "description": "Base class to prefer coercion over casting.\nBy default, Type(target) will cast target to the type.",
             "extends": "Base"
         },
         "miruken.Disposing": {
@@ -1658,8 +1656,8 @@
             "module": "miruken",
             "namespace": "miruken",
             "file": "lib/miruken.js",
-            "line": 911,
-            "description": "Protocol for Disposing",
+            "line": 915,
+            "description": "Protocol for targets that manage disposal lifecycle.",
             "extends": "Protocol"
         },
         "miruken.DisposingMixin": {
@@ -1673,8 +1671,8 @@
             "module": "miruken",
             "namespace": "miruken",
             "file": "lib/miruken.js",
-            "line": 924,
-            "description": "Description goes here",
+            "line": 928,
+            "description": "Mixin for Disposing implementation.",
             "extends": "Module"
         },
         "miruken.Invoking": {
@@ -1688,8 +1686,8 @@
             "module": "miruken",
             "namespace": "miruken",
             "file": "lib/miruken.js",
-            "line": 938,
-            "description": "Description goes here",
+            "line": 942,
+            "description": "Protocol for targets that can execute functions.",
             "extends": "StrictProtocol",
             "is_constructor": 1
         },
@@ -1704,8 +1702,8 @@
             "module": "miruken",
             "namespace": "miruken",
             "file": "lib/miruken.js",
-            "line": 955,
-            "description": "Description goes here",
+            "line": 959,
+            "description": "Protocol for targets that have parent/child relationships.",
             "extends": "Protocol"
         },
         "miruken.Starting": {
@@ -1719,8 +1717,8 @@
             "module": "miruken",
             "namespace": "miruken",
             "file": "lib/miruken.js",
-            "line": 969,
-            "description": "Description goes here",
+            "line": 973,
+            "description": "Protocol for targets that can be started.",
             "extends": "Protocol"
         },
         "miruken.Startup": {
@@ -1734,8 +1732,8 @@
             "module": "miruken",
             "namespace": "miruken",
             "file": "lib/miruken.js",
-            "line": 978,
-            "description": "Description goes here",
+            "line": 982,
+            "description": "Base class for startable targets.",
             "extends": "Base"
         },
         "miruken.Modifier": {
@@ -1749,8 +1747,8 @@
             "module": "miruken",
             "namespace": "miruken",
             "file": "lib/miruken.js",
-            "line": 1017,
-            "description": "Description goes here"
+            "line": 1021,
+            "description": "Class for annotating targets.\nThis is an alternative for the absence of true annotations."
         },
         "miruken.ArrayManager": {
             "name": "miruken.ArrayManager",
@@ -1763,8 +1761,8 @@
             "module": "miruken",
             "namespace": "miruken",
             "file": "lib/miruken.js",
-            "line": 1062,
-            "description": "Description goes here",
+            "line": 1067,
+            "description": "Helper class to simplify array manipulation.",
             "extends": "Base"
         },
         "miruken.IndexedList": {
@@ -1778,7 +1776,7 @@
             "module": "miruken",
             "namespace": "miruken",
             "file": "lib/miruken.js",
-            "line": 1184,
+            "line": 1189,
             "description": "Maintains a simple doublely-linked list with indexing.\nIndexes are partially ordered according to the order comparator.",
             "is_constructor": 1,
             "extends": "Base"
@@ -1794,7 +1792,7 @@
             "module": "miruken",
             "namespace": "miruken",
             "file": "lib/miruken.js",
-            "line": 1306,
+            "line": 1311,
             "description": "Description goes here",
             "extends": "Base"
         },
@@ -1809,8 +1807,8 @@
             "module": "miruken",
             "namespace": "miruken",
             "file": "lib/miruken.js",
-            "line": 1322,
-            "description": "Description goes here",
+            "line": 1327,
+            "description": "Responsible for selecting which interceptors to apply.",
             "extends": "Base"
         },
         "miruken.ProxyBuilder": {
@@ -1824,24 +1822,9 @@
             "module": "miruken",
             "namespace": "miruken",
             "file": "lib/miruken.js",
-            "line": 1341,
-            "description": "Description goes here",
+            "line": 1346,
+            "description": "Builds proxy classes for interception.",
             "extends": "Base"
-        },
-        "miruken.$interceptMethods": {
-            "name": "miruken.$interceptMethods",
-            "shortname": "$interceptMethods",
-            "classitems": [],
-            "plugins": [],
-            "extensions": [],
-            "plugin_for": [],
-            "extension_for": [],
-            "module": "miruken",
-            "namespace": "miruken",
-            "file": "lib/miruken.js",
-            "line": 1409,
-            "description": "Metamacro to intercept proxied methods.",
-            "extends": "MetaMacro"
         }
     },
     "classitems": [
@@ -3227,110 +3210,70 @@
         },
         {
             "file": "lib/miruken.js",
-            "line": 114,
-            "description": "Description goes here",
+            "line": 169,
+            "description": "Determines if the target is a protocol.",
             "itemtype": "method",
-            "name": "get",
+            "name": "isProtocol",
             "params": [
                 {
-                    "name": "protocol",
-                    "description": "- definition",
-                    "type": "Protocol"
-                },
-                {
-                    "name": "propertyName",
-                    "description": "- definition",
-                    "type": "String"
-                },
-                {
-                    "name": "strict",
-                    "description": "- definition",
-                    "type": "Boolean"
+                    "name": "target",
+                    "description": "- target to test",
+                    "type": "Any"
                 }
             ],
             "return": {
-                "description": "object          - definition",
+                "description": "true if the target is a Protocol.",
+                "type": "Boolean"
+            },
+            "class": "miruken.Protocol",
+            "module": "miruken",
+            "namespace": "miruken"
+        },
+        {
+            "file": "lib/miruken.js",
+            "line": 179,
+            "description": "Determines if the target conforms to this protocol.",
+            "itemtype": "method",
+            "name": "conformsTo",
+            "params": [
+                {
+                    "name": "target",
+                    "description": "- target to test",
+                    "type": "Any"
+                }
+            ],
+            "return": {
+                "description": "true if the target conforms to this Protocol.",
+                "type": "Boolean"
+            },
+            "class": "miruken.Protocol",
+            "module": "miruken",
+            "namespace": "miruken"
+        },
+        {
+            "file": "lib/miruken.js",
+            "line": 190,
+            "description": "Creates a protocol binding over the object.",
+            "itemtype": "method",
+            "name": "coerce",
+            "params": [
+                {
+                    "name": "object",
+                    "description": "- object delegate",
+                    "type": "Object"
+                }
+            ],
+            "return": {
+                "description": "a Protocol instance delegating to object.",
                 "type": "Object"
             },
-            "class": "miruken.ObjectDelegate",
+            "class": "miruken.Protocol",
             "module": "miruken",
             "namespace": "miruken"
         },
         {
             "file": "lib/miruken.js",
-            "line": 128,
-            "description": "Description goes here",
-            "itemtype": "method",
-            "name": "set",
-            "params": [
-                {
-                    "name": "protocol",
-                    "description": "- definition",
-                    "type": "Protocol"
-                },
-                {
-                    "name": "propertyName",
-                    "description": "- definition",
-                    "type": "String"
-                },
-                {
-                    "name": "propertyValue",
-                    "description": "- definition",
-                    "type": "String"
-                },
-                {
-                    "name": "strict",
-                    "description": "- definition",
-                    "type": "Boolean"
-                }
-            ],
-            "return": {
-                "description": "object          - definition",
-                "type": "Object"
-            },
-            "class": "miruken.ObjectDelegate",
-            "module": "miruken",
-            "namespace": "miruken"
-        },
-        {
-            "file": "lib/miruken.js",
-            "line": 143,
-            "description": "Description goes here",
-            "itemtype": "method",
-            "name": "invoke",
-            "params": [
-                {
-                    "name": "protocol",
-                    "description": "- definition",
-                    "type": "Protocol"
-                },
-                {
-                    "name": "methodName",
-                    "description": "- definition",
-                    "type": "String"
-                },
-                {
-                    "name": "args",
-                    "description": "- definition",
-                    "type": "Array"
-                },
-                {
-                    "name": "strict",
-                    "description": "- definition",
-                    "type": "Boolean"
-                }
-            ],
-            "return": {
-                "description": "method          - definition",
-                "type": "Method"
-            },
-            "class": "miruken.ObjectDelegate",
-            "module": "miruken",
-            "namespace": "miruken"
-        },
-        {
-            "file": "lib/miruken.js",
-            "line": 207,
+            "line": 199,
             "description": "MetaStep enum",
             "itemtype": "property",
             "name": "MetaStep",
@@ -3341,30 +3284,54 @@
         },
         {
             "file": "lib/miruken.js",
-            "line": 224,
-            "description": "Description goes here",
+            "line": 205,
+            "description": "Triggered when a new class is derived",
+            "class": "miruken.Protocol",
+            "module": "miruken",
+            "namespace": "miruken"
+        },
+        {
+            "file": "lib/miruken.js",
+            "line": 209,
+            "description": "Triggered when an existing class is extended",
+            "class": "miruken.Protocol",
+            "module": "miruken",
+            "namespace": "miruken"
+        },
+        {
+            "file": "lib/miruken.js",
+            "line": 213,
+            "description": "Triggered when an instance is extended",
+            "class": "miruken.Protocol",
+            "module": "miruken",
+            "namespace": "miruken"
+        },
+        {
+            "file": "lib/miruken.js",
+            "line": 225,
+            "description": "Executes the macro for the given step.",
             "itemtype": "method",
             "name": "apply",
             "params": [
                 {
                     "name": "step",
-                    "description": "- definition",
+                    "description": "- meta step",
                     "type": "Step"
                 },
                 {
                     "name": "metadata",
-                    "description": "- definition",
+                    "description": "- effective metadata",
                     "type": "MetaData"
                 },
                 {
                     "name": "target",
-                    "description": "- definition",
-                    "type": "Target"
+                    "description": "- target macro applied to",
+                    "type": "Object"
                 },
                 {
                     "name": "definition",
-                    "description": "- definition",
-                    "type": "Definition"
+                    "description": "- literal containing changes",
+                    "type": "Object"
                 }
             ],
             "class": "miruken.MetaMacro",
@@ -3373,19 +3340,19 @@
         },
         {
             "file": "lib/miruken.js",
-            "line": 233,
-            "description": "Description goes here",
+            "line": 234,
+            "description": "Triggered when a protocol is added to metadata.",
             "itemtype": "method",
             "name": "protocolAdded",
             "params": [
                 {
                     "name": "metadata",
-                    "description": "- definition",
+                    "description": "- effective metadata",
                     "type": "MetaData"
                 },
                 {
                     "name": "protocol",
-                    "description": "- definition",
+                    "description": "- protocol added",
                     "type": "Protocol"
                 }
             ],
@@ -3395,13 +3362,13 @@
         },
         {
             "file": "lib/miruken.js",
-            "line": 257,
-            "description": "Description goes here",
+            "line": 258,
+            "description": "Gets the parent metadata.",
             "itemtype": "method",
             "name": "getParent",
             "return": {
-                "description": "parent          - definition",
-                "type": "Parent"
+                "description": "parent metadata if present.",
+                "type": "MetaBase"
             },
             "class": "miruken.MetaBase",
             "module": "miruken",
@@ -3409,26 +3376,12 @@
         },
         {
             "file": "lib/miruken.js",
-            "line": 263,
-            "description": "Description goes here",
+            "line": 264,
+            "description": "Gets the declared protocols.",
             "itemtype": "method",
             "name": "getProtocols",
             "return": {
-                "description": "protocols    - definition",
-                "type": "Protocols"
-            },
-            "class": "miruken.MetaBase",
-            "module": "miruken",
-            "namespace": "miruken"
-        },
-        {
-            "file": "lib/miruken.js",
-            "line": 269,
-            "description": "Description goes here",
-            "itemtype": "method",
-            "name": "getAllProtocols",
-            "return": {
-                "description": "protocols        - definition",
+                "description": "of declared protocols.",
                 "type": "Array"
             },
             "class": "miruken.MetaBase",
@@ -3437,21 +3390,31 @@
         },
         {
             "file": "lib/miruken.js",
-            "line": 288,
-            "description": "Description goes here",
+            "line": 270,
+            "description": "Gets all conforming protocools.",
+            "itemtype": "method",
+            "name": "getAllProtocols",
+            "return": {
+                "description": "of conforming protocols.",
+                "type": "Array"
+            },
+            "class": "miruken.MetaBase",
+            "module": "miruken",
+            "namespace": "miruken"
+        },
+        {
+            "file": "lib/miruken.js",
+            "line": 289,
+            "description": "Adds one or more protocols to the metadata.",
             "itemtype": "method",
             "name": "addProtocol",
             "params": [
                 {
                     "name": "protocols",
-                    "description": "- definition",
+                    "description": "- protocols to add",
                     "type": "Array"
                 }
             ],
-            "return": {
-                "description": "protocols        - definition",
-                "type": "Array"
-            },
             "class": "miruken.MetaBase",
             "module": "miruken",
             "namespace": "miruken"
@@ -3459,18 +3422,11 @@
         {
             "file": "lib/miruken.js",
             "line": 315,
-            "description": "Description goes here",
+            "description": "Determines if the metadata conforms to the protocol.",
             "itemtype": "method",
             "name": "conformsTo",
-            "params": [
-                {
-                    "name": "protocol",
-                    "description": "- definition",
-                    "type": "Protocol"
-                }
-            ],
             "return": {
-                "description": "bool         - definition",
+                "description": "true if the metadata conforms to the protocol.",
                 "type": "Boolean"
             },
             "class": "miruken.MetaBase",
@@ -3479,29 +3435,29 @@
         },
         {
             "file": "lib/miruken.js",
-            "line": 340,
-            "description": "Description goes here",
+            "line": 339,
+            "description": "Defines a property on the metadata.",
             "itemtype": "method",
             "name": "defineProperty",
             "params": [
                 {
                     "name": "target",
-                    "description": "- definition",
+                    "description": "- target receiving property",
                     "type": "Object"
                 },
                 {
                     "name": "name",
-                    "description": "- definition",
+                    "description": "- name of the property",
                     "type": "String"
                 },
                 {
                     "name": "spec",
-                    "description": "- definition",
+                    "description": "- property specification",
                     "type": "Object"
                 },
                 {
                     "name": "descriptor",
-                    "description": "- definition",
+                    "description": "- property descriptor",
                     "type": "Object"
                 }
             ],
@@ -3511,20 +3467,20 @@
         },
         {
             "file": "lib/miruken.js",
-            "line": 353,
-            "description": "Description goes here",
+            "line": 352,
+            "description": "Gets the descriptor for one or more properties.",
             "itemtype": "method",
             "name": "getDescriptor",
             "params": [
                 {
                     "name": "filter",
-                    "description": "- definition",
+                    "description": "- property selector",
                     "type": "Filter"
                 }
             ],
             "return": {
-                "description": "parent      - definition",
-                "type": "Parent"
+                "description": "aggregated property descriptor.",
+                "type": "Object"
             },
             "class": "miruken.MetaBase",
             "module": "miruken",
@@ -3532,22 +3488,26 @@
         },
         {
             "file": "lib/miruken.js",
-            "line": 383,
-            "description": "Description goes here",
+            "line": 382,
+            "description": "Sets the descriptor for a property.",
             "itemtype": "method",
             "name": "addDescriptor",
             "params": [
                 {
                     "name": "name",
-                    "description": "- definition",
+                    "description": "- property name",
                     "type": "String"
                 },
                 {
                     "name": "descriptor",
-                    "description": "- definition",
+                    "description": "- property descriptor",
                     "type": "Object"
                 }
             ],
+            "return": {
+                "description": "current metadata.",
+                "type": "MetaBase"
+            },
             "class": "miruken.MetaBase",
             "module": "miruken",
             "namespace": "miruken"
@@ -3555,41 +3515,24 @@
         {
             "file": "lib/miruken.js",
             "line": 393,
-            "description": "Description goes here",
+            "description": "Determines if the property descriptor matches the filter.",
             "itemtype": "method",
             "name": "matchDescriptor",
             "params": [
                 {
                     "name": "descriptor",
-                    "description": "- definition",
+                    "description": "- property descriptor",
                     "type": "Object"
                 },
                 {
                     "name": "filter",
-                    "description": "- definition",
+                    "description": "- matching filter",
                     "type": "Object"
                 }
             ],
-            "class": "miruken.MetaBase",
-            "module": "miruken",
-            "namespace": "miruken"
-        },
-        {
-            "file": "lib/miruken.js",
-            "line": 427,
-            "description": "Description goes here",
-            "itemtype": "method",
-            "name": "linkBase",
-            "params": [
-                {
-                    "name": "method",
-                    "description": "- definition",
-                    "type": "Method"
-                }
-            ],
             "return": {
-                "description": "method      - definition",
-                "type": "Method"
+                "description": "true if the descriptor matches, false otherwise.",
+                "type": "Boolean"
             },
             "class": "miruken.MetaBase",
             "module": "miruken",
@@ -3597,8 +3540,29 @@
         },
         {
             "file": "lib/miruken.js",
-            "line": 917,
-            "description": "Releases the object.",
+            "line": 428,
+            "description": "Binds a method to the parent if not present.",
+            "itemtype": "method",
+            "name": "linkBase",
+            "params": [
+                {
+                    "name": "method",
+                    "description": "- method name",
+                    "type": "Function"
+                }
+            ],
+            "return": {
+                "description": "current metadata.",
+                "type": "MetaBase"
+            },
+            "class": "miruken.MetaBase",
+            "module": "miruken",
+            "namespace": "miruken"
+        },
+        {
+            "file": "lib/miruken.js",
+            "line": 921,
+            "description": "Releases any resources managed by the receiver.",
             "itemtype": "method",
             "name": "dispose",
             "class": "miruken.Disposing",
@@ -3607,7 +3571,7 @@
         },
         {
             "file": "lib/miruken.js",
-            "line": 945,
+            "line": 949,
             "description": "Invokes the function with dependencies.",
             "params": [
                 {
@@ -3627,8 +3591,8 @@
                 }
             ],
             "return": {
-                "description": "result of function.",
-                "type": "Object"
+                "description": "result of the function.",
+                "type": "Any"
             },
             "class": "miruken.Invoking",
             "module": "miruken",
@@ -3636,13 +3600,13 @@
         },
         {
             "file": "lib/miruken.js",
-            "line": 961,
+            "line": 965,
             "description": "Creates a new child of the parent.",
             "itemtype": "method",
             "name": "newChild",
             "return": {
                 "description": "the new child.",
-                "type": "Any"
+                "type": "Object"
             },
             "class": "miruken.Parenting",
             "module": "miruken",
@@ -3650,7 +3614,7 @@
         },
         {
             "file": "lib/miruken.js",
-            "line": 987,
+            "line": 991,
             "description": "Convenience function for disposing resources.",
             "itemtype": "method",
             "name": "$using",
@@ -3672,7 +3636,7 @@
                 }
             ],
             "return": {
-                "description": "result of executing action in context.",
+                "description": "result of executing the action in context.",
                 "type": "Any"
             },
             "class": "miruken.Startup",
@@ -3681,13 +3645,13 @@
         },
         {
             "file": "lib/miruken.js",
-            "line": 1071,
-            "description": "Description goes here",
+            "line": 1076,
+            "description": "Gets the array.",
             "itemtype": "method",
             "name": "getItems",
             "return": {
-                "description": "item",
-                "type": "Object"
+                "description": "array.",
+                "type": "Array"
             },
             "class": "miruken.ArrayManager",
             "module": "miruken",
@@ -3695,39 +3659,20 @@
         },
         {
             "file": "lib/miruken.js",
-            "line": 1077,
-            "description": "Description goes here",
-            "itemtype": "method",
-            "name": "getIndex",
-            "return": {
-                "description": "item",
-                "type": "Object"
-            },
-            "class": "miruken.ArrayManager",
-            "module": "miruken",
-            "namespace": "miruken"
-        },
-        {
-            "file": "lib/miruken.js",
-            "line": 1087,
-            "description": "Description goes here",
+            "line": 1082,
+            "description": "Gets the item at array index.",
             "itemtype": "method",
             "name": "getIndex",
             "params": [
                 {
                     "name": "index",
-                    "description": "- description",
-                    "type": "Index"
-                },
-                {
-                    "name": "item",
-                    "description": "- description",
-                    "type": "Item"
+                    "description": "- index of item",
+                    "type": "Number"
                 }
             ],
             "return": {
-                "description": "item",
-                "type": "Object"
+                "description": "item at index.",
+                "type": "Any"
             },
             "class": "miruken.ArrayManager",
             "module": "miruken",
@@ -3735,25 +3680,51 @@
         },
         {
             "file": "lib/miruken.js",
-            "line": 1101,
-            "description": "Description goes here",
+            "line": 1093,
+            "description": "Sets the item at array index if empty.",
+            "itemtype": "method",
+            "name": "setIndex",
+            "params": [
+                {
+                    "name": "index",
+                    "description": "- index of item",
+                    "type": "Number"
+                },
+                {
+                    "name": "item",
+                    "description": "- item to set",
+                    "type": "Any"
+                }
+            ],
+            "return": {
+                "description": "array manager.",
+                "type": "ArrayManager"
+            },
+            "class": "miruken.ArrayManager",
+            "module": "miruken",
+            "namespace": "miruken"
+        },
+        {
+            "file": "lib/miruken.js",
+            "line": 1107,
+            "description": "Inserts the item at array index.",
             "itemtype": "method",
             "name": "insertIndex",
             "params": [
                 {
                     "name": "index",
-                    "description": "- description",
-                    "type": "Index"
+                    "description": "- index of item",
+                    "type": "Number"
                 },
                 {
                     "name": "item",
-                    "description": "- description",
+                    "description": "- item to insert",
                     "type": "Item"
                 }
             ],
             "return": {
-                "description": "item",
-                "type": "Object"
+                "description": "array manager.",
+                "type": "ArrayManager"
             },
             "class": "miruken.ArrayManager",
             "module": "miruken",
@@ -3761,25 +3732,25 @@
         },
         {
             "file": "lib/miruken.js",
-            "line": 1112,
-            "description": "Description goes here",
+            "line": 1118,
+            "description": "Replaces the item at array index.",
             "itemtype": "method",
             "name": "replaceIndex",
             "params": [
                 {
                     "name": "index",
-                    "description": "- description",
-                    "type": "Index"
+                    "description": "- index of item",
+                    "type": "Number"
                 },
                 {
                     "name": "item",
-                    "description": "- description",
+                    "description": "- item to replace",
                     "type": "Item"
                 }
             ],
             "return": {
-                "description": "item",
-                "type": "Object"
+                "description": "array manager.",
+                "type": "ArrayManager"
             },
             "class": "miruken.ArrayManager",
             "module": "miruken",
@@ -3787,20 +3758,20 @@
         },
         {
             "file": "lib/miruken.js",
-            "line": 1123,
-            "description": "Description goes here",
+            "line": 1129,
+            "description": "Removes the item at array index.",
             "itemtype": "method",
             "name": "removeIndex",
             "params": [
                 {
                     "name": "index",
-                    "description": "- description",
-                    "type": "Index"
+                    "description": "- index of item",
+                    "type": "Number"
                 }
             ],
             "return": {
-                "description": "item",
-                "type": "Object"
+                "description": "array manager.",
+                "type": "ArrayManager"
             },
             "class": "miruken.ArrayManager",
             "module": "miruken",
@@ -3808,20 +3779,13 @@
         },
         {
             "file": "lib/miruken.js",
-            "line": 1135,
-            "description": "Description goes here",
+            "line": 1141,
+            "description": "Appends one or more items to the end of the array.",
             "itemtype": "method",
             "name": "append",
-            "params": [
-                {
-                    "name": "items",
-                    "description": "- description",
-                    "type": "Items"
-                }
-            ],
             "return": {
-                "description": "this  - description",
-                "type": "Object"
+                "description": "array manager.",
+                "type": "ArrayManager"
             },
             "class": "miruken.ArrayManager",
             "module": "miruken",
@@ -3829,20 +3793,20 @@
         },
         {
             "file": "lib/miruken.js",
-            "line": 1155,
-            "description": "Description goes here",
+            "line": 1160,
+            "description": "Merges the items into the array.",
             "itemtype": "method",
             "name": "merge",
             "params": [
                 {
                     "name": "items",
-                    "description": "- description",
+                    "description": "- items to merge from",
                     "type": "Array"
                 }
             ],
             "return": {
-                "description": "this  - description",
-                "type": "This"
+                "description": "array manager.",
+                "type": "ArrayManager"
             },
             "class": "miruken.ArrayManager",
             "module": "miruken",
@@ -3850,20 +3814,20 @@
         },
         {
             "file": "lib/miruken.js",
-            "line": 1175,
-            "description": "Description goes here",
+            "line": 1180,
+            "description": "Optional mapping for items before adding to the array.",
             "itemtype": "method",
             "name": "mapItem",
             "params": [
                 {
                     "name": "item",
-                    "description": "- description",
-                    "type": "Object"
+                    "description": "- item to map",
+                    "type": "Any"
                 }
             ],
             "return": {
-                "description": "item - description",
-                "type": "Object"
+                "description": "mapped item.",
+                "type": "Any"
             },
             "class": "miruken.ArrayManager",
             "module": "miruken",
@@ -3871,13 +3835,13 @@
         },
         {
             "file": "lib/miruken.js",
-            "line": 1195,
-            "description": "Description goes here",
+            "line": 1200,
+            "description": "Determines if list is empty.",
             "itemtype": "method",
             "name": "isEmpty",
             "return": {
-                "description": "this - description",
-                "type": "Object"
+                "description": "true if list is empty, false otherwise.",
+                "type": "Boolean"
             },
             "class": "miruken.IndexedList",
             "module": "miruken",
@@ -3885,20 +3849,20 @@
         },
         {
             "file": "lib/miruken.js",
-            "line": 1203,
-            "description": "Description goes here",
+            "line": 1208,
+            "description": "Gets the node at an index.",
             "itemtype": "method",
             "name": "getIndex",
             "params": [
                 {
                     "name": "index",
-                    "description": "- description",
-                    "type": "Index"
+                    "description": "- index of node",
+                    "type": "Number"
                 }
             ],
             "return": {
-                "description": "index - description",
-                "type": "Index"
+                "description": "the node at index.",
+                "type": "Any"
             },
             "class": "miruken.IndexedList",
             "module": "miruken",
@@ -3906,20 +3870,20 @@
         },
         {
             "file": "lib/miruken.js",
-            "line": 1212,
-            "description": "Description goes here",
+            "line": 1217,
+            "description": "Inserts the node at an index.",
             "itemtype": "method",
             "name": "insert",
             "params": [
                 {
                     "name": "node",
-                    "description": "- description",
-                    "type": "Node"
+                    "description": "- node to insert",
+                    "type": "Any"
                 },
                 {
                     "name": "index",
-                    "description": "- description",
-                    "type": "Index"
+                    "description": "- index to insert at",
+                    "type": "Number"
                 }
             ],
             "class": "miruken.IndexedList",
@@ -3928,15 +3892,15 @@
         },
         {
             "file": "lib/miruken.js",
-            "line": 1257,
-            "description": "Description goes here",
+            "line": 1262,
+            "description": "Removes the node from the list.",
             "itemtype": "method",
             "name": "remove",
             "params": [
                 {
                     "name": "node",
-                    "description": "- description",
-                    "type": "Node"
+                    "description": "- node to remove",
+                    "type": "Any"
                 }
             ],
             "class": "miruken.IndexedList",
@@ -3945,7 +3909,7 @@
         },
         {
             "file": "lib/miruken.js",
-            "line": 1293,
+            "line": 1298,
             "description": "Facet enum",
             "itemtype": "property",
             "name": "Facet",
@@ -3956,7 +3920,7 @@
         },
         {
             "file": "lib/miruken.js",
-            "line": 1312,
+            "line": 1317,
             "itemtype": "method",
             "name": "intercept",
             "params": [
@@ -3976,30 +3940,30 @@
         },
         {
             "file": "lib/miruken.js",
-            "line": 1328,
+            "line": 1333,
             "description": "Description goes here",
             "itemtype": "method",
             "name": "selectInterceptors",
             "params": [
                 {
                     "name": "type",
-                    "description": "",
+                    "description": "being intercepted",
                     "type": "Type"
                 },
                 {
                     "name": "method",
-                    "description": "",
-                    "type": "Method"
+                    "description": "name",
+                    "type": "String"
                 },
                 {
-                    "name": "interceptors",
-                    "description": "",
-                    "type": "Interceptors"
+                    "name": "available",
+                    "description": "interceptors",
+                    "type": "Array"
                 }
             ],
             "return": {
-                "description": "interceptors",
-                "type": "Interceptors"
+                "description": "effective interceptors",
+                "type": "Array"
             },
             "class": "miruken.InterceptorSelector",
             "module": "miruken",
@@ -4007,25 +3971,25 @@
         },
         {
             "file": "lib/miruken.js",
-            "line": 1347,
-            "description": "Description goes here",
+            "line": 1352,
+            "description": "Builds a proxy class for the supplied types.",
             "itemtype": "method",
             "name": "buildProxy",
             "params": [
                 {
                     "name": "types",
-                    "description": "- description",
+                    "description": "- classes and protocols",
                     "type": "Array"
                 },
                 {
                     "name": "options",
-                    "description": "- description",
-                    "type": "Options"
+                    "description": "- literal options",
+                    "type": "Object"
                 }
             ],
             "return": {
-                "description": "buildProxy      - description",
-                "type": "Object"
+                "description": "proxy class.",
+                "type": "Class"
             },
             "class": "miruken.ProxyBuilder",
             "module": "miruken",
@@ -4033,22 +3997,22 @@
         },
         {
             "file": "lib/miruken.js",
-            "line": 1591,
+            "line": 1555,
             "description": "Package extensions",
-            "class": "miruken.$interceptMethods",
+            "class": "miruken.ProxyBuilder",
             "module": "miruken",
             "namespace": "miruken"
         },
         {
             "file": "lib/miruken.js",
-            "line": 1624,
-            "description": "Description goes here",
+            "line": 1588,
+            "description": "Determines if target is a protocol.",
             "itemtype": "method",
             "name": "$isProtocol",
             "params": [
                 {
                     "name": "protocol",
-                    "description": "- protocol to test",
+                    "description": "- target to test",
                     "type": "Any"
                 }
             ],
@@ -4056,14 +4020,14 @@
                 "description": "true if a protocol.",
                 "type": "Boolean"
             },
-            "class": "miruken.$interceptMethods",
+            "class": "miruken.ProxyBuilder",
             "module": "miruken",
             "namespace": "miruken"
         },
         {
             "file": "lib/miruken.js",
-            "line": 1632,
-            "description": "Description goes here",
+            "line": 1596,
+            "description": "Determines if target is a class.",
             "itemtype": "method",
             "name": "$isClass",
             "params": [
@@ -4077,14 +4041,14 @@
                 "description": "true if a class (and not a protocol).",
                 "type": "Boolean"
             },
-            "class": "miruken.$interceptMethods",
+            "class": "miruken.ProxyBuilder",
             "module": "miruken",
             "namespace": "miruken"
         },
         {
             "file": "lib/miruken.js",
-            "line": 1642,
-            "description": "Description goes here",
+            "line": 1606,
+            "description": "Gets the class the instance belongs to.",
             "itemtype": "method",
             "name": "$classOf",
             "params": [
@@ -4098,20 +4062,20 @@
                 "description": "class of instance.",
                 "type": "Function"
             },
-            "class": "miruken.$interceptMethods",
+            "class": "miruken.ProxyBuilder",
             "module": "miruken",
             "namespace": "miruken"
         },
         {
             "file": "lib/miruken.js",
-            "line": 1652,
-            "description": "Description goes here",
+            "line": 1616,
+            "description": "Gets the classes superclass.",
             "itemtype": "method",
             "name": "$ancestorOf",
             "params": [
                 {
                     "name": "clazz",
-                    "description": "- clazz",
+                    "description": "- class",
                     "type": "Function"
                 }
             ],
@@ -4119,14 +4083,14 @@
                 "description": "ancestor of class.",
                 "type": "Function"
             },
-            "class": "miruken.$interceptMethods",
+            "class": "miruken.ProxyBuilder",
             "module": "miruken",
             "namespace": "miruken"
         },
         {
             "file": "lib/miruken.js",
-            "line": 1662,
-            "description": "Description goes here",
+            "line": 1626,
+            "description": "Determines if target is a string.",
             "itemtype": "method",
             "name": "$isString",
             "params": [
@@ -4140,14 +4104,14 @@
                 "description": "true if a string.",
                 "type": "Boolean"
             },
-            "class": "miruken.$interceptMethods",
+            "class": "miruken.ProxyBuilder",
             "module": "miruken",
             "namespace": "miruken"
         },
         {
             "file": "lib/miruken.js",
-            "line": 1672,
-            "description": "Description goes here",
+            "line": 1636,
+            "description": "Determines if the target is a function.",
             "itemtype": "method",
             "name": "$isFunction",
             "params": [
@@ -4161,14 +4125,14 @@
                 "description": "true if a function.",
                 "type": "Boolean"
             },
-            "class": "miruken.$interceptMethods",
+            "class": "miruken.ProxyBuilder",
             "module": "miruken",
             "namespace": "miruken"
         },
         {
             "file": "lib/miruken.js",
-            "line": 1682,
-            "description": "Description goes here",
+            "line": 1646,
+            "description": "Determines if target is an object.",
             "itemtype": "method",
             "name": "$isObject",
             "params": [
@@ -4182,14 +4146,14 @@
                 "description": "true if an object.",
                 "type": "Boolean"
             },
-            "class": "miruken.$interceptMethods",
+            "class": "miruken.ProxyBuilder",
             "module": "miruken",
             "namespace": "miruken"
         },
         {
             "file": "lib/miruken.js",
-            "line": 1692,
-            "description": "Description goes here",
+            "line": 1656,
+            "description": "Determines if target is a promise.",
             "itemtype": "method",
             "name": "$isPromise",
             "params": [
@@ -4203,14 +4167,14 @@
                 "description": "true if a promise.",
                 "type": "Boolean"
             },
-            "class": "miruken.$interceptMethods",
+            "class": "miruken.ProxyBuilder",
             "module": "miruken",
             "namespace": "miruken"
         },
         {
             "file": "lib/miruken.js",
-            "line": 1702,
-            "description": "Description goes here",
+            "line": 1666,
+            "description": "Determines if value is null or undefined.",
             "itemtype": "method",
             "name": "$isNothing",
             "params": [
@@ -4224,13 +4188,13 @@
                 "description": "true if value null or undefined.",
                 "type": "Boolean"
             },
-            "class": "miruken.$interceptMethods",
+            "class": "miruken.ProxyBuilder",
             "module": "miruken",
             "namespace": "miruken"
         },
         {
             "file": "lib/miruken.js",
-            "line": 1712,
+            "line": 1676,
             "description": "Description goes here",
             "itemtype": "method",
             "name": "$isSomething",
@@ -4245,14 +4209,14 @@
                 "description": "true if value not null or undefined.",
                 "type": "Boolean"
             },
-            "class": "miruken.$interceptMethods",
+            "class": "miruken.ProxyBuilder",
             "module": "miruken",
             "namespace": "miruken"
         },
         {
             "file": "lib/miruken.js",
-            "line": 1722,
-            "description": "Description goes here",
+            "line": 1686,
+            "description": "Returns a function that returns value.",
             "itemtype": "method",
             "name": "$lift",
             "params": [
@@ -4266,16 +4230,16 @@
                 "description": "function that returns value.",
                 "type": "Function"
             },
-            "class": "miruken.$interceptMethods",
+            "class": "miruken.ProxyBuilder",
             "module": "miruken",
             "namespace": "miruken"
         },
         {
             "file": "lib/miruken.js",
-            "line": 1732,
-            "description": "Description goes here",
+            "line": 1696,
+            "description": "Throttles a function over a time period.",
             "itemtype": "method",
-            "name": "$lift",
+            "name": "$debounce",
             "params": [
                 {
                     "name": "func",
@@ -4302,25 +4266,17 @@
                 "description": "throttled function",
                 "type": "Function"
             },
-            "class": "miruken.$interceptMethods",
+            "class": "miruken.ProxyBuilder",
             "module": "miruken",
             "namespace": "miruken"
         },
         {
             "file": "lib/miruken.js",
-            "line": 1769,
-            "description": "Description goes here",
+            "line": 1733,
+            "description": "Enhances Functions to expose new as a function.",
             "itemtype": "method",
             "name": "new",
-            "class": "miruken.$interceptMethods",
-            "module": "miruken",
-            "namespace": "miruken"
-        },
-        {
-            "file": "lib/miruken.js",
-            "line": 1786,
-            "description": "Add miruken and Miruken to the global namespace",
-            "class": "miruken.$interceptMethods",
+            "class": "miruken.ProxyBuilder",
             "module": "miruken",
             "namespace": "miruken"
         }
@@ -4483,84 +4439,164 @@
             "line": " lib/miruken.js:90"
         },
         {
-            "message": "replacing incorrect tag: params with param",
-            "line": " lib/miruken.js:114"
+            "message": "replacing incorrect tag: returns with return",
+            "line": " lib/miruken.js:169"
         },
         {
-            "message": "replacing incorrect tag: params with param",
-            "line": " lib/miruken.js:114"
+            "message": "replacing incorrect tag: returns with return",
+            "line": " lib/miruken.js:179"
         },
         {
-            "message": "replacing incorrect tag: params with param",
-            "line": " lib/miruken.js:114"
+            "message": "replacing incorrect tag: returns with return",
+            "line": " lib/miruken.js:190"
         },
         {
-            "message": "replacing incorrect tag: params with param",
-            "line": " lib/miruken.js:128"
+            "message": "replacing incorrect tag: returns with return",
+            "line": " lib/miruken.js:258"
         },
         {
-            "message": "replacing incorrect tag: params with param",
-            "line": " lib/miruken.js:128"
+            "message": "replacing incorrect tag: returns with return",
+            "line": " lib/miruken.js:264"
         },
         {
-            "message": "replacing incorrect tag: params with param",
-            "line": " lib/miruken.js:128"
+            "message": "replacing incorrect tag: returns with return",
+            "line": " lib/miruken.js:270"
         },
         {
-            "message": "replacing incorrect tag: params with param",
-            "line": " lib/miruken.js:128"
-        },
-        {
-            "message": "replacing incorrect tag: params with param",
-            "line": " lib/miruken.js:143"
-        },
-        {
-            "message": "replacing incorrect tag: params with param",
-            "line": " lib/miruken.js:143"
-        },
-        {
-            "message": "replacing incorrect tag: params with param",
-            "line": " lib/miruken.js:143"
-        },
-        {
-            "message": "replacing incorrect tag: params with param",
-            "line": " lib/miruken.js:143"
-        },
-        {
-            "message": "replacing incorrect tag: params with param",
+            "message": "replacing incorrect tag: returns with return",
             "line": " lib/miruken.js:315"
         },
         {
             "message": "replacing incorrect tag: returns with return",
-            "line": " lib/miruken.js:1624"
+            "line": " lib/miruken.js:352"
         },
         {
             "message": "replacing incorrect tag: returns with return",
-            "line": " lib/miruken.js:1632"
+            "line": " lib/miruken.js:382"
         },
         {
             "message": "replacing incorrect tag: returns with return",
-            "line": " lib/miruken.js:1662"
+            "line": " lib/miruken.js:393"
         },
         {
             "message": "replacing incorrect tag: returns with return",
-            "line": " lib/miruken.js:1672"
+            "line": " lib/miruken.js:428"
         },
         {
             "message": "replacing incorrect tag: returns with return",
-            "line": " lib/miruken.js:1682"
+            "line": " lib/miruken.js:949"
         },
         {
             "message": "replacing incorrect tag: returns with return",
-            "line": " lib/miruken.js:1692"
+            "line": " lib/miruken.js:965"
         },
         {
             "message": "replacing incorrect tag: returns with return",
-            "line": " lib/miruken.js:1702"
+            "line": " lib/miruken.js:991"
         },
         {
             "message": "replacing incorrect tag: returns with return",
-            "line": " lib/miruken.js:1712"
+            "line": " lib/miruken.js:1076"
+        },
+        {
+            "message": "replacing incorrect tag: returns with return",
+            "line": " lib/miruken.js:1082"
+        },
+        {
+            "message": "replacing incorrect tag: returns with return",
+            "line": " lib/miruken.js:1093"
+        },
+        {
+            "message": "replacing incorrect tag: returns with return",
+            "line": " lib/miruken.js:1107"
+        },
+        {
+            "message": "replacing incorrect tag: returns with return",
+            "line": " lib/miruken.js:1118"
+        },
+        {
+            "message": "replacing incorrect tag: returns with return",
+            "line": " lib/miruken.js:1129"
+        },
+        {
+            "message": "replacing incorrect tag: returns with return",
+            "line": " lib/miruken.js:1141"
+        },
+        {
+            "message": "replacing incorrect tag: returns with return",
+            "line": " lib/miruken.js:1160"
+        },
+        {
+            "message": "replacing incorrect tag: returns with return",
+            "line": " lib/miruken.js:1180"
+        },
+        {
+            "message": "replacing incorrect tag: returns with return",
+            "line": " lib/miruken.js:1200"
+        },
+        {
+            "message": "replacing incorrect tag: returns with return",
+            "line": " lib/miruken.js:1208"
+        },
+        {
+            "message": "replacing incorrect tag: returns with return",
+            "line": " lib/miruken.js:1317"
+        },
+        {
+            "message": "replacing incorrect tag: returns with return",
+            "line": " lib/miruken.js:1333"
+        },
+        {
+            "message": "replacing incorrect tag: returns with return",
+            "line": " lib/miruken.js:1352"
+        },
+        {
+            "message": "replacing incorrect tag: returns with return",
+            "line": " lib/miruken.js:1588"
+        },
+        {
+            "message": "replacing incorrect tag: returns with return",
+            "line": " lib/miruken.js:1596"
+        },
+        {
+            "message": "replacing incorrect tag: returns with return",
+            "line": " lib/miruken.js:1606"
+        },
+        {
+            "message": "replacing incorrect tag: returns with return",
+            "line": " lib/miruken.js:1616"
+        },
+        {
+            "message": "replacing incorrect tag: returns with return",
+            "line": " lib/miruken.js:1626"
+        },
+        {
+            "message": "replacing incorrect tag: returns with return",
+            "line": " lib/miruken.js:1636"
+        },
+        {
+            "message": "replacing incorrect tag: returns with return",
+            "line": " lib/miruken.js:1646"
+        },
+        {
+            "message": "replacing incorrect tag: returns with return",
+            "line": " lib/miruken.js:1656"
+        },
+        {
+            "message": "replacing incorrect tag: returns with return",
+            "line": " lib/miruken.js:1666"
+        },
+        {
+            "message": "replacing incorrect tag: returns with return",
+            "line": " lib/miruken.js:1676"
+        },
+        {
+            "message": "replacing incorrect tag: returns with return",
+            "line": " lib/miruken.js:1686"
+        },
+        {
+            "message": "replacing incorrect tag: returns with return",
+            "line": " lib/miruken.js:1696"
         },
         {
             "message": "Missing item type",
@@ -4743,16 +4779,24 @@
             "line": " lib/error.js:80"
         },
         {
+            "message": "Missing item type\nTriggered when a new class is derived",
+            "line": " lib/miruken.js:205"
+        },
+        {
+            "message": "Missing item type\nTriggered when an existing class is extended",
+            "line": " lib/miruken.js:209"
+        },
+        {
+            "message": "Missing item type\nTriggered when an instance is extended",
+            "line": " lib/miruken.js:213"
+        },
+        {
             "message": "Missing item type\nInvokes the function with dependencies.",
-            "line": " lib/miruken.js:945"
+            "line": " lib/miruken.js:949"
         },
         {
             "message": "Missing item type\nPackage extensions",
-            "line": " lib/miruken.js:1591"
-        },
-        {
-            "message": "Missing item type\nAdd miruken and Miruken to the global namespace",
-            "line": " lib/miruken.js:1786"
+            "line": " lib/miruken.js:1555"
         }
     ]
 }

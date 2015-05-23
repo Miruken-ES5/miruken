@@ -40,7 +40,6 @@
                             <ul id="api-classes" class="apis classes">
                                 <li><a href="../classes/miruken.$inferProperties.html">miruken.$inferProperties</a></li>
                                 <li><a href="../classes/miruken.$inhertStatic.html">miruken.$inhertStatic</a></li>
-                                <li><a href="../classes/miruken.$interceptMethods.html">miruken.$interceptMethods</a></li>
                                 <li><a href="../classes/miruken.$properties.html">miruken.$properties</a></li>
                                 <li><a href="../classes/miruken.$proxyProtocol.html">miruken.$proxyProtocol</a></li>
                                 <li><a href="../classes/miruken.ArrayManager.html">miruken.ArrayManager</a></li>
@@ -63,7 +62,7 @@
                                 <li><a href="../classes/miruken.callback.MethodCallbackHandler.html">miruken.callback.MethodCallbackHandler</a></li>
                                 <li><a href="../classes/miruken.callback.ProvidingCallbackHandler.html">miruken.callback.ProvidingCallbackHandler</a></li>
                                 <li><a href="../classes/miruken.callback.Reentrant.html">miruken.callback.Reentrant</a></li>
-                                <li><a href="../classes/miruken.callback.ReentrantDecorator.html">miruken.callback.ReentrantDecorator</a></li>
+                                <li><a href="../classes/miruken.callback.ReentrantScope.html">miruken.callback.ReentrantScope</a></li>
                                 <li><a href="../classes/miruken.callback.RejectedError.html">miruken.callback.RejectedError</a></li>
                                 <li><a href="../classes/miruken.callback.Resolution.html">miruken.callback.Resolution</a></li>
                                 <li><a href="../classes/miruken.ClassMeta.html">miruken.ClassMeta</a></li>
@@ -179,7 +178,7 @@
         </div>
 
         <div class="foundat">
-            Defined in: <a href="../files/lib_miruken.js.html#l1062"><code>lib&#x2F;miruken.js:1062</code></a>
+            Defined in: <a href="../files/lib_miruken.js.html#l1067"><code>lib&#x2F;miruken.js:1067</code></a>
         </div>
 
             Module: <a href="../modules/miruken.html">miruken</a>
@@ -188,7 +187,7 @@
 
 
 <div class="box intro">
-    <p>Description goes here</p>
+    <p>Helper class to simplify array manipulation.</p>
 
 </div>
 
@@ -210,10 +209,6 @@
                     <ul class="index-list methods extends">
                             <li class="index-item method">
                                 <a href="#method_append">append</a>
-
-                            </li>
-                            <li class="index-item method">
-                                <a href="#method_getIndex">getIndex</a>
 
                             </li>
                             <li class="index-item method">
@@ -244,6 +239,10 @@
                                 <a href="#method_replaceIndex">replaceIndex</a>
 
                             </li>
+                            <li class="index-item method">
+                                <a href="#method_setIndex">setIndex</a>
+
+                            </li>
                     </ul>
                 </div>
 
@@ -257,78 +256,10 @@
 <div id="method_append" class="method item">
     <h3 class="name"><code>append</code></h3>
 
-        <div class="args">
-            <span class="paren">(</span><ul class="args-list inline commas">
-                <li class="arg">
-                        <code>items</code>
-                </li>
-            </ul><span class="paren">)</span>
-        </div>
-
-        <span class="returns-inline">
-            <span class="type">Object</span>
-        </span>
-
-
-
-
-
-
-
-    <div class="meta">
-                <p>
-                Defined in
-        <a href="../files/lib_miruken.js.html#l1135"><code>lib&#x2F;miruken.js:1135</code></a>
-        </p>
-
-
-
-    </div>
-
-    <div class="description">
-        <p>Description goes here</p>
-
-    </div>
-
-        <div class="params">
-            <h4>Parameters:</h4>
-
-            <ul class="params-list">
-                <li class="param">
-                        <code class="param-name">items</code>
-                        <span class="type">Items</span>
-
-
-                    <div class="param-description">
-                        <ul>
-<li>description</li>
-</ul>
-
-                    </div>
-
-                </li>
-            </ul>
-        </div>
-
-        <div class="returns">
-            <h4>Returns:</h4>
-
-            <div class="returns-description">
-                        <span class="type">Object</span>:
-                    <p>this  - description</p>
-
-            </div>
-        </div>
-
-
-</div>
-<div id="method_getIndex" class="method item">
-    <h3 class="name"><code>getIndex</code></h3>
-
         <span class="paren">()</span>
 
         <span class="returns-inline">
-            <span class="type">Object</span>
+            <span class="type">ArrayManager</span>
         </span>
 
 
@@ -340,7 +271,7 @@
     <div class="meta">
                 <p>
                 Defined in
-        <a href="../files/lib_miruken.js.html#l1077"><code>lib&#x2F;miruken.js:1077</code></a>
+        <a href="../files/lib_miruken.js.html#l1141"><code>lib&#x2F;miruken.js:1141</code></a>
         </p>
 
 
@@ -348,7 +279,7 @@
     </div>
 
     <div class="description">
-        <p>Description goes here</p>
+        <p>Appends one or more items to the end of the array.</p>
 
     </div>
 
@@ -357,8 +288,8 @@
             <h4>Returns:</h4>
 
             <div class="returns-description">
-                        <span class="type">Object</span>:
-                    <p>item</p>
+                        <span class="type">ArrayManager</span>:
+                    <p>array manager.</p>
 
             </div>
         </div>
@@ -373,14 +304,11 @@
                 <li class="arg">
                         <code>index</code>
                 </li>
-                <li class="arg">
-                        <code>item</code>
-                </li>
             </ul><span class="paren">)</span>
         </div>
 
         <span class="returns-inline">
-            <span class="type">Object</span>
+            <span class="type">Any</span>
         </span>
 
 
@@ -392,7 +320,7 @@
     <div class="meta">
                 <p>
                 Defined in
-        <a href="../files/lib_miruken.js.html#l1087"><code>lib&#x2F;miruken.js:1087</code></a>
+        <a href="../files/lib_miruken.js.html#l1082"><code>lib&#x2F;miruken.js:1082</code></a>
         </p>
 
 
@@ -400,7 +328,7 @@
     </div>
 
     <div class="description">
-        <p>Description goes here</p>
+        <p>Gets the item at array index.</p>
 
     </div>
 
@@ -410,25 +338,12 @@
             <ul class="params-list">
                 <li class="param">
                         <code class="param-name">index</code>
-                        <span class="type">Index</span>
+                        <span class="type">Number</span>
 
 
                     <div class="param-description">
                         <ul>
-<li>description</li>
-</ul>
-
-                    </div>
-
-                </li>
-                <li class="param">
-                        <code class="param-name">item</code>
-                        <span class="type">Item</span>
-
-
-                    <div class="param-description">
-                        <ul>
-<li>description</li>
+<li>index of item</li>
 </ul>
 
                     </div>
@@ -441,8 +356,8 @@
             <h4>Returns:</h4>
 
             <div class="returns-description">
-                        <span class="type">Object</span>:
-                    <p>item</p>
+                        <span class="type">Any</span>:
+                    <p>item at index.</p>
 
             </div>
         </div>
@@ -455,7 +370,7 @@
         <span class="paren">()</span>
 
         <span class="returns-inline">
-            <span class="type">Object</span>
+            <span class="type">Array</span>
         </span>
 
 
@@ -467,7 +382,7 @@
     <div class="meta">
                 <p>
                 Defined in
-        <a href="../files/lib_miruken.js.html#l1071"><code>lib&#x2F;miruken.js:1071</code></a>
+        <a href="../files/lib_miruken.js.html#l1076"><code>lib&#x2F;miruken.js:1076</code></a>
         </p>
 
 
@@ -475,7 +390,7 @@
     </div>
 
     <div class="description">
-        <p>Description goes here</p>
+        <p>Gets the array.</p>
 
     </div>
 
@@ -484,8 +399,8 @@
             <h4>Returns:</h4>
 
             <div class="returns-description">
-                        <span class="type">Object</span>:
-                    <p>item</p>
+                        <span class="type">Array</span>:
+                    <p>array.</p>
 
             </div>
         </div>
@@ -507,7 +422,7 @@
         </div>
 
         <span class="returns-inline">
-            <span class="type">Object</span>
+            <span class="type">ArrayManager</span>
         </span>
 
 
@@ -519,7 +434,7 @@
     <div class="meta">
                 <p>
                 Defined in
-        <a href="../files/lib_miruken.js.html#l1101"><code>lib&#x2F;miruken.js:1101</code></a>
+        <a href="../files/lib_miruken.js.html#l1107"><code>lib&#x2F;miruken.js:1107</code></a>
         </p>
 
 
@@ -527,7 +442,7 @@
     </div>
 
     <div class="description">
-        <p>Description goes here</p>
+        <p>Inserts the item at array index.</p>
 
     </div>
 
@@ -537,12 +452,12 @@
             <ul class="params-list">
                 <li class="param">
                         <code class="param-name">index</code>
-                        <span class="type">Index</span>
+                        <span class="type">Number</span>
 
 
                     <div class="param-description">
                         <ul>
-<li>description</li>
+<li>index of item</li>
 </ul>
 
                     </div>
@@ -555,7 +470,7 @@
 
                     <div class="param-description">
                         <ul>
-<li>description</li>
+<li>item to insert</li>
 </ul>
 
                     </div>
@@ -568,8 +483,8 @@
             <h4>Returns:</h4>
 
             <div class="returns-description">
-                        <span class="type">Object</span>:
-                    <p>item</p>
+                        <span class="type">ArrayManager</span>:
+                    <p>array manager.</p>
 
             </div>
         </div>
@@ -588,7 +503,7 @@
         </div>
 
         <span class="returns-inline">
-            <span class="type">Object</span>
+            <span class="type">Any</span>
         </span>
 
 
@@ -600,7 +515,7 @@
     <div class="meta">
                 <p>
                 Defined in
-        <a href="../files/lib_miruken.js.html#l1175"><code>lib&#x2F;miruken.js:1175</code></a>
+        <a href="../files/lib_miruken.js.html#l1180"><code>lib&#x2F;miruken.js:1180</code></a>
         </p>
 
 
@@ -608,7 +523,7 @@
     </div>
 
     <div class="description">
-        <p>Description goes here</p>
+        <p>Optional mapping for items before adding to the array.</p>
 
     </div>
 
@@ -618,12 +533,12 @@
             <ul class="params-list">
                 <li class="param">
                         <code class="param-name">item</code>
-                        <span class="type">Object</span>
+                        <span class="type">Any</span>
 
 
                     <div class="param-description">
                         <ul>
-<li>description</li>
+<li>item to map</li>
 </ul>
 
                     </div>
@@ -636,8 +551,8 @@
             <h4>Returns:</h4>
 
             <div class="returns-description">
-                        <span class="type">Object</span>:
-                    <p>item - description</p>
+                        <span class="type">Any</span>:
+                    <p>mapped item.</p>
 
             </div>
         </div>
@@ -656,7 +571,7 @@
         </div>
 
         <span class="returns-inline">
-            <span class="type">This</span>
+            <span class="type">ArrayManager</span>
         </span>
 
 
@@ -668,7 +583,7 @@
     <div class="meta">
                 <p>
                 Defined in
-        <a href="../files/lib_miruken.js.html#l1155"><code>lib&#x2F;miruken.js:1155</code></a>
+        <a href="../files/lib_miruken.js.html#l1160"><code>lib&#x2F;miruken.js:1160</code></a>
         </p>
 
 
@@ -676,7 +591,7 @@
     </div>
 
     <div class="description">
-        <p>Description goes here</p>
+        <p>Merges the items into the array.</p>
 
     </div>
 
@@ -691,7 +606,7 @@
 
                     <div class="param-description">
                         <ul>
-<li>description</li>
+<li>items to merge from</li>
 </ul>
 
                     </div>
@@ -704,8 +619,8 @@
             <h4>Returns:</h4>
 
             <div class="returns-description">
-                        <span class="type">This</span>:
-                    <p>this  - description</p>
+                        <span class="type">ArrayManager</span>:
+                    <p>array manager.</p>
 
             </div>
         </div>
@@ -724,7 +639,7 @@
         </div>
 
         <span class="returns-inline">
-            <span class="type">Object</span>
+            <span class="type">ArrayManager</span>
         </span>
 
 
@@ -736,7 +651,7 @@
     <div class="meta">
                 <p>
                 Defined in
-        <a href="../files/lib_miruken.js.html#l1123"><code>lib&#x2F;miruken.js:1123</code></a>
+        <a href="../files/lib_miruken.js.html#l1129"><code>lib&#x2F;miruken.js:1129</code></a>
         </p>
 
 
@@ -744,7 +659,7 @@
     </div>
 
     <div class="description">
-        <p>Description goes here</p>
+        <p>Removes the item at array index.</p>
 
     </div>
 
@@ -754,12 +669,12 @@
             <ul class="params-list">
                 <li class="param">
                         <code class="param-name">index</code>
-                        <span class="type">Index</span>
+                        <span class="type">Number</span>
 
 
                     <div class="param-description">
                         <ul>
-<li>description</li>
+<li>index of item</li>
 </ul>
 
                     </div>
@@ -772,8 +687,8 @@
             <h4>Returns:</h4>
 
             <div class="returns-description">
-                        <span class="type">Object</span>:
-                    <p>item</p>
+                        <span class="type">ArrayManager</span>:
+                    <p>array manager.</p>
 
             </div>
         </div>
@@ -795,7 +710,7 @@
         </div>
 
         <span class="returns-inline">
-            <span class="type">Object</span>
+            <span class="type">ArrayManager</span>
         </span>
 
 
@@ -807,7 +722,7 @@
     <div class="meta">
                 <p>
                 Defined in
-        <a href="../files/lib_miruken.js.html#l1112"><code>lib&#x2F;miruken.js:1112</code></a>
+        <a href="../files/lib_miruken.js.html#l1118"><code>lib&#x2F;miruken.js:1118</code></a>
         </p>
 
 
@@ -815,7 +730,7 @@
     </div>
 
     <div class="description">
-        <p>Description goes here</p>
+        <p>Replaces the item at array index.</p>
 
     </div>
 
@@ -825,12 +740,12 @@
             <ul class="params-list">
                 <li class="param">
                         <code class="param-name">index</code>
-                        <span class="type">Index</span>
+                        <span class="type">Number</span>
 
 
                     <div class="param-description">
                         <ul>
-<li>description</li>
+<li>index of item</li>
 </ul>
 
                     </div>
@@ -843,7 +758,7 @@
 
                     <div class="param-description">
                         <ul>
-<li>description</li>
+<li>item to replace</li>
 </ul>
 
                     </div>
@@ -856,8 +771,92 @@
             <h4>Returns:</h4>
 
             <div class="returns-description">
-                        <span class="type">Object</span>:
-                    <p>item</p>
+                        <span class="type">ArrayManager</span>:
+                    <p>array manager.</p>
+
+            </div>
+        </div>
+
+
+</div>
+<div id="method_setIndex" class="method item">
+    <h3 class="name"><code>setIndex</code></h3>
+
+        <div class="args">
+            <span class="paren">(</span><ul class="args-list inline commas">
+                <li class="arg">
+                        <code>index</code>
+                </li>
+                <li class="arg">
+                        <code>item</code>
+                </li>
+            </ul><span class="paren">)</span>
+        </div>
+
+        <span class="returns-inline">
+            <span class="type">ArrayManager</span>
+        </span>
+
+
+
+
+
+
+
+    <div class="meta">
+                <p>
+                Defined in
+        <a href="../files/lib_miruken.js.html#l1093"><code>lib&#x2F;miruken.js:1093</code></a>
+        </p>
+
+
+
+    </div>
+
+    <div class="description">
+        <p>Sets the item at array index if empty.</p>
+
+    </div>
+
+        <div class="params">
+            <h4>Parameters:</h4>
+
+            <ul class="params-list">
+                <li class="param">
+                        <code class="param-name">index</code>
+                        <span class="type">Number</span>
+
+
+                    <div class="param-description">
+                        <ul>
+<li>index of item</li>
+</ul>
+
+                    </div>
+
+                </li>
+                <li class="param">
+                        <code class="param-name">item</code>
+                        <span class="type">Any</span>
+
+
+                    <div class="param-description">
+                        <ul>
+<li>item to set</li>
+</ul>
+
+                    </div>
+
+                </li>
+            </ul>
+        </div>
+
+        <div class="returns">
+            <h4>Returns:</h4>
+
+            <div class="returns-description">
+                        <span class="type">ArrayManager</span>:
+                    <p>array manager.</p>
 
             </div>
         </div>

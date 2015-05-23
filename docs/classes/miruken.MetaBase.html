@@ -40,7 +40,6 @@
                             <ul id="api-classes" class="apis classes">
                                 <li><a href="../classes/miruken.$inferProperties.html">miruken.$inferProperties</a></li>
                                 <li><a href="../classes/miruken.$inhertStatic.html">miruken.$inhertStatic</a></li>
-                                <li><a href="../classes/miruken.$interceptMethods.html">miruken.$interceptMethods</a></li>
                                 <li><a href="../classes/miruken.$properties.html">miruken.$properties</a></li>
                                 <li><a href="../classes/miruken.$proxyProtocol.html">miruken.$proxyProtocol</a></li>
                                 <li><a href="../classes/miruken.ArrayManager.html">miruken.ArrayManager</a></li>
@@ -63,7 +62,7 @@
                                 <li><a href="../classes/miruken.callback.MethodCallbackHandler.html">miruken.callback.MethodCallbackHandler</a></li>
                                 <li><a href="../classes/miruken.callback.ProvidingCallbackHandler.html">miruken.callback.ProvidingCallbackHandler</a></li>
                                 <li><a href="../classes/miruken.callback.Reentrant.html">miruken.callback.Reentrant</a></li>
-                                <li><a href="../classes/miruken.callback.ReentrantDecorator.html">miruken.callback.ReentrantDecorator</a></li>
+                                <li><a href="../classes/miruken.callback.ReentrantScope.html">miruken.callback.ReentrantScope</a></li>
                                 <li><a href="../classes/miruken.callback.RejectedError.html">miruken.callback.RejectedError</a></li>
                                 <li><a href="../classes/miruken.callback.Resolution.html">miruken.callback.Resolution</a></li>
                                 <li><a href="../classes/miruken.ClassMeta.html">miruken.ClassMeta</a></li>
@@ -179,7 +178,7 @@
         </div>
 
         <div class="foundat">
-            Defined in: <a href="../files/lib_miruken.js.html#l246"><code>lib&#x2F;miruken.js:246</code></a>
+            Defined in: <a href="../files/lib_miruken.js.html#l247"><code>lib&#x2F;miruken.js:247</code></a>
         </div>
 
             Module: <a href="../modules/miruken.html">miruken</a>
@@ -188,7 +187,7 @@
 
 
 <div class="box intro">
-    <p>Description goes here</p>
+    <p>Base class for all metadata.</p>
 
 </div>
 
@@ -209,7 +208,7 @@
             <div class="meta">
                         <p>
                         Defined in
-                <a href="../files/lib_miruken.js.html#l246"><code>lib&#x2F;miruken.js:246</code></a>
+                <a href="../files/lib_miruken.js.html#l247"><code>lib&#x2F;miruken.js:247</code></a>
                 </p>
         
         
@@ -305,6 +304,9 @@
             </ul><span class="paren">)</span>
         </div>
 
+        <span class="returns-inline">
+            <span class="type">MetaBase</span>
+        </span>
 
 
 
@@ -315,7 +317,7 @@
     <div class="meta">
                 <p>
                 Defined in
-        <a href="../files/lib_miruken.js.html#l383"><code>lib&#x2F;miruken.js:383</code></a>
+        <a href="../files/lib_miruken.js.html#l382"><code>lib&#x2F;miruken.js:382</code></a>
         </p>
 
 
@@ -323,7 +325,7 @@
     </div>
 
     <div class="description">
-        <p>Description goes here</p>
+        <p>Sets the descriptor for a property.</p>
 
     </div>
 
@@ -338,7 +340,7 @@
 
                     <div class="param-description">
                         <ul>
-<li>definition</li>
+<li>property name</li>
 </ul>
 
                     </div>
@@ -351,7 +353,7 @@
 
                     <div class="param-description">
                         <ul>
-<li>definition</li>
+<li>property descriptor</li>
 </ul>
 
                     </div>
@@ -360,6 +362,15 @@
             </ul>
         </div>
 
+        <div class="returns">
+            <h4>Returns:</h4>
+
+            <div class="returns-description">
+                        <span class="type">MetaBase</span>:
+                    <p>current metadata.</p>
+
+            </div>
+        </div>
 
 
 </div>
@@ -374,9 +385,6 @@
             </ul><span class="paren">)</span>
         </div>
 
-        <span class="returns-inline">
-            <span class="type">Array</span>
-        </span>
 
 
 
@@ -387,7 +395,7 @@
     <div class="meta">
                 <p>
                 Defined in
-        <a href="../files/lib_miruken.js.html#l288"><code>lib&#x2F;miruken.js:288</code></a>
+        <a href="../files/lib_miruken.js.html#l289"><code>lib&#x2F;miruken.js:289</code></a>
         </p>
 
 
@@ -395,7 +403,7 @@
     </div>
 
     <div class="description">
-        <p>Description goes here</p>
+        <p>Adds one or more protocols to the metadata.</p>
 
     </div>
 
@@ -410,7 +418,7 @@
 
                     <div class="param-description">
                         <ul>
-<li>definition</li>
+<li>protocols to add</li>
 </ul>
 
                     </div>
@@ -419,28 +427,13 @@
             </ul>
         </div>
 
-        <div class="returns">
-            <h4>Returns:</h4>
-
-            <div class="returns-description">
-                        <span class="type">Array</span>:
-                    <p>protocols        - definition</p>
-
-            </div>
-        </div>
 
 
 </div>
 <div id="method_conformsTo" class="method item">
     <h3 class="name"><code>conformsTo</code></h3>
 
-        <div class="args">
-            <span class="paren">(</span><ul class="args-list inline commas">
-                <li class="arg">
-                        <code>protocol</code>
-                </li>
-            </ul><span class="paren">)</span>
-        </div>
+        <span class="paren">()</span>
 
         <span class="returns-inline">
             <span class="type">Boolean</span>
@@ -463,36 +456,17 @@
     </div>
 
     <div class="description">
-        <p>Description goes here</p>
+        <p>Determines if the metadata conforms to the protocol.</p>
 
     </div>
 
-        <div class="params">
-            <h4>Parameters:</h4>
-
-            <ul class="params-list">
-                <li class="param">
-                        <code class="param-name">protocol</code>
-                        <span class="type">Protocol</span>
-
-
-                    <div class="param-description">
-                        <ul>
-<li>definition</li>
-</ul>
-
-                    </div>
-
-                </li>
-            </ul>
-        </div>
 
         <div class="returns">
             <h4>Returns:</h4>
 
             <div class="returns-description">
                         <span class="type">Boolean</span>:
-                    <p>bool         - definition</p>
+                    <p>true if the metadata conforms to the protocol.</p>
 
             </div>
         </div>
@@ -529,7 +503,7 @@
     <div class="meta">
                 <p>
                 Defined in
-        <a href="../files/lib_miruken.js.html#l340"><code>lib&#x2F;miruken.js:340</code></a>
+        <a href="../files/lib_miruken.js.html#l339"><code>lib&#x2F;miruken.js:339</code></a>
         </p>
 
 
@@ -537,7 +511,7 @@
     </div>
 
     <div class="description">
-        <p>Description goes here</p>
+        <p>Defines a property on the metadata.</p>
 
     </div>
 
@@ -552,7 +526,7 @@
 
                     <div class="param-description">
                         <ul>
-<li>definition</li>
+<li>target receiving property</li>
 </ul>
 
                     </div>
@@ -565,7 +539,7 @@
 
                     <div class="param-description">
                         <ul>
-<li>definition</li>
+<li>name of the property</li>
 </ul>
 
                     </div>
@@ -578,7 +552,7 @@
 
                     <div class="param-description">
                         <ul>
-<li>definition</li>
+<li>property specification</li>
 </ul>
 
                     </div>
@@ -591,7 +565,7 @@
 
                     <div class="param-description">
                         <ul>
-<li>definition</li>
+<li>property descriptor</li>
 </ul>
 
                     </div>
@@ -621,7 +595,7 @@
     <div class="meta">
                 <p>
                 Defined in
-        <a href="../files/lib_miruken.js.html#l269"><code>lib&#x2F;miruken.js:269</code></a>
+        <a href="../files/lib_miruken.js.html#l270"><code>lib&#x2F;miruken.js:270</code></a>
         </p>
 
 
@@ -629,7 +603,7 @@
     </div>
 
     <div class="description">
-        <p>Description goes here</p>
+        <p>Gets all conforming protocools.</p>
 
     </div>
 
@@ -639,7 +613,7 @@
 
             <div class="returns-description">
                         <span class="type">Array</span>:
-                    <p>protocols        - definition</p>
+                    <p>of conforming protocols.</p>
 
             </div>
         </div>
@@ -658,7 +632,7 @@
         </div>
 
         <span class="returns-inline">
-            <span class="type">Parent</span>
+            <span class="type">Object</span>
         </span>
 
 
@@ -670,7 +644,7 @@
     <div class="meta">
                 <p>
                 Defined in
-        <a href="../files/lib_miruken.js.html#l353"><code>lib&#x2F;miruken.js:353</code></a>
+        <a href="../files/lib_miruken.js.html#l352"><code>lib&#x2F;miruken.js:352</code></a>
         </p>
 
 
@@ -678,7 +652,7 @@
     </div>
 
     <div class="description">
-        <p>Description goes here</p>
+        <p>Gets the descriptor for one or more properties.</p>
 
     </div>
 
@@ -693,7 +667,7 @@
 
                     <div class="param-description">
                         <ul>
-<li>definition</li>
+<li>property selector</li>
 </ul>
 
                     </div>
@@ -706,8 +680,8 @@
             <h4>Returns:</h4>
 
             <div class="returns-description">
-                        <span class="type">Parent</span>:
-                    <p>parent      - definition</p>
+                        <span class="type">Object</span>:
+                    <p>aggregated property descriptor.</p>
 
             </div>
         </div>
@@ -720,7 +694,7 @@
         <span class="paren">()</span>
 
         <span class="returns-inline">
-            <span class="type">Parent</span>
+            <span class="type">MetaBase</span>
         </span>
 
 
@@ -732,7 +706,7 @@
     <div class="meta">
                 <p>
                 Defined in
-        <a href="../files/lib_miruken.js.html#l257"><code>lib&#x2F;miruken.js:257</code></a>
+        <a href="../files/lib_miruken.js.html#l258"><code>lib&#x2F;miruken.js:258</code></a>
         </p>
 
 
@@ -740,7 +714,7 @@
     </div>
 
     <div class="description">
-        <p>Description goes here</p>
+        <p>Gets the parent metadata.</p>
 
     </div>
 
@@ -749,8 +723,8 @@
             <h4>Returns:</h4>
 
             <div class="returns-description">
-                        <span class="type">Parent</span>:
-                    <p>parent          - definition</p>
+                        <span class="type">MetaBase</span>:
+                    <p>parent metadata if present.</p>
 
             </div>
         </div>
@@ -763,7 +737,7 @@
         <span class="paren">()</span>
 
         <span class="returns-inline">
-            <span class="type">Protocols</span>
+            <span class="type">Array</span>
         </span>
 
 
@@ -775,7 +749,7 @@
     <div class="meta">
                 <p>
                 Defined in
-        <a href="../files/lib_miruken.js.html#l263"><code>lib&#x2F;miruken.js:263</code></a>
+        <a href="../files/lib_miruken.js.html#l264"><code>lib&#x2F;miruken.js:264</code></a>
         </p>
 
 
@@ -783,7 +757,7 @@
     </div>
 
     <div class="description">
-        <p>Description goes here</p>
+        <p>Gets the declared protocols.</p>
 
     </div>
 
@@ -792,8 +766,8 @@
             <h4>Returns:</h4>
 
             <div class="returns-description">
-                        <span class="type">Protocols</span>:
-                    <p>protocols    - definition</p>
+                        <span class="type">Array</span>:
+                    <p>of declared protocols.</p>
 
             </div>
         </div>
@@ -812,7 +786,7 @@
         </div>
 
         <span class="returns-inline">
-            <span class="type">Method</span>
+            <span class="type">MetaBase</span>
         </span>
 
 
@@ -824,7 +798,7 @@
     <div class="meta">
                 <p>
                 Defined in
-        <a href="../files/lib_miruken.js.html#l427"><code>lib&#x2F;miruken.js:427</code></a>
+        <a href="../files/lib_miruken.js.html#l428"><code>lib&#x2F;miruken.js:428</code></a>
         </p>
 
 
@@ -832,7 +806,7 @@
     </div>
 
     <div class="description">
-        <p>Description goes here</p>
+        <p>Binds a method to the parent if not present.</p>
 
     </div>
 
@@ -842,12 +816,12 @@
             <ul class="params-list">
                 <li class="param">
                         <code class="param-name">method</code>
-                        <span class="type">Method</span>
+                        <span class="type">Function</span>
 
 
                     <div class="param-description">
                         <ul>
-<li>definition</li>
+<li>method name</li>
 </ul>
 
                     </div>
@@ -860,8 +834,8 @@
             <h4>Returns:</h4>
 
             <div class="returns-description">
-                        <span class="type">Method</span>:
-                    <p>method      - definition</p>
+                        <span class="type">MetaBase</span>:
+                    <p>current metadata.</p>
 
             </div>
         </div>
@@ -882,6 +856,9 @@
             </ul><span class="paren">)</span>
         </div>
 
+        <span class="returns-inline">
+            <span class="type">Boolean</span>
+        </span>
 
 
 
@@ -900,7 +877,7 @@
     </div>
 
     <div class="description">
-        <p>Description goes here</p>
+        <p>Determines if the property descriptor matches the filter.</p>
 
     </div>
 
@@ -915,7 +892,7 @@
 
                     <div class="param-description">
                         <ul>
-<li>definition</li>
+<li>property descriptor</li>
 </ul>
 
                     </div>
@@ -928,7 +905,7 @@
 
                     <div class="param-description">
                         <ul>
-<li>definition</li>
+<li>matching filter</li>
 </ul>
 
                     </div>
@@ -937,6 +914,15 @@
             </ul>
         </div>
 
+        <div class="returns">
+            <h4>Returns:</h4>
+
+            <div class="returns-description">
+                        <span class="type">Boolean</span>:
+                    <p>true if the descriptor matches, false otherwise.</p>
+
+            </div>
+        </div>
 
 
 </div>

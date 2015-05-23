@@ -40,7 +40,6 @@
                             <ul id="api-classes" class="apis classes">
                                 <li><a href="../classes/miruken.$inferProperties.html">miruken.$inferProperties</a></li>
                                 <li><a href="../classes/miruken.$inhertStatic.html">miruken.$inhertStatic</a></li>
-                                <li><a href="../classes/miruken.$interceptMethods.html">miruken.$interceptMethods</a></li>
                                 <li><a href="../classes/miruken.$properties.html">miruken.$properties</a></li>
                                 <li><a href="../classes/miruken.$proxyProtocol.html">miruken.$proxyProtocol</a></li>
                                 <li><a href="../classes/miruken.ArrayManager.html">miruken.ArrayManager</a></li>
@@ -63,7 +62,7 @@
                                 <li><a href="../classes/miruken.callback.MethodCallbackHandler.html">miruken.callback.MethodCallbackHandler</a></li>
                                 <li><a href="../classes/miruken.callback.ProvidingCallbackHandler.html">miruken.callback.ProvidingCallbackHandler</a></li>
                                 <li><a href="../classes/miruken.callback.Reentrant.html">miruken.callback.Reentrant</a></li>
-                                <li><a href="../classes/miruken.callback.ReentrantDecorator.html">miruken.callback.ReentrantDecorator</a></li>
+                                <li><a href="../classes/miruken.callback.ReentrantScope.html">miruken.callback.ReentrantScope</a></li>
                                 <li><a href="../classes/miruken.callback.RejectedError.html">miruken.callback.RejectedError</a></li>
                                 <li><a href="../classes/miruken.callback.Resolution.html">miruken.callback.Resolution</a></li>
                                 <li><a href="../classes/miruken.ClassMeta.html">miruken.ClassMeta</a></li>
@@ -179,7 +178,7 @@
         </div>
 
         <div class="foundat">
-            Defined in: <a href="../files/lib_miruken.js.html#l1184"><code>lib&#x2F;miruken.js:1184</code></a>
+            Defined in: <a href="../files/lib_miruken.js.html#l1189"><code>lib&#x2F;miruken.js:1189</code></a>
         </div>
 
             Module: <a href="../modules/miruken.html">miruken</a>
@@ -210,7 +209,7 @@ Indexes are partially ordered according to the order comparator.</p>
             <div class="meta">
                         <p>
                         Defined in
-                <a href="../files/lib_miruken.js.html#l1184"><code>lib&#x2F;miruken.js:1184</code></a>
+                <a href="../files/lib_miruken.js.html#l1189"><code>lib&#x2F;miruken.js:1189</code></a>
                 </p>
         
         
@@ -291,7 +290,7 @@ Indexes are partially ordered according to the order comparator.</p>
         </div>
 
         <span class="returns-inline">
-            <span class="type">Index</span>
+            <span class="type">Any</span>
         </span>
 
 
@@ -303,7 +302,7 @@ Indexes are partially ordered according to the order comparator.</p>
     <div class="meta">
                 <p>
                 Defined in
-        <a href="../files/lib_miruken.js.html#l1203"><code>lib&#x2F;miruken.js:1203</code></a>
+        <a href="../files/lib_miruken.js.html#l1208"><code>lib&#x2F;miruken.js:1208</code></a>
         </p>
 
 
@@ -311,7 +310,7 @@ Indexes are partially ordered according to the order comparator.</p>
     </div>
 
     <div class="description">
-        <p>Description goes here</p>
+        <p>Gets the node at an index.</p>
 
     </div>
 
@@ -321,12 +320,12 @@ Indexes are partially ordered according to the order comparator.</p>
             <ul class="params-list">
                 <li class="param">
                         <code class="param-name">index</code>
-                        <span class="type">Index</span>
+                        <span class="type">Number</span>
 
 
                     <div class="param-description">
                         <ul>
-<li>description</li>
+<li>index of node</li>
 </ul>
 
                     </div>
@@ -339,8 +338,8 @@ Indexes are partially ordered according to the order comparator.</p>
             <h4>Returns:</h4>
 
             <div class="returns-description">
-                        <span class="type">Index</span>:
-                    <p>index - description</p>
+                        <span class="type">Any</span>:
+                    <p>the node at index.</p>
 
             </div>
         </div>
@@ -371,7 +370,7 @@ Indexes are partially ordered according to the order comparator.</p>
     <div class="meta">
                 <p>
                 Defined in
-        <a href="../files/lib_miruken.js.html#l1212"><code>lib&#x2F;miruken.js:1212</code></a>
+        <a href="../files/lib_miruken.js.html#l1217"><code>lib&#x2F;miruken.js:1217</code></a>
         </p>
 
 
@@ -379,7 +378,7 @@ Indexes are partially ordered according to the order comparator.</p>
     </div>
 
     <div class="description">
-        <p>Description goes here</p>
+        <p>Inserts the node at an index.</p>
 
     </div>
 
@@ -389,12 +388,12 @@ Indexes are partially ordered according to the order comparator.</p>
             <ul class="params-list">
                 <li class="param">
                         <code class="param-name">node</code>
-                        <span class="type">Node</span>
+                        <span class="type">Any</span>
 
 
                     <div class="param-description">
                         <ul>
-<li>description</li>
+<li>node to insert</li>
 </ul>
 
                     </div>
@@ -402,12 +401,12 @@ Indexes are partially ordered according to the order comparator.</p>
                 </li>
                 <li class="param">
                         <code class="param-name">index</code>
-                        <span class="type">Index</span>
+                        <span class="type">Number</span>
 
 
                     <div class="param-description">
                         <ul>
-<li>description</li>
+<li>index to insert at</li>
 </ul>
 
                     </div>
@@ -425,7 +424,7 @@ Indexes are partially ordered according to the order comparator.</p>
         <span class="paren">()</span>
 
         <span class="returns-inline">
-            <span class="type">Object</span>
+            <span class="type">Boolean</span>
         </span>
 
 
@@ -437,7 +436,7 @@ Indexes are partially ordered according to the order comparator.</p>
     <div class="meta">
                 <p>
                 Defined in
-        <a href="../files/lib_miruken.js.html#l1195"><code>lib&#x2F;miruken.js:1195</code></a>
+        <a href="../files/lib_miruken.js.html#l1200"><code>lib&#x2F;miruken.js:1200</code></a>
         </p>
 
 
@@ -445,7 +444,7 @@ Indexes are partially ordered according to the order comparator.</p>
     </div>
 
     <div class="description">
-        <p>Description goes here</p>
+        <p>Determines if list is empty.</p>
 
     </div>
 
@@ -454,8 +453,8 @@ Indexes are partially ordered according to the order comparator.</p>
             <h4>Returns:</h4>
 
             <div class="returns-description">
-                        <span class="type">Object</span>:
-                    <p>this - description</p>
+                        <span class="type">Boolean</span>:
+                    <p>true if list is empty, false otherwise.</p>
 
             </div>
         </div>
@@ -483,7 +482,7 @@ Indexes are partially ordered according to the order comparator.</p>
     <div class="meta">
                 <p>
                 Defined in
-        <a href="../files/lib_miruken.js.html#l1257"><code>lib&#x2F;miruken.js:1257</code></a>
+        <a href="../files/lib_miruken.js.html#l1262"><code>lib&#x2F;miruken.js:1262</code></a>
         </p>
 
 
@@ -491,7 +490,7 @@ Indexes are partially ordered according to the order comparator.</p>
     </div>
 
     <div class="description">
-        <p>Description goes here</p>
+        <p>Removes the node from the list.</p>
 
     </div>
 
@@ -501,12 +500,12 @@ Indexes are partially ordered according to the order comparator.</p>
             <ul class="params-list">
                 <li class="param">
                         <code class="param-name">node</code>
-                        <span class="type">Node</span>
+                        <span class="type">Any</span>
 
 
                     <div class="param-description">
                         <ul>
-<li>description</li>
+<li>node to remove</li>
 </ul>
 
                     </div>
@@ -534,7 +533,7 @@ Indexes are partially ordered according to the order comparator.</p>
                         <div class="meta">
                                     <p>
                                     Defined in
-                            <a href="../files/lib_miruken.js.html#l1293"><code>lib&#x2F;miruken.js:1293</code></a>
+                            <a href="../files/lib_miruken.js.html#l1298"><code>lib&#x2F;miruken.js:1298</code></a>
                             </p>
                     
                     
