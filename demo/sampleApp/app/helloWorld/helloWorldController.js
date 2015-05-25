@@ -2,12 +2,12 @@ new function(){
 	var sampleApp = new base2.Package(this, {
 		name: 'sampleApp',
 		imports: 'miruken.mvc',
-		exports: 'HelloWorld'
+		exports: 'HelloWorldController'
 	});
 
 	eval(this.imports);
 
-	var HelloWorld = Controller.extend({
+	var HelloWorldController = Controller.extend({
 		$properties:{
 			first: 'Hari',
 			last: 'Seldon'

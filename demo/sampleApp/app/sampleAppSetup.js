@@ -14,10 +14,15 @@ new function(){
 		constructor: function($routeProvider){
 			$routeProvider
 				.when('/', {
-					templateUrl: 'app/helloWorld/helloWorld.html',
-					controller: 'HelloWorld',
+					templateUrl: 'app/welcome/welcome.html',
+					controller: 'WelcomeController',
 					controllerAs: 'vm'
 				})
+				.when('/helloWorld', {
+					templateUrl: 'app/helloWorld/helloWorld.html',
+					controller: 'HelloWorldController',
+					controllerAs: 'vm'
+				});
 		}
 	});
 
