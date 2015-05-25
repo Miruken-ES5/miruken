@@ -1710,10 +1710,12 @@ var miruken = require('./miruken.js'),
 new function () { // closure
 
     /**
-     * Definition goes here
+     * Package providing message passing support.<br/>
+     * Requires the {{#crossLinkModule "miruken"}}{{/crossLinkModule}} module.
      * @module miruken
      * @submodule callback
      * @namespace miruken.callback
+     * @class $
      */
     var callback = new base2.Package(this, {
         name:    "callback",
@@ -1726,14 +1728,35 @@ new function () { // closure
     eval(this.imports);
 
     var _definitions = {},
-        $handle      = $define('$handle',  Variance.Contravariant),
-        $provide     = $define('$provide', Variance.Covariant),
-        $lookup      = $define('$lookup' , Variance.Invariant),
+        /**
+         * Contravariant handler definitions.
+         * @property {Function} $handle
+         * @for miruken.callback.$
+         */
+        $handle = $define('$handle',  Variance.Contravariant),
+        /**
+         * Covariant provider definitions.
+         * @property {Function} $provide  
+         * @for miruken.callback.$
+         */        
+        $provide = $define('$provide', Variance.Covariant),
+        /**
+         * Invariant lookup definitions.
+         * @property {Function} $lookup  
+         * @for miruken.callback.$
+         */                
+        $lookup = $define('$lookup' , Variance.Invariant),
+        /**
+         * return value to indicate not handled.
+         * @property {Object} $NOT_HANDLED
+         * @for miruken.callback.$
+         */                
         $NOT_HANDLED = {};
 
     /**
-     * Metamacro to register callback definitions.
+     * Metamacro to register callback handlers.
      * @class $callbacks
+     * @extends miruken.MetaMacro
      */
     var $callbacks = MetaMacro.extend({
         apply: function (step, metadata, target, definition) {
@@ -1770,14 +1793,29 @@ new function () { // closure
                 }
             }
         },
+        /**
+         * Determines if the macro should be inherited
+         * @method shouldInherit
+         * @returns {boolean} true
+         */                        
         shouldInherit: True,
+        /**
+         * Determines if the macro should be applied on extension.
+         * @method isActive
+         * @returns {boolean} true
+         */ 
         isActive: True
     });
 
     /**
-     * Definition goes here
+     * Captures the invocation of a method.
      * @class HandleMethod
      * @constructor
+     * @param  {number}            type        -  get, set or invoke
+     * @param  {miruken.Protocol}  protocol    -  initiating protocol
+     * @param  {string}            methodName  -  method name
+     * @param  {Array}             [...args]   -  method arguments
+     * @param  {boolean}           strict      -  true if strict, false otherwise
      * @extends Base
      */
     var HandleMethod = Base.extend({
@@ -1787,15 +1825,61 @@ new function () { // closure
             }
             var _returnValue, _exception;
             this.extend({
-                getType:        function () { return type; },
-                getProtocol:    function () { return protocol; },
-                getMethodName:  function () { return methodName; },
-                getArguments:   function () { return args; },
+                /**
+                 * Gets the type of method.
+                 * @method getType
+                 * @returns {number} type of method.
+                 */
+                getType: function () { return type; },
+                /**
+                 * Gets the protocol the method belongs to.
+                 * @method getProtocol
+                 * @returns {miruken.Protocol} initiating protocol.
+                 */
+                getProtocol: function () { return protocol; },
+                /**
+                 * Gets the method name.
+                 * @method getMethod
+                 * @returns {string} method name.
+                 */
+                getMethodName: function () { return methodName; },
+                /**
+                 * Gets the method arguments.
+                 * @method getArguments
+                 * @returns {Array} method arguments.
+                 */
+                getArguments: function () { return args; },
+                /**
+                 * Gets the method return value.
+                 * @method getReturnValue
+                 * @returns {Any} method return value.
+                 */
                 getReturnValue: function () { return _returnValue; },
+                /**
+                 * Sets the method return value.
+                 * @method setReturnValue
+                 * @param   {Any} value  - new return value
+                 */
                 setReturnValue: function (value) { _returnValue = value; },
-                getException:   function () { return _exception; },
-                setException:   function (exception) { _exception = exception; },
-                invokeOn:       function (target, composer) {
+                /**
+                 * Gets the method execption.
+                 * @method getException
+                 * @returns {Error} method exception.
+                 */
+                getException: function () { return _exception; },
+                /**
+                 * Sets the method exception.
+                 * @method setException
+                 * @param   {Error}  exception  - new exception
+                 */
+                setException: function (exception) { _exception = exception; },
+                /**
+                 * Attempts to invoke the method on the target.
+                 * @method invokeOn
+                 * @param   {Object}  target  - method receiver
+                 * @returns {boolean} true if the method was accepted.
+                 */
+                invokeOn: function (target, composer) {
                     if (!target || (strict && protocol && !protocol.adoptedBy(target))) {
                         return false;
                     }
@@ -1839,15 +1923,32 @@ new function () { // closure
             });
         }
     }, {
-        Get:    1,  // Getter
-        Set:    2,  // Setter
-        Invoke: 3   // Method
+        /**
+         * Identifies a property get.
+         * @property {number} Get
+         * @static
+         */
+        Get: 1,
+        /**
+         * Identifies a property set.
+         * @property {number} Set
+         * @static
+         */
+        Set: 2,
+        /**
+         * Identifies a method invocation.
+         * @property {number} Invoke
+         * @static
+         */
+        Invoke: 3
     });
 
     /**
-     * Definition goes here
+     * Represents the lookup of a key.
      * @class Lookup
      * @constructor
+     * @param   {string}   key   -  lookup key
+     * @param   {boolean}  many  -  lookup cardinality
      * @extends Base
      */
     var Lookup = Base.extend(
@@ -1860,9 +1961,28 @@ new function () { // closure
             var _results = [],
                 _instant = $instant.test(key);
             this.extend({
+                /**
+                 * Gets the lookup key.
+                 * @method getKey
+                 * @returns {Any} lookup key
+                 */
                 getKey: function () { return key; },
+                /**
+                 * Gets the lookup cardinality.
+                 * @method isMany
+                 * @returns {boolean} true if lookup all, otherwise first. 
+                 */
                 isMany: function () { return many; },
+                /**
+                 * Gets the matching results.
+                 * @method getResults
+                 * @returns {Array} results of lookup.
+                 */
                 getResults: function () { return _results; },
+                /**
+                 * Adds the lookup result.
+                 * @param  {Any}  reault - lookup result
+                 */
                 addResult: function (result) {
                     if (!(_instant && $isPromise(result))) {
                         _results.push(result);
@@ -1873,9 +1993,11 @@ new function () { // closure
     });
 
     /**
-     * Definition goes here
+     * Represents the deferred handling of a callback.
      * @class Deferred
      * @constructor
+     * @param   {Object}   callback  -  callback
+     * @param   {boolean}  many      -  deferred cardinality
      * @extends Base
      */
     var Deferred = Base.extend(
@@ -1887,12 +2009,31 @@ new function () { // closure
             many = !!many;
             var _pending = [];
             this.extend({
+                /**
+                 * Gets the cardinality of handle.
+                 * @method isMany
+                 * @returns {boolean} true if all handlers, otherwise first. 
+                 */
                 isMany: function () { return many; },
+                /**
+                 * Gets the callback.
+                 * @method getCallback
+                 * @returns {Object} callback.
+                 */
                 getCallback: function () { return callback; },
+                /**
+                 * Gets the pending promises.
+                 * @method getPending
+                 * @returns {Array} pending promises.
+                 */
                 getPending: function () { return _pending; },
-                track: function (result) {
-                    if ($isPromise(result)) {
-                        _pending.push(result);
+                /**
+                 * Tracks the pending promise.
+                 * @param  {miruken.Promise}  promise - handle promise
+                 */
+                track: function (promise) {
+                    if ($isPromise(promise)) {
+                        _pending.push(promise);
                     }
                 }
             });
@@ -1900,9 +2041,11 @@ new function () { // closure
     });
 
     /**
-     * Definition goes here
+     * Represents the resolution of a key.
      * @class Resolution
      * @constructor
+     * @param   {string}   key   -  resolution key
+     * @param   {boolean}  many  -  resolution cardinality
      * @extends Base
      */
     var Resolution = Base.extend(
@@ -1915,9 +2058,28 @@ new function () { // closure
             var _resolutions = [],
                 _instant     = $instant.test(key);
             this.extend({
+                /**
+                 * Gets the key.
+                 * @method getKey
+                 * @returns {Any} key
+                 */                
                 getKey: function () { return key; },
+                /**
+                 * Gets the cardinality of resolution.
+                 * @method isMany
+                 * @returns {boolean} true if resolve all, otherwise first. 
+                 */                
                 isMany: function () { return many; },
+                /**
+                 * Gets the resolutions.
+                 * @method getResolutions
+                 * @returns {Array} resolutions.
+                 */                
                 getResolutions: function () { return _resolutions; },
+                /**
+                 * Adds a resolution.
+                 * @param  {Any}  resolution - resolution
+                 */
                 resolve: function (resolution) {
                     if (!(_instant && $isPromise(resolution))) {
                         _resolutions.push(resolution);
@@ -1928,15 +2090,21 @@ new function () { // closure
     });
 
     /**
-     * Definition goes here
+     * Marks a callback as reentrant.
      * @class Reentrant
      * @constructor
+     * @param   {Object}  callback  -  callback to mark
      * @extends Base
      */
     var Reentrant = Base.extend({
         constructor: function (callback) {
             if (callback) {
                 this.extend({
+                    /**
+                     * Gets the callback.
+                     * @method getCallback
+                     * @returns {Object} callback
+                     */
                     getCallback: function () { return callback; },
                 });
             }
@@ -1944,9 +2112,10 @@ new function () { // closure
     });
 
     /**
-     * Definition goes here
+     * Base class for handling arbitrary callbacks.
      * @class CallbackHandler
      * @constructor
+     * @param  {Object}  [delegate]  -  delegate
      * @extends Base
      */
     var CallbackHandler = Base.extend(
@@ -1960,15 +2129,23 @@ new function () { // closure
         /**
          * Handles the callback.
          * @method handle
-         * @param   {Object}          callback    - any callback
-         * @param   {boolean}         greedy      - true of handle greedily
-         * @param   {CallbackHandler} [composer]  - initiated the handle for composition
+         * @param   {Object}                           callback        -  any callback
+         * @param   {boolean}                          [greedy=false]  -  true if handle greedily
+         * @param   {miruken.callback.CallbackHandler} [composer]      -  composition handler
          * @returns {boolean} true if the callback was handled, false otherwise.
          */
         handle: function (callback, greedy, composer) {
             return !$isNothing(callback) &&
                    !!this.handleCallback(callback, !!greedy, composer || this);
         },
+        /**
+         * Handles the callback with all arguments populated.
+         * @method handleCallback
+         * @param   {Object}                           callback    -  any callback
+         * @param   {boolean}                          greedy      -  true if handle greedily
+         * @param   {miruken.callback.CallbackHandler} [composer]  -  composition handler
+         * @returns {boolean} true if the callback was handled, false otherwise.
+         */
         handleCallback: function (callback, greedy, composer) {
             return $handle.dispatch(this, callback, null, composer, greedy);
         },
@@ -2007,6 +2184,11 @@ new function () { // closure
                                    $handle.dispatch(this, reentrant.getCallback(), null, composer);
             }
         ],
+        /**
+         * Converts the callback handler to a {{#crossLink "miruken.Delegate"}}{{/crossLink}}.
+         * @method toDelegate
+         * @returns {miruken.callback.InvocationDelegate}  delegate for this callback handler.
+         */            
         toDelegate: function () { return new InvocationDelegate(this); }
     }, {
         coerce: function (object) { return new this(object); }
@@ -2017,10 +2199,11 @@ new function () { // closure
     });
 
     /**
-     * Definition goes here
+     * Base class for all CallbackHandler decorators.
      * @class CallbackHandlerDecorator
      * @constructor
-     * @extends CallbackHandler
+     * @param  {miruken.callback.CallbackHandler}  decoratee  -  decoratee
+     * @extends miruken.callback.CallbackHandler
      */
     var CallbackHandlerDecorator = CallbackHandler.extend({
         constructor: function _(decoratee) {
@@ -2040,10 +2223,11 @@ new function () { // closure
     });
 
     /**
-     * Definition goes here
+     * Marks all callbacks as reentrant.
      * @class ReentrantScope
      * @constructor
-     * @extends CallbackHandler
+     * @param  {miruken.callback.CallbackHandler)  handler  -  delegating handler
+     * @extends miruken.callback.CallbackHandler
      */
     var ReentrantScope = CallbackHandler.extend({
         constructor: function _(handler) {
@@ -2059,10 +2243,12 @@ new function () { // closure
     });
 
     /**
-     * Definition goes here
+     * Represents a {{#crossLink "miruken.callback.CallbackHandler"}}{{/crossLink}} that can filter callbacks.
      * @class CallbackHandlerFilter
      * @constructor
-     * @extends CallbackHandlerDecorator
+     * @param  {miruken.callback.CallbackHandler}  decoratee  -  decoratee
+     * @param  {Function}                          filter     -  callback filter
+     * @extends miruken.callback.CallbackHandlerDecorator
      */
     var CallbackHandlerFilter = CallbackHandlerDecorator.extend({
         constructor: function _(decoratee, filter) {
@@ -2090,8 +2276,9 @@ new function () { // closure
     });                                                                   
 
     /**
-     * Definition goes here
+     * Identifies a reject callback.
      * @class RejectedError
+     * @extends Error
      */
     function RejectedError() {
         if (Error.captureStackTrace) {
@@ -2104,10 +2291,14 @@ new function () { // closure
     RejectedError.prototype.constructor = RejectedError;
 
     /**
-     * Definition goes here
+     * Represents a {{#crossLink "miruken.callback.CallbackHandler"}}{{/crossLink}}
+     * that can apply pre/post actions.
      * @class CallbackHandlerAspect
      * @constructor
-     * @extends CallbackHandlerFilter
+     * @param  {miruken.callback.CallbackHandler}  decoratee  -  decoratee
+     * @param  {Function}                          before     -  before predicate
+     * @param  {Function}                          after      -  after action
+     * @extends miruken.callback.CallbackHandlerFilter
      */
     var CallbackHandlerAspect = CallbackHandlerFilter.extend({
         constructor: function (decoratee, before, after) {
@@ -2162,10 +2353,12 @@ new function () { // closure
     }
     
     /**
-     * Definition goes here
+     * Represents a two-way {{#crossLink "miruken.callback.CallbackHandler"}}{{/crossLink}} path.
      * @class CascadeCallbackHandler
      * @constructor
-     * @extends CallbackHandler
+     * @param  {miruken.callback.CallbackHandler}  handler           -  primary handler
+     * @param  {miruken.callback.CallbackHandler}  cascadeToHandler  -  secondary handler
+     * @extends miruken.callback.CallbackHandler
      */
     var CascadeCallbackHandler = CallbackHandler.extend({
         constructor: function _(handler, cascadeToHandler) {
@@ -2195,16 +2388,28 @@ new function () { // closure
     });
 
     /**
-     * Definition goes here
+     * Represents zero or more {{#crossLink "miruken.callback.CallbackHandler"}}{{/crossLink}}.
      * @class CompositeCallbackHandler
      * @constructor
-     * @extends CallbackHandler
+     * @param  {Arguments}  arguments  -  callback handlers
+     * @extends miruken.callback.CallbackHandler
      */
     var CompositeCallbackHandler = CallbackHandler.extend({
         constructor: function () {
             var _handlers = new Array2;
             this.extend({
+                /**
+                 * Gets all participating callback handlers.
+                 * @method getHandlers
+                 * @returns {Array} participating callback handlers.
+                 */
                 getHandlers: function () { return _handlers.copy(); },
+                /**
+                 * Adds the callback handlers to the composite.
+                 * @method addHandlers
+                 * @returns {miruken.callback.CompositeCallbackHandler}  composite
+                 * @chainable
+                 */
                 addHandlers: function () {
                     Array2.flatten(arguments).forEach(function (handler) {
                         if (handler) {
@@ -2213,6 +2418,12 @@ new function () { // closure
                     });
                     return this;
                 },
+                /**
+                 * Removes callback handlers from the composite.
+                 * @method removeHandlers
+                 * @returns {miruken.callback.CompositeCallbackHandler}  composite
+                 * @chainable
+                 */
                 removeHandlers: function () {
                     Array2.flatten(arguments).forEach(function (handler) {
                         if (!handler) {
@@ -2252,10 +2463,13 @@ new function () { // closure
     });
 
     /**
-     * Definition goes here
+     * {{#crossLink "miruken.callback.CallbackHandler"}}{{/crossLink}}
+     * that tests a condition before handling callbacks.
      * @class ConditionalCallbackHandler
      * @constructor
-     * @extends CallbackHandlerDecorator
+     * @param  {miruken.callback.CallbackHandler}  decoratee  -  decoratee
+     * @param  {Function}                          condition  -  condition predicate
+     * @extends miruken.callback.CallbackHandlerDecorator
      */
     var ConditionalCallbackHandler = CallbackHandlerDecorator.extend({
         constructor: function _(decoratee, condition) {
@@ -2279,10 +2493,12 @@ new function () { // closure
     });
 
     /**
-     * Definition goes here
+     * Shortcut for handling a callback.
      * @class AcceptingCallbackHandler
      * @constructor
-     * @extends CallbackHandler
+     * @param  {Function}  handler     -  handles callbacks
+     * @param  {Any}       constraint  -  callback constraint
+     * @extends miruken.callback.CallbackHandler
      */
     var AcceptingCallbackHandler = CallbackHandler.extend({
         constructor: function (handler, constraint) {
@@ -2300,10 +2516,12 @@ new function () { // closure
     };
 
     /**
-     * Definition goes here
+     * Shortcut for providing a callback.
      * @class ProvidingCallbackHandler
      * @constructor
-     * @extends CallbackHandler
+     * @param  {Function}  provider    -  provides callbacks
+     * @param  {Any}       constraint  -  callback constraint
+     * @extends miruken.callback.CallbackHandler
      */
     var ProvidingCallbackHandler = CallbackHandler.extend({
         constructor: function (provider, constraint) {
@@ -2321,10 +2539,12 @@ new function () { // closure
     };
 
     /**
-     * Definition goes here
+     * Shortcut for exposing a method.
      * @class MethodCallbackHandler
      * @constructor
-     * @extends CallbackHandler
+     * @param  {string}    methodName  -  method name
+     * @param  {Function}  method      -  method function
+     * @extends miruken.callback.CallbackHandler
      */
     var MethodCallbackHandler = CallbackHandler.extend({
         constructor: function _(methodName, method) {
@@ -2360,23 +2580,43 @@ new function () { // closure
     };
 
     /**
-     * InvocationOptions enum
-     * @property InvocationOptions
-     * @type Enum
+     * InvocationOptions flags enum
+     * @class InvocationOptions
+     * @extends miruken.Enum
      */
     var InvocationOptions = {
-        None:        0,
-        Broadcast:   1 << 0,
-        BestEffort:  1 << 1,
-        Strict:      1 << 2,
+        /**
+         * @property {number} None
+         */
+        None: 0,
+        /**
+         * Delivers invocation to all handlers.  At least one must recognize it.
+         * @property {number} Broadcast
+         */
+        Broadcast: 1 << 0,
+        /**
+         * Marks invocation as optional.
+         * @property {number} BestEffort
+         */        
+        BestEffort: 1 << 1,
+        /**
+         * Requires invocation to match conforming protocol.
+         * @property {number} Strict
+         */                
+        Strict: 1 << 2,
     };
+    /**
+     * Publishes invocation to all handlers.
+     * @property {number} Notify
+     */                
     InvocationOptions.Notify = InvocationOptions.Broadcast | InvocationOptions.BestEffort;
     InvocationOptions = Enum(InvocationOptions);
 
     /**
-     * Definition goes here
+     * Captures invocation semantics.
      * @class InvocationSemantics
      * @constructor
+     * @param  {miruken.callback.InvocationOptions}  options  -  invocation options.
      * @extends Base
      */
     var InvocationSemantics = Reentrant.extend({
@@ -2384,9 +2624,21 @@ new function () { // closure
             var _options   = options || InvocationOptions.None,
                 _specified = _options;
             this.extend({
+                /**
+                 * Gets the invocation option.
+                 * @method getOption
+                 * @param   {miruken.callback.InvocationOption} option  -  option to test
+                 * @returns {boolean} true if invocation option enabled, false otherwise.
+                 */
                 getOption: function (option) {
                     return (_options & option) === option;
                 },
+                /**
+                 * Sets the invocation option.
+                 * @method setOption
+                 * @param   {miruken.callback.InvocationOption} option  -  option to set
+                 * @param   {boolean}  enabled  -  true if enable option, false to clear.
+                 */                
                 setOption: function (option, enabled) {
                     if (enabled) {
                         _options = _options | option;
@@ -2395,26 +2647,39 @@ new function () { // closure
                     }
                     _specified = _specified | option;
                 },
+                /**
+                 * Determines if the invocation option was specified.
+                 * @method getOption
+                 * @param   {miruken.callback.InvocationOption} option  -  option to test
+                 * @returns {boolean} true if invocation option specified, false otherwise.
+                 */                
                 isSpecified: function (option) {
                     return (_specified & option) === option;
                 }
             });
         },
-        mergeInto: function (constraints) {
+        /**
+         * Merges invocation options into the supplied constraints. 
+         * @method mergeInto
+         * @param   {miruken.callback.InvocationSemantics}  semantics  -  receives invocation semantics
+         */                
+        mergeInto: function (semantics) {
             for (var index = 0; index <= 2; ++index) {
                 var option = (1 << index);
-                if (this.isSpecified(option) && !constraints.isSpecified(option)) {
-                    constraints.setOption(option, this.getOption(option));
+                if (this.isSpecified(option) && !semantics.isSpecified(option)) {
+                    semantics.setOption(option, this.getOption(option));
                 }
             }
         }
     });
 
     /**
-     * Definition goes here
+     * Handles invocation semantics.
      * @class InvocationOptionsHandler
      * @constructor
-     * @extends CallbackHandler
+     * @param   {miruken.callback.CallbackHandler}      handler  -  delegate callback handler
+     * @param   {miruken.callback.InvocationSemantics}  options  -  invocation semantics
+     * @extends miruken.callback.CallbackHandler
      */
     var InvocationOptionsHandler = CallbackHandler.extend({
         constructor: function _(handler, options) {
@@ -2435,10 +2700,12 @@ new function () { // closure
     });
 
     /**
-     * Definition goes here
+     * Delegates properties and methods to a callback handler using 
+     * {{#crossLink "miruken.callback.HandleMethod"}}{{/crossLink}}.
      * @class InvocationDelegate
      * @constructor
-     * @extends Delegate
+     * @param   {miruken.callback.CallbackHandler}  handler  -  delegting callback handler 
+     * @extends miruken.Delegate
      */
     var InvocationDelegate = Delegate.extend({
         constructor: function _(handler) {
@@ -2473,26 +2740,81 @@ new function () { // closure
     }
 
     CallbackHandler.implement({
+        /**
+         * Establishes strict invocation semantics.
+         * @method $strict
+         * @returns {miruken.callback.InvocationOptionsHandler} strict semantics.
+         * @for miruken.callback.CallbackHandler
+         */
         $strict: function () { return this.$callOptions(InvocationOptions.Strict); },
+        /**
+         * Establishes broadcast invocation semantics.
+         * @method $broadcast
+         * @returns {miruken.callback.InvocationOptionsHandler} broadcast semanics.
+         * @for miruken.callback.CallbackHandler
+         */        
         $broadcast: function () { return this.$callOptions(InvocationOptions.Broadcast); },
+        /**
+         * Establishes best-effort invocation semantics.
+         * @method $bestEffort
+         * @returns {miruken.callback.InvocationOptionsHandler} best-effort semanics.
+         * @for miruken.callback.CallbackHandler
+         */                
         $bestEffort: function () { return this.$callOptions(InvocationOptions.BestEffort); },
+        /**
+         * Establishes notification invocation semantics.
+         * @method $notify
+         * @returns {miruken.callback.InvocationOptionsHandler} notification semanics.
+         * @for miruken.callback.CallbackHandler
+         */                        
         $notify: function () { return this.$callOptions(InvocationOptions.Notify); },
+        /**
+         * Establishes custom invocation semantics.
+         * @method $callOptions
+         * @param  {miruken.callback.InvocationOptions}  options  -  invocation semantics
+         * @returns {miruken.callback.InvocationOptionsHandler} custom semanics.
+         * @for miruken.callback.CallbackHandler
+         */                        
         $callOptions: function (options) { return new InvocationOptionsHandler(this, options); }
     });
 
     CallbackHandler.implement({
+        /**
+         * Asynchronusly handles the callback.
+         * @method defer
+         * @param   {Object}  callback  -  callback
+         * @returns {Promise} promise to handled callback.
+         * @for miruken.callback.CallbackHandler
+         * @async
+         */                        
         defer: function (callback) {
             var deferred = new Deferred(callback);
             return this.handle(deferred, false, global.$composer)
                  ? Promise.all(deferred.getPending()).return(true)
                  : Promise.resolve(false);
         },
+        /**
+         * Asynchronusly handles the callback greedily.
+         * @method deferAll
+         * @param   {Object}  callback  -  callback
+         * @returns {Promise} promise to handled callback.
+         * @for miruken.callback.CallbackHandler
+         * @async
+         */                                
         deferAll: function (callback) {
             var deferred = new Deferred(callback, true);
             return this.handle(deferred, true, global.$composer)
                  ? Promise.all(deferred.getPending()).return(true)
                  : Promise.resolve(false);
         },
+        /**
+         * Resolves the key.
+         * @method resolve
+         * @param   {Any}  key  -  key
+         * @returns {Any}  resolved key.  Could be a promise.
+         * @for miruken.callback.CallbackHandler
+         * @async
+         */                                
         resolve: function (key) {
             var resolution = (key instanceof Resolution) ? key : new Resolution(key);
             if (this.handle(resolution, false, global.$composer)) {
@@ -2502,6 +2824,14 @@ new function () { // closure
                 }
             }
         },
+        /**
+         * Resolves the key greedily.
+         * @method resolveAll
+         * @param   {Any}   key  -  key
+         * @returns {Array} resolved key.  Could be a promise.
+         * @for miruken.callback.CallbackHandler
+         * @async
+         */                                        
         resolveAll: function (key) {
             var resolution = (key instanceof Resolution) ? key : new Resolution(key, true);
             if (this.handle(resolution, true, global.$composer)) {
@@ -2514,6 +2844,13 @@ new function () { // closure
             }
             return [];
         },
+        /**
+         * Looks up the key.
+         * @method lookup
+         * @param   {Any}  key  -  key
+         * @returns {Any}  value of key.
+         * @for miruken.callback.CallbackHandler
+         */                                        
         lookup: function (key) {
             var lookup = (key instanceof Lookup) ? key : new Lookup(key);
             if (this.handle(lookup, false, global.$composer)) {
@@ -2523,6 +2860,13 @@ new function () { // closure
                 }
             }
         },
+        /**
+         * Looks up the key greedily.
+         * @method lookupAll
+         * @param   {Any}  key  -  key
+         * @returns {Array}  value(s) of key.
+         * @for miruken.callback.CallbackHandler
+         */                                                
         lookupAll: function (key) {
             var lookup = (key instanceof Lookup) ? key : new Lookup(key, true);
             if (this.handle(lookup, true, global.$composer)) {
@@ -2535,12 +2879,34 @@ new function () { // closure
             }
             return [];
         },
+        /**
+         * Creates a handler for the filtering callbacks.
+         * @method filter
+         * @param   {Function}  filter  -  filter
+         * @returns {miruken.callback.CallbackHandlerFilter}  filtered callback handler.
+         * @for miruken.callback.CallbackHandler
+         */                                                        
         filter: function (filter) {
             return $isNothing(filter) ? this : new CallbackHandlerFilter(this, filter);
         },
+        /**
+         * Creates a handler for applying aspects to callbacks.
+         * @method aspect
+         * @param   {Function}  before  -  before predicate
+         * @param   {Function}  action  -  after action
+         * @returns {miruken.callback.CallbackHandlerAspect}  aspected callback handler.
+         * @for miruken.callback.CallbackHandler
+         */                                                                
         aspect: function (before, after) {
             return new CallbackHandlerAspect(this, before, after);
         },
+        /**
+         * Creates a handler for conditionally handling callbacks.
+         * @method when
+         * @param   {Any}  constraint  -  matching constraint
+         * @returns {miruken.callback.ConditionalCallbackHandler}  conditional callback handler.
+         * @for miruken.callback.CallbackHandler
+         */                                                                        
         when: function (constraint) {
             var when      = new _Node(constraint),
                 condition = function (callback) {
@@ -2554,6 +2920,13 @@ new function () { // closure
             };
             return new ConditionalCallbackHandler(this, condition);
         },
+        /**
+         * Builds a handler chain.
+         * @method next
+         * @param   {Arguments}  arguments  -  handler chain members
+         * @returns {miruken.callback.CallbackHandler}  chained callback handler.
+         * @for miruken.callback.CallbackHandler
+         */                                                                                
         next: function () {
             switch(arguments.length) {
             case 0:  return this;
@@ -2566,9 +2939,10 @@ new function () { // closure
     /**
      * Defines a new handler relationship.
      * @method $define
-     * @param    {string}   tag       - name of definition
-     * @param    {Variance} variance  - variance of definition
+     * @param    {string}           tag       - name of definition
+     * @param    {miruken.Variance} variance  - variance of definition
      * @return   {Function} function to add to definition.
+     * @for $
      */
     function $define(tag, variance) {
         if (!$isString(tag) || tag.length === 0 || /\s/.test(tag)) {
@@ -2732,13 +3106,6 @@ new function () { // closure
         return definition;
     }
 
-    /**
-     * Definition goes here
-     * @class _Node
-     * @param {Constraint} constraint
-     * @param {Handler} handler
-     * @param {Removed} removed
-     */
     function _Node(constraint, handler, removed) {
         var invariant   = $eq.test(constraint);
         constraint      = Modifier.unwrap(constraint);
@@ -2847,6 +3214,14 @@ new function () { // closure
         return result ? (result !== $NOT_HANDLED) : (result === undefined);
     }
 
+    /**
+     * Gets the effective promise.  This could be the result of a method call.<br/>
+     * See {{#crossLink "miruken.callback.HandleMethod"}}{{/crossLink}}
+     * @method getEffectivePromise
+     * @param    {Object}  object  -  source object
+     * @returns  {Promise} effective promise.
+     * @for miruken.$
+     */
     function getEffectivePromise(object) {
         if (object instanceof HandleMethod) {
             object = object.getReturnValue();
@@ -2871,6 +3246,12 @@ var miruken = require('./miruken.js');
 new function () { // closure
 
     /**
+     * Package providing contextual support.<br />
+     * Requires the {{#crossLinkModule "miruken"}}{{/crossLinkModule}},
+     * {{#crossLinkModule "graph"}}{{/crossLinkModule}} and 
+     * {{#crossLinkModule "callback"}}{{/crossLinkModule}} modules.
+     * @module miruken
+     * @submodule context
      * @namespace miruken.context
      */
     var context = new base2.Package(this, {
@@ -2885,27 +3266,72 @@ new function () { // closure
 
     /**
      * ContextState enum
-     * @enum {Number}
+     * @class ContextState
+     * @extends miruken.Enum
      */
     var ContextState = Enum({
+        /**
+         * Context is active.
+         * @property {number} Active
+         */
         Active: 1,
+        /**
+         * Context is in the process of ending.
+         * @property {number} Ending
+         */        
         Ending: 2,
+        /**
+         * Context has ended.
+         * @property {number} Ended
+         */                
         Ended:  3 
     });
 
     /**
-     * @protocol {ContextObserver}
+     * Protocol for observing Context lifecycle.
+     * @class ContextObserver
+     * @extends miruken.Protocol
      */
     var ContextObserver = Protocol.extend({
-        contextEnding:      function (context) {},
-        contextEnded:       function (context) {},
-        childContextEnding: function (context) {},
-        childContextEnded:  function (context) {}
+        /**
+         * Called when a context is in the process of ending.
+         * @method contextEnding
+         * @param   {miruken.context.Context}  context
+         */
+        contextEnding: function (context) {},
+        /**
+         * Called when a context has ended.
+         * @method contextEnded
+         * @param   {miruken.context.Context}  context
+         */        
+        contextEnded: function (context) {},
+        /**
+         * Called when a child context is in the process of ending.
+         * @method childContextEnding
+         * @param   {miruken.context.Context}  childContext
+         */
+        childContextEnding: function (childContext) {},
+        /**
+         * Called when a child context has ended.
+         * @method childContextEnded
+         * @param   {miruken.context.Context}  childContext
+         */        
+        childContextEnded: function (context) {}
     });
 
     /**
-     * @class {Context}
-     */
+     * A Context represents the scope at a give point in time.  It has a beginning and an end.
+     * It can handle callbacks as well as notify observers of its lifecycle changes.  In addition,
+     * it has parent-child relationships and thus can participate in a hierarchy.
+     * @class Context
+     * @constructor
+     * @param   {miruken.context.Context}  [parent]   -  parent context
+     * @extends miruken.callback.CompositeCallbackHandler
+     * @uses miruken.Parenting
+     * @uses miruken.graph.Traversing
+     * @uses miruken.graph.TraversingMixin
+     * @uses miruken.Disposing
+     */    
     var Context = CompositeCallbackHandler.extend(
         Parenting, Traversing, Disposing, TraversingMixin,
         $inferProperties, {
@@ -2919,18 +3345,43 @@ new function () { // closure
                 _observers;
 
             this.extend({
+                /**
+                 * Gets the context state.
+                 * @method getState
+                 * @returns {miruken.context.ContextState} context state.
+                 */
                 getState: function () {
                     return _state; 
                 },
+                /**
+                 * Gets the parent context.
+                 * @method getParent
+                 * @returns {miruken.context.Context} parent context.
+                 */                
                 getParent: function () {
                     return _parent; 
                 },
+                /**
+                 * Gets the context children.
+                 * @method getChildren
+                 * @returns {Array} context children.
+                 */                                
                 getChildren: function () {
                     return _children.copy(); 
                 },
+                /**
+                 * Determines if the context has children.
+                 * @method hasChildren
+                 * @returns {boolean} true if context has children, false otherwise.
+                 */                                                
                 hasChildren: function () {
                     return _children.length > 0; 
                 },
+                /**
+                 * Gets the root context.
+                 * @method getRoot
+                 * @returns {miruken.context.Context} root context.
+                 */                                
                 getRoot: function () {
                     var root = this;    
                     while (root && root.getParent()) {
@@ -2955,10 +3406,18 @@ new function () { // closure
                     _children.push(childContext);
                     return childContext;
                 },
+                /**
+                 * Stores the object in the context.
+                 * @method store
+                 * @param  {Object} object  -  object to store
+                 * @returns {miruken.context.Context} receiving context.
+                 * @chainable
+                 */                                                
                 store: function (object) {
                     if ($isSomething(object)) {
                         $provide(this, object);
                     }
+                    return this;
                 },
                 handleCallback: function (callback, greedy, composer) {
                     var handled = this.base(callback, greedy, composer);
@@ -2970,6 +3429,15 @@ new function () { // closure
                     }
                     return !!handled;
                 },
+                /**
+                 * Handles the callback using the traversing axis.
+                 * @method handleAxis
+                 * @param   {miruken.graph.TraversingAxis}     axis            -  any callback
+                 * @param   {Object}                           callback        -  any callback
+                 * @param   {boolean}                          [greedy=false]  -  true if handle greedily
+                 * @param   {miruken.callback.CallbackHandler} [composer]      -  composition handler
+                 * @returns {boolean} true if the callback was handled, false otherwise.
+                 */                
                 handleAxis: function (axis, callback, greedy, composer) {
                     if (callback === null || callback === undefined) {
                         return false;
@@ -2987,6 +3455,12 @@ new function () { // closure
                     });
                     return !!handled;
                 },
+                /**
+                 * Subscribes to the context notifications.
+                 * @method observe
+                 * @param   {miruken.context.ContextObserver}  observer  -  receives notifications
+                 * @returns {Function} unsubscribes from context notifications.
+                 */                                
                 observe: function (observer) {
                     _ensureActive();
                     if (observer === null || observer === undefined) {
@@ -2996,6 +3470,13 @@ new function () { // closure
                     (_observers || (_observers = new Array2)).push(observer);
                     return function () { _observers.remove(observer); };
                 },
+                /**
+                 * Unwinds to the root context.
+                 * @method unwindToRootContext
+                 * @param   {miruken.context.ContextObserver}  observer  -  receives notifications
+                 * @returns {miruken.context.Context} receiving context.
+                 * @chainable
+                 */                                                
                 unwindToRootContext: function () {
                     var current = this;
                     while (current) {
@@ -3005,11 +3486,22 @@ new function () { // closure
                         }
                         current = current.getParent();
                     }
-                    return null;
+                    return this;
                 },
+                /**
+                 * Unwinds to the context by ending all children.
+                 * @method unwind
+                 * @returns {miruken.context.Context} receiving context.
+                 * @chainable
+                 */                                                
                 unwind: function () {
                     this.getChildren().invoke('end');
+                    return this;
                 },
+                /**
+                 * Ends the context.
+                 * @method end
+                 */                                                                
                 end: function () { 
                     if (_state == ContextState.Active) {
                         _state = ContextState.Ending;
@@ -3036,24 +3528,32 @@ new function () { // closure
     });
 
     /**
-     * @protocol {Contextual}
+     * Protocol to provide the minimal functionality to support contextual based operations.
+     * This is an alternatve to the delegate model of communication, but with less coupling 
+     * and ceremony.
+     * @class Contextual
+     * @extends miruken.Protocol
      */
     var Contextual = Protocol.extend({
         /**
-         * Gets the Context associated with this object.
-         * @returns {Context} this associated Context.
+         * Gets the context associated with the receiver.
+         * @method getContext
+         * @returns {miruken.context.Context} associated context.
          */
         getContext: function () {},
         /**
-         * Sets the Context associated with this object.
-         * @param   {Context} context  - associated context
+         * Sets the context associated with the receiver.
+         * @method setContext
+         * @param  {miruken.contet.Context} context  -  associated context
          */
         setContext: function (context) {}
     });
 
     /**
-     * Contextual mixin
-     * @class {Contextual}
+     * Mixin for Contextual implementation.
+     * @class ContextualMixin
+     * @uses miruken.context.Contextual
+     * @extends Module
      */
     var ContextualMixin = Module.extend({
         getContext: function (object) {
@@ -3072,18 +3572,31 @@ new function () { // closure
                 delete object.__context;
             }
         },
+        /**
+         * Determines if the receivers context is active.
+         * @method isActiveContext
+         * @returns {boolean} true if the receivers context is active, false otherwise.
+         */        
         isActiveContext: function (object) {
             return object.__context && (object.__context.getState() === ContextState.Active);
         },
+        /**
+         * Ends the receivers context.
+         * @method endContext
+         */                
         endContext: function (object) {
-            if (object.__context) object.__context.end();
+            if (object.__context) {
+                object.__context.end();
+            }
         }
     });
 
     /**
-     * @class {$contextual}
-     * Metamacro to implement Contextual protocol.
-     */
+     * Metamacro to make classes contextual.
+     * @class $contextual
+     * @constructor
+     * @extends miruken.MetaMacro
+     */    
     var $contextual = MetaMacro.extend({
         apply: function (step, metadata) {
             if (step === MetaStep.Subclass) {
@@ -3095,22 +3608,37 @@ new function () { // closure
     });
 
     /**
-     * ContextualHelper mixin
-     * @class {ContextualHelper}
-     */
+     * Mixin for Contextual helper support.
+     * @class ContextualHelper
+     * @extends Module
+     */    
     var ContextualHelper = Module.extend({
+        /**
+         * Resolves the receivers context.
+         * @method resolveContext
+         * @returns {miruken.context.Context} receiver if a context or getContext of receiver. 
+         */                
         resolveContext: function (contextual) {
             if (!contextual) return null;
             if (contextual instanceof Context) return contextual;
             return $isFunction(contextual.getContext)
                  ? contextual.getContext() : null;
         },
+        /**
+         * Ensure the receiver is associated with a context.
+         * @method requireContext
+         * @throws {Error} an error if a context could not be resolved.
+         */                        
         requireContext: function (contextual) {
             var context = ContextualHelper.resolveContext(contextual);
             if (!(context instanceof Context))
                 throw new Error("The supplied object is not a Context or Contextual object.");
             return context;
         },
+        /**
+         * Clears and ends the receivers associated context.
+         * @method clearContext
+         */                                
         clearContext: function (contextual) {
             if (!contextual ||
                 !$isFunction(contextual.getContext) || 
@@ -3127,6 +3655,14 @@ new function () { // closure
                 }
             }
         },
+        /**
+         * Attaches the context to the receiver.
+         * @method bindContext
+         * @param  {miruken.context.Context}  context  -  context
+         * @param  {boolean}                  replace  -  true if replace existing context
+         * @returns {miruken.context.Context} effective context.
+         * @throws {Error} an error if the context could be attached.
+         */                                        
         bindContext: function (contextual, context, replace) {
             if (!contextual ||
                 (!replace && $isFunction(contextual.getContext)
@@ -3141,10 +3677,18 @@ new function () { // closure
             contextual.setContext(ContextualHelper.resolveContext(context));
             return contextual;
         },
-        bindChildContext: function (contextual, child) {
+        /**
+         * Attaches a child context of the receiver to the contextual child.
+         * @method bindChildContext
+         * @param  {miruken.context.Context}  child  -  contextual child
+         * @param  {boolean}                  replace  -  true if replace existing context
+         * @returns {miruken.context.Context} effective child context.
+         * @throws {Error} an error if the child context could be attached.
+         */                                                
+        bindChildContext: function (contextual, child, replace) {
             var childContext;
             if (child) {
-                if ($isFunction(child.getContext)) {
+                if (!replace && $isFunction(child.getContext)) {
                     childContext = child.getContext();
                     if (childContext && childContext.getState() === ContextState.Active) {
                         return childContext;
@@ -3216,10 +3760,11 @@ new function () { // closure
         return new Traversal();
     }
 
-    // =========================================================================
-    // Function context extensions
-    // =========================================================================
-
+    /**
+     * Enhances Functions to create instances in a context.
+     * @method newInContext
+     * @for Function
+     */
     if (Function.prototype.newInContext === undefined)
         Function.prototype.newInContext = function () {
             var args        = Array.prototype.slice.call(arguments),
@@ -3232,6 +3777,11 @@ new function () { // closure
             return object;
         };
 
+    /**
+     * Enhances Functions to create instances in a child context.
+     * @method newInChildContext
+     * @for Function
+     */
     if (Function.prototype.newInChildContext === undefined)
         Function.prototype.newInChildContext = function () {
             var args        = Array.prototype.slice.call(arguments),
@@ -3260,6 +3810,11 @@ var miruken = require('./miruken.js'),
 new function() { // closure
 
     /**
+     * Package providing generalized error support.<br/>
+     * Requires the {{#crossLinkModule "miruken"}}{{/crossLinkModule}} and
+     * {{#crossLinkModule "callback"}}{{/crossLinkModule}} modules.
+     * @module miruken
+     * @submodule error
      * @namespace miruken.error
      */
     var error = new base2.Package(this, {
@@ -3273,69 +3828,81 @@ new function() { // closure
     eval(this.imports);
 
     /**
-     * @protocol {Errors}
-     */
+     * Protocol for handling and reporting errors.
+     * @class Errors
+     * @extends miruken.Protocol
+     */    
     var Errors = Protocol.extend({
+        /**
+         * Handles an error.
+         * @method handlerError
+         * @param   {Any}          error      - error (usually Error)
+         * @param   {Any}          [context]  - scope of error
+         * @returns {Promise} promise of handled error.
+         */        
         handleError:     function (error,     context) {},
+        /**
+         * Handles an exception.
+         * @method handlerException
+         * @param   {Exception}    excption   - exception
+         * @param   {Any}          [context]  - scope of error
+         * @returns {Promise} of handled error.
+         */        
         handleException: function (exception, context) {},
+        /**
+         * Reports an error.
+         * @method reportError
+         * @param   {Any}          error      - error (usually Error)
+         * @param   {Any}          [context]  - scope of error
+         * @returns {Promise} of reported error.
+         */        
         reportError:     function (error,     context) {},
+        /**
+         * Reports an excepion.
+         * @method reportException
+         * @param   {Exception}    exception  - exception
+         * @param   {Any}          [context]  - scope of exception
+         * @returns {Promise} of reported exception.
+         */        
         reportException: function (exception, context) {}
     });
 
     /**
-     * @class {ErrorCallbackHandler}
-     */
-    var ErrorCallbackHandler = CallbackHandler.extend({
-        /**
-         * Handles the error.
-         * @param   {Any}          error      - error (usually Error)
-         * @param   {Any}          [context]  - scope of error
-         * @returns {Promise(Any)} the handled error.
-         */
+     * CallbackHandler for handling errors.
+     * @class ErrorCallbackHandler
+     * @extends miruken.callback.CallbackHandler
+     * @uses miruken.error.Errors
+     */    
+    var ErrorCallbackHandler = CallbackHandler.extend(Errors, {
         handleError: function (error, context) {
             var reportError = Errors($composer).reportError(error, context);
             return reportError === undefined
                  ? Promise.reject(error)
                  : Promise.resolve(reportError);
         },
-        /**
-         * Handles the exception.
-         * @param   {Exception}    excption   - exception
-         * @param   {Any}          [context]  - scope of error
-         * @returns {Promise(Any)} the handled exception.
-         */
         handleException: function (exception, context) {
             var reportException = Errors($composer).reportException(exception, context);
             return reportException === undefined
                  ? Promise.reject(exception)
                  : Promise.resolve(reportException);
         },                                                      
-        /**
-         * Reports the error. i.e. to the console.
-         * @param   {Any}          error      - error (usually Error)
-         * @param   {Any}          [context]  - scope of error
-         * @returns {Promise(Any)} the reported error (could be a dialog).
-         */
         reportError: function (error, context) {
             console.error(error);
             return Promise.resolve();
         },
-        /**
-         * Reports the excepion. i.e. to the console.
-         * @param   {Exception}    exception  - exception
-         * @param   {Any}          [context]  - scope of exception
-         * @returns {Promise(Any)} the reported exception (could be a dialog).
-         */
         reportException: function (exception, context) {
             console.error(exception);
             return Promise.resolve();
         }
     });
 
-    /**
-     * Recoverable filter
-     */
     CallbackHandler.implement({
+        /**
+         * Marks the callback handler for recovery.
+         * @method $recover
+         * @returns {miruken.callback.CallbackHandlerFilter} recovery semantics.
+         * @for miruken.callback.CallbackHandler
+         */        
         $recover: function (context) {
             return new CallbackHandlerFilter(this, function(callback, composer, proceed) {
                 try {
@@ -3356,7 +3923,12 @@ new function() { // closure
                 }
             });
         },
-
+        /**
+         * Creates a function to pass error promises to Errors feature.
+         * @method $recoverError
+         * @returns {Function} function to pass error promises to Errors feature. 
+         * @for miruken.callback.CallbackHandler
+         */        
         $recoverError: function (context) {
             return function (error) {
                 return Errors(this).handleError(error, context);
@@ -3378,10 +3950,11 @@ var miruken = require('./miruken.js');
 new function () { // closure
 
     /**
-     * Definition goes here
+     * Package containing graph traversal support.
      * @module miruken
-     * @submodule callback
+     * @submodule graph
      * @namespace miruken.graph
+     * @class $
      */
     var grpah = new base2.Package(this, {
         name:    "graph",
@@ -3393,61 +3966,90 @@ new function () { // closure
 
     eval(this.imports);
 
-    // =========================================================================
-    // Traversing
-    // =========================================================================
-
     /**
-     * Traversing enum
-     * @property TraversingAxis
-     * @type Enum
+     * TraversingAxis enum
+     * @class TraversingAxis
+     * @extends miruken.Enum
      */
+
     var TraversingAxis = Enum({
-        Self:                    1,
-        Root:                    2,
-        Child:                   3,
-        Sibling:                 4,
-        Ancestor:                5,
-        Descendant:              6,
-        DescendantReverse:       7,
-        ChildOrSelf:             8,
-        SiblingOrSelf:           9,
-        AncestorOrSelf:          10,
-        DescendantOrSelf:        11,
+        /**
+         * @property {number} Self
+         */
+        Self: 1,
+        /**
+         * @property {number} Root
+         */        
+        Root: 2,
+        /**
+         * @property {number} Child
+         */                
+        Child: 3,
+        /**
+         * @property {number} Sibling
+         */                        
+        Sibling: 4,
+        /**
+         * @property {number} Ancestor
+         */                                
+        Ancestor: 5,
+        /**
+         * @property {number} Descendant
+         */                                        
+        Descendant: 6,
+        /**
+         * @property {number} DescendantReverse
+         */                                        
+        DescendantReverse: 7,
+        /**
+         * @property {number} ChildOrSelf
+         */                                                
+        ChildOrSelf: 8,
+        /**
+         * @property {number} SiblingOrSelf
+         */                                                        
+        SiblingOrSelf: 9,
+        /**
+         * @property {number} AncestorOrSelf
+         */                                                                
+        AncestorOrSelf: 10,
+        /**
+         * @property {number} DescendantOrSelf
+         */                                                                        
+        DescendantOrSelf: 11,
+        /**
+         * @property {number} DescendantOrSelfReverse
+         */                                                                                
         DescendantOrSelfReverse: 12,
-        AncestorSiblingOrSelf:   13
+        /**
+         * @property {number} AncestorSiblingOrSelf 
+         */                                                                                        
+        AncestorSiblingOrSelf: 13
     });
 
     /**
-     * Description goes here
+     * Protocol for traversing an abitrary graph of objects.
      * @class Traversing
-     * @extends Protocol
+     * @extends miruken.Protocol
      */
     var Traversing = Protocol.extend({
         /**
          * Traverse a graph of objects.
          * @method traverse
-         * @param {TraversingAxis} axis       - axis of traversal
-         * @param {Function}       visitor    - receives visited nodes
-         * @param {Object}         context    - visitor callback context
+         * @param {miruken.graph.TraversingAxis} axis  -  axis of traversal
+         * @param {Function}                     visitor     -  receives visited nodes
+         * @param {Object}                       [context]   -  visitor callback context
          */
         traverse: function (axis, visitor, context) {}
     });
 
     /**
-     * Traversing mixin
+     * Mixin for Traversing functionality.
      * @class TraversingMixin
+     * @uses miruken.graph.Traversing
      * @extends Module
      */
     var TraversingMixin = Module.extend({
-        /**
-         * Traverse a graph of objects.
-         * @method traverse
-         * @param {Object}      object      -   axis of traversal
-         * @param {Axis}        axis        -   receives visited nodes
-         * @param {Visitor}     visitor     -   receives visited nodes
-         * @param {Object}      context     -   visitor callback context
-         */
         traverse: function (object, axis, visitor, context) {
             if ($isFunction(axis)) {
                 context = visitor;
@@ -3606,51 +4208,52 @@ new function () { // closure
     }
 
     /**
-     * Description goes here
+     * Helper class for traversing a graph.
+     * @static
      * @class Traversal
      * @extends Abstract
      */
     var Traversal = Abstract.extend({}, {
         /**
-         * Description goes here
+         * Performs a pre-order graph traversal.
+         * @static
          * @method preOrder
-         * @param  {Node}       node       -   description
-         * @param  {Visitor}    visitor    -   description
-         * @param  {Context}    context    -   description
-         * @return {Array}      preOrder   -   description
+         * @param  {miruken.graph.Traversing}  node       -  node to traverse
+         * @param  {Function}                  visitor    -  receives visited nodes
+         * @param  {Object}                    [context]  -  visitor calling context
          */
         preOrder: function (node, visitor, context) {
             return _preOrder(node, visitor, context, []);
         },
         /**
-         * Description goes here
+         * Performs a post-order graph traversal.
+         * @static
          * @method postOrder
-         * @param  {Node}       node        -   description
-         * @param  {Visitor}    visitor     -   description
-         * @param  {Context}    context     -   description
-         * @return {Array}      postOrder   -   description
+         * @param  {miruken.graph.Traversing}  node       -  node to traverse
+         * @param  {Function}                  visitor    -  receives visited nodes
+         * @param  {Object}                    [context]  -  visitor calling context
          */
         postOrder: function (node, visitor, context) {
             return _postOrder(node, visitor, context, []);
         },
         /**
-         * Description goes here
+         * Performs a level-order graph traversal.
+         * @static
          * @method levelOrder
-         * @param  {Node}       node        -   description
-         * @param  {Visitor}    visitor     -   description
-         * @param  {Context}    context     -   description
-         * @return {Array}      levelOrder  -   description
+         * @param  {miruken.graph.Traversing}  node       -  node to traverse
+         * @param  {Function}                  visitor    -  receives visited nodes
+         * @param  {Object}                    [context]  -  visitor calling context
          */
         levelOrder: function (node, visitor, context) {
             return _levelOrder(node, visitor, context, []);
         },
         /**
-         * Description goes here
-         * @method reverseLevelOrder
-         * @param  {Node}       node                -   description
-         * @param  {Visitor}    visitor             -   description
-         * @param  {Context}    context             -   description
-         * @return {Array}      reverseLevelOrder   -   description
+         * Performs a reverse level-order graph traversal.
+         * @static
+         * @method levelOrder
+         * @param  {miruken.graph.Traversing}  node       -  node to traverse
+         * @param  {Function}                  visitor    -  receives visited nodes
+         * @param  {Object}                    [context]  -  visitor calling context
          */
         reverseLevelOrder: function (node, visitor, context) {
             return _reverseLevelOrder(node, visitor, context, []);
@@ -4075,11 +4678,15 @@ var miruken = require('../miruken.js'),
 new function () { // closure
 
     /**
-     * Definition goes here
+     * Package providing Inversion-of-Control capabilities.<br/>
+     * Requires the {{#crossLinkModule "miruken"}}{{/crossLinkModule}},
+     * {{#crossLinkModule "context"}}{{/crossLinkModule}} and 
+     * {{#crossLinkModule "validate"}}{{/crossLinkModule}} modules.
      * @module miruken
      * @submodule ioc
      * @namespace miruken.ioc
-     */
+     * @Class $
+     */        
     var ioc = new base2.Package(this, {
         name:    "ioc",
         version: miruken.version,
@@ -4091,82 +4698,104 @@ new function () { // closure
     eval(this.imports);
 
     /**
-     * Composer dependency.
-     */
-    var $$composer    = {},
-        $container    = $createModifier(),
-        $proxyBuilder = new ProxyBuilder;
+     * Symbol for injecting composer dependency.<br/>
+     * See {{#crossLink "miruken.callback.CallbackHandler"}}{{/crossLink}}
+     * @property {Object} $$composer
+     * @for miruken.ioc.$
+     */    
+    var $$composer = {};
+    
+    /**
+     * Modifier to request container dependency.<br/>
+     * See {{#crossLink "miruken.ioc.Container"}}{{/crossLink}}
+     * @class $container
+     * @extend miruken.Modifier
+     */            
+    var $container = $createModifier();
+    
+    /**
+     * Shared proxy builder
+     * @property {miruken.ProxyBuilder} proxyBuilder
+     * @for miruken.ioc.$
+     */            
+    var $proxyBuilder = new ProxyBuilder;
 
     /**
-     * Definition goes here
+     * Protocol for exposing container capabilities.
      * @class Container
-     * @constructor
-     */
+     * @extends miruken.StrictProtocol
+     * @uses miruken.Invoking
+     * @uses miruken.Disposing
+     */            
     var Container = StrictProtocol.extend(Invoking, Disposing, {
         /**
          * Registers on or more components in the container.
          * @method register
-         * @param   {Any*}    registrations  - Registrations
-         * @returns {Promise} a promise representing the registration.
+         * @param   {Arguments}  [...registrations]  -  registrations
+         * @return {Function} function to unregister components.
          */
         register: function (/*registrations*/) {},
         /**
          * Adds a configured component to the container with policies.
          * @method addComponent
-         * @param   {ComponentModel}    componentModel  - component model
-         * @param   {Array}             policies        - component policies
-         * @returns {Promise} a promise representing the component.
+         * @param   {miruken.ioc.ComponentModel} componentModel  -  component model
+         * @param   {Array}                      [...policies]   -  component policies
+         * @return {Function} function to remove component.
          */
         addComponent: function (componentModel, policies) {},
         /**
          * Resolves the component for the key.
          * @method resolve
-         * @param   {Any} key  - key used to identify the component
-         * @returns {Any} component (or Promise) satisfying the key.
+         * @param   {Any}  key  -  key used to identify the component
+         * @returns {Object | Promise}  component satisfying the key.
+         * @async
          */
         resolve: function (key) {},
         /**
          * Resolves all the components for the key.
          * @method resolveAll
-         * @param   {Any} key  - key used to identify the components
-         * @returns {Array} components (or Promises) satisfying the key.
+         * @param   {Any}  key  -  key used to identify the component
+         * @returns {Array} components or promises satisfying the key.
+         * @async
          */
         resolveAll: function (key) {}
     });
 
     /**
-     * Definition goes here
+     * Protocol for registering components in a {{#crossLink "miruken.ioc.Container"}}{{/crossLink}}.
      * @class Registration
-     * @extends Protocol
-     */
+     * @extends miruken.Protocol
+     */                
     var Registration = Protocol.extend({
         /**
          * Encapsulates the regisration of one or more components.
-         * @param {Container}       container  - container to register components in
-         * @param {CallbackHandler} composer   - supports composition
+         * @method register
+         * @param {miruken.ioc.Container}            container  -  container to register components
+         * @param {miruken.callback.CallbackHandler} composer   -  composition handler
+         * @return {Function} function to unregister components.
          */
          register: function (container, composer) {}
     });
 
-    /**
-     * Definition goes here
+     /**
+     * Protocol for applying policies to a {{#crossLink "miruken.ioc.ComponentModel"}}{{/crossLink}}
      * @class ComponentPolicy
-     * @extends Protocol
-     */
+     * @extends miruken.Protocol
+     */                
     var ComponentPolicy = Protocol.extend({
         /**
          * Applies the policy to the ComponentModel.
          * @method apply
-         * @param {ComponentModel} componentModel  - component model
+         * @param {miruken.ioc.ComponentModel} componentModel  -  component model
          */
          apply: function (componentModel) {}
     });
 
     /**
-     * DependencyModifiers enum
-     * @property DependencyModifiers
-     * @type Enum
-     */
+     * DependencyModifiers flags enum
+     * @class DependencyModifiers
+     * @extends miruken.Enum
+     */    
     var DependencyModifiers = Enum({
         None:       0,
         Use:        1 << 0,
@@ -4181,9 +4810,11 @@ new function () { // closure
         });
 
     /**
-     * Definition goes here
+     * Describes a component dependency.
      * @class DependencyModel
      * @constructor
+     * @param {Any} dependency  -  annotated dependency
+     * @param {miruken.ioc.DependencyModifiers} modifiers  -  dependency annotations
      * @extends Base
      */
     var DependencyModel = Base.extend({
@@ -4226,6 +4857,12 @@ new function () { // closure
             Object.defineProperty(this, 'modifiers', spec);
             delete spec.value;
         },
+        /**
+         * Tests if the receiving dependency is annotated with the modifier.
+         * @method test
+         * @param   {{miruken.ioc.DependencyModifiers}  modifier  -  modifier flags
+         * @returns {boolean} true if the dependency is annotated with modifier(s).
+         */        
         test: function (modifier) {
             return (this.modifiers & modifier) === modifier;
         }
@@ -4236,10 +4873,11 @@ new function () { // closure
     });
 
     /**
-     * Definition goes here
+     * Manages an array of dependencies.
      * @class DependencyManager
      * @constructor
-     * @extends ArrayManager
+     * @param {Array} dependencies  -  dependencies
+     * @extends miruken.ArrayManager
      */
     var DependencyManager = ArrayManager.extend({
         constructor: function (dependencies) {
@@ -4253,11 +4891,17 @@ new function () { // closure
     });
 
     /**
-     * Definition goes here
+     * Extracts dependencies from a component model.
      * @class DependencyInspector
      * @extends Base
      */
     var DependencyInspector = Base.extend({
+        /**
+         * Inspects the component model for dependencies.
+         * @method inspect
+         * @param   {miruken.ioc.ComponentModel} componentModel  -  component model
+         * @param   {Array}                      [...policies]   -  component policies
+         */
         inspect: function (componentModel, policies) {
             // Dependencies will be merged from inject definitions
             // starting from most derived unitl no more remain or the
@@ -4290,7 +4934,7 @@ new function () { // closure
     });
 
     /**
-     * Definition goes here
+     * Defines a component specification.
      * @class ComponentModel
      * @constructor
      * @extends Base
@@ -4301,10 +4945,25 @@ new function () { // closure
             var _key, _class, _lifestyle, _factory,
                 _invariant = false, _burden = {};
             this.extend({
+                /**
+                 * Gets the component key.
+                 * @method getKey
+                 * @returns {Any} component key
+                 */
                 getKey: function () {
                     return _key || _class
                 },
+                /**
+                 * Sets the component key.
+                 * @method setKey
+                 * @param {Any} value  - component key
+                 */
                 setKey: function (value) { _key = value; },
+                /**
+                 * Gets the component class.
+                 * @method getClass
+                 * @returns {Function} component class
+                 */
                 getClass: function () {
                     var clazz = _class;
                     if (!clazz && $isClass(_key)) {
@@ -4312,23 +4971,53 @@ new function () { // closure
                     }
                     return clazz;
                 },
+                /**
+                 * Sets the component class.
+                 * @method setClass
+                 * @param {Function} value  -  component class
+                 */
                 setClass: function (value) {
                     if ($isSomething(value) && !$isClass(value)) {
                         throw new TypeError(format("%1 is not a class.", value));
                     }
                     _class = value;
                 },
+                /**
+                 * Determines if the component is invariant.
+                 * @method isInvariant
+                 * @returns {boolean} true if component is invariant, false othereise.
+                 */                                                
                 isInvariant: function () {
                     return _invariant;
                 },
+                /**
+                 * Sets the component invariance.
+                 * @method setInvariant
+                 * @param {bool} value  -  true if component is invariant, false othereise.
+                 */
                 setInvariant: function (value) { _invariant = !!value; },
+                /**
+                 * Gets the component lifestyle.
+                 * @method getLifestyle
+                 * @returns {miruken.ioc.Lifestyle} component lifestyle.
+                 */
                 getLifestyle: function () { return _lifestyle; },
+                /**
+                 * Sets the component lifestyle.
+                 * @method setLifestyle
+                 * @param {miruken.ioc.Lifestyle} value  -  component lifestyle
+                 */
                 setLifestyle: function (value) {
                     if (!$isSomething(value) && !(value instanceof Lifestyle)) {
                         throw new TypeError(format("%1 is not a Lifestyle.", value));
                     }
                     _lifestyle = value; 
                 },
+                /**
+                 * Gets the component factory.
+                 * @method getFactory
+                 * @returns {Function} component factory.
+                 */
                 getFactory: function () {
                     var factory = _factory,
                         clazz   = this.class;
@@ -4349,15 +5038,32 @@ new function () { // closure
                     }
                     return factory;
                 },
+                /**
+                 * Sets the component factory.
+                 * @method setFactory
+                 * @param {Function} value  -  component factory
+                 */
                 setFactory: function (value) {
                     if ($isSomething(value) && !$isFunction(value)) {
                         throw new TypeError(format("%1 is not a function.", value));
                     }
                     _factory = value;
                 },
+                /**
+                 * Gets the component dependency group.
+                 * @method getDependencies
+                 * @param   {string} [key=Facet.Parameters]  -  dependency group  
+                 * @returns {Array}  group dependencies.
+                 */                
                 getDependencies: function (key) { 
                     return _burden[key || Facet.Parameters];
                 },
+                /**
+                 * Sets the component dependency group.
+                 * @method setDependencies
+                 * @param {string} [key=Facet.Parameters]  -  dependency group  
+                 * @param {Array}  value                   -  group dependenies.
+                 */                
                 setDependencies: function (key, value) {
                     if (arguments.length === 1) {
                         value = key, key = Facet.Parameters;
@@ -4367,6 +5073,13 @@ new function () { // closure
                     }
                     _burden[key] = Array2.map(value, DependencyModel);
                 },
+                /**
+                 * Manages the component dependency group.
+                 * @method manageDependencies
+                 * @param  {string}   [key=Facet.Parameters]  -  dependency group  
+                 * @param  {Function} actions  -  function accepting miruken.ioc.DependencyManager
+                 * @return {Array} dependency group.
+                 */                                
                 manageDependencies: function (key, actions) {
                     if (arguments.length === 1) {
                         actions = key, key = Facet.Parameters;
@@ -4382,6 +5095,11 @@ new function () { // closure
                     }
                     return dependencies;
                 },
+                /**
+                 * Gets the component dependency burden.
+                 * @method getBurden
+                 * @return {Object} hash of component dependencies.
+                 */                                
                 getBurden: function () { return _burden; }
             });
         },
@@ -4417,12 +5135,25 @@ new function () { // closure
     }
 
     /**
-     * Definition goes here
+     * Manages the creation and destruction of components.
      * @class Lifestyle
      * @extends Base
+     * @uses miruken.ioc.ComponentPolicy
+     * @uses miruken.DisposingMixin
+     * @uses miruken.Disposing
      */
     var Lifestyle = Base.extend(ComponentPolicy, Disposing, DisposingMixin, {
+        /**
+         * Obtains the component instance.
+         * @method resolve
+         * @returns {Object} component instance.
+         */
         resolve: function (factory) { return factory(); },
+        /**
+         * Tracks the component instance for disposal.
+         * @method trackInstance
+         * @param {Object} instance  -  component instance.
+         */        
         trackInstance: function (instance) {
             if (instance && $isFunction(instance.dispose)) {
                 var _this = this;
@@ -4436,6 +5167,12 @@ new function () { // closure
                 });
             }
         },
+        /**
+         * Disposes the component instance.
+         * @method disposeInstance
+         * @param {Object}  instance   -  component instance.
+         * @param {boolean} disposing  -  true if being disposed.  
+         */                
         disposeInstance: function (instance, disposing) {
             if (!disposing && instance && $isFunction(instance.dispose)) {
                 instance.dispose(true);
@@ -4448,17 +5185,18 @@ new function () { // closure
     });
 
    /**
-     * Definition goes here
+     * Lifestyle for creating new untracked component instances.
      * @class TransientLifestyle
-     * @extends Lifestyle
+     * @extends miruken.ioc.Lifestyle
      */
     var TransientLifestyle = Lifestyle.extend();
 
    /**
-     * Definition goes here
+     * Lifestyle for managing a single instance of a component.
      * @class SingletonLifestyle
      * @constructor
-     * @extends Lifestyle
+     * @param {Object} [instance]  -  existing component instance
+     * @extends miruken.ioc.Lifestyle
      */
     var SingletonLifestyle = Lifestyle.extend({
         constructor: function (instance) {
@@ -4501,10 +5239,10 @@ new function () { // closure
     });
 
    /**
-     * Definition goes here
+     * Lifestyle for managing instances scoped to a {{#crossLink "miruken.context.Context"}}{{/crossLink}}.
      * @class ContextualLifestyle
      * @constructor
-     * @extends Lifestyle
+     * @extends miruken.ioc.Lifestyle
      */
     var ContextualLifestyle = Lifestyle.extend({
         constructor: function () {
@@ -4576,25 +5314,47 @@ new function () { // closure
     });
 
     /**
-     * Definition goes here
+     * Builds {{#crossLink "miruken.ioc.ComponentModel"}}{{/crossLink}} using fluent api.
      * @class ComponentBuilder
      * @constructor
      * @extends Base
+     * @uses miruken.ioc.Registration
      */
     var ComponentBuilder = Base.extend(Registration, {
         constructor: function (key) {
             var _componentModel = new ComponentModel,
                 _newInContext, _newInChildContext,
-                _policies       = [];
+                _policies = [];
             _componentModel.setKey(key);
             this.extend({
+                /**
+                 * Marks the component as invariant.
+                 * @method invariant
+                 * @return {miruken.ioc.ComponentBuilder} builder
+                 * @chainable
+                 */
                 invariant: function () {
                     _componentModel.setInvariant();
+                    return this;
                 },
+                /**
+                 * Specifies the component class.
+                 * @method boundTo
+                 * @param {Function} value  - component class
+                 * @return {miruken.ioc.ComponentBuilder} builder
+                 * @chainable
+                 */                
                 boundTo: function (clazz) {
                     _componentModel.setClass(clazz);
                     return this;
                 },
+                /**
+                 * Specifies component dependencies.
+                 * @method dependsOn
+                 * @param  {Argument} arguments  -  dependencies
+                 * @return {miruken.ioc.ComponentBuilder} builder
+                 * @chainable
+                 */                                
                 dependsOn: function (/* dependencies */) {
                     var dependencies;
                     if (arguments.length === 1 && (arguments[0] instanceof Array)) {
@@ -4605,34 +5365,87 @@ new function () { // closure
                     _componentModel.setDependencies(dependencies);
                     return this;
                 },
+                /**
+                 * Specifies the component factory.
+                 * @method usingFactory
+                 * @param {Function} value  - component factory
+                 * @return {miruken.ioc.ComponentBuilder} builder
+                 * @chainable
+                 */                                
                 usingFactory: function (factory) {
                     _componentModel.setFactory(factory);
                     return this;
                 },
+                /**
+                 * Uses the supplied component instance.
+                 * @method instance
+                 * @param {Object} instance  - component instance
+                 * @return {miruken.ioc.ComponentBuilder} builder
+                 * @chainable
+                 */                                                
                 instance: function (instance) {
                     _componentModel.setLifestyle(new SingletonLifestyle(instance));
                     return this;
                 },
+                /**
+                 * Chooses the {{#crossLink "miruken.ioc.SingletonLifestyle"}}{{/crossLink}}.
+                 * @method singleon
+                 * @return {miruken.ioc.ComponentBuilder} builder
+                 * @chainable
+                 */
                 singleton: function () {
                     _componentModel.setLifestyle(new SingletonLifestyle);
                     return this;
                 },
+                /**
+                 * Chooses the {{#crossLink "miruken.ioc.TransientLifestyle"}}{{/crossLink}}.
+                 * @method transient
+                 * @return {miruken.ioc.ComponentBuilder} builder
+                 * @chainable
+                 */                
                 transient: function () {
                     _componentModel.setLifestyle(new TransientLifestyle);
                     return this;
                 },
+                /**
+                 * Chooses the {{#crossLink "miruken.ioc.ContextualLifestyle"}}{{/crossLink}}.
+                 * @method contextual
+                 * @return {miruken.ioc.ComponentBuilder} builder
+                 * @chainable
+                 */                                
                 contextual: function () {
                     _componentModel.setLifestyle(new ContextualLifestyle);
                     return this;
                 },
+                /**
+                 * Binds the component to the current 
+                 * {{#crossLink "miruken.context.Context"}}{{/crossLink}}.
+                 * @method newInContext
+                 * @return {miruken.ioc.ComponentBuilder} builder
+                 * @chainable
+                 */                                                
                 newInContext: function () {
                     _newInContext = true;
                     return this;
                 },
+                /**
+                 * Binds the component to a child of the current 
+                 * {{#crossLink "miruken.context.Context"}}{{/crossLink}}.
+                 * @method newInContext
+                 * @return {miruken.ioc.ComponentBuilder} builder
+                 * @chainable
+                 */                                                                
                 newInChildContext: function () {
                     _newInChildContext = true;
                     return this;
                 },
+                /**
+                 * Attaches component interceptors.
+                 * @method interceptors
+                 * @param  {Argument} arguments  -  interceptors
+                 * @return {miruken.ioc.ComponentBuilder} builder
+                 * @chainable
+                 */                                                
                 interceptors: function (/* interceptors */) {
                     var interceptors = (arguments.length === 1 
                                     && (arguments[0] instanceof Array))
@@ -4640,6 +5453,12 @@ new function () { // closure
                                      : Array.prototype.slice.call(arguments);
                     return new InterceptorBuilder(this, _componentModel, interceptors);
                 },
+                /**
+                 * Gets the {{#crossLink "miruken.ioc.ComponentPolicy"}}{{/crossLink}} of type policyClass.
+                 * @method getPolicy
+                 * @param   {Function}  policyClass  -  type of policy to get
+                 * @returns {miruken.ioc.ComponentPolicy} policy of type PolicyClass
+                 */            
                 getPolicy: function (policyClass) {
                     for (var i = 0; i < _policies.length; ++i) {
                         var policy = _policies[i];
@@ -4648,6 +5467,12 @@ new function () { // closure
                         }
                     }
                 },
+                /**
+                 * Attaches a {{#crossLink "miruken.ioc.ComponentPolicy"}}{{/crossLink}} to the model.
+                 * @method addPolicy
+                 * @param   {miruken.ioc.ComponentPolicy}  policy  -  policy
+                 * @returns {boolean} true if policy was added, false if policy type already attached.
+                 */            
                 addPolicy: function (policy) {
                     if (this.getPolicy($classOf(policy))) {
                         return false;
@@ -4655,7 +5480,7 @@ new function () { // closure
                     _policies.push(policy);
                     return true;
                 },
-                register: function(container) {
+                register: function (container) {
                     if ( _newInContext || _newInChildContext) {
                         var factory = _componentModel.getFactory();
                         _componentModel.setFactory(function (dependencies) {
@@ -4676,10 +5501,14 @@ new function () { // closure
     });
 
     /**
-     * Definition goes here
+     * Builds {{#crossLink "miruken.ioc.ComponentModel"}}{{/crossLink}} interceptors using fluent api.
      * @class InterceptorBuilder
      * @constructor
+     * @param {miruken.ioc.ComponentBuilder}  component       -  component builder
+     * @param {miruken.ioc.ComponentModel}    componentModel  -  component model
+     * @param {Array}                         interceptors    -  component interceptors
      * @extends Base
+     * @uses miruken.ioc.Registration
      */
     var InterceptorBuilder = Base.extend(Registration, {
         constructor: function (component, componentModel, interceptors) {
@@ -4695,9 +5524,22 @@ new function () { // closure
                     });
                     return this;
                 },
+                /**
+                 * Marks interceptors to be added to the front of the list.
+                 * @method toFront
+                 * @returns {miruken.ioc.InterceptorBuilder} builder
+                 * @chainable
+                 */            
                 toFront: function () {
                     return this.atIndex(0);
                 },
+                /**
+                 * Marks interceptors to be added at the supplied index.
+                 * @method atIndex
+                 * @param {number}  index  -  index to add interceptors at
+                 * @returns {miruken.ioc.InterceptorBuilder} builder
+                 * @chainable
+                 */            
                 atIndex: function (index) {
                     componentModel.manageDependencies(Facet.Interceptors, function (manager) {
                         Array2.forEach(interceptors, function (interceptor) {
@@ -4717,11 +5559,12 @@ new function () { // closure
     });
 
     /**
-     * Definition goes here
+     * Shortcut for creating a {{#crossLink "miruken.ioc.ComponentBuilder"}}{{/crossLink}}.
      * @method $component
      * @param   {Any} key - component key
-     * @return  {ComponentBuilder} a fluent component builder.
-     */
+     * @return  {miruken.ioc.ComponentBuilder} component builder.
+     * @for miruken.ioc.$
+     */    
     function $component(key) {
         return new ComponentBuilder(key);
     }
@@ -4730,7 +5573,10 @@ new function () { // closure
      * Definition goes here
      * @class DependencyResolution
      * @constructor
-     * @extends Resolution
+     * @param   {string}                             key     -  resolution key
+     * @param   {miruken.ioc.DependencyResolution}   parent  -  parent resolution
+     * @param   {boolean}                            many    -  resolution cardinality
+     * @extends miruken.callback.Resolution
      */
     var DependencyResolution = Resolution.extend({
         constructor: function (key, parent, many) {
@@ -4745,10 +5591,21 @@ new function () { // closure
                     _class   = clazz;
                     return true;
                 },
+                /**
+                 * Determines if the handler is in the process of resolving a dependency.
+                 * @method isResolvingDependency
+                 * @param   {Function}  handler  -  dependency handler
+                 * @returns {boolean} true if resolving a dependency, false otherwise.
+                 */                
                 isResolvingDependency: function (handler) {
                     return (handler === _handler)
                         || (parent && parent.isResolvingDependency(handler))
                 },
+                /**
+                 * Formats the dependency resolution chain for display.
+                 * @method formattedDependencyChain
+                 * @returns {string} formatted dependency resolution chain.
+                 */                
                 formattedDependencyChain: function () {
                     var invariant  = $eq.test(key),
                         rawKey     = Modifier.unwrap(key),
@@ -4763,25 +5620,32 @@ new function () { // closure
     });
 
     /**
-     * Definition goes here
+     * Records a dependency resolution failure.
      * @class DependencyResolutionError
-     * @param {DependencyResolution} dependency  - failing dependency
-     * @param {string}               message     - error message
+     * @constructor
+     * @param {miruken.ioc.DependencyResolution} dependency  -  failing dependency
+     * @param {string}                           message     -  error message
+     * @extends Error
      */
     function DependencyResolutionError(dependency, message) {
         this.message    = message;
         this.dependency = dependency;
         this.stack      = (new Error).stack;
     }
+    /**
+     * Failing dependency resolution.
+     * @property {miruken.ioc.DependencyResolution} dependency
+     */
     DependencyResolutionError.prototype             = new Error;
     DependencyResolutionError.prototype.constructor = DependencyResolutionError;
 
     /**
-     * Definition goes here
-     * @class ValidationError
-     * @param {ComponentModel}  componentModel  - invaid component model
-     * @param {ValidtionResult} validation      - validation errors
-     * @param {string}          message         - error message
+     * Records an invalid {{#crossLink "miruken.ioc.ComponentModel"}}{{/crossLink}}.
+     * @class ComponentModelError
+     * @param {miruken.ioc.ComponentModel}        componentModel  -  invalid component model
+     * @param {miruken.validate.ValidationResult} validation      -  validation failures
+     * @param {string}                            message         -  error message
+     * @extends Error
      */
     function ComponentModelError(componentModel, validation, message) {
         this.message        = message || "The component model contains one or more errors";
@@ -4789,14 +5653,19 @@ new function () { // closure
         this.validation     = validation;
         this.stack          = (new Error).stack;
     }
+    /**
+     * Invalid component model.
+     * @property {miruken.ioc.ComponentModel} componentModel
+     */    
     ComponentModelError.prototype             = new Error;
     ComponentModelError.prototype.constructor = ComponentModelError;
 
     /**
-     * Definition goes here
+     * Default Inversion of Control {{#crossLink "miruken.ioc.Container"}}{{/crossLink}}.
      * @class IoContainer
      * @constructor
      * @extends CallbackHandler
+     * @uses miruken.ioc.Container
      */
     var IoContainer = CallbackHandler.extend(Container, {
         constructor: function () {
@@ -4819,12 +5688,24 @@ new function () { // closure
                     }
                     return this.registerHandler(componentModel); 
                 },
+                /**
+                 * Adds a component inspector to the container.
+                 * @method addInspector
+                 * @param  {Object}  inspector  -  any object with an 'inspect' method that
+                 * accepts a {{#crossLink "miruken.ioc.ComponentModel"}}{{/crossLink}} and
+                 * array of {{#crossLink "miruken.ioc.ComponentPolicy"}}{{/crossLink}}
+                 */
                 addInspector: function (inspector) {
                     if (!$isFunction(inspector.inspect)) {
                         throw new TypeError("Inspectors must have an inspect method.");
                     }
                     _inspectors.push(inspector);
                 },
+                /**
+                 * Removes a previously added component inspector from the container.
+                 * @method removeInspector
+                 * @param  {Object}  inspector  -  component inspector
+                 */                
                 removeInspector: function (inspector) {
                     Array2.remove(_inspectors, inspector);
                 }
@@ -5014,9 +5895,11 @@ require('./base2.js');
 new function () { // closure
 
     /**
-     * Definition goes here
+     * Package containing enhancements to the javascript language.
      * @module miruken
      * @namespace miruken
+     * @main miruken
+     * @class $
      */
     var miruken = new base2.Package(this, {
         name:    "miruken",
@@ -5043,9 +5926,10 @@ new function () { // closure
      * Represents an enumeration
      * @class Enum
      * @constructor
+     * @param  {Object}  choices  -  enum choices
      */
     var Enum = Base.extend({
-        constructor: function() {
+        constructor: function () {
             throw new TypeError("Enums cannot be instantiated.");
         }
     }, {
@@ -5065,17 +5949,30 @@ new function () { // closure
 
     /**
      * Variance enum
-     * @property Variance
-     * @type Enum
+     * @class Variance
+     * @extends miruken.Enum
      */
     var Variance = Enum({
-        Covariant:     1,  // out
-        Contravariant: 2,  // in
-        Invariant:     3   // exact
+        /**
+         * Matches a more specific type than originally specified.
+         * @property {number} Covariant
+         */
+        Covariant: 1,
+        /**
+         * Matches a more generic (less derived) type than originally specified.
+         * @property {number} Contravariant
+         */        
+        Contravariant: 2,
+        /**
+         * Matches only the type originally specified.
+         * @property {number} Invariant
+         */        
+        Invariant: 3
         });
 
     /**
-     * Delegates stuff
+     * Delegates properties and methods to another object.<br/>
+     * See {{#crossLink "miruken.Protocol"}}{{/crossLink}}
      * @class Delegate
      * @extends Base
      */
@@ -5083,37 +5980,39 @@ new function () { // closure
         /**
          * Delegates the property get on the protocol.
          * @method get
-         * @param   {Protocol} protocol      - receiving protocol
-         * @param   {string}   propertyName  - name of the property
-         * @param   {boolean}  strict        - true if target must adopt protocol
-         * @returns {Any}      the result of the proxied get.
+         * @param   {miruken.Protocol} protocol      - receiving protocol
+         * @param   {string}           propertyName  - name of the property
+         * @param   {boolean}          strict        - true if target must adopt protocol
+         * @returns {Any} result of the proxied get.
          */
         get: function (protocol, propertyName, strict) {},
         /**
          * Delegates the property set on the protocol.
          * @method set
-         * @param   {Protocol} protocol      - receiving protocol
-         * @param   {string}   propertyName  - name of the property
-         * @param   {Object}   propertyValue - value of the property
-         * @param   {boolean}  strict        - true if target must adopt protocol
+         * @param   {miruken.Protocol} protocol      - receiving protocol
+         * @param   {string}           propertyName  - name of the property
+         * @param   {Object}           propertyValue - value of the property
+         * @param   {boolean}          strict        - true if target must adopt protocol
          */
         set: function (protocol, propertyName, propertyValue, strict) {},
         /**
          * Delegates the method invocation on the protocol.
          * @method invoke
-         * @param   {Protocol} protocol    - receiving protocol
-         * @param   {string}   methodName  - name of the method
-         * @param   {Array}    args        - method arguments
-         * @param   {boolean}  strict      - true if target must adopt protocol
-         * @returns {Any}      the result of the proxied invocation.
+         * @param   {miruken.Protocol} protocol      - receiving protocol
+         * @param   {string}           methodName  - name of the method
+         * @param   {Array}            args        - method arguments
+         * @param   {boolean}          strict      - true if target must adopt protocol
+         * @returns {Any} result of the proxied invocation.
          */
          invoke: function (protocol, methodName, args, strict) {}
     });
 
     /**
+     * Delegates properties and methods to an obejct.
      * @class ObjectDelegate
      * @constructor
-     * @extends Delegate
+     * @param   {Object}  object  - receiving object
+     * @extends miruken.Delegate
      */
     var ObjectDelegate = Delegate.extend({
         constructor: function (object) {
@@ -5144,9 +6043,11 @@ new function () { // closure
     });
     
     /**
-     * Declares methods and properties independent of class.
+     * Declares methods and properties independent of a class.
      * @class Protocol
      * @constructor
+     * @param   {miruken.Delegate}  delegate        -  delegate
+     * @param   {boolean}           [strict=false]  -  true ifstrict, false otherwise
      * @extends Base
      */
     var Protocol = Base.extend({
@@ -5178,9 +6079,10 @@ new function () { // closure
         }
     }, {
         /**
-         * Determines if the target is a protocol.
+         * Determines if the target is a {{#crossLink "miruken.Protocol"}}{{/crossLink}}.
+         * @static
          * @method isProtocol
-         * @param   {Any}      target    - target to test
+         * @param   {Any}      target    -  target to test
          * @returns {boolean}  true if the target is a Protocol.
          */
         isProtocol: function (target) {
@@ -5189,9 +6091,10 @@ new function () { // closure
         conformsTo: False,
         /**
          * Determines if the target conforms to this protocol.
+         * @static
          * @method conformsTo
-         * @param   {Any}      target    - target to test
-         * @returns {boolean}  true if the target conforms to this Protocol.
+         * @param   {Any}      target    -  target to test
+         * @returns {boolean}  true if the target conforms to this protocol.
          */
         adoptedBy: function (target) {
             return target && $isFunction(target.conformsTo)
@@ -5200,31 +6103,35 @@ new function () { // closure
         },
         /**
          * Creates a protocol binding over the object.
+         * @static
          * @method coerce
-         * @param   {Object}   object    - object delegate
-         * @returns {Object}   a Protocol instance delegating to object. 
+         * @param   {Object} object  -  object delegate
+         * @returns {Object} protocol instance delegating to object. 
          */
         coerce: function (object, strict) { return new this(object, strict); }
     });
 
     /**
      * MetaStep enum
-     * @property MetaStep
-     * @type Enum
+     * @class MetaStep
+     * @extends Enum
      */
     var MetaStep = Enum({
         /**
          * Triggered when a new class is derived
+         * @property {number} Subclass
          */
-        Subclass:  1,
+        Subclass: 1,
         /**
          * Triggered when an existing class is extended
+         * @property {number} Implement
          */
         Implement: 2,
         /**
          * Triggered when an instance is extended
+         * @property {number} Extend
          */
-        Extend:    3
+        Extend: 3
         });
 
     /**
@@ -5236,20 +6143,30 @@ new function () { // closure
         /**
          * Executes the macro for the given step.
          * @method apply
-         * @param  {Step}       step        - meta step
-         * @param  {MetaData}   metadata    - effective metadata
-         * @param  {Object}     target      - target macro applied to 
-         * @param  {Object}     definition  - literal containing changes
+         * @param  {miruken.MetaStep}  step        - meta step
+         * @param  {miruken.MetaBase}  metadata    - effective metadata
+         * @param  {Object}            target      - target macro applied to 
+         * @param  {Object}            definition  - literal containing changes
          */
         apply: function (step, metadata, target, definition) {},
         /**
          * Triggered when a protocol is added to metadata.
          * @method protocolAdded
-         * @param {MetaData}    metadata    - effective metadata
-         * @param {Protocol}    protocol    - protocol added
+         * @param {miruken.MetaBase}   metadata    - effective metadata
+         * @param {miruken.Protocol}   protocol    - protocol added
          */
         protocolAdded: function (metadata, protocol) {},
+        /**
+         * Determines if the macro should be inherited
+         * @method shouldInherit
+         * @returns {boolean} false
+         */
         shouldInherit: False,
+        /**
+         * Determines if the macro should be applied on extension.
+         * @method isActive
+         * @returns {boolean} false
+         */
         isActive: False,
     }, {
         coerce: function () { return this.new.apply(this, arguments); }
@@ -5259,29 +6176,29 @@ new function () { // closure
      * Base class for all metadata.
      * @class MetaBase
      * @constructor
-     * @extends MetaMacro
+     * @param  {miruken.MetaBase}  [parent]  - parent meta-data
+     * @extends miruken.MetaMacro
      */
     var MetaBase = MetaMacro.extend({
-        constructor: function(parent)  {
-            var _protocols   = [],
-                _descriptors;
+        constructor: function (parent)  {
+            var _protocols = [], _descriptors;
             this.extend({
                 /**
                  * Gets the parent metadata.
                  * @method getParent
-                 * @returns {MetaBase} parent metadata if present.
+                 * @returns {miruken.MetaBase} parent metadata if present.
                  */
                 getParent: function () { return parent; },
                 /**
                  * Gets the declared protocols.
                  * @method getProtocols
-                 * @returns {Array} of declared protocols.
+                 * @returns {Array} declared protocols.
                  */
                 getProtocols: function () { return _protocols.slice(0) },
                 /**
                  * Gets all conforming protocools.
                  * @method getAllProtocols
-                 * @returns {Array} of conforming protocols.
+                 * @returns {Array} conforming protocols.
                  */
                 getAllProtocols: function () {
                     var protocols = this.getProtocols(),
@@ -5300,7 +6217,7 @@ new function () { // closure
                 /**
                  * Adds one or more protocols to the metadata.
                  * @method addProtocol
-                 * @param  {Array}   protocols  - protocols to add
+                 * @param  {Array}  protocols  -  protocols to add
                  */
                 addProtocol: function (protocols) {
                     if ($isNothing(protocols)) {
@@ -5326,7 +6243,8 @@ new function () { // closure
                 /**
                  * Determines if the metadata conforms to the protocol.
                  * @method conformsTo
-                 * @returns {boolean}  true if the metadata conforms to the protocol.
+                 * @param  {miruken.Protocol}   protocol -  protocols to test
+                 * @returns {boolean}  true if the metadata includes the protocol.
                  */
                 conformsTo: function (protocol) {
                     if (!(protocol && (protocol.prototype instanceof Protocol))) {
@@ -5350,10 +6268,10 @@ new function () { // closure
                 /**
                  * Defines a property on the metadata.
                  * @method defineProperty
-                 * @param  {Object}   target      - target receiving property
-                 * @param  {string}   name        - name of the property
-                 * @param  {Object}   spec        - property specification
-                 * @param  {Object}   descriptor  - property descriptor
+                 * @param  {Object}   target        -  target receiving property
+                 * @param  {string}   name          -  name of the property
+                 * @param  {Object}   spec          -  property specification
+                 * @param  {Object}   [descriptor]  -  property descriptor
                  */
                 defineProperty: function(target, name, spec, descriptor) {
                     descriptor = extend({}, descriptor);
@@ -5363,8 +6281,8 @@ new function () { // closure
                 /**
                  * Gets the descriptor for one or more properties.
                  * @method getDescriptor
-                 * @param    {Filter}   filter      - property selector
-                 * @returns  {Object}   aggregated property descriptor.
+                 * @param    {Object|string}  filter  -  property selector
+                 * @returns  {Object} aggregated property descriptor.
                  */
                 getDescriptor: function (filter) {
                     var descriptors;
@@ -5393,9 +6311,10 @@ new function () { // closure
                 /**
                  * Sets the descriptor for a property.
                  * @method addDescriptor
-                 * @param    {string}   name        - property name
-                 * @param    {Object}   descriptor  - property descriptor
-                 * @returns  {MetaBase} current metadata.
+                 * @param    {string}   name        -  property name
+                 * @param    {Object}   descriptor  -  property descriptor
+                 * @returns  {miruken.MetaBase} current metadata.
+                 * @chainable
                  */
                 addDescriptor: function (name, descriptor) {
                     _descriptors = extend(_descriptors || {}, name, descriptor);
@@ -5404,9 +6323,9 @@ new function () { // closure
                 /**
                  * Determines if the property descriptor matches the filter.
                  * @method matchDescriptor
-                 * @param    {Object}   descriptor  - property descriptor
-                 * @param    {Object}   filter      - matching filter
-                 * @returns  {boolean}  true if the descriptor matches, false otherwise.
+                 * @param    {Object}   descriptor  -  property descriptor
+                 * @param    {Object}   filter      -  matching filter
+                 * @returns  {boolean} true if the descriptor matches, false otherwise.
                  */
                 matchDescriptor: function (descriptor, filter) {
                     if (typeOf(descriptor) !== 'object' || typeOf(filter) !== 'object') {
@@ -5439,8 +6358,9 @@ new function () { // closure
                 /**
                  * Binds a method to the parent if not present.
                  * @method linkBase
-                 * @param    {Function}  method - method name
-                 * @returns  {MetaBase}  current metadata.
+                 * @param    {Function}  method  -  method name
+                 * @returns  {miruken.MetaBase} current metadata.
+                 * @chainable
                  */
                 linkBase: function (method) {
                     if (!this[method]) {
@@ -5461,7 +6381,11 @@ new function () { // closure
      * Represents metadata describing a class.
      * @class ClassMeta
      * @constructor
-     * @extends MetaBase
+     * @param   {Function}  baseClass  -  associated base class
+     * @param   {Function}  subClass   -  associated class
+     * @param   {Array}     protocols  -  conforming protocols
+     * @param   {Array}     macros     -  class macros
+     * @extends miruken.MetaBase
      */
     var ClassMeta = MetaBase.extend({
         constructor: function(baseClass, subClass, protocols, macros)  {
@@ -5470,8 +6394,23 @@ new function () { // closure
                 _macros     = macros ? macros.slice(0) : undefined;
             this.base(baseClass.$meta, protocols);
             this.extend({
+                /**
+                 * Gets the associated base class.
+                 * @method getBase
+                 * @returns  {Function} base class.
+                 */                
                 getBase: function () { return baseClass; },
+                /**
+                 * Gets the associated class
+                 * @method getClass
+                 * @returns  {Function} class.
+                 */                                
                 getClass: function () { return subClass; },
+                /**
+                 * Determines if the meta-data represents a protocol.
+                 * @method isProtocol
+                 * @returns  {boolean} true if a protocol, false otherwise.
+                 */                                
                 isProtocol: function () { return _isProtocol; },
                 getAllProtocols: function () {
                     var protocols = this.base();
@@ -5535,14 +6474,30 @@ new function () { // closure
      * Represents metadata describing an instance.
      * @class InstanceMeta
      * @constructor
-     * @extends MetaBase
+     * @param   {miruken.ClassMeta}  classMeta  -  class meta-data
+     * @extends miruken.MetaBase
      */
     var InstanceMeta = MetaBase.extend({
         constructor: function (classMeta) {
             this.base(classMeta);
             this.extend({
-                getBase: function () { return classMeta.getBase(); },
+                /**
+                 * Gets the associated base class.
+                 * @method getBase
+                 * @returns  {Function} base class.
+                 */                                
+                getBase: function () { return classMeta.getBase(); }, 
+                /**
+                 * Gets the associated class
+                 * @method getClass
+                 * @returns  {Function} class.
+                 */                                              
                 getClass: function () { return classMeta.getClass(); },
+                /**
+                 * Determines if the meta-data represents a protocol.
+                 * @method isProtocol
+                 * @returns  {boolean} true if a protocol, false otherwise.
+                 */                                                
                 isProtocol: function () { return classMeta.isProtocol(); }
             });
         }
@@ -5647,9 +6602,10 @@ new function () { // closure
     }
 
     /**
-     * Metamacro to proxy protocol methods through a delegate.
+     * Metamacro to proxy protocol methods through a delegate.<br/>
+     * See {{#crossLink "miruken.Protocol"}}{{/crossLink}}
      * @class $proxyProtocol
-     * @extends MetaMacro
+     * @extends miruken.MetaMacro
      */
     var $proxyProtocol = MetaMacro.extend({
         apply: function (step, metadata, target, definition) {
@@ -5687,11 +6643,21 @@ new function () { // closure
                 }
             }
         },
+        /**
+         * Determines if the macro should be inherited
+         * @method shouldInherit
+         * @returns {boolean} true
+         */        
         shouldInherit: True,
+        /**
+         * Determines if the macro should be applied on extension.
+         * @method isActive
+         * @returns {boolean} true
+         */        
         isActive: True
     });
     Protocol.extend     = Base.extend
-    Protocol.implement  = Base.implement;;
+    Protocol.implement  = Base.implement;
     Protocol.$meta      = new ClassMeta(Base, Protocol, null, [new $proxyProtocol]);
     Protocol.$meta.apply(MetaStep.Subclass, Protocol.$meta, Protocol.prototype);
 
@@ -5699,7 +6665,9 @@ new function () { // closure
      * Protocol base requiring conformance to match methods.
      * @class StrictProtocol
      * @constructor
-     * @extends Protocol     
+     * @param   {miruken.Delegate}  delegate       -  delegate
+     * @param   {boolean}           [strict=true]  -  true ifstrict, false otherwise
+     * @extends miruekn.Protocol     
      */
     var StrictProtocol = Protocol.extend({
         constructor: function (proxy, strict) {
@@ -5711,7 +6679,8 @@ new function () { // closure
      * Metamacro to define custom properties.
      * @class $properties
      * @constructor
-     * @extends MetaMacro
+     * @param   {string}  [tag='$properties']  - properties tag
+     * @extends miruken.MetaMacro
      */
     var $properties = MetaMacro.extend({
         constructor: function _(tag) {
@@ -5783,7 +6752,17 @@ new function () { // closure
         defineProperty: function(metadata, target, name, spec, descriptor) {
             metadata.defineProperty(target, name, spec, descriptor);
         },
+        /**
+         * Determines if the macro should be inherited
+         * @method shouldInherit
+         * @returns {boolean} true
+         */                
         shouldInherit: True,
+        /**
+         * Determines if the macro should be applied on extension.
+         * @method isActive
+         * @returns {boolean} true
+         */                
         isActive: True
     });
 
@@ -5815,9 +6794,9 @@ new function () { // closure
 
     /**
      * Metamacro to derive properties from existng methods.
-     * Currently getXYZ, isXYZ and setXYZ conventions are recognized.
      * @class $inferProperties
-     * @extends MetaMacro
+     * @example Currently getXYZ, isXYZ and setXYZ conventions are recognized.
+     * @extends miruken.MetaMacro
      */
     var $inferProperties = MetaMacro.extend({
         apply: function _(step, metadata, target, definition) {
@@ -5846,7 +6825,17 @@ new function () { // closure
         defineProperty: function(metadata, target, name, spec) {
             metadata.defineProperty(target, name, spec);
         },
+        /**
+         * Determines if the macro should be inherited
+         * @method shouldInherit
+         * @returns {boolean} true
+         */                
         shouldInherit: True,
+        /**
+         * Determines if the macro should be applied on extension.
+         * @method isActive
+         * @returns {boolean} true
+         */               
         isActive: True
     });
 
@@ -5880,7 +6869,8 @@ new function () { // closure
      * Metamacro to inherit static members in subclasses.
      * @class $inhertStatic
      * @constructor
-     * @extends MetaMacro
+     * @param  {string}  [...members]  -  members to inherit
+     * @extends miruken.MetaMacro
      */
     var $inheritStatic = MetaMacro.extend({
         constructor: function _(/*members*/) {
@@ -5910,6 +6900,11 @@ new function () { // closure
                 }
             }
         },
+        /**
+         * Determines if the macro should be inherited
+         * @method shouldInherit
+         * @returns {boolean} true
+         */                
         shouldInherit: True
     });
 
@@ -5926,7 +6921,7 @@ new function () { // closure
     /**
      * Protocol for targets that manage disposal lifecycle.
      * @class Disposing
-     * @extends Protocol
+     * @extends miruken.Protocol
      */
     var Disposing = Protocol.extend({
         /**
@@ -5939,6 +6934,7 @@ new function () { // closure
     /**
      * Mixin for Disposing implementation.
      * @class DisposingMixin
+     * @uses miruken.Disposing
      * @extends Module
      */
     var DisposingMixin = Module.extend({
@@ -5953,15 +6949,15 @@ new function () { // closure
     /**
      * Protocol for targets that can execute functions.
      * @class Invoking
-     * @extends StrictProtocol
-     * @constructor
+     * @extends miruken.StrictProtocol
      */
     var Invoking = StrictProtocol.extend({
         /**
          * Invokes the function with dependencies.
+         * @method invoke
          * @param    {Function} fn           - function to invoke
          * @param    {Array}    dependencies - function dependencies
-         * @param    {Object}   ctx          - function context
+         * @param    {Object}   [ctx]        - function context
          * @returns  {Any}      result of the function.
          */
         invoke: function (fn, dependencies, ctx) {}
@@ -5970,7 +6966,7 @@ new function () { // closure
     /**
      * Protocol for targets that have parent/child relationships.
      * @class Parenting
-     * @extends Protocol
+     * @extends miruken.Protocol
      */
     var Parenting = Protocol.extend({
         /**
@@ -5984,15 +6980,20 @@ new function () { // closure
     /**
      * Protocol for targets that can be started.
      * @class Starting
-     * @extends Protocol
+     * @extends miruken.Protocol
      */
     var Starting = Protocol.extend({
+        /**
+         * Starts the reciever.
+         * @method start
+         */
         start: function () {}
     });
 
     /**
      * Base class for startable targets.
      * @class Startup
+     * @uses miruken.Starting
      * @extends Base
      */
     var Startup = Base.extend(Starting, {
@@ -6001,10 +7002,11 @@ new function () { // closure
 
     /**
      * Convenience function for disposing resources.
+     * @for miruken.$
      * @method $using
-     * @param    {Disposing}           disposing  - object to dispose
+     * @param    {miruken.Disposing}   disposing  - object to dispose
      * @param    {Function | Promise}  action     - block or Promise
-     * @param    {Object}              context    - block context
+     * @param    {Object}              [context]  - block context
      * @returns  {Any} result of executing the action in context.
      */
     function $using(disposing, action, context) {
@@ -6031,8 +7033,8 @@ new function () { // closure
 
     /**
      * Class for annotating targets.
-     * This is an alternative for the absence of true annotations.
      * @class Modifier
+     * @param  {Object}  source  -  source to annotate
      */
     function Modifier() {}
     Modifier.isModified = function (source) {
@@ -6078,6 +7080,8 @@ new function () { // closure
     /**
      * Helper class to simplify array manipulation.
      * @class ArrayManager
+     * @constructor
+     * @param  {Array}  [...items]  -  initial items
      * @extends Base
      */
     var ArrayManager = Base.extend({
@@ -6107,6 +7111,7 @@ new function () { // closure
                  * @param    {number}  index - index of item
                  * @param    {Any}     item  - item to set
                  * @returns  {ArrayManager} array manager.
+                 * @chainable
                  */
                 setIndex: function (index, item) {
                     if ((_items.length <= index) ||
@@ -6121,6 +7126,7 @@ new function () { // closure
                  * @param    {number}   index - index of item
                  * @param    {Item}     item  - item to insert
                  * @returns  {ArrayManager} array manager.
+                 * @chainable
                  */
                 insertIndex: function (index, item) {
                     _items.splice(index, 0, this.mapItem(item));
@@ -6132,6 +7138,7 @@ new function () { // closure
                  * @param    {number}   index - index of item
                  * @param    {Item}     item  - item to replace
                  * @returns  {ArrayManager} array manager.
+                 * @chainable
                  */
                 replaceIndex: function (index, item) {
                     _items[index] = this.mapItem(item);
@@ -6142,6 +7149,7 @@ new function () { // closure
                  * @method removeIndex
                  * @param    {number}   index - index of item
                  * @returns  {ArrayManager} array manager.
+                 * @chainable
                  */
                 removeIndex: function (index) {
                     if (_items.length > index) {
@@ -6153,6 +7161,7 @@ new function () { // closure
                  * Appends one or more items to the end of the array.
                  * @method append
                  * @returns  {ArrayManager} array manager.
+                 * @chainable
                  */
                 append: function (/* items */) {
                     var newItems;
@@ -6173,6 +7182,7 @@ new function () { // closure
                  * @method merge
                  * @param    {Array}  items - items to merge from
                  * @returns  {ArrayManager} array manager.
+                 * @chainable
                  */
                 merge: function (items) {
                     for (var index = 0; index < items.length; ++index) {
@@ -6191,7 +7201,7 @@ new function () { // closure
         /** 
          * Optional mapping for items before adding to the array.
          * @method mapItem
-         * @param    {Any}  item - item to map
+         * @param    {Any}  item  -  item to map
          * @returns  {Any}  mapped item.
          */
         mapItem: function (item) { return item; }
@@ -6202,10 +7212,11 @@ new function () { // closure
      * Indexes are partially ordered according to the order comparator.
      * @class IndexedList
      * @constructor
+     * @param  {Function}  order  -  orders items
      * @extends Base
      */
     var IndexedList = Base.extend({
-        constructor: function(order) {
+        constructor: function (order) {
             var _index = {};
             this.extend({
                 /** 
@@ -6219,7 +7230,7 @@ new function () { // closure
                 /** 
                  * Gets the node at an index.
                  * @method getIndex
-                 * @param  {number} index - index of node
+                 * @param    {number} index - index of node
                  * @returns  {Any}  the node at index.
                  */
                 getIndex: function (index) {
@@ -6307,28 +7318,40 @@ new function () { // closure
     });
 
     /**
-     * Facet enum
-     * @property Facet
-     * @type Enum
+     * Facet choices for proxies.
+     * @class Facet
+     * @extends miruken.Enum
      */
     var Facet = Enum({
-        Parameters:           'parameters',
-        Interceptors:         'interceptors',
+        /**
+         * @property {string} Parameters
+         */
+        Parameters: 'parameters',
+        /**
+         * @property {string} Interceptors
+         */        
+        Interceptors: 'interceptors',
+        /**
+         * @property {string} InterceptorSelectors
+         */                
         InterceptorSelectors: 'interceptorSelectors',
-        Delegate:             'delegate'
+        /**
+         * @property {string} Delegate
+         */                        
+        Delegate: 'delegate'
         });
 
 
     /**
-     * Description goes here
+     * Base class for method interception.
      * @class Interceptor
      * @extends Base
      */
     var Interceptor = Base.extend({
         /**
          * @method intercept
-         * @param    {Invocation} invocation
-         * @returns  {Invocation} invocation
+         * @param    {Object} invocation  - invocation
+         * @returns  {Any} invocation result
          */
         intercept: function (invocation) {
             return invocation.proceed();
@@ -6344,10 +7367,10 @@ new function () { // closure
         /**
          * Description goes here
          * @method selectInterceptors
-         * @param    {Type}    type being intercepted
-         * @param    {string}  method name
-         * @param    {Array}   available interceptors
-         * @returns  {Array}   effective interceptors
+         * @param    {Type}    type         - type being intercepted
+         * @param    {string}  method       - method name
+         * @param    {Array}   interceptors - available interceptors
+         * @returns  {Array} effective interceptors
          */
         selectInterceptors: function (type, method, interceptors) {
             return interceptors;
@@ -6363,9 +7386,9 @@ new function () { // closure
         /**
          * Builds a proxy class for the supplied types.
          * @method buildProxy
-         * @param    {Array}    types       - classes and protocols
-         * @param    {Object}   options     - literal options
-         * @returns  {Class}    proxy class.
+         * @param    {Array}     ...types    - classes and protocols
+         * @param    {Object}    options     - literal options
+         * @returns  {Function}  proxy class.
          */
         buildProxy: function(types, options) {
             if (!(types instanceof Array)) {
@@ -6563,9 +7586,6 @@ new function () { // closure
         getInterceptors: true, getDelegate: true, setDelegate: true
     };
 
-    /**
-     * Package extensions
-     */
     Package.implement({
         export: function (name, member) {
             this.addName(name, member);
@@ -6601,6 +7621,7 @@ new function () { // closure
      * @method $isProtocol
      * @param    {Any}     protocol  - target to test
      * @returns  {boolean} true if a protocol.
+     * @for miruken.$
      */
     var $isProtocol = Protocol.isProtocol;
 
@@ -6742,8 +7763,9 @@ new function () { // closure
     }
 
     /**
-     * Enhances Functions to expose new as a function.
+     * Enhances Functions to create instances.
      * @method new
+     * @for Function
      */
     if (Function.prototype.new === undefined)
         Function.prototype.new = function () {
@@ -6780,7 +7802,15 @@ var miruken = require('../miruken.js');
 new function () { // closure
 
     /**
+     * Package providing mvc support.<br/>
+     * Requires the {{#crossLinkModule "miruken"}}{{/crossLinkModule}},
+     * {{#crossLinkModule "callback"}}{{/crossLinkModule}},
+     * {{#crossLinkModule "context"}}{{/crossLinkModule}} and 
+     * {{#crossLinkModule "validate"}}{{/crossLinkModule}} modules.
+     * @module miruken
+     * @submodule mvc
      * @namespace miruken.mvc
+     * @class $
      */
     var mvc = new base2.Package(this, {
         name:    "mvc",
@@ -6902,20 +7932,23 @@ new function () { // closure
     }
 
     /**
-     * @protocol {MasterDetail}
-     * Manages master-detail relationships.
-     */
+     * Protocol managing master-detail relationships.
+     * @class MasterDetail
+     * @constructor
+     * @extends miruekn.Protocol     
+     */    
     var MasterDetail = Protocol.extend({
         /**
          * Gets the selected detail.
-         * @param   {Function} detailClass  - type of detail
-         * @returns {Promise} for the selected detail.
+         * @method getSelectedDetail
+         * @param   {Function} detailClass  -  type of detail
+         * @returns {Object} selected detail.  Could be a Promise.
          */
         getSelectedDetail: function (detailClass) {},
         /**
          * Gets the selected details.
-         * @param   {Function} detailClass  - type of detail
-         * @returns {Promise} for the selected details.
+         * @param   {Function} detailClass  -  type of detail
+         * @returns {Object}  selected details.  Could be a Promise.
          */
         getSelectedDetails: function (detailClass) {},
         /**
@@ -7027,8 +8060,14 @@ var miruken = require('../miruken.js'),
 new function () { // closure
 
     /**
+     * Package providing validation support.<br/>
+     * Requires the {{#crossLinkModule "miruken"}}{{/crossLinkModule}} and
+     * {{#crossLinkModule "callback"}}{{/crossLinkModule}} modules.
+     * @module miruken
+     * @submodule validate
      * @namespace miruken.validate
-     */
+     * @class $
+     */    
     var validate = new base2.Package(this, {
         name:    "validate",
         version: miruken.version,
@@ -7039,36 +8078,57 @@ new function () { // closure
 
     eval(this.imports);
 
+    /**
+     * Validation definitions.
+     * @property {Function} $validate
+     * @for miruken.validate.$
+     */
     var $validate = $define('$validate');
 
     /**
-     * @protocol {Validating}
-     */
+     * Protocol for validating objects.
+     * @class Validating
+     * @extends miruken.Protocol
+     */        
     var Validating = Protocol.extend({
         /**
          * Validates the object in the scope.
-         * @param   {Object} object   - object to validate
-         * @param   {Object} scope    - scope of validation
-         * @param   {Object} results? - validation results
-         * @returns the validation results.
+         * @method validate 
+         * @param   {Object} object     -  object to validate
+         * @param   {Object} scope      -  scope of validation
+         * @param   {Object} [results]  -  validation results
+         * @returns {miruken.validate.ValidationResult}  validation results.
          */
         validate: function (object, scope, results) {},
         /**
-         * Validates the object in the scope.
-         * @param   {Object} object  - object to validate
-         * @param   {Object} scope   - scope of validation
-         * @returns {Promise} a promise for the validation results.
+         * Validates the object asynchronously in the scope.
+         * @method validateAsync
+         * @param   {Object} object     - object to validate
+         * @param   {Object} scope      - scope of validation
+         * @param   {Object} [results]  - validation results
+         * @returns {Promise} promise of validation results.
+         * @async
          */
         validateAsync: function (object, scope, results) {}
     });
 
     /**
-     * @protocol {Validator}
-     */
+     * Protocol for validating objects strictly.
+     * @class Validator
+     * @extends miruken.StrictProtocol
+     * @uses miruken.validate.Validating
+     */        
     var Validator = StrictProtocol.extend(Validating);
     
     /**
-     * @class {Validation}
+     * Represents the validation of an object.
+     * @class Validation
+     * @constructor
+     * @param   {Object}    object  -  object to validate
+     * @param   {boolean}   async   -  true if validate asynchronously
+     * @param   {Any}       scope   -  scope of validation
+     * @param   {miruken.validate.ValidationResult} results  -  results to validate to
+     * @extends Base
      */
     var Validation = Base.extend(
         $inferProperties, {
@@ -7077,9 +8137,29 @@ new function () { // closure
             async   = !!async;
             results = results || new ValidationResult;
             this.extend({
+                /**
+                 * Determines if validation should be asynchronous.
+                 * @method isAsync
+                 * @returns {boolean} true if asynchronous
+                 */                
                 isAsync: function () { return async; },
+                /**
+                 * Gets the target to validate.
+                 * @method getObject
+                 * @returns {Object} target to validate.
+                 */                                
                 getObject: function () { return object; },
+                /**
+                 * Gets the scope of validation.
+                 * @method getScope
+                 * @returns {Any} scope of validation.
+                 */                                                
                 getScope: function () { return scope; },
+                /**
+                 * Gets the validation results.
+                 * @method getResults
+                 * @returns {miruken.validate.ValidationResult} validation results.
+                 */                                                                
                 getResults: function () { return results; },
                 getAsyncResults: function () { return _asyncResults; },
                 addAsyncResult: function (result) {
@@ -7094,13 +8174,21 @@ new function () { // closure
     var IGNORE = ['isValid', 'valid', 'getErrors', 'errors', 'addKey', 'addError'];
 
     /**
-     * @class {ValidationResult}
-     */
+     * Captures the validation errors.
+     * @class ValidationResult
+     * @constructor
+     * @extends Base
+     */    
     var ValidationResult = Base.extend(
         $inferProperties, {
         constructor: function () {
             var _errors, _summary;
             this.extend({
+                /**
+                 * Determines if object is valid.
+                 * @method isValid
+                 * @returns {boolean} true if object is valid.
+                 */                
                 isValid: function () {
                     if (_errors || _summary) {
                         return false;
@@ -7118,6 +8206,11 @@ new function () { // closure
                     }
                     return true;
                 },
+                /**
+                 * Gets aggregated validation errors.
+                 * @method getErrors
+                 * @returns {Object} name/value pairs of aggregated errors.
+                 */                                
                 getErrors: function () {
                     if (_summary) {
                         return _summary;
@@ -7155,16 +8248,25 @@ new function () { // closure
                     }
                     return _summary;
                 },
+               /**
+                * Gets or adds validation results for the key.
+                * @method addKey
+                * @param  {string} key  -  property name
+                * @results {miruken.validate.ValidationResult} named validation results.
+                */                
                 addKey: function (key) {
                     return this[key] || (this[key] = new ValidationResult);
                 },
                /**
-                * @param  {String} name  - validator name
-                * @param  {Object} error - literal error details
+                * Adds a named validation error.
+                * @method addError
+                * @param  {string}  name   -  validator name
+                * @param  {Object}  error  -  literal error details
+                * @example
                 *     Standard Keys:
-                *        key?     => contains the invalid key
-                *        message? => contains the error message
-                *        value?   => contains the invalid valid
+                *        key      => contains the invalid key
+                *        message  => contains the error message
+                *        value    => contains the invalid valid
                 */
                 addError: function (name, error) {
                     var errors = (_errors || (_errors = {})),
@@ -7177,6 +8279,12 @@ new function () { // closure
                     _summary = null;
                     return this;
                 },
+                /**
+                 * Clears all validation results.
+                 * @method reset
+                 * @returns {miruken.validate.ValidationResult} receiving results
+                 * @chainable
+                 */
                 reset: function () { 
                     _errors = _summary = undefined;
                     var ownKeys = Object.getOwnPropertyNames(this);
@@ -7197,8 +8305,11 @@ new function () { // closure
     });
 
     /**
-     * @class {ValidationCallbackHandler}
-     */
+     * CallbackHandler for performing validation.
+     * @class ValidationCallbackHandler
+     * @extends miruken.callback.CallbackHandler
+     * @uses miruken.validate.Validator
+     */        
     var ValidationCallbackHandler = CallbackHandler.extend(Validator, {
         validate: function (object, scope, results) {
             var validation = new Validation(object, false, scope, results);
@@ -7235,25 +8346,11 @@ new function () { // closure
         }
     });
 
-    CallbackHandler.implement({
-        $valid: function (target, scope) {
-            return this.aspect(function (_, composer) {
-                return Validator(composer).validate(target, scope).valid;
-            });
-        },
-        $validAsync: function (target, scope) {
-            return this.aspect(function (_, composer) {
-                return Validator(composer).validateAsync(target, scope).then(function (results) {
-                    return results.valid;
-                });
-            });
-        }        
-    });
-
     /**
-     * @class {$validateThat}
-     * Metamacro to validate instances.
-     */
+     * Metamacro for class-based validation.
+     * @class $validateThat
+     * @extends miruken.MetaMacro
+     */    
     var $validateThat = MetaMacro.extend({
         apply: function _(step, metadata, target, definition) {
             var validateThat = definition['$validateThat'];
@@ -7292,7 +8389,17 @@ new function () { // closure
                 delete target['$validateThat'];
             }
         },
+        /**
+         * Determines if the macro should be inherited
+         * @method shouldInherit
+         * @returns {boolean} true
+         */         
         shouldInherit: True,
+        /**
+         * Determines if the macro should be applied on extension.
+         * @method isActive
+         * @returns {boolean} true
+         */
         isActive: True
     });
 
@@ -7321,6 +8428,37 @@ new function () { // closure
         delete spec.value;
     }
 
+    CallbackHandler.implement({
+        /**
+         * Marks the callback handler for validation.
+         * @method $valid
+         * @param   {Object}  target  -  object to validate
+         * @param   {Any}     scope   -  scope of validation
+         * @returns {miruken.callback.CallbackHandlerAspect} validation semantics.
+         * @for miruken.callback.CallbackHandler
+         */                
+        $valid: function (target, scope) {
+            return this.aspect(function (_, composer) {
+                return Validator(composer).validate(target, scope).valid;
+            });
+        },
+        /**
+         * Marks the callback handler for asynchronous validation.
+         * @method $valid
+         * @param   {Object}  target  -  object to validate
+         * @param   {Any}     scope   -  scope of validation
+         * @returns {miruken.callback.CallbackHandlerAspect} validation semantics.
+         * @for miruken.callback.CallbackHandler
+         */                        
+        $validAsync: function (target, scope) {
+            return this.aspect(function (_, composer) {
+                return Validator(composer).validateAsync(target, scope).then(function (results) {
+                    return results.valid;
+                });
+            });
+        }        
+    });
+
     if (typeof module !== 'undefined' && module.exports) {
         module.exports = exports = validate;
     }
@@ -7339,8 +8477,11 @@ var miruken    = require('../miruken.js'),
 new function () { // closure
 
     /**
+     * Package providing validation support.<br/>
+     * @module miruken
+     * @submodule validate
      * @namespace miruken.validate
-     */
+     */    
     var validate = new base2.Package(this, {
         name:    "validate",
         version: miruken.version,
@@ -7360,6 +8501,11 @@ new function () { // closure
 
     validatejs.validators.nested = Undefined;
 
+    /**
+     * Metamacro to register custom validators.
+     * @class $registerValidators
+     * @extends miruken.MetaMacro
+     */    
     var $registerValidators = MetaMacro.extend({
         apply: function (step, metadata, target, definition) {
             if (step === MetaStep.Subclass || step === MetaStep.Implement) {
@@ -7389,18 +8535,34 @@ new function () { // closure
                 }
             }
         },
+        /**
+         * Determines if the macro should be inherited
+         * @method shouldInherit
+         * @returns {boolean} true
+         */        
         shouldInherit: True,
+        /**
+         * Determines if the macro should be applied on extension.
+         * @method isActive
+         * @returns {boolean} true
+         */        
         isActive: True
     });
 
     /**
-     * @class {ValidationRegistry}
-     */
+     * Base class to define custom validators.
+     * @class ValidationRegistry
+     * @constructor
+     * @extends Abstract
+     * @uses miruken.validate.$registerValidators
+     */        
     var ValidationRegistry = Abstract.extend($registerValidators);
 
     /**
-     * @class {ValidateJsCallbackHandler}
-     */
+     * CallbackHandler for performing validation using [validate.js](http://validatejs.org)
+     * @class ValidationJsCallbackHandler
+     * @extends miruken.callback.CallbackHandler
+     */            
     var ValidateJsCallbackHandler = CallbackHandler.extend({
         $validate: [
             null,  function (validation, composer) {
@@ -7505,6 +8667,7 @@ new function () { // closure
     eval(this.exports);
 
 }
+
 },{"../callback.js":2,"../miruken.js":10,"./validate.js":14,"bluebird":16,"validate.js":54}],16:[function(require,module,exports){
 (function (process,global){
 /* @preserve

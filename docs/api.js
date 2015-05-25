@@ -1,6 +1,7 @@
 YUI.add("yuidoc-meta", function(Y) {
    Y.YUIDoc = { meta: {
     "classes": [
+        "miruken.$",
         "miruken.$inferProperties",
         "miruken.$inhertStatic",
         "miruken.$properties",
@@ -11,6 +12,7 @@ YUI.add("yuidoc-meta", function(Y) {
         "miruken.Disposing",
         "miruken.DisposingMixin",
         "miruken.Enum",
+        "miruken.Facet",
         "miruken.IndexedList",
         "miruken.InstanceMeta",
         "miruken.Interceptor",
@@ -18,6 +20,7 @@ YUI.add("yuidoc-meta", function(Y) {
         "miruken.Invoking",
         "miruken.MetaBase",
         "miruken.MetaMacro",
+        "miruken.MetaStep",
         "miruken.Miruken",
         "miruken.Modifier",
         "miruken.ObjectDelegate",
@@ -27,6 +30,8 @@ YUI.add("yuidoc-meta", function(Y) {
         "miruken.Starting",
         "miruken.Startup",
         "miruken.StrictProtocol",
+        "miruken.Variance",
+        "miruken.callback.$",
         "miruken.callback.$callbacks",
         "miruken.callback.AcceptingCallbackHandler",
         "miruken.callback.CallbackHandler",
@@ -39,6 +44,7 @@ YUI.add("yuidoc-meta", function(Y) {
         "miruken.callback.Deferred",
         "miruken.callback.HandleMethod",
         "miruken.callback.InvocationDelegate",
+        "miruken.callback.InvocationOptions",
         "miruken.callback.InvocationOptionsHandler",
         "miruken.callback.InvocationSemantics",
         "miruken.callback.Lookup",
@@ -48,15 +54,23 @@ YUI.add("yuidoc-meta", function(Y) {
         "miruken.callback.ReentrantScope",
         "miruken.callback.RejectedError",
         "miruken.callback.Resolution",
-        "miruken.callback._Node",
-        "miruken.context.{$contextual}\nMetamacro to implement Contextual protocol.",
-        "miruken.context.{ContextualHelper}",
-        "miruken.context.{Contextual}",
-        "miruken.context.{Context}",
-        "miruken.error.{ErrorCallbackHandler}",
+        "miruken.context.$contextual",
+        "miruken.context.Context",
+        "miruken.context.ContextObserver",
+        "miruken.context.ContextState",
+        "miruken.context.Contextual",
+        "miruken.context.ContextualHelper",
+        "miruken.context.ContextualMixin",
+        "miruken.context.Function",
+        "miruken.error.ErrorCallbackHandler",
+        "miruken.error.Errors",
+        "miruken.graph.$",
         "miruken.graph.Traversal",
         "miruken.graph.Traversing",
+        "miruken.graph.TraversingAxis",
         "miruken.graph.TraversingMixin",
+        "miruken.ioc.$",
+        "miruken.ioc.$container",
         "miruken.ioc..{BasedOnBuilder}",
         "miruken.ioc..{FromBuilder}",
         "miruken.ioc..{FromPackageBuilder}",
@@ -64,12 +78,14 @@ YUI.add("yuidoc-meta", function(Y) {
         "miruken.ioc..{KeyBuilder}",
         "miruken.ioc.ComponentBuilder",
         "miruken.ioc.ComponentModel",
+        "miruken.ioc.ComponentModelError",
         "miruken.ioc.ComponentPolicy",
         "miruken.ioc.Container",
         "miruken.ioc.ContextualLifestyle",
         "miruken.ioc.DependencyInspector",
         "miruken.ioc.DependencyManager",
         "miruken.ioc.DependencyModel",
+        "miruken.ioc.DependencyModifiers",
         "miruken.ioc.DependencyResolution",
         "miruken.ioc.DependencyResolutionError",
         "miruken.ioc.InterceptorBuilder",
@@ -78,39 +94,75 @@ YUI.add("yuidoc-meta", function(Y) {
         "miruken.ioc.Registration",
         "miruken.ioc.SingletonLifestyle",
         "miruken.ioc.TransientLifestyle",
-        "miruken.ioc.ValidationError",
+        "miruken.mvc.$",
+        "miruken.mvc.MasterDetail",
         "miruken.mvc.{Controller}",
         "miruken.mvc.{Model}",
         "miruken.ng.Directive",
         "miruken.ng.Runner",
         "miruken.ng.UseModelValidation",
-        "miruken.validate.{$validateThat}\nMetamacro to validate instances.",
-        "miruken.validate.{ValidateJsCallbackHandler}",
-        "miruken.validate.{ValidationCallbackHandler}",
-        "miruken.validate.{ValidationRegistry}",
-        "miruken.validate.{ValidationResult}",
-        "miruken.validate.{Validation}"
+        "miruken.validate.$",
+        "miruken.validate.$registerValidators",
+        "miruken.validate.$validateThat",
+        "miruken.validate.Validating",
+        "miruken.validate.Validation",
+        "miruken.validate.ValidationCallbackHandler",
+        "miruken.validate.ValidationJsCallbackHandler",
+        "miruken.validate.ValidationRegistry",
+        "miruken.validate.ValidationResult",
+        "miruken.validate.Validator",
+        "miruken.validate.miruken.callback.CallbackHandler"
     ],
     "modules": [
         "callback",
+        "context",
+        "error",
+        "graph",
         "ioc",
-        "miruken"
+        "miruken",
+        "mvc",
+        "validate"
     ],
     "allModules": [
         {
             "displayName": "callback",
             "name": "callback",
-            "description": "Definition goes here"
+            "description": "Package providing message passing support.<br/>\nRequires the {{#crossLinkModule \"miruken\"}}{{/crossLinkModule}} module."
+        },
+        {
+            "displayName": "context",
+            "name": "context",
+            "description": "Package providing contextual support.<br />\nRequires the {{#crossLinkModule \"miruken\"}}{{/crossLinkModule}},\n{{#crossLinkModule \"graph\"}}{{/crossLinkModule}} and \n{{#crossLinkModule \"callback\"}}{{/crossLinkModule}} modules."
+        },
+        {
+            "displayName": "error",
+            "name": "error",
+            "description": "Package providing generalized error support.<br/>\nRequires the {{#crossLinkModule \"miruken\"}}{{/crossLinkModule}} and\n{{#crossLinkModule \"callback\"}}{{/crossLinkModule}} modules."
+        },
+        {
+            "displayName": "graph",
+            "name": "graph",
+            "description": "Package containing graph traversal support."
         },
         {
             "displayName": "ioc",
             "name": "ioc",
-            "description": "Definition goes here"
+            "description": "Package providing Inversion-of-Control capabilities.<br/>\nRequires the {{#crossLinkModule \"miruken\"}}{{/crossLinkModule}},\n{{#crossLinkModule \"context\"}}{{/crossLinkModule}} and \n{{#crossLinkModule \"validate\"}}{{/crossLinkModule}} modules."
         },
         {
             "displayName": "miruken",
             "name": "miruken",
-            "description": "Definition goes here"
+            "description": "Package containing enhancements to the javascript language."
+        },
+        {
+            "displayName": "mvc",
+            "name": "mvc",
+            "description": "Package providing mvc support.<br/>\nRequires the {{#crossLinkModule \"miruken\"}}{{/crossLinkModule}},\n{{#crossLinkModule \"callback\"}}{{/crossLinkModule}},\n{{#crossLinkModule \"context\"}}{{/crossLinkModule}} and \n{{#crossLinkModule \"validate\"}}{{/crossLinkModule}} modules."
+        },
+        {
+            "displayName": "validate",
+            "name": "validate",
+            "description": "Package providing validation support.<br/>\nRequires the {{#crossLinkModule \"miruken\"}}{{/crossLinkModule}} and\n{{#crossLinkModule \"callback\"}}{{/crossLinkModule}} modules."
         }
     ]
 } };
