@@ -9,11 +9,7 @@ new function(){
 
 	var HelloWorldController = Controller.extend({
 		$properties:{
-			first: 'Hari',
-			last: 'Seldon'
-		},
-		getFullName: function(){
-			return format('%1 %2', this.first, this.last);
+			message: 'Hello, World!'
 		}
 	});
 

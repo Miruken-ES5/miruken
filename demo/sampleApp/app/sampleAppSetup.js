@@ -12,17 +12,11 @@ new function(){
 	var sampleAppInstaller = Installer.extend({
 		$inject: ['$routeProvider'],
 		constructor: function($routeProvider){
-			$routeProvider
-				.when('/', {
-					templateUrl: 'app/welcome/welcome.html',
-					controller: 'WelcomeController',
-					controllerAs: 'vm'
-				})
-				.when('/helloWorld', {
-					templateUrl: 'app/helloWorld/helloWorld.html',
-					controller: 'HelloWorldController',
-					controllerAs: 'vm'
-				});
+			$routeProvider.when('/', {
+				templateUrl: 'app/welcome/welcome.html',
+				controller: 'WelcomeController',
+				controllerAs: 'vm'
+			});
 		}
 	});
 
