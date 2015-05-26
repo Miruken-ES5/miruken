@@ -38,8 +38,8 @@ new function(){
 			this.extend({
 				person:  new Person({
 					first:   'Hari', 
-					last:   'Seldon', 
-					gender: Person.MALE}),
+					last:    'Seldon', 
+					gender:  Person.MALE}),
 				employee: new Employee({
 					first:    'Raych', 
 					last:     'Seldon', 

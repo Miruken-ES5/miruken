@@ -26,18 +26,28 @@ new function(){
 			Person.MALE = 'MALE';
 			Person.FEMALE = 'FEMALE';
 
-			var Employee = function(first, last, gender, payGrade){
-				this.first = first;
-				this.last = last;
+			var Employee = function(first, last, gender, title, payGrade){
+				Person.call(this, first, last, gender)
+				this.title = title;
 				this.payGrade = payGrade;
 			}
 
-			Employee.prototype = new Person();
-			Employee.prototype.constructor = Employee;
+			Employee.prototype = Object.create(Person.prototype, {
+				constructor: {
+					configurable: true,
+					enumerable: true,
+					value: Employee,
+					writable: true
+				}
+			});
+
+			Employee.prototype.fullname = function(){
+				return Person.prototype.fullname.call(this) + ', ' + this.title;
+			}
 			
 			this.extend({
 				person:  new Person('Hari', 'Seldon', Person.MALE),
-				employee: new Employee('Raych', 'Seldon', Person.MALE, 3),
+				employee: new Employee('Raych', 'Seldon', Person.MALE, 'Professor', 3),
 				isObject: function(object){
 					return object instanceof Object;
 				},
