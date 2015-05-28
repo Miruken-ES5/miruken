@@ -4347,8 +4347,11 @@ var miruken = require('../miruken.js'),
 new function () { // closure
 
     /**
-     * @namespace miruken.ioc.
-     */
+     * @module miruken
+     * @submodule ioc
+     * @namespace miruken.ioc
+     * @Class $
+     */            
     var ioc = new base2.Package(this, {
         name:    "ioc",
         version: miruken.version,
@@ -4360,20 +4363,38 @@ new function () { // closure
     eval(this.imports);
 
     /**
-     * @class {Installer}
-     */
+     * Base class for installing one or more components into a 
+     * {{#crossLink "miruken.ioc.Container"}}{{/crossLink}}.
+     * @class Installer
+     * @extends Base
+     * @uses miruken.ioc.Registration
+     */        
     var Installer = Base.extend(Registration, {
-        register: function(container, composer) {}
+        register: function (container, composer) {}
     });
 
     /**
-     * @class {FromBuilder}
-     */
+     * Fluent builder for specifying source of components.
+     * @class FromBuilder
+     * @constructor
+     * @extends Base
+     * @uses miruken.ioc.Registration
+     */    
     var FromBuilder = Base.extend(Registration, {
         constructor: function () {
             var _basedOn;
             this.extend({
+                /**
+                 * Gets the classes represented by this source.
+                 * @method getClasses
+                 * @returns {Array} classes from this source.
+                 */        
                 getClasses: function () { return []; },
+                /**
+                 * Gets the builder for filtering classes from this source.
+                 * @method basedOn
+                 * @returns {miruken.ioc.BasedOnBuilder} fluent class filter.
+                 */        
                 basedOn: function (/*constraints*/) {
                     _basedOn = new BasedOnBuilder(this, Array2.flatten(arguments));
                     return _basedOn;
@@ -4408,9 +4429,13 @@ new function () { // closure
     });
 
     /**
-     * @class {FromPackageBuilder}
-     */
-    var FromPackageBuilder = FromBuilder.extend(Registration, {
+     * Fluent builder for specifying a Package as a source of components.
+     * @class FromPackageBuilder
+     * @constructor
+     * @param {Package} package  -  package containing components
+     * @extends miruken.ioc.FromBuilder
+     */        
+    var FromPackageBuilder = FromBuilder.extend({
         constructor: function (package) {
             this.base();
             this.extend({
@@ -4426,13 +4451,26 @@ new function () { // closure
     });
 
     /**
-     * @class {BasedOnBuilder}
-     */
+     * Fluent builder for filtering a source of components.
+     * @class BasedOnBuilder
+     * @constructor
+     * @param  {miruken.ioc.FromBuilder}  from            -  source of components
+     * @param  {Array}                    ...constraints  -  initial constraints
+     * @extends Base
+     * @uses miruken.ioc.Registration
+     */        
     var BasedOnBuilder = Base.extend(Registration, {
         constructor: function (from, constraints) {
             var _if, _unless, _configuration;
             this.withKeys = new KeyBuilder(this);
             this.extend({
+                /**
+                 * Adds a predicate for including a component.
+                 * @method if
+                 * @param   {Function}  condition  -  predicate to include component
+                 * @returns {miruken.ioc.BasedOnBuilder} current builder.
+                 * @chainable
+                 */        
                 if: function (condition) {
                     if (_if) {
                         var cond = _if;
@@ -4444,6 +4482,13 @@ new function () { // closure
                     }
                     return this;
                 },
+                /**
+                 * Adds a predicate for excluding a component.
+                 * @method unless
+                 * @param   {Function}  condition  -  predicate to exclude component
+                 * @returns {miruken.ioc.BasedOnBuilder} current builder.
+                 * @chainable
+                 */                        
                 unless: function (condition) {
                     if (_unless) {
                         var cond = _unless;
@@ -4455,6 +4500,14 @@ new function () { // closure
                     }
                     return this;
                 },
+                /**
+                 * Adds a custom component configuration.
+                 * @method configure
+                 * @param   {Function}  configuration  -  receives
+                 * {{#crossLink "miruken.ioc.ComponentModel"}}{{/crossLink}} for configuration
+                 * @returns {miruken.ioc.BasedOnBuilder} current builder.
+                 * @chainable
+                 */                                        
                 configure: function (configuration) {
                     if (_configuration) {
                         var configure  = _configuration;
@@ -4506,22 +4559,41 @@ new function () { // closure
     });
 
     /**
-     * @class {KeyBuilder}
-     */
+     * Fluent builder for identifying component key(s).
+     * @class KeyBuilder
+     * @constructor
+     * @param  {miruken.ioc.BasedOnBuilder}  basedOn  -  based on builder
+     * @extends Base
+     */            
     var KeyBuilder = Base.extend({
         constructor: function (basedOn) {
             var _keySelector;
             this.extend({
+                /**
+                 * Uses the component class as the key.
+                 * @method self
+                 * @returns {miruken.ioc.BasedOnBuilder} based on builder.
+                 */
                 self: function () {
                     return selectKeys(function (keys, clazz) {
                         keys.push(clazz);
                     });
                 },
+                /**
+                 * Uses the based on contraints as the keys.
+                 * @method basedOn
+                 * @returns {miruken.ioc.BasedOnBuilder} based on builder.
+                 */
                 basedOn: function () {
                     return selectKeys(function (keys, clazz, constraints) {
                         keys.push.apply(keys, constraints);
                     });
                 },
+                /**
+                 * Uses any class {{#crossLink "miruken.Protocol"}}{{/crossLink}} as the key.
+                 * @method anyService
+                 * @returns {miruken.ioc.BasedOnBuilder} based on builder.
+                 */
                 anyService: function () {
                     return selectKeys(function (keys, clazz) {
                         var services = clazz.$meta.getAllProtocols();
@@ -4530,11 +4602,22 @@ new function () { // closure
                         }
                     });
                 },
+                /**
+                 * Uses all class {{#crossLink "miruken.Protocol"}}{{/crossLink}} as the keys.
+                 * @method allServices
+                 * @returns {miruken.ioc.BasedOnBuilder} based on builder.
+                 */
                 allServices: function () {
                     return selectKeys(function (keys, clazz) {
                         keys.push.apply(keys, clazz.$meta.getAllProtocols());
                     });
                 },
+                /**
+                 * Uses the most specific {{#crossLink "miruken.Protocol"}}{{/crossLink}} 
+                 * in the class hierarchy as the key.
+                 * @method mostSpecificService
+                 * @returns {miruken.ioc.BasedOnBuilder} based on builder.
+                 */
                 mostSpecificService: function (service) {
                     return selectKeys(function (keys, clazz, constraints) {
                         if ($isProtocol(service)) {
@@ -4566,6 +4649,13 @@ new function () { // closure
                         }
                     });
                 },
+                /**
+                 * Uses a string as the component name.  
+                 * If no name is provided, the default name will be used.
+                 * @method name
+                 * @param {string | Function}  [n]  -  name or function receiving default name
+                 * @returns {miruken.ioc.BasedOnBuilder} based on builder.
+                 */                
                 name: function (n) {
                     return selectKeys(function (keys, clazz, constraints, name) {
                         if ($isNothing(n)) {
@@ -4581,6 +4671,14 @@ new function () { // closure
                         }
                     });
                 },
+                /**
+                 * Gets the component keys to be registered as.
+                 * @method getKeys
+                 * @param {Function}  clazz           -  component class
+                 * @param {Array}     ...constraints  -  initial constraints
+                 * @param {string}    name            -  default name
+                 * @returns {Array} component keys.
+                 */                                
                 getKeys: function (clazz, constraints, name) {
                     var keys = [];
                     if (_keySelector) {
@@ -4608,10 +4706,12 @@ new function () { // closure
     });
 
     /**
-     * @function $classes
-     * @param   {Any} from - source of classes 
-     * @returns {Any} a fluent class builder.
-     */
+     * Shortcut for creating a {{#crossLink "miruken.ioc.FromBuilder"}}{{/crossLink}}.
+     * @method $classes
+     * @param   {Any}  from  -  any source of classes.  Only Package is currently supported. 
+     * @return  {miruken.ioc.FromBuilder} from builder.
+     * @for miruken.ioc.$
+     */        
     function $classes(from) {
         if (from instanceof Package) {
             return new FromPackageBuilder(from);
@@ -4619,6 +4719,12 @@ new function () { // closure
         throw new TypeError(format("Unrecognized $classes from %1.", hint));
     }
 
+    /**
+     * Creates a {{#crossLink "miruken.ioc.FromBuilder"}}{{/crossLink}} using a Package source.
+     * @method $classes.fromPackage
+     * @param  {Package}  package
+     * @for miruken.ioc.$
+     */    
     $classes.fromPackage = function (package) {
         if (!(package instanceof Package)) {
             throw new TypeError(
@@ -4768,7 +4874,7 @@ new function () { // closure
      */                
     var Registration = Protocol.extend({
         /**
-         * Encapsulates the regisration of one or more components.
+         * Encapsulates the regisration of one or more components in a container.
          * @method register
          * @param {miruken.ioc.Container}            container  -  container to register components
          * @param {miruken.callback.CallbackHandler} composer   -  composition handler
@@ -4797,16 +4903,56 @@ new function () { // closure
      * @extends miruken.Enum
      */    
     var DependencyModifiers = Enum({
-        None:       0,
-        Use:        1 << 0,
-        Lazy:       1 << 1,
-        Every:      1 << 2,
+        /**
+         * No dependency modifiers.
+         * @property {number} None
+         */
+        None: 0,
+        /**
+         * See {{#crossLink "miruken.Modifier/$use:attribute"}}{{/crossLink}}
+         * @property {number} Use
+         */
+        Use: 1 << 0,
+        /**
+         * See {{#crossLink "miruken.Modifier/$lazy:attribute"}}{{/crossLink}}
+         * @property {number} Lazy
+         */
+        Lazy: 1 << 1,
+        /**
+         * See {{#crossLink "miruken.Modifier/$every:attribute"}}{{/crossLink}}
+         * @property {number} Every
+         */
+        Every: 1 << 2,
+        /**
+         * See {{#crossLink "miruken.Modifier/$eval:attribute"}}{{/crossLink}}
+         * @property {number} Dynamic
+         */
         Dynamic:    1 << 3,
+        /**
+         * See {{#crossLink "miruken.Modifier/$optional:attribute"}}{{/crossLink}}
+         * @property {number} Optional
+         */
         Optional:   1 << 4,
+        /**
+         * See {{#crossLink "miruken.Modifier/$promise:attribute"}}{{/crossLink}}
+         * @property {number} Promise
+         */
         Promise:    1 << 5,
-        Invariant:  1 << 6,
-        Container:  1 << 7,
-        Child:      1 << 8
+        /**
+         * See {{#crossLink "miruken.Modifier/$eq:attribute"}}{{/crossLink}}
+         * @property {number} Invariant
+         */
+        Invariant: 1 << 6,
+        /**
+         * See {{#crossLink "miruken.ioc.$container"}}{{/crossLink}}
+         * @property {number} Container
+         */
+        Container: 1 << 7,
+        /**
+         * See {{#crossLink "miruken.Modifier/$child:attribute"}}{{/crossLink}}
+         * @property {number} Child
+         */        
+        Child: 1 << 8
         });
 
     /**
@@ -5911,16 +6057,67 @@ new function () { // closure
 
     var META = '$meta';
 
-    var $eq       = $createModifier(),
-        $use      = $createModifier(),
-        $copy     = $createModifier(),
-        $lazy     = $createModifier(),
-        $eval     = $createModifier(),
-        $every    = $createModifier(),
-        $child    = $createModifier(),
-        $optional = $createModifier(),
-        $promise  = $createModifier(),
-        $instant  = $createModifier();
+    /**
+     * Annotates invariance.
+     * @attribute $eq
+     * @for miruken.Modifier
+     */
+    var $eq = $createModifier();
+    /**
+     * Annotates use value as is.
+     * @attribute $use
+     * @for miruken.Modifier
+     */    
+    var $use = $createModifier();
+    /**
+     * Annotates copy semantics.
+     * @attribute $copy
+     * @for miruken.Modifier
+     */        
+    var $copy = $createModifier();
+    /**
+     * Annotates lazy semantics.
+     * @attribute $lazy
+     * @for miruken.Modifier
+     */            
+    var $lazy = $createModifier();
+    /**
+     * Annotates function to be evaluated.
+     * @attribute $eval
+     * @for miruken.Modifier
+     */                
+    var $eval = $createModifier();
+    /**
+     * Annotates zero or more semantics.
+     * @attribute $every
+     * @for miruken.Modifier
+     */                    
+    var $every = $createModifier();
+    /**
+     * Annotates 
+     * @attribute use {{#crossLink "miruken.Parenting"}}{{/crossLink}} protocol.
+     * @attribute $child
+     * @for miruken.Modifier
+     */                        
+    var $child  = $createModifier();
+    /**
+     * Annotates optional semantics.
+     * @attribute $optional
+     * @for miruken.Modifier
+     */                        
+    var $optional = $createModifier();
+    /**
+     * Annotates Promise expectation.
+     * @attribute $promise
+     * @for miruken.Modifier
+     */                            
+    var $promise = $createModifier();
+    /**
+     * Annotates synchronous.
+     * @attribute $instant
+     * @for miruken.Modifier
+     */                                
+    var $instant = $createModifier();
     
     /**
      * Represents an enumeration
@@ -6677,6 +6874,16 @@ new function () { // closure
 
     /**
      * Metamacro to define custom properties.
+     * <pre>
+     *    var Person = Base.extend({
+     *       $properties: {
+     *           firstName: '',
+     *           lastNane:  '',
+     *           mom:       { map: Person },
+     *           dad:       { map: Person }
+     *       }
+     *    })
+     * </pre>
      * @class $properties
      * @constructor
      * @param   {string}  [tag='$properties']  - properties tag

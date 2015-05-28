@@ -95,11 +95,7 @@
                                 <li><a href="../classes/miruken.Invoking.html">miruken.Invoking</a></li>
                                 <li><a href="../classes/miruken.ioc.$.html">miruken.ioc.$</a></li>
                                 <li><a href="../classes/miruken.ioc.$container.html">miruken.ioc.$container</a></li>
-                                <li><a href="../classes/miruken.ioc..{BasedOnBuilder}.html">miruken.ioc..{BasedOnBuilder}</a></li>
-                                <li><a href="../classes/miruken.ioc..{FromBuilder}.html">miruken.ioc..{FromBuilder}</a></li>
-                                <li><a href="../classes/miruken.ioc..{FromPackageBuilder}.html">miruken.ioc..{FromPackageBuilder}</a></li>
-                                <li><a href="../classes/miruken.ioc..{Installer}.html">miruken.ioc..{Installer}</a></li>
-                                <li><a href="../classes/miruken.ioc..{KeyBuilder}.html">miruken.ioc..{KeyBuilder}</a></li>
+                                <li><a href="../classes/miruken.ioc.BasedOnBuilder.html">miruken.ioc.BasedOnBuilder</a></li>
                                 <li><a href="../classes/miruken.ioc.ComponentBuilder.html">miruken.ioc.ComponentBuilder</a></li>
                                 <li><a href="../classes/miruken.ioc.ComponentModel.html">miruken.ioc.ComponentModel</a></li>
                                 <li><a href="../classes/miruken.ioc.ComponentModelError.html">miruken.ioc.ComponentModelError</a></li>
@@ -112,8 +108,12 @@
                                 <li><a href="../classes/miruken.ioc.DependencyModifiers.html">miruken.ioc.DependencyModifiers</a></li>
                                 <li><a href="../classes/miruken.ioc.DependencyResolution.html">miruken.ioc.DependencyResolution</a></li>
                                 <li><a href="../classes/miruken.ioc.DependencyResolutionError.html">miruken.ioc.DependencyResolutionError</a></li>
+                                <li><a href="../classes/miruken.ioc.FromBuilder.html">miruken.ioc.FromBuilder</a></li>
+                                <li><a href="../classes/miruken.ioc.FromPackageBuilder.html">miruken.ioc.FromPackageBuilder</a></li>
+                                <li><a href="../classes/miruken.ioc.Installer.html">miruken.ioc.Installer</a></li>
                                 <li><a href="../classes/miruken.ioc.InterceptorBuilder.html">miruken.ioc.InterceptorBuilder</a></li>
                                 <li><a href="../classes/miruken.ioc.IoContainer.html">miruken.ioc.IoContainer</a></li>
+                                <li><a href="../classes/miruken.ioc.KeyBuilder.html">miruken.ioc.KeyBuilder</a></li>
                                 <li><a href="../classes/miruken.ioc.Lifestyle.html">miruken.ioc.Lifestyle</a></li>
                                 <li><a href="../classes/miruken.ioc.Registration.html">miruken.ioc.Registration</a></li>
                                 <li><a href="../classes/miruken.ioc.SingletonLifestyle.html">miruken.ioc.SingletonLifestyle</a></li>
@@ -123,10 +123,10 @@
                                 <li><a href="../classes/miruken.MetaStep.html">miruken.MetaStep</a></li>
                                 <li><a href="../classes/miruken.Miruken.html">miruken.Miruken</a></li>
                                 <li><a href="../classes/miruken.Modifier.html">miruken.Modifier</a></li>
-                                <li><a href="../classes/miruken.mvc.$.html">miruken.mvc.$</a></li>
+                                <li><a href="../classes/miruken.mvc.Controller.html">miruken.mvc.Controller</a></li>
                                 <li><a href="../classes/miruken.mvc.MasterDetail.html">miruken.mvc.MasterDetail</a></li>
-                                <li><a href="../classes/miruken.mvc.{Controller}.html">miruken.mvc.{Controller}</a></li>
-                                <li><a href="../classes/miruken.mvc.{Model}.html">miruken.mvc.{Model}</a></li>
+                                <li><a href="../classes/miruken.mvc.MasterDetailAware.html">miruken.mvc.MasterDetailAware</a></li>
+                                <li><a href="../classes/miruken.mvc.Model.html">miruken.mvc.Model</a></li>
                                 <li><a href="../classes/miruken.ng.Directive.html">miruken.ng.Directive</a></li>
                                 <li><a href="../classes/miruken.ng.Runner.html">miruken.ng.Runner</a></li>
                                 <li><a href="../classes/miruken.ng.UseModelValidation.html">miruken.ng.UseModelValidation</a></li>
@@ -221,6 +221,7 @@ See <a href="../classes/miruken.ioc.Container.html" class="crosslink">miruken.io
     <ul class="api-class-tabs">
         <li class="api-class-tab index"><a href="#index">Index</a></li>
 
+            <li class="api-class-tab attrs"><a href="#attrs">Attributes</a></li>
     </ul>
 
     <div>
@@ -229,11 +230,341 @@ See <a href="../classes/miruken.ioc.Container.html" class="crosslink">miruken.io
 
 
 
+                <div class="index-section attrs">
+                    <h3>Attributes</h3>
+
+                    <ul class="index-list attrs extends">
+                            <li class="index-item attr inherited">
+                                <a href="#attr_$child">$child</a>
+                            </li>
+                            <li class="index-item attr inherited">
+                                <a href="#attr_$copy">$copy</a>
+                            </li>
+                            <li class="index-item attr inherited">
+                                <a href="#attr_$eq">$eq</a>
+                            </li>
+                            <li class="index-item attr inherited">
+                                <a href="#attr_$eval">$eval</a>
+                            </li>
+                            <li class="index-item attr inherited">
+                                <a href="#attr_$every">$every</a>
+                            </li>
+                            <li class="index-item attr inherited">
+                                <a href="#attr_$instant">$instant</a>
+                            </li>
+                            <li class="index-item attr inherited">
+                                <a href="#attr_$lazy">$lazy</a>
+                            </li>
+                            <li class="index-item attr inherited">
+                                <a href="#attr_$optional">$optional</a>
+                            </li>
+                            <li class="index-item attr inherited">
+                                <a href="#attr_$promise">$promise</a>
+                            </li>
+                            <li class="index-item attr inherited">
+                                <a href="#attr_$use">$use</a>
+                            </li>
+                    </ul>
+                </div>
 
         </div>
 
 
 
+            <div id="attrs" class="api-class-tabpanel">
+                <h2 class="off-left">Attributes</h2>
+
+                    <div id="attr_$child" class="attr item inherited">
+                        <a name="config_$child"></a> 
+                        <h3 class="name"><code>$child</code></h3>
+                        <span class="type">#crossLink "miruken.Parenting"</span>
+                    
+                    
+                    
+                    
+                    
+                    
+                    
+                    
+                        <div class="meta">
+                                    <p>Inherited from
+                                    <a href="../classes/miruken.Modifier.html#attr_$child">miruken.Modifier</a>:
+                            <a href="../files/lib_miruken.js.html#l58"><code>lib&#x2F;miruken.js:58</code></a>
+                            </p>
+                    
+                    
+                        </div>
+                    
+                        <div class="description">
+                            <p>Annotates</p>
+                    
+                        </div>
+                    
+                    
+                    
+                    </div>
+                    <div id="attr_$copy" class="attr item inherited">
+                        <a name="config_$copy"></a> 
+                        <h3 class="name"><code>$copy</code></h3>
+                        <span class="type"></span>
+                    
+                    
+                    
+                    
+                    
+                    
+                    
+                    
+                        <div class="meta">
+                                    <p>Inherited from
+                                    <a href="../classes/miruken.Modifier.html#attr_$copy">miruken.Modifier</a>:
+                            <a href="../files/lib_miruken.js.html#l34"><code>lib&#x2F;miruken.js:34</code></a>
+                            </p>
+                    
+                    
+                        </div>
+                    
+                        <div class="description">
+                            <p>Annotates copy semantics.</p>
+                    
+                        </div>
+                    
+                    
+                    
+                    </div>
+                    <div id="attr_$eq" class="attr item inherited">
+                        <a name="config_$eq"></a> 
+                        <h3 class="name"><code>$eq</code></h3>
+                        <span class="type"></span>
+                    
+                    
+                    
+                    
+                    
+                    
+                    
+                    
+                        <div class="meta">
+                                    <p>Inherited from
+                                    <a href="../classes/miruken.Modifier.html#attr_$eq">miruken.Modifier</a>:
+                            <a href="../files/lib_miruken.js.html#l22"><code>lib&#x2F;miruken.js:22</code></a>
+                            </p>
+                    
+                    
+                        </div>
+                    
+                        <div class="description">
+                            <p>Annotates invariance.</p>
+                    
+                        </div>
+                    
+                    
+                    
+                    </div>
+                    <div id="attr_$eval" class="attr item inherited">
+                        <a name="config_$eval"></a> 
+                        <h3 class="name"><code>$eval</code></h3>
+                        <span class="type"></span>
+                    
+                    
+                    
+                    
+                    
+                    
+                    
+                    
+                        <div class="meta">
+                                    <p>Inherited from
+                                    <a href="../classes/miruken.Modifier.html#attr_$eval">miruken.Modifier</a>:
+                            <a href="../files/lib_miruken.js.html#l46"><code>lib&#x2F;miruken.js:46</code></a>
+                            </p>
+                    
+                    
+                        </div>
+                    
+                        <div class="description">
+                            <p>Annotates function to be evaluated.</p>
+                    
+                        </div>
+                    
+                    
+                    
+                    </div>
+                    <div id="attr_$every" class="attr item inherited">
+                        <a name="config_$every"></a> 
+                        <h3 class="name"><code>$every</code></h3>
+                        <span class="type"></span>
+                    
+                    
+                    
+                    
+                    
+                    
+                    
+                    
+                        <div class="meta">
+                                    <p>Inherited from
+                                    <a href="../classes/miruken.Modifier.html#attr_$every">miruken.Modifier</a>:
+                            <a href="../files/lib_miruken.js.html#l52"><code>lib&#x2F;miruken.js:52</code></a>
+                            </p>
+                    
+                    
+                        </div>
+                    
+                        <div class="description">
+                            <p>Annotates zero or more semantics.</p>
+                    
+                        </div>
+                    
+                    
+                    
+                    </div>
+                    <div id="attr_$instant" class="attr item inherited">
+                        <a name="config_$instant"></a> 
+                        <h3 class="name"><code>$instant</code></h3>
+                        <span class="type"></span>
+                    
+                    
+                    
+                    
+                    
+                    
+                    
+                    
+                        <div class="meta">
+                                    <p>Inherited from
+                                    <a href="../classes/miruken.Modifier.html#attr_$instant">miruken.Modifier</a>:
+                            <a href="../files/lib_miruken.js.html#l77"><code>lib&#x2F;miruken.js:77</code></a>
+                            </p>
+                    
+                    
+                        </div>
+                    
+                        <div class="description">
+                            <p>Annotates synchronous.</p>
+                    
+                        </div>
+                    
+                    
+                    
+                    </div>
+                    <div id="attr_$lazy" class="attr item inherited">
+                        <a name="config_$lazy"></a> 
+                        <h3 class="name"><code>$lazy</code></h3>
+                        <span class="type"></span>
+                    
+                    
+                    
+                    
+                    
+                    
+                    
+                    
+                        <div class="meta">
+                                    <p>Inherited from
+                                    <a href="../classes/miruken.Modifier.html#attr_$lazy">miruken.Modifier</a>:
+                            <a href="../files/lib_miruken.js.html#l40"><code>lib&#x2F;miruken.js:40</code></a>
+                            </p>
+                    
+                    
+                        </div>
+                    
+                        <div class="description">
+                            <p>Annotates lazy semantics.</p>
+                    
+                        </div>
+                    
+                    
+                    
+                    </div>
+                    <div id="attr_$optional" class="attr item inherited">
+                        <a name="config_$optional"></a> 
+                        <h3 class="name"><code>$optional</code></h3>
+                        <span class="type"></span>
+                    
+                    
+                    
+                    
+                    
+                    
+                    
+                    
+                        <div class="meta">
+                                    <p>Inherited from
+                                    <a href="../classes/miruken.Modifier.html#attr_$optional">miruken.Modifier</a>:
+                            <a href="../files/lib_miruken.js.html#l65"><code>lib&#x2F;miruken.js:65</code></a>
+                            </p>
+                    
+                    
+                        </div>
+                    
+                        <div class="description">
+                            <p>Annotates optional semantics.</p>
+                    
+                        </div>
+                    
+                    
+                    
+                    </div>
+                    <div id="attr_$promise" class="attr item inherited">
+                        <a name="config_$promise"></a> 
+                        <h3 class="name"><code>$promise</code></h3>
+                        <span class="type"></span>
+                    
+                    
+                    
+                    
+                    
+                    
+                    
+                    
+                        <div class="meta">
+                                    <p>Inherited from
+                                    <a href="../classes/miruken.Modifier.html#attr_$promise">miruken.Modifier</a>:
+                            <a href="../files/lib_miruken.js.html#l71"><code>lib&#x2F;miruken.js:71</code></a>
+                            </p>
+                    
+                    
+                        </div>
+                    
+                        <div class="description">
+                            <p>Annotates Promise expectation.</p>
+                    
+                        </div>
+                    
+                    
+                    
+                    </div>
+                    <div id="attr_$use" class="attr item inherited">
+                        <a name="config_$use"></a> 
+                        <h3 class="name"><code>$use</code></h3>
+                        <span class="type"></span>
+                    
+                    
+                    
+                    
+                    
+                    
+                    
+                    
+                        <div class="meta">
+                                    <p>Inherited from
+                                    <a href="../classes/miruken.Modifier.html#attr_$use">miruken.Modifier</a>:
+                            <a href="../files/lib_miruken.js.html#l28"><code>lib&#x2F;miruken.js:28</code></a>
+                            </p>
+                    
+                    
+                        </div>
+                    
+                        <div class="description">
+                            <p>Annotates use value as is.</p>
+                    
+                        </div>
+                    
+                    
+                    
+                    </div>
+            </div>
 
     </div>
 </div>

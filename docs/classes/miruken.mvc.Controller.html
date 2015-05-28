@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
     <meta charset="utf-8">
-    <title>miruken.callback.ConditionalCallbackHandler - miruken</title>
+    <title>miruken.mvc.Controller - miruken</title>
     <link rel="stylesheet" href="http://yui.yahooapis.com/3.9.1/build/cssgrids/cssgrids-min.css">
     <link rel="stylesheet" href="../assets/vendor/prettify/prettify-min.css">
     <link rel="stylesheet" href="../assets/css/main.css" id="site_styles">
@@ -193,44 +193,41 @@
             <div class="apidocs">
                 <div id="docs-main">
                     <div class="content">
-<h1>miruken.callback.ConditionalCallbackHandler Class</h1>
+<h1>miruken.mvc.Controller Class</h1>
 <div class="box meta">
+        <div class="uses">
+            Uses
+            <ul class="inline commas">
+                    <li><a href="miruken.context.Contextual.html">miruken.context.Contextual</a></li>
+                    <li><a href="miruken.validate.Validating.html">miruken.validate.Validating</a></li>
+            </ul>
+        </div>
 
         <div class="extends">
-            Extends <a href="../classes/miruken.callback.CallbackHandlerDecorator.html" class="crosslink">miruken.callback.CallbackHandlerDecorator</a>
+            Extends <a href="../classes/miruken.callback.CallbackHandler.html" class="crosslink">miruken.callback.CallbackHandler</a>
         </div>
 
         <div class="foundat">
-            Defined in: <a href="../files/lib_callback.js.html#l759"><code>lib&#x2F;callback.js:759</code></a>
+            Defined in: <a href="../files/lib_mvc_mvc.js.html#l154"><code>lib&#x2F;mvc&#x2F;mvc.js:154</code></a>
         </div>
 
-            Module: <a href="../modules/callback.html">callback</a><br>
+            Module: <a href="../modules/mvc.html">mvc</a><br>
             Parent Module: <a href="../modules/miruken.html">miruken</a>
 
 </div>
 
 
 <div class="box intro">
-    <p><a href="../classes/miruken.callback.CallbackHandler.html" class="crosslink">miruken.callback.CallbackHandler</a>
-that tests a condition before handling callbacks.</p>
+    <p>Base class for controllers.</p>
 
 </div>
 
     <div class="constructor">
         <h2>Constructor</h2>
-        <div id="method_miruken.callback.ConditionalCallbackHandler" class="method item">
-            <h3 class="name"><code>miruken.callback.ConditionalCallbackHandler</code></h3>
+        <div id="method_miruken.mvc.Controller" class="method item">
+            <h3 class="name"><code>miruken.mvc.Controller</code></h3>
         
-                <div class="args">
-                    <span class="paren">(</span><ul class="args-list inline commas">
-                        <li class="arg">
-                                <code>decoratee</code>
-                        </li>
-                        <li class="arg">
-                                <code>condition</code>
-                        </li>
-                    </ul><span class="paren">)</span>
-                </div>
+                <span class="paren">()</span>
         
         
         
@@ -242,7 +239,7 @@ that tests a condition before handling callbacks.</p>
             <div class="meta">
                         <p>
                         Defined in
-                <a href="../files/lib_callback.js.html#l759"><code>lib&#x2F;callback.js:759</code></a>
+                <a href="../files/lib_mvc_mvc.js.html#l154"><code>lib&#x2F;mvc&#x2F;mvc.js:154</code></a>
                 </p>
         
         
@@ -253,38 +250,6 @@ that tests a condition before handling callbacks.</p>
                 
             </div>
         
-                <div class="params">
-                    <h4>Parameters:</h4>
-        
-                    <ul class="params-list">
-                        <li class="param">
-                                <code class="param-name">decoratee</code>
-                                <span class="type"><a href="../classes/miruken.callback.CallbackHandler.html" class="crosslink">miruken.callback.CallbackHandler</a></span>
-        
-        
-                            <div class="param-description">
-                                <ul>
-        <li>decoratee</li>
-        </ul>
-        
-                            </div>
-        
-                        </li>
-                        <li class="param">
-                                <code class="param-name">condition</code>
-                                <span class="type">Function</span>
-        
-        
-                            <div class="param-description">
-                                <ul>
-        <li>condition predicate</li>
-        </ul>
-        
-                            </div>
-        
-                        </li>
-                    </ul>
-                </div>
         
         
         
@@ -355,6 +320,10 @@ that tests a condition before handling callbacks.</p>
 
                             </li>
                             <li class="index-item method inherited">
+                                <a href="#method_getContext">getContext</a>
+
+                            </li>
+                            <li class="index-item method inherited">
                                 <a href="#method_handle">handle</a>
 
                             </li>
@@ -383,7 +352,19 @@ that tests a condition before handling callbacks.</p>
 
                             </li>
                             <li class="index-item method inherited">
+                                <a href="#method_setContext">setContext</a>
+
+                            </li>
+                            <li class="index-item method inherited">
                                 <a href="#method_toDelegate">toDelegate</a>
+
+                            </li>
+                            <li class="index-item method inherited">
+                                <a href="#method_validate">validate</a>
+
+                            </li>
+                            <li class="index-item method inherited">
+                                <a href="#method_validateAsync">validateAsync</a>
 
                             </li>
                             <li class="index-item method inherited">
@@ -1100,6 +1081,49 @@ that tests a condition before handling callbacks.</p>
 
 
 </div>
+<div id="method_getContext" class="method item inherited">
+    <h3 class="name"><code>getContext</code></h3>
+
+        <span class="paren">()</span>
+
+        <span class="returns-inline">
+            <span class="type"><a href="../classes/miruken.context.Context.html" class="crosslink">miruken.context.Context</a></span>
+        </span>
+
+
+
+
+
+
+
+    <div class="meta">
+                <p>Inherited from
+                <a href="../classes/miruken.context.Contextual.html#method_getContext">miruken.context.Contextual</a>:
+        <a href="../files/lib_context.js.html#l297"><code>lib&#x2F;context.js:297</code></a>
+        </p>
+
+
+
+    </div>
+
+    <div class="description">
+        <p>Gets the context associated with the receiver.</p>
+
+    </div>
+
+
+        <div class="returns">
+            <h4>Returns:</h4>
+
+            <div class="returns-description">
+                        <span class="type"><a href="../classes/miruken.context.Context.html" class="crosslink">miruken.context.Context</a></span>:
+                    <p>associated context.</p>
+
+            </div>
+        </div>
+
+
+</div>
 <div id="method_handle" class="method item inherited">
     <h3 class="name"><code>handle</code></h3>
 
@@ -1645,6 +1669,62 @@ that tests a condition before handling callbacks.</p>
 
 
 </div>
+<div id="method_setContext" class="method item inherited">
+    <h3 class="name"><code>setContext</code></h3>
+
+        <div class="args">
+            <span class="paren">(</span><ul class="args-list inline commas">
+                <li class="arg">
+                        <code>context</code>
+                </li>
+            </ul><span class="paren">)</span>
+        </div>
+
+
+
+
+
+
+
+
+    <div class="meta">
+                <p>Inherited from
+                <a href="../classes/miruken.context.Contextual.html#method_setContext">miruken.context.Contextual</a>:
+        <a href="../files/lib_context.js.html#l303"><code>lib&#x2F;context.js:303</code></a>
+        </p>
+
+
+
+    </div>
+
+    <div class="description">
+        <p>Sets the context associated with the receiver.</p>
+
+    </div>
+
+        <div class="params">
+            <h4>Parameters:</h4>
+
+            <ul class="params-list">
+                <li class="param">
+                        <code class="param-name">context</code>
+                        <span class="type">miruken.contet.Context</span>
+
+
+                    <div class="param-description">
+                        <ul>
+<li>associated context</li>
+</ul>
+
+                    </div>
+
+                </li>
+            </ul>
+        </div>
+
+
+
+</div>
 <div id="method_toDelegate" class="method item inherited">
     <h3 class="name"><code>toDelegate</code></h3>
 
@@ -1682,6 +1762,209 @@ that tests a condition before handling callbacks.</p>
             <div class="returns-description">
                         <span class="type"><a href="../classes/miruken.callback.InvocationDelegate.html" class="crosslink">miruken.callback.InvocationDelegate</a></span>:
                     <p>delegate for this callback handler.</p>
+
+            </div>
+        </div>
+
+
+</div>
+<div id="method_validate" class="method item inherited">
+    <h3 class="name"><code>validate</code></h3>
+
+        <div class="args">
+            <span class="paren">(</span><ul class="args-list inline commas">
+                <li class="arg">
+                        <code>object</code>
+                </li>
+                <li class="arg">
+                        <code>scope</code>
+                </li>
+                <li class="arg">
+                        <code class="optional">[results]</code>
+                </li>
+            </ul><span class="paren">)</span>
+        </div>
+
+        <span class="returns-inline">
+            <span class="type"><a href="../classes/miruken.validate.ValidationResult.html" class="crosslink">miruken.validate.ValidationResult</a></span>
+        </span>
+
+
+
+
+
+
+
+    <div class="meta">
+                <p>Inherited from
+                <a href="../classes/miruken.validate.Validating.html#method_validate">miruken.validate.Validating</a>:
+        <a href="../files/lib_validate_validate.js.html#l39"><code>lib&#x2F;validate&#x2F;validate.js:39</code></a>
+        </p>
+
+
+
+    </div>
+
+    <div class="description">
+        <p>Validates the object in the scope.</p>
+
+    </div>
+
+        <div class="params">
+            <h4>Parameters:</h4>
+
+            <ul class="params-list">
+                <li class="param">
+                        <code class="param-name">object</code>
+                        <span class="type">Object</span>
+
+
+                    <div class="param-description">
+                        <ul>
+<li>object to validate</li>
+</ul>
+
+                    </div>
+
+                </li>
+                <li class="param">
+                        <code class="param-name">scope</code>
+                        <span class="type">Object</span>
+
+
+                    <div class="param-description">
+                        <ul>
+<li>scope of validation</li>
+</ul>
+
+                    </div>
+
+                </li>
+                <li class="param">
+                        <code class="param-name optional">[results]</code>
+                        <span class="type">Object</span>
+                        <span class="flag optional" title="This parameter is optional.">optional</span>
+
+
+                    <div class="param-description">
+                        <ul>
+<li>validation results</li>
+</ul>
+
+                    </div>
+
+                </li>
+            </ul>
+        </div>
+
+        <div class="returns">
+            <h4>Returns:</h4>
+
+            <div class="returns-description">
+                        <span class="type"><a href="../classes/miruken.validate.ValidationResult.html" class="crosslink">miruken.validate.ValidationResult</a></span>:
+                    <p>validation results.</p>
+
+            </div>
+        </div>
+
+
+</div>
+<div id="method_validateAsync" class="method item inherited">
+    <h3 class="name"><code>validateAsync</code></h3>
+
+        <div class="args">
+            <span class="paren">(</span><ul class="args-list inline commas">
+                <li class="arg">
+                        <code>object</code>
+                </li>
+                <li class="arg">
+                        <code>scope</code>
+                </li>
+                <li class="arg">
+                        <code class="optional">[results]</code>
+                </li>
+            </ul><span class="paren">)</span>
+        </div>
+
+        <span class="returns-inline">
+            <span class="type">Promise</span>
+        </span>
+
+
+
+
+
+
+        <span class="flag async">async</span>
+
+    <div class="meta">
+                <p>Inherited from
+                <a href="../classes/miruken.validate.Validating.html#method_validateAsync">miruken.validate.Validating</a>:
+        <a href="../files/lib_validate_validate.js.html#l48"><code>lib&#x2F;validate&#x2F;validate.js:48</code></a>
+        </p>
+
+
+
+    </div>
+
+    <div class="description">
+        <p>Validates the object asynchronously in the scope.</p>
+
+    </div>
+
+        <div class="params">
+            <h4>Parameters:</h4>
+
+            <ul class="params-list">
+                <li class="param">
+                        <code class="param-name">object</code>
+                        <span class="type">Object</span>
+
+
+                    <div class="param-description">
+                        <ul>
+<li>object to validate</li>
+</ul>
+
+                    </div>
+
+                </li>
+                <li class="param">
+                        <code class="param-name">scope</code>
+                        <span class="type">Object</span>
+
+
+                    <div class="param-description">
+                        <ul>
+<li>scope of validation</li>
+</ul>
+
+                    </div>
+
+                </li>
+                <li class="param">
+                        <code class="param-name optional">[results]</code>
+                        <span class="type">Object</span>
+                        <span class="flag optional" title="This parameter is optional.">optional</span>
+
+
+                    <div class="param-description">
+                        <ul>
+<li>validation results</li>
+</ul>
+
+                    </div>
+
+                </li>
+            </ul>
+        </div>
+
+        <div class="returns">
+            <h4>Returns:</h4>
+
+            <div class="returns-description">
+                        <span class="type">Promise</span>:
+                    <p>promise of validation results.</p>
 
             </div>
         </div>

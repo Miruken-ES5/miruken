@@ -95,11 +95,7 @@
                                 <li><a href="../classes/miruken.Invoking.html">miruken.Invoking</a></li>
                                 <li><a href="../classes/miruken.ioc.$.html">miruken.ioc.$</a></li>
                                 <li><a href="../classes/miruken.ioc.$container.html">miruken.ioc.$container</a></li>
-                                <li><a href="../classes/miruken.ioc..{BasedOnBuilder}.html">miruken.ioc..{BasedOnBuilder}</a></li>
-                                <li><a href="../classes/miruken.ioc..{FromBuilder}.html">miruken.ioc..{FromBuilder}</a></li>
-                                <li><a href="../classes/miruken.ioc..{FromPackageBuilder}.html">miruken.ioc..{FromPackageBuilder}</a></li>
-                                <li><a href="../classes/miruken.ioc..{Installer}.html">miruken.ioc..{Installer}</a></li>
-                                <li><a href="../classes/miruken.ioc..{KeyBuilder}.html">miruken.ioc..{KeyBuilder}</a></li>
+                                <li><a href="../classes/miruken.ioc.BasedOnBuilder.html">miruken.ioc.BasedOnBuilder</a></li>
                                 <li><a href="../classes/miruken.ioc.ComponentBuilder.html">miruken.ioc.ComponentBuilder</a></li>
                                 <li><a href="../classes/miruken.ioc.ComponentModel.html">miruken.ioc.ComponentModel</a></li>
                                 <li><a href="../classes/miruken.ioc.ComponentModelError.html">miruken.ioc.ComponentModelError</a></li>
@@ -112,8 +108,12 @@
                                 <li><a href="../classes/miruken.ioc.DependencyModifiers.html">miruken.ioc.DependencyModifiers</a></li>
                                 <li><a href="../classes/miruken.ioc.DependencyResolution.html">miruken.ioc.DependencyResolution</a></li>
                                 <li><a href="../classes/miruken.ioc.DependencyResolutionError.html">miruken.ioc.DependencyResolutionError</a></li>
+                                <li><a href="../classes/miruken.ioc.FromBuilder.html">miruken.ioc.FromBuilder</a></li>
+                                <li><a href="../classes/miruken.ioc.FromPackageBuilder.html">miruken.ioc.FromPackageBuilder</a></li>
+                                <li><a href="../classes/miruken.ioc.Installer.html">miruken.ioc.Installer</a></li>
                                 <li><a href="../classes/miruken.ioc.InterceptorBuilder.html">miruken.ioc.InterceptorBuilder</a></li>
                                 <li><a href="../classes/miruken.ioc.IoContainer.html">miruken.ioc.IoContainer</a></li>
+                                <li><a href="../classes/miruken.ioc.KeyBuilder.html">miruken.ioc.KeyBuilder</a></li>
                                 <li><a href="../classes/miruken.ioc.Lifestyle.html">miruken.ioc.Lifestyle</a></li>
                                 <li><a href="../classes/miruken.ioc.Registration.html">miruken.ioc.Registration</a></li>
                                 <li><a href="../classes/miruken.ioc.SingletonLifestyle.html">miruken.ioc.SingletonLifestyle</a></li>
@@ -123,10 +123,10 @@
                                 <li><a href="../classes/miruken.MetaStep.html">miruken.MetaStep</a></li>
                                 <li><a href="../classes/miruken.Miruken.html">miruken.Miruken</a></li>
                                 <li><a href="../classes/miruken.Modifier.html">miruken.Modifier</a></li>
-                                <li><a href="../classes/miruken.mvc.$.html">miruken.mvc.$</a></li>
+                                <li><a href="../classes/miruken.mvc.Controller.html">miruken.mvc.Controller</a></li>
                                 <li><a href="../classes/miruken.mvc.MasterDetail.html">miruken.mvc.MasterDetail</a></li>
-                                <li><a href="../classes/miruken.mvc.{Controller}.html">miruken.mvc.{Controller}</a></li>
-                                <li><a href="../classes/miruken.mvc.{Model}.html">miruken.mvc.{Model}</a></li>
+                                <li><a href="../classes/miruken.mvc.MasterDetailAware.html">miruken.mvc.MasterDetailAware</a></li>
+                                <li><a href="../classes/miruken.mvc.Model.html">miruken.mvc.Model</a></li>
                                 <li><a href="../classes/miruken.ng.Directive.html">miruken.ng.Directive</a></li>
                                 <li><a href="../classes/miruken.ng.Runner.html">miruken.ng.Runner</a></li>
                                 <li><a href="../classes/miruken.ng.UseModelValidation.html">miruken.ng.UseModelValidation</a></li>
@@ -197,11 +197,11 @@
 <div class="box meta">
 
         <div class="extends">
-            Extends miruekn.Protocol
+            Extends <a href="../classes/miruken.Protocol.html" class="crosslink">miruken.Protocol</a>
         </div>
 
         <div class="foundat">
-            Defined in: <a href="../files/lib_mvc_mvc.js.html#l138"><code>lib&#x2F;mvc&#x2F;mvc.js:138</code></a>
+            Defined in: <a href="../files/lib_mvc_mvc.js.html#l181"><code>lib&#x2F;mvc&#x2F;mvc.js:181</code></a>
         </div>
 
             Module: <a href="../modules/mvc.html">mvc</a><br>
@@ -211,43 +211,10 @@
 
 
 <div class="box intro">
-    <p>Protocol managing master-detail relationships.</p>
+    <p>Protocol for managing master-detail relationships.</p>
 
 </div>
 
-    <div class="constructor">
-        <h2>Constructor</h2>
-        <div id="method_miruken.mvc.MasterDetail" class="method item">
-            <h3 class="name"><code>miruken.mvc.MasterDetail</code></h3>
-        
-                <span class="paren">()</span>
-        
-        
-        
-        
-        
-        
-        
-        
-            <div class="meta">
-                        <p>
-                        Defined in
-                <a href="../files/lib_mvc_mvc.js.html#l138"><code>lib&#x2F;mvc&#x2F;mvc.js:138</code></a>
-                </p>
-        
-        
-        
-            </div>
-        
-            <div class="description">
-                
-            </div>
-        
-        
-        
-        
-        </div>
-    </div>
 
 <div id="classdocs" class="tabview">
     <ul class="api-class-tabs">
@@ -265,7 +232,47 @@
 
                     <ul class="index-list methods extends">
                             <li class="index-item method">
+                                <a href="#method_addDetail">addDetail</a>
+
+                            </li>
+                            <li class="index-item method">
+                                <a href="#method_deselectDetail">deselectDetail</a>
+
+                            </li>
+                            <li class="index-item method">
+                                <a href="#method_getNextDetail">getNextDetail</a>
+
+                            </li>
+                            <li class="index-item method">
+                                <a href="#method_getPreviousDetail">getPreviousDetail</a>
+
+                            </li>
+                            <li class="index-item method">
                                 <a href="#method_getSelectedDetail">getSelectedDetail</a>
+
+                            </li>
+                            <li class="index-item method">
+                                <a href="#method_getSelectedDetails">getSelectedDetails</a>
+
+                            </li>
+                            <li class="index-item method">
+                                <a href="#method_hasNextDetail.">hasNextDetail.</a>
+
+                            </li>
+                            <li class="index-item method">
+                                <a href="#method_hasPreviousDetail">hasPreviousDetail</a>
+
+                            </li>
+                            <li class="index-item method">
+                                <a href="#method_removeDetail">removeDetail</a>
+
+                            </li>
+                            <li class="index-item method">
+                                <a href="#method_selectDetail">selectDetail</a>
+
+                            </li>
+                            <li class="index-item method">
+                                <a href="#method_updateDetail">updateDetail</a>
 
                             </li>
                     </ul>
@@ -278,6 +285,254 @@
             <div id="methods" class="api-class-tabpanel">
                 <h2 class="off-left">Methods</h2>
 
+<div id="method_addDetail" class="method item">
+    <h3 class="name"><code>addDetail</code></h3>
+
+        <div class="args">
+            <span class="paren">(</span><ul class="args-list inline commas">
+                <li class="arg">
+                        <code>detail</code>
+                </li>
+            </ul><span class="paren">)</span>
+        </div>
+
+
+
+
+
+
+
+
+    <div class="meta">
+                <p>
+                Defined in
+        <a href="../files/lib_mvc_mvc.js.html#l241"><code>lib&#x2F;mvc&#x2F;mvc.js:241</code></a>
+        </p>
+
+
+
+    </div>
+
+    <div class="description">
+        <p>Adds the detail to the master.</p>
+
+    </div>
+
+        <div class="params">
+            <h4>Parameters:</h4>
+
+            <ul class="params-list">
+                <li class="param">
+                        <code class="param-name">detail</code>
+                        <span class="type">Object</span>
+
+
+                    <div class="param-description">
+                        <ul>
+<li>added detail</li>
+</ul>
+
+                    </div>
+
+                </li>
+            </ul>
+        </div>
+
+
+
+</div>
+<div id="method_deselectDetail" class="method item">
+    <h3 class="name"><code>deselectDetail</code></h3>
+
+        <div class="args">
+            <span class="paren">(</span><ul class="args-list inline commas">
+                <li class="arg">
+                        <code>detail</code>
+                </li>
+            </ul><span class="paren">)</span>
+        </div>
+
+
+
+
+
+
+
+
+    <div class="meta">
+                <p>
+                Defined in
+        <a href="../files/lib_mvc_mvc.js.html#l207"><code>lib&#x2F;mvc&#x2F;mvc.js:207</code></a>
+        </p>
+
+
+
+    </div>
+
+    <div class="description">
+        <p>Unselects the detail</p>
+
+    </div>
+
+        <div class="params">
+            <h4>Parameters:</h4>
+
+            <ul class="params-list">
+                <li class="param">
+                        <code class="param-name">detail</code>
+                        <span class="type">Object</span>
+
+
+                    <div class="param-description">
+                        <ul>
+<li>unselected detail</li>
+</ul>
+
+                    </div>
+
+                </li>
+            </ul>
+        </div>
+
+
+
+</div>
+<div id="method_getNextDetail" class="method item">
+    <h3 class="name"><code>getNextDetail</code></h3>
+
+        <div class="args">
+            <span class="paren">(</span><ul class="args-list inline commas">
+                <li class="arg">
+                        <code>detailClass</code>
+                </li>
+            </ul><span class="paren">)</span>
+        </div>
+
+        <span class="returns-inline">
+            <span class="type">Object</span>
+        </span>
+
+
+
+
+
+
+
+    <div class="meta">
+                <p>
+                Defined in
+        <a href="../files/lib_mvc_mvc.js.html#l234"><code>lib&#x2F;mvc&#x2F;mvc.js:234</code></a>
+        </p>
+
+
+
+    </div>
+
+    <div class="description">
+        <p>Gets the next detail.</p>
+
+    </div>
+
+        <div class="params">
+            <h4>Parameters:</h4>
+
+            <ul class="params-list">
+                <li class="param">
+                        <code class="param-name">detailClass</code>
+                        <span class="type">Function</span>
+
+
+                    <div class="param-description">
+                        <ul>
+<li>type of detail</li>
+</ul>
+
+                    </div>
+
+                </li>
+            </ul>
+        </div>
+
+        <div class="returns">
+            <h4>Returns:</h4>
+
+            <div class="returns-description">
+                        <span class="type">Object</span>:
+                    <p>next detail or undefined.</p>
+
+            </div>
+        </div>
+
+
+</div>
+<div id="method_getPreviousDetail" class="method item">
+    <h3 class="name"><code>getPreviousDetail</code></h3>
+
+        <div class="args">
+            <span class="paren">(</span><ul class="args-list inline commas">
+                <li class="arg">
+                        <code>detailClass</code>
+                </li>
+            </ul><span class="paren">)</span>
+        </div>
+
+        <span class="returns-inline">
+            <span class="type">Object</span>
+        </span>
+
+
+
+
+
+
+
+    <div class="meta">
+                <p>
+                Defined in
+        <a href="../files/lib_mvc_mvc.js.html#l227"><code>lib&#x2F;mvc&#x2F;mvc.js:227</code></a>
+        </p>
+
+
+
+    </div>
+
+    <div class="description">
+        <p>Gets the previous detail.</p>
+
+    </div>
+
+        <div class="params">
+            <h4>Parameters:</h4>
+
+            <ul class="params-list">
+                <li class="param">
+                        <code class="param-name">detailClass</code>
+                        <span class="type">Function</span>
+
+
+                    <div class="param-description">
+                        <ul>
+<li>type of detail</li>
+</ul>
+
+                    </div>
+
+                </li>
+            </ul>
+        </div>
+
+        <div class="returns">
+            <h4>Returns:</h4>
+
+            <div class="returns-description">
+                        <span class="type">Object</span>:
+                    <p>previous detail or undefined..</p>
+
+            </div>
+        </div>
+
+
+</div>
 <div id="method_getSelectedDetail" class="method item">
     <h3 class="name"><code>getSelectedDetail</code></h3>
 
@@ -302,7 +557,7 @@
     <div class="meta">
                 <p>
                 Defined in
-        <a href="../files/lib_mvc_mvc.js.html#l145"><code>lib&#x2F;mvc&#x2F;mvc.js:145</code></a>
+        <a href="../files/lib_mvc_mvc.js.html#l187"><code>lib&#x2F;mvc&#x2F;mvc.js:187</code></a>
         </p>
 
 
@@ -343,6 +598,394 @@
 
             </div>
         </div>
+
+
+</div>
+<div id="method_getSelectedDetails" class="method item">
+    <h3 class="name"><code>getSelectedDetails</code></h3>
+
+        <div class="args">
+            <span class="paren">(</span><ul class="args-list inline commas">
+                <li class="arg">
+                        <code>detailClass</code>
+                </li>
+            </ul><span class="paren">)</span>
+        </div>
+
+        <span class="returns-inline">
+            <span class="type">Object</span>
+        </span>
+
+
+
+
+
+
+
+    <div class="meta">
+                <p>
+                Defined in
+        <a href="../files/lib_mvc_mvc.js.html#l194"><code>lib&#x2F;mvc&#x2F;mvc.js:194</code></a>
+        </p>
+
+
+
+    </div>
+
+    <div class="description">
+        <p>Gets the selected details.</p>
+
+    </div>
+
+        <div class="params">
+            <h4>Parameters:</h4>
+
+            <ul class="params-list">
+                <li class="param">
+                        <code class="param-name">detailClass</code>
+                        <span class="type">Function</span>
+
+
+                    <div class="param-description">
+                        <ul>
+<li>type of detail</li>
+</ul>
+
+                    </div>
+
+                </li>
+            </ul>
+        </div>
+
+        <div class="returns">
+            <h4>Returns:</h4>
+
+            <div class="returns-description">
+                        <span class="type">Object</span>:
+                    <p>selected details.  Could be a Promise.</p>
+
+            </div>
+        </div>
+
+
+</div>
+<div id="method_hasNextDetail." class="method item">
+    <h3 class="name"><code>hasNextDetail.</code></h3>
+
+        <div class="args">
+            <span class="paren">(</span><ul class="args-list inline commas">
+                <li class="arg">
+                        <code>detailClass</code>
+                </li>
+            </ul><span class="paren">)</span>
+        </div>
+
+        <span class="returns-inline">
+            <span class="type">Boolean</span>
+        </span>
+
+
+
+
+
+
+
+    <div class="meta">
+                <p>
+                Defined in
+        <a href="../files/lib_mvc_mvc.js.html#l220"><code>lib&#x2F;mvc&#x2F;mvc.js:220</code></a>
+        </p>
+
+
+
+    </div>
+
+    <div class="description">
+        <p>Determines if a next detail exists.</p>
+
+    </div>
+
+        <div class="params">
+            <h4>Parameters:</h4>
+
+            <ul class="params-list">
+                <li class="param">
+                        <code class="param-name">detailClass</code>
+                        <span class="type">Function</span>
+
+
+                    <div class="param-description">
+                        <ul>
+<li>type of detail</li>
+</ul>
+
+                    </div>
+
+                </li>
+            </ul>
+        </div>
+
+        <div class="returns">
+            <h4>Returns:</h4>
+
+            <div class="returns-description">
+                        <span class="type">Boolean</span>:
+                    <p>true if a next detail exists.</p>
+
+            </div>
+        </div>
+
+
+</div>
+<div id="method_hasPreviousDetail" class="method item">
+    <h3 class="name"><code>hasPreviousDetail</code></h3>
+
+        <div class="args">
+            <span class="paren">(</span><ul class="args-list inline commas">
+                <li class="arg">
+                        <code>detailClass</code>
+                </li>
+            </ul><span class="paren">)</span>
+        </div>
+
+        <span class="returns-inline">
+            <span class="type">Boolean</span>
+        </span>
+
+
+
+
+
+
+
+    <div class="meta">
+                <p>
+                Defined in
+        <a href="../files/lib_mvc_mvc.js.html#l213"><code>lib&#x2F;mvc&#x2F;mvc.js:213</code></a>
+        </p>
+
+
+
+    </div>
+
+    <div class="description">
+        <p>Determines if a previous detail exists.</p>
+
+    </div>
+
+        <div class="params">
+            <h4>Parameters:</h4>
+
+            <ul class="params-list">
+                <li class="param">
+                        <code class="param-name">detailClass</code>
+                        <span class="type">Function</span>
+
+
+                    <div class="param-description">
+                        <ul>
+<li>type of detail</li>
+</ul>
+
+                    </div>
+
+                </li>
+            </ul>
+        </div>
+
+        <div class="returns">
+            <h4>Returns:</h4>
+
+            <div class="returns-description">
+                        <span class="type">Boolean</span>:
+                    <p>true if a previous detail exists.</p>
+
+            </div>
+        </div>
+
+
+</div>
+<div id="method_removeDetail" class="method item">
+    <h3 class="name"><code>removeDetail</code></h3>
+
+        <div class="args">
+            <span class="paren">(</span><ul class="args-list inline commas">
+                <li class="arg">
+                        <code>detail</code>
+                </li>
+                <li class="arg">
+                        <code>deleteIt</code>
+                </li>
+            </ul><span class="paren">)</span>
+        </div>
+
+
+
+
+
+
+
+
+    <div class="meta">
+                <p>
+                Defined in
+        <a href="../files/lib_mvc_mvc.js.html#l253"><code>lib&#x2F;mvc&#x2F;mvc.js:253</code></a>
+        </p>
+
+
+
+    </div>
+
+    <div class="description">
+        <p>Removes the detail from the master.</p>
+
+    </div>
+
+        <div class="params">
+            <h4>Parameters:</h4>
+
+            <ul class="params-list">
+                <li class="param">
+                        <code class="param-name">detail</code>
+                        <span class="type">Object</span>
+
+
+                    <div class="param-description">
+                        <ul>
+<li>removed detail</li>
+</ul>
+
+                    </div>
+
+                </li>
+                <li class="param">
+                        <code class="param-name">deleteIt</code>
+                        <span class="type">Boolean</span>
+
+
+                    <div class="param-description">
+                        <ul>
+<li>true to delete it</li>
+</ul>
+
+                    </div>
+
+                </li>
+            </ul>
+        </div>
+
+
+
+</div>
+<div id="method_selectDetail" class="method item">
+    <h3 class="name"><code>selectDetail</code></h3>
+
+        <div class="args">
+            <span class="paren">(</span><ul class="args-list inline commas">
+                <li class="arg">
+                        <code>detail</code>
+                </li>
+            </ul><span class="paren">)</span>
+        </div>
+
+
+
+
+
+
+
+
+    <div class="meta">
+                <p>
+                Defined in
+        <a href="../files/lib_mvc_mvc.js.html#l201"><code>lib&#x2F;mvc&#x2F;mvc.js:201</code></a>
+        </p>
+
+
+
+    </div>
+
+    <div class="description">
+        <p>Selects the detail</p>
+
+    </div>
+
+        <div class="params">
+            <h4>Parameters:</h4>
+
+            <ul class="params-list">
+                <li class="param">
+                        <code class="param-name">detail</code>
+                        <span class="type">Object</span>
+
+
+                    <div class="param-description">
+                        <ul>
+<li>selected detail</li>
+</ul>
+
+                    </div>
+
+                </li>
+            </ul>
+        </div>
+
+
+
+</div>
+<div id="method_updateDetail" class="method item">
+    <h3 class="name"><code>updateDetail</code></h3>
+
+        <div class="args">
+            <span class="paren">(</span><ul class="args-list inline commas">
+                <li class="arg">
+                        <code>detail</code>
+                </li>
+            </ul><span class="paren">)</span>
+        </div>
+
+
+
+
+
+
+
+
+    <div class="meta">
+                <p>
+                Defined in
+        <a href="../files/lib_mvc_mvc.js.html#l247"><code>lib&#x2F;mvc&#x2F;mvc.js:247</code></a>
+        </p>
+
+
+
+    </div>
+
+    <div class="description">
+        <p>Updates the detail in the master.</p>
+
+    </div>
+
+        <div class="params">
+            <h4>Parameters:</h4>
+
+            <ul class="params-list">
+                <li class="param">
+                        <code class="param-name">detail</code>
+                        <span class="type">Object</span>
+
+
+                    <div class="param-description">
+                        <ul>
+<li>updated detail</li>
+</ul>
+
+                    </div>
+
+                </li>
+            </ul>
+        </div>
+
 
 
 </div>

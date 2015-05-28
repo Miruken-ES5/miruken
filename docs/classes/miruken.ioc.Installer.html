@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
     <meta charset="utf-8">
-    <title>miruken.ioc..{Installer} - miruken</title>
+    <title>miruken.ioc.Installer - miruken</title>
     <link rel="stylesheet" href="http://yui.yahooapis.com/3.9.1/build/cssgrids/cssgrids-min.css">
     <link rel="stylesheet" href="../assets/vendor/prettify/prettify-min.css">
     <link rel="stylesheet" href="../assets/css/main.css" id="site_styles">
@@ -95,11 +95,7 @@
                                 <li><a href="../classes/miruken.Invoking.html">miruken.Invoking</a></li>
                                 <li><a href="../classes/miruken.ioc.$.html">miruken.ioc.$</a></li>
                                 <li><a href="../classes/miruken.ioc.$container.html">miruken.ioc.$container</a></li>
-                                <li><a href="../classes/miruken.ioc..{BasedOnBuilder}.html">miruken.ioc..{BasedOnBuilder}</a></li>
-                                <li><a href="../classes/miruken.ioc..{FromBuilder}.html">miruken.ioc..{FromBuilder}</a></li>
-                                <li><a href="../classes/miruken.ioc..{FromPackageBuilder}.html">miruken.ioc..{FromPackageBuilder}</a></li>
-                                <li><a href="../classes/miruken.ioc..{Installer}.html">miruken.ioc..{Installer}</a></li>
-                                <li><a href="../classes/miruken.ioc..{KeyBuilder}.html">miruken.ioc..{KeyBuilder}</a></li>
+                                <li><a href="../classes/miruken.ioc.BasedOnBuilder.html">miruken.ioc.BasedOnBuilder</a></li>
                                 <li><a href="../classes/miruken.ioc.ComponentBuilder.html">miruken.ioc.ComponentBuilder</a></li>
                                 <li><a href="../classes/miruken.ioc.ComponentModel.html">miruken.ioc.ComponentModel</a></li>
                                 <li><a href="../classes/miruken.ioc.ComponentModelError.html">miruken.ioc.ComponentModelError</a></li>
@@ -112,8 +108,12 @@
                                 <li><a href="../classes/miruken.ioc.DependencyModifiers.html">miruken.ioc.DependencyModifiers</a></li>
                                 <li><a href="../classes/miruken.ioc.DependencyResolution.html">miruken.ioc.DependencyResolution</a></li>
                                 <li><a href="../classes/miruken.ioc.DependencyResolutionError.html">miruken.ioc.DependencyResolutionError</a></li>
+                                <li><a href="../classes/miruken.ioc.FromBuilder.html">miruken.ioc.FromBuilder</a></li>
+                                <li><a href="../classes/miruken.ioc.FromPackageBuilder.html">miruken.ioc.FromPackageBuilder</a></li>
+                                <li><a href="../classes/miruken.ioc.Installer.html">miruken.ioc.Installer</a></li>
                                 <li><a href="../classes/miruken.ioc.InterceptorBuilder.html">miruken.ioc.InterceptorBuilder</a></li>
                                 <li><a href="../classes/miruken.ioc.IoContainer.html">miruken.ioc.IoContainer</a></li>
+                                <li><a href="../classes/miruken.ioc.KeyBuilder.html">miruken.ioc.KeyBuilder</a></li>
                                 <li><a href="../classes/miruken.ioc.Lifestyle.html">miruken.ioc.Lifestyle</a></li>
                                 <li><a href="../classes/miruken.ioc.Registration.html">miruken.ioc.Registration</a></li>
                                 <li><a href="../classes/miruken.ioc.SingletonLifestyle.html">miruken.ioc.SingletonLifestyle</a></li>
@@ -123,10 +123,10 @@
                                 <li><a href="../classes/miruken.MetaStep.html">miruken.MetaStep</a></li>
                                 <li><a href="../classes/miruken.Miruken.html">miruken.Miruken</a></li>
                                 <li><a href="../classes/miruken.Modifier.html">miruken.Modifier</a></li>
-                                <li><a href="../classes/miruken.mvc.$.html">miruken.mvc.$</a></li>
+                                <li><a href="../classes/miruken.mvc.Controller.html">miruken.mvc.Controller</a></li>
                                 <li><a href="../classes/miruken.mvc.MasterDetail.html">miruken.mvc.MasterDetail</a></li>
-                                <li><a href="../classes/miruken.mvc.{Controller}.html">miruken.mvc.{Controller}</a></li>
-                                <li><a href="../classes/miruken.mvc.{Model}.html">miruken.mvc.{Model}</a></li>
+                                <li><a href="../classes/miruken.mvc.MasterDetailAware.html">miruken.mvc.MasterDetailAware</a></li>
+                                <li><a href="../classes/miruken.mvc.Model.html">miruken.mvc.Model</a></li>
                                 <li><a href="../classes/miruken.ng.Directive.html">miruken.ng.Directive</a></li>
                                 <li><a href="../classes/miruken.ng.Runner.html">miruken.ng.Runner</a></li>
                                 <li><a href="../classes/miruken.ng.UseModelValidation.html">miruken.ng.UseModelValidation</a></li>
@@ -193,21 +193,33 @@
             <div class="apidocs">
                 <div id="docs-main">
                     <div class="content">
-<h1>miruken.ioc..{Installer} Class</h1>
+<h1>miruken.ioc.Installer Class</h1>
 <div class="box meta">
-
-
-        <div class="foundat">
-            Defined in: <a href="../files/lib_ioc_config.js.html#l20"><code>lib&#x2F;ioc&#x2F;config.js:20</code></a>
+        <div class="uses">
+            Uses
+            <ul class="inline commas">
+                    <li><a href="miruken.ioc.Registration.html">miruken.ioc.Registration</a></li>
+            </ul>
         </div>
 
-            Module: <a href="../modules/miruken.html">miruken</a>
+        <div class="extends">
+            Extends Base
+        </div>
+
+        <div class="foundat">
+            Defined in: <a href="../files/lib_ioc_config.js.html#l23"><code>lib&#x2F;ioc&#x2F;config.js:23</code></a>
+        </div>
+
+            Module: <a href="../modules/ioc.html">ioc</a><br>
+            Parent Module: <a href="../modules/miruken.html">miruken</a>
 
 </div>
 
 
 <div class="box intro">
-    
+    <p>Base class for installing one or more components into a 
+<a href="../classes/miruken.ioc.Container.html" class="crosslink">miruken.ioc.Container</a>.</p>
+
 </div>
 
 
@@ -215,17 +227,116 @@
     <ul class="api-class-tabs">
         <li class="api-class-tab index"><a href="#index">Index</a></li>
 
+            <li class="api-class-tab methods"><a href="#methods">Methods</a></li>
     </ul>
 
     <div>
         <div id="index" class="api-class-tabpanel index">
             <h2 class="off-left">Item Index</h2>
 
+                <div class="index-section methods">
+                    <h3>Methods</h3>
+
+                    <ul class="index-list methods extends">
+                            <li class="index-item method inherited">
+                                <a href="#method_register">register</a>
+
+                            </li>
+                    </ul>
+                </div>
 
 
 
         </div>
 
+            <div id="methods" class="api-class-tabpanel">
+                <h2 class="off-left">Methods</h2>
+
+<div id="method_register" class="method item inherited">
+    <h3 class="name"><code>register</code></h3>
+
+        <div class="args">
+            <span class="paren">(</span><ul class="args-list inline commas">
+                <li class="arg">
+                        <code>container</code>
+                </li>
+                <li class="arg">
+                        <code>composer</code>
+                </li>
+            </ul><span class="paren">)</span>
+        </div>
+
+        <span class="returns-inline">
+            <span class="type">Function</span>
+        </span>
+
+
+
+
+
+
+
+    <div class="meta">
+                <p>Inherited from
+                <a href="../classes/miruken.ioc.Registration.html#method_register">miruken.ioc.Registration</a>:
+        <a href="../files/lib_ioc_ioc.js.html#l98"><code>lib&#x2F;ioc&#x2F;ioc.js:98</code></a>
+        </p>
+
+
+
+    </div>
+
+    <div class="description">
+        <p>Encapsulates the regisration of one or more components in a container.</p>
+
+    </div>
+
+        <div class="params">
+            <h4>Parameters:</h4>
+
+            <ul class="params-list">
+                <li class="param">
+                        <code class="param-name">container</code>
+                        <span class="type"><a href="../classes/miruken.ioc.Container.html" class="crosslink">miruken.ioc.Container</a></span>
+
+
+                    <div class="param-description">
+                        <ul>
+<li>container to register components</li>
+</ul>
+
+                    </div>
+
+                </li>
+                <li class="param">
+                        <code class="param-name">composer</code>
+                        <span class="type"><a href="../classes/miruken.callback.CallbackHandler.html" class="crosslink">miruken.callback.CallbackHandler</a></span>
+
+
+                    <div class="param-description">
+                        <ul>
+<li>composition handler</li>
+</ul>
+
+                    </div>
+
+                </li>
+            </ul>
+        </div>
+
+        <div class="returns">
+            <h4>Returns:</h4>
+
+            <div class="returns-description">
+                        <span class="type">Function</span>:
+                    <p>function to unregister components.</p>
+
+            </div>
+        </div>
+
+
+</div>
+            </div>
 
 
 

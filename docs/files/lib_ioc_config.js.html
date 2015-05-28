@@ -95,11 +95,7 @@
                                 <li><a href="../classes/miruken.Invoking.html">miruken.Invoking</a></li>
                                 <li><a href="../classes/miruken.ioc.$.html">miruken.ioc.$</a></li>
                                 <li><a href="../classes/miruken.ioc.$container.html">miruken.ioc.$container</a></li>
-                                <li><a href="../classes/miruken.ioc..{BasedOnBuilder}.html">miruken.ioc..{BasedOnBuilder}</a></li>
-                                <li><a href="../classes/miruken.ioc..{FromBuilder}.html">miruken.ioc..{FromBuilder}</a></li>
-                                <li><a href="../classes/miruken.ioc..{FromPackageBuilder}.html">miruken.ioc..{FromPackageBuilder}</a></li>
-                                <li><a href="../classes/miruken.ioc..{Installer}.html">miruken.ioc..{Installer}</a></li>
-                                <li><a href="../classes/miruken.ioc..{KeyBuilder}.html">miruken.ioc..{KeyBuilder}</a></li>
+                                <li><a href="../classes/miruken.ioc.BasedOnBuilder.html">miruken.ioc.BasedOnBuilder</a></li>
                                 <li><a href="../classes/miruken.ioc.ComponentBuilder.html">miruken.ioc.ComponentBuilder</a></li>
                                 <li><a href="../classes/miruken.ioc.ComponentModel.html">miruken.ioc.ComponentModel</a></li>
                                 <li><a href="../classes/miruken.ioc.ComponentModelError.html">miruken.ioc.ComponentModelError</a></li>
@@ -112,8 +108,12 @@
                                 <li><a href="../classes/miruken.ioc.DependencyModifiers.html">miruken.ioc.DependencyModifiers</a></li>
                                 <li><a href="../classes/miruken.ioc.DependencyResolution.html">miruken.ioc.DependencyResolution</a></li>
                                 <li><a href="../classes/miruken.ioc.DependencyResolutionError.html">miruken.ioc.DependencyResolutionError</a></li>
+                                <li><a href="../classes/miruken.ioc.FromBuilder.html">miruken.ioc.FromBuilder</a></li>
+                                <li><a href="../classes/miruken.ioc.FromPackageBuilder.html">miruken.ioc.FromPackageBuilder</a></li>
+                                <li><a href="../classes/miruken.ioc.Installer.html">miruken.ioc.Installer</a></li>
                                 <li><a href="../classes/miruken.ioc.InterceptorBuilder.html">miruken.ioc.InterceptorBuilder</a></li>
                                 <li><a href="../classes/miruken.ioc.IoContainer.html">miruken.ioc.IoContainer</a></li>
+                                <li><a href="../classes/miruken.ioc.KeyBuilder.html">miruken.ioc.KeyBuilder</a></li>
                                 <li><a href="../classes/miruken.ioc.Lifestyle.html">miruken.ioc.Lifestyle</a></li>
                                 <li><a href="../classes/miruken.ioc.Registration.html">miruken.ioc.Registration</a></li>
                                 <li><a href="../classes/miruken.ioc.SingletonLifestyle.html">miruken.ioc.SingletonLifestyle</a></li>
@@ -123,10 +123,10 @@
                                 <li><a href="../classes/miruken.MetaStep.html">miruken.MetaStep</a></li>
                                 <li><a href="../classes/miruken.Miruken.html">miruken.Miruken</a></li>
                                 <li><a href="../classes/miruken.Modifier.html">miruken.Modifier</a></li>
-                                <li><a href="../classes/miruken.mvc.$.html">miruken.mvc.$</a></li>
+                                <li><a href="../classes/miruken.mvc.Controller.html">miruken.mvc.Controller</a></li>
                                 <li><a href="../classes/miruken.mvc.MasterDetail.html">miruken.mvc.MasterDetail</a></li>
-                                <li><a href="../classes/miruken.mvc.{Controller}.html">miruken.mvc.{Controller}</a></li>
-                                <li><a href="../classes/miruken.mvc.{Model}.html">miruken.mvc.{Model}</a></li>
+                                <li><a href="../classes/miruken.mvc.MasterDetailAware.html">miruken.mvc.MasterDetailAware</a></li>
+                                <li><a href="../classes/miruken.mvc.Model.html">miruken.mvc.Model</a></li>
                                 <li><a href="../classes/miruken.ng.Directive.html">miruken.ng.Directive</a></li>
                                 <li><a href="../classes/miruken.ng.Runner.html">miruken.ng.Runner</a></li>
                                 <li><a href="../classes/miruken.ng.UseModelValidation.html">miruken.ng.UseModelValidation</a></li>
@@ -204,8 +204,11 @@ var miruken = require(&#x27;../miruken.js&#x27;),
 new function () { // closure
 
     /**
-     * @namespace miruken.ioc.
-     */
+     * @module miruken
+     * @submodule ioc
+     * @namespace miruken.ioc
+     * @Class $
+     */            
     var ioc = new base2.Package(this, {
         name:    &quot;ioc&quot;,
         version: miruken.version,
@@ -217,20 +220,38 @@ new function () { // closure
     eval(this.imports);
 
     /**
-     * @class {Installer}
-     */
+     * Base class for installing one or more components into a 
+     * {{#crossLink &quot;miruken.ioc.Container&quot;}}{{/crossLink}}.
+     * @class Installer
+     * @extends Base
+     * @uses miruken.ioc.Registration
+     */        
     var Installer = Base.extend(Registration, {
-        register: function(container, composer) {}
+        register: function (container, composer) {}
     });
 
     /**
-     * @class {FromBuilder}
-     */
+     * Fluent builder for specifying source of components.
+     * @class FromBuilder
+     * @constructor
+     * @extends Base
+     * @uses miruken.ioc.Registration
+     */    
     var FromBuilder = Base.extend(Registration, {
         constructor: function () {
             var _basedOn;
             this.extend({
+                /**
+                 * Gets the classes represented by this source.
+                 * @method getClasses
+                 * @returns {Array} classes from this source.
+                 */        
                 getClasses: function () { return []; },
+                /**
+                 * Gets the builder for filtering classes from this source.
+                 * @method basedOn
+                 * @returns {miruken.ioc.BasedOnBuilder} fluent class filter.
+                 */        
                 basedOn: function (/*constraints*/) {
                     _basedOn = new BasedOnBuilder(this, Array2.flatten(arguments));
                     return _basedOn;
@@ -265,9 +286,13 @@ new function () { // closure
     });
 
     /**
-     * @class {FromPackageBuilder}
-     */
-    var FromPackageBuilder = FromBuilder.extend(Registration, {
+     * Fluent builder for specifying a Package as a source of components.
+     * @class FromPackageBuilder
+     * @constructor
+     * @param {Package} package  -  package containing components
+     * @extends miruken.ioc.FromBuilder
+     */        
+    var FromPackageBuilder = FromBuilder.extend({
         constructor: function (package) {
             this.base();
             this.extend({
@@ -283,13 +308,26 @@ new function () { // closure
     });
 
     /**
-     * @class {BasedOnBuilder}
-     */
+     * Fluent builder for filtering a source of components.
+     * @class BasedOnBuilder
+     * @constructor
+     * @param  {miruken.ioc.FromBuilder}  from            -  source of components
+     * @param  {Array}                    ...constraints  -  initial constraints
+     * @extends Base
+     * @uses miruken.ioc.Registration
+     */        
     var BasedOnBuilder = Base.extend(Registration, {
         constructor: function (from, constraints) {
             var _if, _unless, _configuration;
             this.withKeys = new KeyBuilder(this);
             this.extend({
+                /**
+                 * Adds a predicate for including a component.
+                 * @method if
+                 * @param   {Function}  condition  -  predicate to include component
+                 * @returns {miruken.ioc.BasedOnBuilder} current builder.
+                 * @chainable
+                 */        
                 if: function (condition) {
                     if (_if) {
                         var cond = _if;
@@ -301,6 +339,13 @@ new function () { // closure
                     }
                     return this;
                 },
+                /**
+                 * Adds a predicate for excluding a component.
+                 * @method unless
+                 * @param   {Function}  condition  -  predicate to exclude component
+                 * @returns {miruken.ioc.BasedOnBuilder} current builder.
+                 * @chainable
+                 */                        
                 unless: function (condition) {
                     if (_unless) {
                         var cond = _unless;
@@ -312,6 +357,14 @@ new function () { // closure
                     }
                     return this;
                 },
+                /**
+                 * Adds a custom component configuration.
+                 * @method configure
+                 * @param   {Function}  configuration  -  receives
+                 * {{#crossLink &quot;miruken.ioc.ComponentModel&quot;}}{{/crossLink}} for configuration
+                 * @returns {miruken.ioc.BasedOnBuilder} current builder.
+                 * @chainable
+                 */                                        
                 configure: function (configuration) {
                     if (_configuration) {
                         var configure  = _configuration;
@@ -363,22 +416,41 @@ new function () { // closure
     });
 
     /**
-     * @class {KeyBuilder}
-     */
+     * Fluent builder for identifying component key(s).
+     * @class KeyBuilder
+     * @constructor
+     * @param  {miruken.ioc.BasedOnBuilder}  basedOn  -  based on builder
+     * @extends Base
+     */            
     var KeyBuilder = Base.extend({
         constructor: function (basedOn) {
             var _keySelector;
             this.extend({
+                /**
+                 * Uses the component class as the key.
+                 * @method self
+                 * @returns {miruken.ioc.BasedOnBuilder} based on builder.
+                 */
                 self: function () {
                     return selectKeys(function (keys, clazz) {
                         keys.push(clazz);
                     });
                 },
+                /**
+                 * Uses the based on contraints as the keys.
+                 * @method basedOn
+                 * @returns {miruken.ioc.BasedOnBuilder} based on builder.
+                 */
                 basedOn: function () {
                     return selectKeys(function (keys, clazz, constraints) {
                         keys.push.apply(keys, constraints);
                     });
                 },
+                /**
+                 * Uses any class {{#crossLink &quot;miruken.Protocol&quot;}}{{/crossLink}} as the key.
+                 * @method anyService
+                 * @returns {miruken.ioc.BasedOnBuilder} based on builder.
+                 */
                 anyService: function () {
                     return selectKeys(function (keys, clazz) {
                         var services = clazz.$meta.getAllProtocols();
@@ -387,11 +459,22 @@ new function () { // closure
                         }
                     });
                 },
+                /**
+                 * Uses all class {{#crossLink &quot;miruken.Protocol&quot;}}{{/crossLink}} as the keys.
+                 * @method allServices
+                 * @returns {miruken.ioc.BasedOnBuilder} based on builder.
+                 */
                 allServices: function () {
                     return selectKeys(function (keys, clazz) {
                         keys.push.apply(keys, clazz.$meta.getAllProtocols());
                     });
                 },
+                /**
+                 * Uses the most specific {{#crossLink &quot;miruken.Protocol&quot;}}{{/crossLink}} 
+                 * in the class hierarchy as the key.
+                 * @method mostSpecificService
+                 * @returns {miruken.ioc.BasedOnBuilder} based on builder.
+                 */
                 mostSpecificService: function (service) {
                     return selectKeys(function (keys, clazz, constraints) {
                         if ($isProtocol(service)) {
@@ -423,6 +506,13 @@ new function () { // closure
                         }
                     });
                 },
+                /**
+                 * Uses a string as the component name.  
+                 * If no name is provided, the default name will be used.
+                 * @method name
+                 * @param {string | Function}  [n]  -  name or function receiving default name
+                 * @returns {miruken.ioc.BasedOnBuilder} based on builder.
+                 */                
                 name: function (n) {
                     return selectKeys(function (keys, clazz, constraints, name) {
                         if ($isNothing(n)) {
@@ -438,6 +528,14 @@ new function () { // closure
                         }
                     });
                 },
+                /**
+                 * Gets the component keys to be registered as.
+                 * @method getKeys
+                 * @param {Function}  clazz           -  component class
+                 * @param {Array}     ...constraints  -  initial constraints
+                 * @param {string}    name            -  default name
+                 * @returns {Array} component keys.
+                 */                                
                 getKeys: function (clazz, constraints, name) {
                     var keys = [];
                     if (_keySelector) {
@@ -465,10 +563,12 @@ new function () { // closure
     });
 
     /**
-     * @function $classes
-     * @param   {Any} from - source of classes 
-     * @returns {Any} a fluent class builder.
-     */
+     * Shortcut for creating a {{#crossLink &quot;miruken.ioc.FromBuilder&quot;}}{{/crossLink}}.
+     * @method $classes
+     * @param   {Any}  from  -  any source of classes.  Only Package is currently supported. 
+     * @return  {miruken.ioc.FromBuilder} from builder.
+     * @for miruken.ioc.$
+     */        
     function $classes(from) {
         if (from instanceof Package) {
             return new FromPackageBuilder(from);
@@ -476,6 +576,12 @@ new function () { // closure
         throw new TypeError(format(&quot;Unrecognized $classes from %1.&quot;, hint));
     }
 
+    /**
+     * Creates a {{#crossLink &quot;miruken.ioc.FromBuilder&quot;}}{{/crossLink}} using a Package source.
+     * @method $classes.fromPackage
+     * @param  {Package}  package
+     * @for miruken.ioc.$
+     */    
     $classes.fromPackage = function (package) {
         if (!(package instanceof Package)) {
             throw new TypeError(
