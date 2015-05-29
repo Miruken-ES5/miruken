@@ -305,24 +305,21 @@ new function () { // closure
             this.extend({
                 /**
                  * Gets the context state.
-                 * @method getState
-                 * @returns {miruken.context.ContextState} context state.
+                 * @property {miruken.context.ContextState} state
                  */
                 getState: function () {
                     return _state; 
                 },
                 /**
                  * Gets the parent context.
-                 * @method getParent
-                 * @returns {miruken.context.Context} parent context.
+                 * @property {miruken.context.Context} parent
                  */                
                 getParent: function () {
                     return _parent; 
                 },
                 /**
                  * Gets the context children.
-                 * @method getChildren
-                 * @returns {Array} context children.
+                 * @property {Array} children
                  */                                
                 getChildren: function () {
                     return _children.copy(); 
@@ -337,8 +334,7 @@ new function () { // closure
                 },
                 /**
                  * Gets the root context.
-                 * @method getRoot
-                 * @returns {miruken.context.Context} root context.
+                 * @property {miruken.context.Context} root
                  */                                
                 getRoot: function () {
                     var root = this;    
@@ -691,7 +687,111 @@ new function () { // closure
             };
         }(axis);
     }
-    
+
+    /**
+     * Sets the default callback handler axis to
+     * {{#crossLink &quot;miruken.graph.TraversingAxis/Self:property&quot;}}{{/crossLink}}.
+     * @method $self
+     * @returns {miruken.context.Context} default traversal axis.
+     * @for miruken.context.Context
+     */
+
+    /**
+     * Sets the default callback handler axis to
+     * {{#crossLink &quot;miruken.graph.TraversingAxis/Root:property&quot;}}{{/crossLink}}.
+     * @method $root
+     * @returns {miruken.context.Context} default traversal axis.
+     * @for miruken.context.Context
+     */
+
+    /**
+     * Sets the default callback handler axis to
+     * {{#crossLink &quot;miruken.graph.TraversingAxis/Child:property&quot;}}{{/crossLink}}.
+     * @method $child
+     * @returns {miruken.context.Context} default traversal axis.
+     * @for miruken.context.Context
+     */
+
+    /**
+     * Sets the default callback handler axis to
+     * {{#crossLink &quot;miruken.graph.TraversingAxis/Sibling:property&quot;}}{{/crossLink}}.
+     * @method $sibling
+     * @returns {miruken.context.Context} default traversal axis.
+     * @for miruken.context.Context
+     */
+
+    /**
+     * Sets the default callback handler axis to
+     * {{#crossLink &quot;miruken.graph.TraversingAxis/Ancestor:property&quot;}}{{/crossLink}}.
+     * @method $ancestor
+     * @returns {miruken.context.Context} default traversal axis.
+     * @for miruken.context.Context
+     */
+
+    /**
+     * Sets the default callback handler axis to
+     * {{#crossLink &quot;miruken.graph.TraversingAxis/Descendant:property&quot;}}{{/crossLink}}.
+     * @method $descendant
+     * @returns {miruken.context.Context} default traversal axis.
+     * @for miruken.context.Context
+     */
+
+    /**
+     * Sets the default callback handler axis to
+     * {{#crossLink &quot;miruken.graph.TraversingAxis/DescendantReverse:property&quot;}}{{/crossLink}}.
+     * @method $descendantReverse
+     * @returns {miruken.context.Context} default traversal axis.
+     * @for miruken.context.Context
+     */        
+
+    /**
+     * Sets the default callback handler axis to
+     * {{#crossLink &quot;miruken.graph.TraversingAxis/ChildOrSelf:property&quot;}}{{/crossLink}}.
+     * @method $childOrSelf
+     * @returns {miruken.context.Context} default traversal axis.
+     * @for miruken.context.Context
+     */
+
+    /**
+     * Sets the default callback handler axis to
+     * {{#crossLink &quot;miruken.graph.TraversingAxis/SiblingOrSelf:property&quot;}}{{/crossLink}}.
+     * @method $siblingOrSelf
+     * @returns {miruken.context.Context} default traversal axis.
+     * @for miruken.context.Context
+     */
+
+    /**
+     * Sets the default callback handler axis to
+     * {{#crossLink &quot;miruken.graph.TraversingAxis/AncestorOrSelf:property&quot;}}{{/crossLink}}.
+     * @method $ancestorOrSelf
+     * @returns {miruken.context.Context} default traversal axis.
+     * @for miruken.context.Context
+     */        
+
+    /**
+     * Sets the default callback handler axis to
+     * {{#crossLink &quot;miruken.graph.TraversingAxis/DescendantOrSelf:property&quot;}}{{/crossLink}}.
+     * @method $descendantOrSelf
+     * @returns {miruken.context.Context} default traversal axis.
+     * @for miruken.context.Context
+     */
+
+    /**
+     * Sets the default callback handler axis to
+     * {{#crossLink &quot;miruken.graph.TraversingAxis/DescendantOrSelfReverse:property&quot;}}{{/crossLink}}.
+     * @method $descendantOrSelfReverse
+     * @returns {miruken.context.Context} default traversal axis.
+     * @for miruken.context.Context
+     */
+
+    /**
+     * Sets the default callback handler axis to
+     * {{#crossLink &quot;miruken.graph.TraversingAxis/AncestorSiblingOrSelf:property&quot;}}{{/crossLink}}.
+     * @method $ancestorSiblingOrSelf
+     * @returns {miruken.context.Context} default traversal axis.
+     * @for miruken.context.Context
+     */
+
     Context.implement(axisControl);
 
     function _newContextTraversal(context, axis) {

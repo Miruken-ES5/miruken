@@ -354,12 +354,12 @@ new function () { // closure
          * See {{#crossLink &quot;miruken.Modifier/$optional:attribute&quot;}}{{/crossLink}}
          * @property {number} Optional
          */
-        Optional:   1 &lt;&lt; 4,
+        Optional: 1 &lt;&lt; 4,
         /**
          * See {{#crossLink &quot;miruken.Modifier/$promise:attribute&quot;}}{{/crossLink}}
          * @property {number} Promise
          */
-        Promise:    1 &lt;&lt; 5,
+        Promise: 1 &lt;&lt; 5,
         /**
          * See {{#crossLink &quot;miruken.Modifier/$eq:attribute&quot;}}{{/crossLink}}
          * @property {number} Invariant
@@ -512,8 +512,7 @@ new function () { // closure
     });
 
     /**
-     * Defines a component specification to be managed by a
-     * {{#crossLink &quot;miruken.ioc.Container&quot;}}{{/crossLink}}.
+     * Describes a component to be managed by a {{#crossLink &quot;miruken.ioc.Container&quot;}}{{/crossLink}}.
      * @class ComponentModel
      * @constructor
      * @extends Base
@@ -525,23 +524,16 @@ new function () { // closure
                 _invariant = false, _burden = {};
             this.extend({
                 /**
-                 * Gets the component key.
-                 * @method getKey
-                 * @returns {Any} component key
+                 * Gets/sets the component key.
+                 * @property {Any} key
                  */
                 getKey: function () {
                     return _key || _class
                 },
-                /**
-                 * Sets the component key.
-                 * @method setKey
-                 * @param {Any} value  - component key
-                 */
                 setKey: function (value) { _key = value; },
                 /**
-                 * Gets the component class.
-                 * @method getClass
-                 * @returns {Function} component class
+                 * Gets/sets the component class.
+                 * @property {Functon} class
                  */
                 getClass: function () {
                     var clazz = _class;
@@ -550,11 +542,6 @@ new function () { // closure
                     }
                     return clazz;
                 },
-                /**
-                 * Sets the component class.
-                 * @method setClass
-                 * @param {Function} value  -  component class
-                 */
                 setClass: function (value) {
                     if ($isSomething(value) &amp;&amp; !$isClass(value)) {
                         throw new TypeError(format(&quot;%1 is not a class.&quot;, value));
@@ -562,30 +549,18 @@ new function () { // closure
                     _class = value;
                 },
                 /**
-                 * Determines if the component is invariant.
-                 * @method isInvariant
-                 * @returns {boolean} true if component is invariant, false othereise.
+                 * true if component is invariant, false otherwise.
+                 * @property {boolean} invariant
                  */                                                
                 isInvariant: function () {
                     return _invariant;
                 },
-                /**
-                 * Sets the component invariance.
-                 * @method setInvariant
-                 * @param {bool} value  -  true if component is invariant, false othereise.
-                 */
                 setInvariant: function (value) { _invariant = !!value; },
                 /**
-                 * Gets the component lifestyle.
-                 * @method getLifestyle
-                 * @returns {miruken.ioc.Lifestyle} component lifestyle.
+                 * Gets/sets the component lifestyle.
+                 * @property {miruken.ioc.Lifestyle} lifestyle
                  */
                 getLifestyle: function () { return _lifestyle; },
-                /**
-                 * Sets the component lifestyle.
-                 * @method setLifestyle
-                 * @param {miruken.ioc.Lifestyle} value  -  component lifestyle
-                 */
                 setLifestyle: function (value) {
                     if (!$isSomething(value) &amp;&amp; !(value instanceof Lifestyle)) {
                         throw new TypeError(format(&quot;%1 is not a Lifestyle.&quot;, value));
@@ -593,9 +568,8 @@ new function () { // closure
                     _lifestyle = value; 
                 },
                 /**
-                 * Gets the component factory.
-                 * @method getFactory
-                 * @returns {Function} component factory.
+                 * Gets/sets the component factory.
+                 * @property {Function} factory
                  */
                 getFactory: function () {
                     var factory = _factory,
@@ -617,11 +591,6 @@ new function () { // closure
                     }
                     return factory;
                 },
-                /**
-                 * Sets the component factory.
-                 * @method setFactory
-                 * @param {Function} value  -  component factory
-                 */
                 setFactory: function (value) {
                     if ($isSomething(value) &amp;&amp; !$isFunction(value)) {
                         throw new TypeError(format(&quot;%1 is not a function.&quot;, value));
@@ -676,8 +645,7 @@ new function () { // closure
                 },
                 /**
                  * Gets the component dependency burden.
-                 * @method getBurden
-                 * @return {Object} hash of component dependencies.
+                 * @property {Object} burden
                  */                                
                 getBurden: function () { return _burden; }
             });

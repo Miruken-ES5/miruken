@@ -467,24 +467,21 @@ new function () { // closure
             this.extend({
                 /**
                  * Gets the lookup key.
-                 * @method getKey
-                 * @returns {Any} lookup key
+                 * @property {Any} key
                  */
                 getKey: function () { return key; },
                 /**
-                 * Gets the lookup cardinality.
-                 * @method isMany
-                 * @returns {boolean} true if lookup all, otherwise first. 
+                 * true if lookup all, false otherwise.
+                 * @property {boolean} many
                  */
                 isMany: function () { return many; },
                 /**
                  * Gets the matching results.
-                 * @method getResults
-                 * @returns {Array} results of lookup.
+                 * @property {Array} results
                  */
                 getResults: function () { return _results; },
                 /**
-                 * Adds the lookup result.
+                 * Adds a lookup result.
                  * @param  {Any}  reault - lookup result
                  */
                 addResult: function (result) {
@@ -514,26 +511,23 @@ new function () { // closure
             var _pending = [];
             this.extend({
                 /**
-                 * Gets the cardinality of handle.
-                 * @method isMany
-                 * @returns {boolean} true if all handlers, otherwise first. 
+                 * true if handle all, false otherwise.
+                 * @property {boolean} many
                  */
                 isMany: function () { return many; },
                 /**
                  * Gets the callback.
-                 * @method getCallback
-                 * @returns {Object} callback.
+                 * @property {Object} callback
                  */
                 getCallback: function () { return callback; },
                 /**
                  * Gets the pending promises.
-                 * @method getPending
-                 * @returns {Array} pending promises.
+                 * @property {Array} pending
                  */
                 getPending: function () { return _pending; },
                 /**
-                 * Tracks the pending promise.
-                 * @param  {miruken.Promise}  promise - handle promise
+                 * Tracks a pending promise.
+                 * @param {miruken.Promise}  promise - handle promise
                  */
                 track: function (promise) {
                     if ($isPromise(promise)) {
@@ -564,25 +558,22 @@ new function () { // closure
             this.extend({
                 /**
                  * Gets the key.
-                 * @method getKey
-                 * @returns {Any} key
+                 * @property {Any} key
                  */                
                 getKey: function () { return key; },
                 /**
-                 * Gets the cardinality of resolution.
-                 * @method isMany
-                 * @returns {boolean} true if resolve all, otherwise first. 
+                 * true if resolve all, false otherwise.
+                 * @property {boolean} many
                  */                
                 isMany: function () { return many; },
                 /**
                  * Gets the resolutions.
-                 * @method getResolutions
-                 * @returns {Array} resolutions.
+                 * @property {Array} resolutions
                  */                
                 getResolutions: function () { return _resolutions; },
                 /**
                  * Adds a resolution.
-                 * @param  {Any}  resolution - resolution
+                 * @param {Any} resolution  -  resolution
                  */
                 resolve: function (resolution) {
                     if (!(_instant &amp;&amp; $isPromise(resolution))) {
