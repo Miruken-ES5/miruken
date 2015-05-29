@@ -83,7 +83,6 @@
                                 <li><a href="../classes/miruken.error.ErrorCallbackHandler.html">miruken.error.ErrorCallbackHandler</a></li>
                                 <li><a href="../classes/miruken.error.Errors.html">miruken.error.Errors</a></li>
                                 <li><a href="../classes/miruken.Facet.html">miruken.Facet</a></li>
-                                <li><a href="../classes/miruken.graph.$.html">miruken.graph.$</a></li>
                                 <li><a href="../classes/miruken.graph.Traversal.html">miruken.graph.Traversal</a></li>
                                 <li><a href="../classes/miruken.graph.Traversing.html">miruken.graph.Traversing</a></li>
                                 <li><a href="../classes/miruken.graph.TraversingAxis.html">miruken.graph.TraversingAxis</a></li>
@@ -141,10 +140,10 @@
                                 <li><a href="../classes/miruken.validate.$registerValidators.html">miruken.validate.$registerValidators</a></li>
                                 <li><a href="../classes/miruken.validate.$validateThat.html">miruken.validate.$validateThat</a></li>
                                 <li><a href="../classes/miruken.validate.miruken.callback.CallbackHandler.html">miruken.validate.miruken.callback.CallbackHandler</a></li>
+                                <li><a href="../classes/miruken.validate.ValidateJsCallbackHandler.html">miruken.validate.ValidateJsCallbackHandler</a></li>
                                 <li><a href="../classes/miruken.validate.Validating.html">miruken.validate.Validating</a></li>
                                 <li><a href="../classes/miruken.validate.Validation.html">miruken.validate.Validation</a></li>
                                 <li><a href="../classes/miruken.validate.ValidationCallbackHandler.html">miruken.validate.ValidationCallbackHandler</a></li>
-                                <li><a href="../classes/miruken.validate.ValidationJsCallbackHandler.html">miruken.validate.ValidationJsCallbackHandler</a></li>
                                 <li><a href="../classes/miruken.validate.ValidationRegistry.html">miruken.validate.ValidationRegistry</a></li>
                                 <li><a href="../classes/miruken.validate.ValidationResult.html">miruken.validate.ValidationResult</a></li>
                                 <li><a href="../classes/miruken.validate.Validator.html">miruken.validate.Validator</a></li>
@@ -218,6 +217,7 @@
       $properties: {
           firstName: { validate: { presence: true } },
           lastNane:  { validate: { presence: true } },
+          sibling:   { map: Child },
           age:       { validate {
                            numericality: {
                                onlyInteger:       true,
@@ -309,8 +309,9 @@
 
                             </li>
                             <li class="index-item method">
-                                <a href="#method_toData">toData</a>
+                                <a href="#method_map">map</a>
 
+                                    <span class="flag static">static</span>
                             </li>
                             <li class="index-item method">
                                 <a href="#method_toData">toData</a>
@@ -347,7 +348,7 @@
     <div class="meta">
                 <p>
                 Defined in
-        <a href="../files/lib_mvc_mvc.js.html#l57"><code>lib&#x2F;mvc&#x2F;mvc.js:57</code></a>
+        <a href="../files/lib_mvc_mvc.js.html#l58"><code>lib&#x2F;mvc&#x2F;mvc.js:58</code></a>
         </p>
 
 
@@ -382,93 +383,8 @@
 
 
 </div>
-<div id="method_toData" class="method item">
-    <h3 class="name"><code>toData</code></h3>
-
-        <div class="args">
-            <span class="paren">(</span><ul class="args-list inline commas">
-                <li class="arg">
-                        <code>spec</code>
-                </li>
-                <li class="arg">
-                        <code class="optional">[data]</code>
-                </li>
-            </ul><span class="paren">)</span>
-        </div>
-
-        <span class="returns-inline">
-            <span class="type">Object</span>
-        </span>
-
-
-
-
-
-
-
-    <div class="meta">
-                <p>
-                Defined in
-        <a href="../files/lib_mvc_mvc.js.html#l96"><code>lib&#x2F;mvc&#x2F;mvc.js:96</code></a>
-        </p>
-
-
-
-    </div>
-
-    <div class="description">
-        <p>Maps the model into json structured data.</p>
-
-    </div>
-
-        <div class="params">
-            <h4>Parameters:</h4>
-
-            <ul class="params-list">
-                <li class="param">
-                        <code class="param-name">spec</code>
-                        <span class="type">Object</span>
-
-
-                    <div class="param-description">
-                        <ul>
-<li>filters data to map</li>
-</ul>
-
-                    </div>
-
-                </li>
-                <li class="param">
-                        <code class="param-name optional">[data]</code>
-                        <span class="type">Object</span>
-                        <span class="flag optional" title="This parameter is optional.">optional</span>
-
-
-                    <div class="param-description">
-                        <ul>
-<li>receives mapped data</li>
-</ul>
-
-                    </div>
-
-                </li>
-            </ul>
-        </div>
-
-        <div class="returns">
-            <h4>Returns:</h4>
-
-            <div class="returns-description">
-                        <span class="type">Object</span>:
-                    <p>json structured data.</p>
-
-            </div>
-        </div>
-
-
-</div>
-<div id="method_toData" class="method item">
-    <h3 class="name"><code>toData</code></h3>
+<div id="method_map" class="method item">
+    <h3 class="name"><code>map</code></h3>
 
         <div class="args">
             <span class="paren">(</span><ul class="args-list inline commas">
@@ -491,13 +407,14 @@
 
 
 
+        <span class="flag static">static</span>
 
 
 
     <div class="meta">
                 <p>
                 Defined in
-        <a href="../files/lib_mvc_mvc.js.html#l132"><code>lib&#x2F;mvc&#x2F;mvc.js:132</code></a>
+        <a href="../files/lib_mvc_mvc.js.html#l133"><code>lib&#x2F;mvc&#x2F;mvc.js:133</code></a>
         </p>
 
 
@@ -505,7 +422,7 @@
     </div>
 
     <div class="description">
-        <p>Maps the model value into json using the mapper.</p>
+        <p>Maps the model value into json using a mapper function.</p>
 
     </div>
 
@@ -548,6 +465,91 @@
                     <div class="param-description">
                         <ul>
 <li>mapping options</li>
+</ul>
+
+                    </div>
+
+                </li>
+            </ul>
+        </div>
+
+        <div class="returns">
+            <h4>Returns:</h4>
+
+            <div class="returns-description">
+                        <span class="type">Object</span>:
+                    <p>json structured data.</p>
+
+            </div>
+        </div>
+
+
+</div>
+<div id="method_toData" class="method item">
+    <h3 class="name"><code>toData</code></h3>
+
+        <div class="args">
+            <span class="paren">(</span><ul class="args-list inline commas">
+                <li class="arg">
+                        <code>spec</code>
+                </li>
+                <li class="arg">
+                        <code class="optional">[data]</code>
+                </li>
+            </ul><span class="paren">)</span>
+        </div>
+
+        <span class="returns-inline">
+            <span class="type">Object</span>
+        </span>
+
+
+
+
+
+
+
+    <div class="meta">
+                <p>
+                Defined in
+        <a href="../files/lib_mvc_mvc.js.html#l97"><code>lib&#x2F;mvc&#x2F;mvc.js:97</code></a>
+        </p>
+
+
+
+    </div>
+
+    <div class="description">
+        <p>Maps the model into json structured data.</p>
+
+    </div>
+
+        <div class="params">
+            <h4>Parameters:</h4>
+
+            <ul class="params-list">
+                <li class="param">
+                        <code class="param-name">spec</code>
+                        <span class="type">Object</span>
+
+
+                    <div class="param-description">
+                        <ul>
+<li>filters data to map</li>
+</ul>
+
+                    </div>
+
+                </li>
+                <li class="param">
+                        <code class="param-name optional">[data]</code>
+                        <span class="type">Object</span>
+                        <span class="flag optional" title="This parameter is optional.">optional</span>
+
+
+                    <div class="param-description">
+                        <ul>
+<li>receives mapped data</li>
 </ul>
 
                     </div>

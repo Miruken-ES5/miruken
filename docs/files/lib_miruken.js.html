@@ -83,7 +83,6 @@
                                 <li><a href="../classes/miruken.error.ErrorCallbackHandler.html">miruken.error.ErrorCallbackHandler</a></li>
                                 <li><a href="../classes/miruken.error.Errors.html">miruken.error.Errors</a></li>
                                 <li><a href="../classes/miruken.Facet.html">miruken.Facet</a></li>
-                                <li><a href="../classes/miruken.graph.$.html">miruken.graph.$</a></li>
                                 <li><a href="../classes/miruken.graph.Traversal.html">miruken.graph.Traversal</a></li>
                                 <li><a href="../classes/miruken.graph.Traversing.html">miruken.graph.Traversing</a></li>
                                 <li><a href="../classes/miruken.graph.TraversingAxis.html">miruken.graph.TraversingAxis</a></li>
@@ -141,10 +140,10 @@
                                 <li><a href="../classes/miruken.validate.$registerValidators.html">miruken.validate.$registerValidators</a></li>
                                 <li><a href="../classes/miruken.validate.$validateThat.html">miruken.validate.$validateThat</a></li>
                                 <li><a href="../classes/miruken.validate.miruken.callback.CallbackHandler.html">miruken.validate.miruken.callback.CallbackHandler</a></li>
+                                <li><a href="../classes/miruken.validate.ValidateJsCallbackHandler.html">miruken.validate.ValidateJsCallbackHandler</a></li>
                                 <li><a href="../classes/miruken.validate.Validating.html">miruken.validate.Validating</a></li>
                                 <li><a href="../classes/miruken.validate.Validation.html">miruken.validate.Validation</a></li>
                                 <li><a href="../classes/miruken.validate.ValidationCallbackHandler.html">miruken.validate.ValidationCallbackHandler</a></li>
-                                <li><a href="../classes/miruken.validate.ValidationJsCallbackHandler.html">miruken.validate.ValidationJsCallbackHandler</a></li>
                                 <li><a href="../classes/miruken.validate.ValidationRegistry.html">miruken.validate.ValidationRegistry</a></li>
                                 <li><a href="../classes/miruken.validate.ValidationResult.html">miruken.validate.ValidationResult</a></li>
                                 <li><a href="../classes/miruken.validate.Validator.html">miruken.validate.Validator</a></li>
@@ -281,7 +280,14 @@ new function () { // closure
     var $instant = $createModifier();
     
     /**
-     * Represents an enumeration
+     * Defines an enumeration.
+     * &lt;pre&gt;
+     *    var Color = Enum({
+     *        red:   1,
+     *        green: 2,
+     *        blue:  3
+     *    })
+     * &lt;/pre&gt;
      * @class Enum
      * @constructor
      * @param  {Object}  choices  -  enum choices
@@ -402,6 +408,14 @@ new function () { // closure
     
     /**
      * Declares methods and properties independent of a class.
+     * &lt;pre&gt;
+     *    var Auditing = Protocol.extend({
+     *        $properties: {
+     *            level: undefined
+     *        },
+     *        record: function (activity) {}
+     *    })
+     * &lt;/pre&gt;
      * @class Protocol
      * @constructor
      * @param   {miruken.Delegate}  delegate        -  delegate
@@ -1034,17 +1048,30 @@ new function () { // closure
     });
 
     /**
-     * Metamacro to define custom properties.
+     * Metamacro to define class properties.  This macro is automatically applied.
      * &lt;pre&gt;
      *    var Person = Base.extend({
-     *       $properties: {
-     *           firstName: &#x27;&#x27;,
-     *           lastNane:  &#x27;&#x27;,
-     *           mom:       { map: Person },
-     *           dad:       { map: Person }
-     *       }
+     *        $properties: {
+     *            firstName: &#x27;&#x27;,
+     *            lastNane:  &#x27;&#x27;,
+     *            fullName:  {
+     *                get: function () {
+     *                   return this.firstName + &#x27; &#x27; + this.lastName;
+     *                },
+     *                set: function (value) {
+     *                    var parts = value.split(&#x27; &#x27;);
+     *                    if (parts.length &gt; 0) {
+     *                        this.firstName = parts[0];
+     *                    }
+     *                    if (parts.length &gt; 1) {
+     *                        this.lastName = parts[1];
+     *                    }
+     *                }
+     *            },
+     *        }
      *    })
      * &lt;/pre&gt;
+     * would give the Person class a firstName and lastName property and a computed fullName.
      * @class $properties
      * @constructor
      * @param   {string}  [tag=&#x27;$properties&#x27;]  - properties tag
@@ -1161,9 +1188,17 @@ new function () { // closure
     }
 
     /**
-     * Metamacro to derive properties from existng methods.
+     * Metamacro to derive class properties from existng methods.
+     * &lt;p&gt;Currently getFoo, isFoo and setFoo conventions are recognized.&lt;/p&gt;
+     * &lt;pre&gt;
+     *    var Person = Base.extend(**$inferProperties**, {
+     *        getName: function () { return this._name; },
+     *        setName: function (value) { this._name = value; },
+     *    })
+     * &lt;/pre&gt;
+     * would create a Person.name property bound to getName and setName 
      * @class $inferProperties
-     * @example Currently getXYZ, isXYZ and setXYZ conventions are recognized.
+     * @constructor
      * @extends miruken.MetaMacro
      */
     var $inferProperties = MetaMacro.extend({
@@ -1235,6 +1270,21 @@ new function () { // closure
 
     /**
      * Metamacro to inherit static members in subclasses.
+     * &lt;pre&gt;
+     * var Math = Base.extend(
+     *     **$inheritStatic**, null, {
+     *         PI:  3.14159265359,
+     *         add: function (a, b) {
+     *             return a + b;
+     *          }
+     *     }),
+     *     Geometry = Math.extend(null, {
+     *         area: function(length, width) {
+     *             return length * width;
+     *         }
+     *     });
+     * &lt;/pre&gt;
+     * would make Math.PI and Math.add available on the Geometry class.
      * @class $inhertStatic
      * @constructor
      * @param  {string}  [...members]  -  members to inherit
@@ -1300,7 +1350,7 @@ new function () { // closure
     });
 
     /**
-     * Mixin for Disposing implementation.
+     * Mixin for {{#crossLink &quot;miruken.Disposing&quot;}}{{/crossLink}} implementation.
      * @class DisposingMixin
      * @uses miruken.Disposing
      * @extends Module
@@ -1727,7 +1777,7 @@ new function () { // closure
     });
 
     /**
-     * Responsible for selecting which interceptors to apply.
+     * Responsible for selecting which interceptors to apply to a method.
      * @class InterceptorSelector
      * @extends Base
      */

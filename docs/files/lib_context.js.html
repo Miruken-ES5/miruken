@@ -83,7 +83,6 @@
                                 <li><a href="../classes/miruken.error.ErrorCallbackHandler.html">miruken.error.ErrorCallbackHandler</a></li>
                                 <li><a href="../classes/miruken.error.Errors.html">miruken.error.Errors</a></li>
                                 <li><a href="../classes/miruken.Facet.html">miruken.Facet</a></li>
-                                <li><a href="../classes/miruken.graph.$.html">miruken.graph.$</a></li>
                                 <li><a href="../classes/miruken.graph.Traversal.html">miruken.graph.Traversal</a></li>
                                 <li><a href="../classes/miruken.graph.Traversing.html">miruken.graph.Traversing</a></li>
                                 <li><a href="../classes/miruken.graph.TraversingAxis.html">miruken.graph.TraversingAxis</a></li>
@@ -141,10 +140,10 @@
                                 <li><a href="../classes/miruken.validate.$registerValidators.html">miruken.validate.$registerValidators</a></li>
                                 <li><a href="../classes/miruken.validate.$validateThat.html">miruken.validate.$validateThat</a></li>
                                 <li><a href="../classes/miruken.validate.miruken.callback.CallbackHandler.html">miruken.validate.miruken.callback.CallbackHandler</a></li>
+                                <li><a href="../classes/miruken.validate.ValidateJsCallbackHandler.html">miruken.validate.ValidateJsCallbackHandler</a></li>
                                 <li><a href="../classes/miruken.validate.Validating.html">miruken.validate.Validating</a></li>
                                 <li><a href="../classes/miruken.validate.Validation.html">miruken.validate.Validation</a></li>
                                 <li><a href="../classes/miruken.validate.ValidationCallbackHandler.html">miruken.validate.ValidationCallbackHandler</a></li>
-                                <li><a href="../classes/miruken.validate.ValidationJsCallbackHandler.html">miruken.validate.ValidationJsCallbackHandler</a></li>
                                 <li><a href="../classes/miruken.validate.ValidationRegistry.html">miruken.validate.ValidationRegistry</a></li>
                                 <li><a href="../classes/miruken.validate.ValidationResult.html">miruken.validate.ValidationResult</a></li>
                                 <li><a href="../classes/miruken.validate.Validator.html">miruken.validate.Validator</a></li>
@@ -223,7 +222,7 @@ new function () { // closure
     eval(this.imports);
 
     /**
-     * ContextState enum
+     * Represents the state of a {{#crossLink &quot;miruken.context.Context&quot;}}{{/crossLink}}.
      * @class ContextState
      * @extends miruken.Enum
      */
@@ -246,7 +245,8 @@ new function () { // closure
     });
 
     /**
-     * Protocol for observing Context lifecycle.
+     * Protocol for observing the lifecycle of
+     * {{#crossLink &quot;miruken.context.Context&quot;}}{{/crossLink}}.
      * @class ContextObserver
      * @extends miruken.Protocol
      */
@@ -278,12 +278,12 @@ new function () { // closure
     });
 
     /**
-     * A Context represents the scope at a give point in time.  It has a beginning and an end.
-     * It can handle callbacks as well as notify observers of its lifecycle changes.  In addition,
-     * it has parent-child relationships and thus can participate in a hierarchy.
+     * A Context represents the scope at a give point in time.&lt;br/&gt;
+     * It has a beginning and an end and can handle callbacks as well as notify observers of lifecycle changes.&lt;br/&gt;
+     * In addition, it maintains parent-child relationships and thus can participate in a hierarchy.
      * @class Context
      * @constructor
-     * @param   {miruken.context.Context}  [parent]   -  parent context
+     * @param   {miruken.context.Context}  [parent]  -  parent context
      * @extends miruken.callback.CompositeCallbackHandler
      * @uses miruken.Parenting
      * @uses miruken.graph.Traversing
@@ -486,7 +486,7 @@ new function () { // closure
     });
 
     /**
-     * Protocol to provide the minimal functionality to support contextual based operations.
+     * Protocol to provide the minimal functionality to support contextual based operations.&lt;br/&gt;
      * This is an alternatve to the delegate model of communication, but with less coupling 
      * and ceremony.
      * @class Contextual
@@ -508,7 +508,7 @@ new function () { // closure
     });
 
     /**
-     * Mixin for Contextual implementation.
+     * Mixin for {{#crossLink &quot;miruken.context.Contextual&quot;}}{{/crossLink}} implementation.
      * @class ContextualMixin
      * @uses miruken.context.Contextual
      * @extends Module
@@ -550,7 +550,14 @@ new function () { // closure
     });
 
     /**
-     * Metamacro to make classes contextual.
+     * Metamacro to make classes contextual.&lt;br/&gt;
+     * See {{#crossLink &quot;miruken.context.ContextualMixin&quot;}}{{/crossLink}}
+     * &lt;pre&gt;
+     *    var Controller = Base.extend($contextual, {
+     *       action: function () {}
+     *    })
+     * &lt;/pre&gt;
+     * would give the Controller class contextual support.
      * @class $contextual
      * @constructor
      * @extends miruken.MetaMacro
@@ -566,7 +573,7 @@ new function () { // closure
     });
 
     /**
-     * Mixin for Contextual helper support.
+     * Mixin for {{#crossLink &quot;miruken.context.Contextual&quot;}}{{/crossLink}} helper support.
      * @class ContextualHelper
      * @extends Module
      */    

@@ -83,7 +83,6 @@
                                 <li><a href="../classes/miruken.error.ErrorCallbackHandler.html">miruken.error.ErrorCallbackHandler</a></li>
                                 <li><a href="../classes/miruken.error.Errors.html">miruken.error.Errors</a></li>
                                 <li><a href="../classes/miruken.Facet.html">miruken.Facet</a></li>
-                                <li><a href="../classes/miruken.graph.$.html">miruken.graph.$</a></li>
                                 <li><a href="../classes/miruken.graph.Traversal.html">miruken.graph.Traversal</a></li>
                                 <li><a href="../classes/miruken.graph.Traversing.html">miruken.graph.Traversing</a></li>
                                 <li><a href="../classes/miruken.graph.TraversingAxis.html">miruken.graph.TraversingAxis</a></li>
@@ -141,10 +140,10 @@
                                 <li><a href="../classes/miruken.validate.$registerValidators.html">miruken.validate.$registerValidators</a></li>
                                 <li><a href="../classes/miruken.validate.$validateThat.html">miruken.validate.$validateThat</a></li>
                                 <li><a href="../classes/miruken.validate.miruken.callback.CallbackHandler.html">miruken.validate.miruken.callback.CallbackHandler</a></li>
+                                <li><a href="../classes/miruken.validate.ValidateJsCallbackHandler.html">miruken.validate.ValidateJsCallbackHandler</a></li>
                                 <li><a href="../classes/miruken.validate.Validating.html">miruken.validate.Validating</a></li>
                                 <li><a href="../classes/miruken.validate.Validation.html">miruken.validate.Validation</a></li>
                                 <li><a href="../classes/miruken.validate.ValidationCallbackHandler.html">miruken.validate.ValidationCallbackHandler</a></li>
-                                <li><a href="../classes/miruken.validate.ValidationJsCallbackHandler.html">miruken.validate.ValidationJsCallbackHandler</a></li>
                                 <li><a href="../classes/miruken.validate.ValidationRegistry.html">miruken.validate.ValidationRegistry</a></li>
                                 <li><a href="../classes/miruken.validate.ValidationResult.html">miruken.validate.ValidationResult</a></li>
                                 <li><a href="../classes/miruken.validate.Validator.html">miruken.validate.Validator</a></li>
@@ -199,6 +198,7 @@
     <pre class="code prettyprint linenums">
 var miruken = require(&#x27;../miruken.js&#x27;),
     Promise = require(&#x27;bluebird&#x27;);
+              require(&#x27;../callback.js&#x27;),
               require(&#x27;../context.js&#x27;),
               require(&#x27;../validate&#x27;);
 
@@ -207,6 +207,7 @@ new function () { // closure
     /**
      * Package providing Inversion-of-Control capabilities.&lt;br/&gt;
      * Requires the {{#crossLinkModule &quot;miruken&quot;}}{{/crossLinkModule}},
+     * {{#crossLinkModule &quot;callback&quot;}}{{/crossLinkModule}},
      * {{#crossLinkModule &quot;context&quot;}}{{/crossLinkModule}} and 
      * {{#crossLinkModule &quot;validate&quot;}}{{/crossLinkModule}} modules.
      * @module miruken
@@ -311,7 +312,7 @@ new function () { // closure
      */                
     var ComponentPolicy = Protocol.extend({
         /**
-         * Applies the policy to the ComponentModel.
+         * Applies the policy to the component model.
          * @method apply
          * @param {miruken.ioc.ComponentModel} componentModel  -  component model
          */
@@ -419,8 +420,18 @@ new function () { // closure
             }
             var spec = _.spec || (_.spec = {});
             spec.value = dependency;
+            /**
+             * Gets the dependency.
+             * @property {Any} dependency
+             * @readOnly
+             */            
             Object.defineProperty(this, &#x27;dependency&#x27;, spec);
             spec.value = modifiers;
+            /**
+             * Gets the dependency flags.
+             * @property {miruken.ioc.DependencyModifiers} modifiers
+             * @readOnly
+             */                        
             Object.defineProperty(this, &#x27;modifiers&#x27;, spec);
             delete spec.value;
         },
@@ -501,7 +512,8 @@ new function () { // closure
     });
 
     /**
-     * Defines a component specification.
+     * Defines a component specification to be managed by a
+     * {{#crossLink &quot;miruken.ioc.Container&quot;}}{{/crossLink}}.
      * @class ComponentModel
      * @constructor
      * @extends Base
@@ -1137,7 +1149,8 @@ new function () { // closure
     }
 
     /**
-     * Definition goes here
+     * Specialized {{#crossLink &quot;miruken.callback.Resolution&quot;}}{{/crossLink}}
+     * that maintains a parent relationship for representing resolution chains.
      * @class DependencyResolution
      * @constructor
      * @param   {string}                             key     -  resolution key
@@ -1207,7 +1220,7 @@ new function () { // closure
     DependencyResolutionError.prototype.constructor = DependencyResolutionError;
 
     /**
-     * Records an invalid {{#crossLink &quot;miruken.ioc.ComponentModel&quot;}}{{/crossLink}}.
+     * Identifies an invalid {{#crossLink &quot;miruken.ioc.ComponentModel&quot;}}{{/crossLink}}.
      * @class ComponentModelError
      * @param {miruken.ioc.ComponentModel}        componentModel  -  invalid component model
      * @param {miruken.validate.ValidationResult} validation      -  validation failures

@@ -83,7 +83,6 @@
                                 <li><a href="../classes/miruken.error.ErrorCallbackHandler.html">miruken.error.ErrorCallbackHandler</a></li>
                                 <li><a href="../classes/miruken.error.Errors.html">miruken.error.Errors</a></li>
                                 <li><a href="../classes/miruken.Facet.html">miruken.Facet</a></li>
-                                <li><a href="../classes/miruken.graph.$.html">miruken.graph.$</a></li>
                                 <li><a href="../classes/miruken.graph.Traversal.html">miruken.graph.Traversal</a></li>
                                 <li><a href="../classes/miruken.graph.Traversing.html">miruken.graph.Traversing</a></li>
                                 <li><a href="../classes/miruken.graph.TraversingAxis.html">miruken.graph.TraversingAxis</a></li>
@@ -141,10 +140,10 @@
                                 <li><a href="../classes/miruken.validate.$registerValidators.html">miruken.validate.$registerValidators</a></li>
                                 <li><a href="../classes/miruken.validate.$validateThat.html">miruken.validate.$validateThat</a></li>
                                 <li><a href="../classes/miruken.validate.miruken.callback.CallbackHandler.html">miruken.validate.miruken.callback.CallbackHandler</a></li>
+                                <li><a href="../classes/miruken.validate.ValidateJsCallbackHandler.html">miruken.validate.ValidateJsCallbackHandler</a></li>
                                 <li><a href="../classes/miruken.validate.Validating.html">miruken.validate.Validating</a></li>
                                 <li><a href="../classes/miruken.validate.Validation.html">miruken.validate.Validation</a></li>
                                 <li><a href="../classes/miruken.validate.ValidationCallbackHandler.html">miruken.validate.ValidationCallbackHandler</a></li>
-                                <li><a href="../classes/miruken.validate.ValidationJsCallbackHandler.html">miruken.validate.ValidationJsCallbackHandler</a></li>
                                 <li><a href="../classes/miruken.validate.ValidationRegistry.html">miruken.validate.ValidationRegistry</a></li>
                                 <li><a href="../classes/miruken.validate.ValidationResult.html">miruken.validate.ValidationResult</a></li>
                                 <li><a href="../classes/miruken.validate.Validator.html">miruken.validate.Validator</a></li>
@@ -201,7 +200,7 @@
         </div>
 
         <div class="foundat">
-            Defined in: <a href="../files/lib_miruken.js.html#l964"><code>lib&#x2F;miruken.js:964</code></a>
+            Defined in: <a href="../files/lib_miruken.js.html#l992"><code>lib&#x2F;miruken.js:992</code></a>
         </div>
 
             Module: <a href="../modules/miruken.html">miruken</a>
@@ -210,10 +209,51 @@
 
 
 <div class="box intro">
-    <p>Metamacro to derive properties from existng methods.</p>
+    <p>Metamacro to derive class properties from existng methods.</p>
+<p><p>Currently getFoo, isFoo and setFoo conventions are recognized.</p></p>
+<p><pre>
+   var Person = Base.extend(<strong>$inferProperties</strong>, {
+       getName: function () { return this._name; },
+       setName: function (value) { this._name = value; },
+   })
+</pre>
+would create a Person.name property bound to getName and setName</p>
 
 </div>
 
+    <div class="constructor">
+        <h2>Constructor</h2>
+        <div id="method_miruken.$inferProperties" class="method item">
+            <h3 class="name"><code>miruken.$inferProperties</code></h3>
+        
+                <span class="paren">()</span>
+        
+        
+        
+        
+        
+        
+        
+        
+            <div class="meta">
+                        <p>
+                        Defined in
+                <a href="../files/lib_miruken.js.html#l992"><code>lib&#x2F;miruken.js:992</code></a>
+                </p>
+        
+        
+        
+            </div>
+        
+            <div class="description">
+                
+            </div>
+        
+        
+        
+        
+        </div>
+    </div>
 
 <div id="classdocs" class="tabview">
     <ul class="api-class-tabs">
@@ -286,7 +326,7 @@
     <div class="meta">
                 <p>Inherited from
                 <a href="../classes/miruken.MetaMacro.html#method_apply">miruken.MetaMacro</a>:
-        <a href="../files/lib_miruken.js.html#l302"><code>lib&#x2F;miruken.js:302</code></a>
+        <a href="../files/lib_miruken.js.html#l317"><code>lib&#x2F;miruken.js:317</code></a>
         </p>
 
 
@@ -381,7 +421,7 @@
                 miruken.MetaMacro
             </a>
             but overwritten in
-        <a href="../files/lib_miruken.js.html#l1003"><code>lib&#x2F;miruken.js:1003</code></a>
+        <a href="../files/lib_miruken.js.html#l1039"><code>lib&#x2F;miruken.js:1039</code></a>
         </p>
 
 
@@ -430,7 +470,7 @@
     <div class="meta">
                 <p>Inherited from
                 <a href="../classes/miruken.MetaMacro.html#method_protocolAdded">miruken.MetaMacro</a>:
-        <a href="../files/lib_miruken.js.html#l311"><code>lib&#x2F;miruken.js:311</code></a>
+        <a href="../files/lib_miruken.js.html#l326"><code>lib&#x2F;miruken.js:326</code></a>
         </p>
 
 
@@ -499,7 +539,7 @@
                 miruken.MetaMacro
             </a>
             but overwritten in
-        <a href="../files/lib_miruken.js.html#l997"><code>lib&#x2F;miruken.js:997</code></a>
+        <a href="../files/lib_miruken.js.html#l1033"><code>lib&#x2F;miruken.js:1033</code></a>
         </p>
 
 

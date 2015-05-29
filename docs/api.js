@@ -64,7 +64,6 @@ YUI.add("yuidoc-meta", function(Y) {
         "miruken.context.Function",
         "miruken.error.ErrorCallbackHandler",
         "miruken.error.Errors",
-        "miruken.graph.$",
         "miruken.graph.Traversal",
         "miruken.graph.Traversing",
         "miruken.graph.TraversingAxis",
@@ -104,10 +103,10 @@ YUI.add("yuidoc-meta", function(Y) {
         "miruken.validate.$",
         "miruken.validate.$registerValidators",
         "miruken.validate.$validateThat",
+        "miruken.validate.ValidateJsCallbackHandler",
         "miruken.validate.Validating",
         "miruken.validate.Validation",
         "miruken.validate.ValidationCallbackHandler",
-        "miruken.validate.ValidationJsCallbackHandler",
         "miruken.validate.ValidationRegistry",
         "miruken.validate.ValidationResult",
         "miruken.validate.Validator",
@@ -127,7 +126,7 @@ YUI.add("yuidoc-meta", function(Y) {
         {
             "displayName": "callback",
             "name": "callback",
-            "description": "Package providing message passing support.<br/>\nRequires the {{#crossLinkModule \"miruken\"}}{{/crossLinkModule}} module."
+            "description": "Package providing message handling support.<br/>\nRequires the {{#crossLinkModule \"miruken\"}}{{/crossLinkModule}} module."
         },
         {
             "displayName": "context",
@@ -147,7 +146,7 @@ YUI.add("yuidoc-meta", function(Y) {
         {
             "displayName": "ioc",
             "name": "ioc",
-            "description": "Package providing Inversion-of-Control capabilities.<br/>\nRequires the {{#crossLinkModule \"miruken\"}}{{/crossLinkModule}},\n{{#crossLinkModule \"context\"}}{{/crossLinkModule}} and \n{{#crossLinkModule \"validate\"}}{{/crossLinkModule}} modules."
+            "description": "Package providing Inversion-of-Control capabilities.<br/>\nRequires the {{#crossLinkModule \"miruken\"}}{{/crossLinkModule}},\n{{#crossLinkModule \"callback\"}}{{/crossLinkModule}},\n{{#crossLinkModule \"context\"}}{{/crossLinkModule}} and \n{{#crossLinkModule \"validate\"}}{{/crossLinkModule}} modules."
         },
         {
             "displayName": "miruken",

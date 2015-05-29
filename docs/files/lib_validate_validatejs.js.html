@@ -83,7 +83,6 @@
                                 <li><a href="../classes/miruken.error.ErrorCallbackHandler.html">miruken.error.ErrorCallbackHandler</a></li>
                                 <li><a href="../classes/miruken.error.Errors.html">miruken.error.Errors</a></li>
                                 <li><a href="../classes/miruken.Facet.html">miruken.Facet</a></li>
-                                <li><a href="../classes/miruken.graph.$.html">miruken.graph.$</a></li>
                                 <li><a href="../classes/miruken.graph.Traversal.html">miruken.graph.Traversal</a></li>
                                 <li><a href="../classes/miruken.graph.Traversing.html">miruken.graph.Traversing</a></li>
                                 <li><a href="../classes/miruken.graph.TraversingAxis.html">miruken.graph.TraversingAxis</a></li>
@@ -141,10 +140,10 @@
                                 <li><a href="../classes/miruken.validate.$registerValidators.html">miruken.validate.$registerValidators</a></li>
                                 <li><a href="../classes/miruken.validate.$validateThat.html">miruken.validate.$validateThat</a></li>
                                 <li><a href="../classes/miruken.validate.miruken.callback.CallbackHandler.html">miruken.validate.miruken.callback.CallbackHandler</a></li>
+                                <li><a href="../classes/miruken.validate.ValidateJsCallbackHandler.html">miruken.validate.ValidateJsCallbackHandler</a></li>
                                 <li><a href="../classes/miruken.validate.Validating.html">miruken.validate.Validating</a></li>
                                 <li><a href="../classes/miruken.validate.Validation.html">miruken.validate.Validation</a></li>
                                 <li><a href="../classes/miruken.validate.ValidationCallbackHandler.html">miruken.validate.ValidationCallbackHandler</a></li>
-                                <li><a href="../classes/miruken.validate.ValidationJsCallbackHandler.html">miruken.validate.ValidationJsCallbackHandler</a></li>
                                 <li><a href="../classes/miruken.validate.ValidationRegistry.html">miruken.validate.ValidationRegistry</a></li>
                                 <li><a href="../classes/miruken.validate.ValidationResult.html">miruken.validate.ValidationResult</a></li>
                                 <li><a href="../classes/miruken.validate.Validator.html">miruken.validate.Validator</a></li>
@@ -206,10 +205,10 @@ var miruken    = require(&#x27;../miruken.js&#x27;),
 new function () { // closure
 
     /**
-     * Package providing validation support.&lt;br/&gt;
      * @module miruken
      * @submodule validate
      * @namespace miruken.validate
+     * @class $
      */    
     var validate = new base2.Package(this, {
         name:    &quot;validate&quot;,
@@ -225,13 +224,35 @@ new function () { // closure
 
     var DETAILED    = { format: &quot;detailed&quot; },
         VALIDATABLE = { validate: undefined },
+        /**
+         * Shortcut to indicate required property.
+         * @property {Object} $required
+         * @readOnly
+         * @for miruken.validate.$ 
+         */
         $required   = Object.freeze({ presence: true }),
+        /**
+         * Shortcut to indicate nested validation.
+         * @property {Object} $nested
+         * @readOnly
+         * @for miruken.validate.$ 
+         */
         $nested     = Object.freeze({ nested: true });
 
     validatejs.validators.nested = Undefined;
 
     /**
-     * Metamacro to register custom validators.
+     * Metamacro to register custom validators with [validate.js](http://validatejs.org).
+     * &lt;pre&gt;
+     *    var CustomValidators = Base.extend($registerValidators, {
+     *        uniqueUserName: [Database, function (db, userName) {
+     *            if (db.hasUserName(userName)) {
+     *               return &quot;UserName &quot; + userName + &quot; is already taken&quot;;
+     *            }
+     *        }]
+     *    })
+     * &lt;/pre&gt;
+     * would register a uniqueUserName validator with a Database dependency.
      * @class $registerValidators
      * @extends miruken.MetaMacro
      */    
@@ -279,17 +300,47 @@ new function () { // closure
     });
 
     /**
-     * Base class to define custom validators.
+     * Base class to define custom validators using
+     * {{#crossLink &quot;miruken.validate.$registerValidators&quot;}}{{/crossLink}}.
+     * &lt;pre&gt;
+     *    var CustomValidators = ValidationRegistry.extend({
+     *        creditCardNumber: function (cardNumber, options, key, attributes) {
+     *           // do the check...
+     *        }
+     *    })
+     * &lt;/pre&gt;
+     * would register a creditCardNumber validator function.
      * @class ValidationRegistry
      * @constructor
      * @extends Abstract
-     * @uses miruken.validate.$registerValidators
      */        
     var ValidationRegistry = Abstract.extend($registerValidators);
 
     /**
      * CallbackHandler for performing validation using [validate.js](http://validatejs.org)
-     * @class ValidationJsCallbackHandler
+     * &lt;p&gt;
+     * Classes participate in validation by declaring **validate** constraints on properties.
+     * &lt;/p&gt;
+     * &lt;pre&gt;
+     * var Address = Base.extend({
+     *     $properties: {
+     *         line:    { &lt;b&gt;validate&lt;/b&gt;: { presence: true } },
+     *         city:    { &lt;b&gt;validate&lt;/b&gt;: { presence: true } },
+     *         state:   { 
+     *             &lt;b&gt;validate&lt;/b&gt;: {
+     *                 presence: true,
+     *                 length: { is: 2 }
+     *             }
+     *         },
+     *         zipcode: { 
+     *             &lt;b&gt;validate&lt;/b&gt;: {
+     *                 presence: true,
+     *                 length: { is: 5 }
+     *         }
+     *     }
+     * })
+     * &lt;/pre&gt;
+     * @class ValidateJsCallbackHandler
      * @extends miruken.callback.CallbackHandler
      */            
     var ValidateJsCallbackHandler = CallbackHandler.extend({

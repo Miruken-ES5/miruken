@@ -83,7 +83,6 @@
                                 <li><a href="../classes/miruken.error.ErrorCallbackHandler.html">miruken.error.ErrorCallbackHandler</a></li>
                                 <li><a href="../classes/miruken.error.Errors.html">miruken.error.Errors</a></li>
                                 <li><a href="../classes/miruken.Facet.html">miruken.Facet</a></li>
-                                <li><a href="../classes/miruken.graph.$.html">miruken.graph.$</a></li>
                                 <li><a href="../classes/miruken.graph.Traversal.html">miruken.graph.Traversal</a></li>
                                 <li><a href="../classes/miruken.graph.Traversing.html">miruken.graph.Traversing</a></li>
                                 <li><a href="../classes/miruken.graph.TraversingAxis.html">miruken.graph.TraversingAxis</a></li>
@@ -141,10 +140,10 @@
                                 <li><a href="../classes/miruken.validate.$registerValidators.html">miruken.validate.$registerValidators</a></li>
                                 <li><a href="../classes/miruken.validate.$validateThat.html">miruken.validate.$validateThat</a></li>
                                 <li><a href="../classes/miruken.validate.miruken.callback.CallbackHandler.html">miruken.validate.miruken.callback.CallbackHandler</a></li>
+                                <li><a href="../classes/miruken.validate.ValidateJsCallbackHandler.html">miruken.validate.ValidateJsCallbackHandler</a></li>
                                 <li><a href="../classes/miruken.validate.Validating.html">miruken.validate.Validating</a></li>
                                 <li><a href="../classes/miruken.validate.Validation.html">miruken.validate.Validation</a></li>
                                 <li><a href="../classes/miruken.validate.ValidationCallbackHandler.html">miruken.validate.ValidationCallbackHandler</a></li>
-                                <li><a href="../classes/miruken.validate.ValidationJsCallbackHandler.html">miruken.validate.ValidationJsCallbackHandler</a></li>
                                 <li><a href="../classes/miruken.validate.ValidationRegistry.html">miruken.validate.ValidationRegistry</a></li>
                                 <li><a href="../classes/miruken.validate.ValidationResult.html">miruken.validate.ValidationResult</a></li>
                                 <li><a href="../classes/miruken.validate.Validator.html">miruken.validate.Validator</a></li>
@@ -195,19 +194,13 @@
                     <div class="content">
 <h1>miruken.validate.ValidationRegistry Class</h1>
 <div class="box meta">
-        <div class="uses">
-            Uses
-            <ul class="inline commas">
-                    <li><a href="miruken.validate.$registerValidators.html">miruken.validate.$registerValidators</a></li>
-            </ul>
-        </div>
 
         <div class="extends">
             Extends Abstract
         </div>
 
         <div class="foundat">
-            Defined in: <a href="../files/lib_validate_validatejs.js.html#l82"><code>lib&#x2F;validate&#x2F;validatejs.js:82</code></a>
+            Defined in: <a href="../files/lib_validate_validatejs.js.html#l104"><code>lib&#x2F;validate&#x2F;validatejs.js:104</code></a>
         </div>
 
             Module: <a href="../modules/validate.html">validate</a><br>
@@ -217,7 +210,16 @@
 
 
 <div class="box intro">
-    <p>Base class to define custom validators.</p>
+    <p>Base class to define custom validators using
+<a href="../classes/miruken.validate.$registerValidators.html" class="crosslink">miruken.validate.$registerValidators</a>.</p>
+<p><pre>
+   var CustomValidators = ValidationRegistry.extend({
+       creditCardNumber: function (cardNumber, options, key, attributes) {
+          // do the check...
+       }
+   })
+</pre>
+would register a creditCardNumber validator function.</p>
 
 </div>
 
@@ -238,7 +240,7 @@
             <div class="meta">
                         <p>
                         Defined in
-                <a href="../files/lib_validate_validatejs.js.html#l82"><code>lib&#x2F;validate&#x2F;validatejs.js:82</code></a>
+                <a href="../files/lib_validate_validatejs.js.html#l104"><code>lib&#x2F;validate&#x2F;validatejs.js:104</code></a>
                 </p>
         
         
@@ -259,128 +261,17 @@
     <ul class="api-class-tabs">
         <li class="api-class-tab index"><a href="#index">Index</a></li>
 
-            <li class="api-class-tab methods"><a href="#methods">Methods</a></li>
     </ul>
 
     <div>
         <div id="index" class="api-class-tabpanel index">
             <h2 class="off-left">Item Index</h2>
 
-                <div class="index-section methods">
-                    <h3>Methods</h3>
-
-                    <ul class="index-list methods extends">
-                            <li class="index-item method inherited inherited">
-                                <a href="#method_isActive">isActive</a>
-
-                            </li>
-                            <li class="index-item method inherited inherited">
-                                <a href="#method_shouldInherit">shouldInherit</a>
-
-                            </li>
-                    </ul>
-                </div>
 
 
 
         </div>
 
-            <div id="methods" class="api-class-tabpanel">
-                <h2 class="off-left">Methods</h2>
-
-<div id="method_isActive" class="method item inherited">
-    <h3 class="name"><code>isActive</code></h3>
-
-        <span class="paren">()</span>
-
-        <span class="returns-inline">
-            <span class="type">Boolean</span>
-        </span>
-
-
-
-
-
-
-
-    <div class="meta">
-            <p>Inherited from
-            <a href="../classes/miruken.MetaMacro.html#method_isActive">
-                miruken.MetaMacro
-            </a>
-            but overwritten in
-        <a href="../files/lib_validate_validatejs.js.html#l74"><code>lib&#x2F;validate&#x2F;validatejs.js:74</code></a>
-        </p>
-
-
-
-    </div>
-
-    <div class="description">
-        <p>Determines if the macro should be applied on extension.</p>
-
-    </div>
-
-
-        <div class="returns">
-            <h4>Returns:</h4>
-
-            <div class="returns-description">
-                        <span class="type">Boolean</span>:
-                    <p>true</p>
-
-            </div>
-        </div>
-
-
-</div>
-<div id="method_shouldInherit" class="method item inherited">
-    <h3 class="name"><code>shouldInherit</code></h3>
-
-        <span class="paren">()</span>
-
-        <span class="returns-inline">
-            <span class="type">Boolean</span>
-        </span>
-
-
-
-
-
-
-
-    <div class="meta">
-            <p>Inherited from
-            <a href="../classes/miruken.MetaMacro.html#method_shouldInherit">
-                miruken.MetaMacro
-            </a>
-            but overwritten in
-        <a href="../files/lib_validate_validatejs.js.html#l68"><code>lib&#x2F;validate&#x2F;validatejs.js:68</code></a>
-        </p>
-
-
-
-    </div>
-
-    <div class="description">
-        <p>Determines if the macro should be inherited</p>
-
-    </div>
-
-
-        <div class="returns">
-            <h4>Returns:</h4>
-
-            <div class="returns-description">
-                        <span class="type">Boolean</span>:
-                    <p>true</p>
-
-            </div>
-        </div>
-
-
-</div>
-            </div>
 
 
 

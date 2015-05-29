@@ -83,7 +83,6 @@
                                 <li><a href="../classes/miruken.error.ErrorCallbackHandler.html">miruken.error.ErrorCallbackHandler</a></li>
                                 <li><a href="../classes/miruken.error.Errors.html">miruken.error.Errors</a></li>
                                 <li><a href="../classes/miruken.Facet.html">miruken.Facet</a></li>
-                                <li><a href="../classes/miruken.graph.$.html">miruken.graph.$</a></li>
                                 <li><a href="../classes/miruken.graph.Traversal.html">miruken.graph.Traversal</a></li>
                                 <li><a href="../classes/miruken.graph.Traversing.html">miruken.graph.Traversing</a></li>
                                 <li><a href="../classes/miruken.graph.TraversingAxis.html">miruken.graph.TraversingAxis</a></li>
@@ -141,10 +140,10 @@
                                 <li><a href="../classes/miruken.validate.$registerValidators.html">miruken.validate.$registerValidators</a></li>
                                 <li><a href="../classes/miruken.validate.$validateThat.html">miruken.validate.$validateThat</a></li>
                                 <li><a href="../classes/miruken.validate.miruken.callback.CallbackHandler.html">miruken.validate.miruken.callback.CallbackHandler</a></li>
+                                <li><a href="../classes/miruken.validate.ValidateJsCallbackHandler.html">miruken.validate.ValidateJsCallbackHandler</a></li>
                                 <li><a href="../classes/miruken.validate.Validating.html">miruken.validate.Validating</a></li>
                                 <li><a href="../classes/miruken.validate.Validation.html">miruken.validate.Validation</a></li>
                                 <li><a href="../classes/miruken.validate.ValidationCallbackHandler.html">miruken.validate.ValidationCallbackHandler</a></li>
-                                <li><a href="../classes/miruken.validate.ValidationJsCallbackHandler.html">miruken.validate.ValidationJsCallbackHandler</a></li>
                                 <li><a href="../classes/miruken.validate.ValidationRegistry.html">miruken.validate.ValidationRegistry</a></li>
                                 <li><a href="../classes/miruken.validate.ValidationResult.html">miruken.validate.ValidationResult</a></li>
                                 <li><a href="../classes/miruken.validate.Validator.html">miruken.validate.Validator</a></li>
@@ -229,6 +228,18 @@
                                 <a href="#method_$define">$define</a>
 
                             </li>
+                            <li class="index-item method">
+                                <a href="#method_$handle">$handle</a>
+
+                            </li>
+                            <li class="index-item method">
+                                <a href="#method_$lookup">$lookup</a>
+
+                            </li>
+                            <li class="index-item method">
+                                <a href="#method_$provide">$provide</a>
+
+                            </li>
                     </ul>
                 </div>
 
@@ -237,19 +248,7 @@
 
                     <ul class="index-list properties">
                             <li class="index-item property">
-                                <a href="#property_$handle">$handle</a>
-
-                            </li>
-                            <li class="index-item property">
-                                <a href="#property_$lookup">$lookup</a>
-
-                            </li>
-                            <li class="index-item property">
                                 <a href="#property_$NOT_HANDLED">$NOT_HANDLED</a>
-
-                            </li>
-                            <li class="index-item property">
-                                <a href="#property_$provide">$provide</a>
 
                             </li>
                     </ul>
@@ -288,7 +287,7 @@
     <div class="meta">
                 <p>
                 Defined in
-        <a href="../files/lib_callback.js.html#l1233"><code>lib&#x2F;callback.js:1233</code></a>
+        <a href="../files/lib_callback.js.html#l1305"><code>lib&#x2F;callback.js:1305</code></a>
         </p>
 
 
@@ -296,7 +295,7 @@
     </div>
 
     <div class="description">
-        <p>Defines a new handler relationship.</p>
+        <p>Defines a new handler grouping.  This is the main extensibility point for handling callbacks.</p>
 
     </div>
 
@@ -311,7 +310,7 @@
 
                     <div class="param-description">
                         <ul>
-<li>name of definition</li>
+<li>group tag</li>
 </ul>
 
                     </div>
@@ -324,7 +323,7 @@
 
                     <div class="param-description">
                         <ul>
-<li>variance of definition</li>
+<li>group variance</li>
 </ul>
 
                     </div>
@@ -338,10 +337,112 @@
 
             <div class="returns-description">
                         <span class="type">Function</span>:
-                    <p>function to add to definition.</p>
+                    <p>function to add to a group.</p>
 
             </div>
         </div>
+
+        <div class="throws">
+            <h4>Throws:</h4>
+
+            <div class="throws-description">
+                        <span class="type">TypeError</span>:
+                    <p>if group already defined.</p>
+
+            </div>
+        </div>
+
+</div>
+<div id="method_$handle" class="method item">
+    <h3 class="name"><code>$handle</code></h3>
+
+        <span class="paren">()</span>
+
+
+
+
+
+
+
+
+    <div class="meta">
+                <p>
+                Defined in
+        <a href="../files/lib_callback.js.html#l25"><code>lib&#x2F;callback.js:25</code></a>
+        </p>
+
+
+
+    </div>
+
+    <div class="description">
+        <p>Definition for handling callbacks contravariantly.</p>
+
+    </div>
+
+
+
+
+</div>
+<div id="method_$lookup" class="method item">
+    <h3 class="name"><code>$lookup</code></h3>
+
+        <span class="paren">()</span>
+
+
+
+
+
+
+
+
+    <div class="meta">
+                <p>
+                Defined in
+        <a href="../files/lib_callback.js.html#l37"><code>lib&#x2F;callback.js:37</code></a>
+        </p>
+
+
+
+    </div>
+
+    <div class="description">
+        <p>Definition for matching callbacks invariantly.</p>
+
+    </div>
+
+
+
+
+</div>
+<div id="method_$provide" class="method item">
+    <h3 class="name"><code>$provide</code></h3>
+
+        <span class="paren">()</span>
+
+
+
+
+
+
+
+
+    <div class="meta">
+                <p>
+                Defined in
+        <a href="../files/lib_callback.js.html#l31"><code>lib&#x2F;callback.js:31</code></a>
+        </p>
+
+
+
+    </div>
+
+    <div class="description">
+        <p>Definition for providing callbacks covariantly.</p>
+
+    </div>
+
+
 
 
 </div>
@@ -350,56 +451,6 @@
             <div id="properties" class="api-class-tabpanel">
                 <h2 class="off-left">Properties</h2>
 
-                    <div id="property_$handle" class="property item">
-                        <h3 class="name"><code>$handle</code></h3>
-                        <span class="type">Function</span>
-                    
-                    
-                    
-                    
-                    
-                        <div class="meta">
-                                    <p>
-                                    Defined in
-                            <a href="../files/lib_callback.js.html#l25"><code>lib&#x2F;callback.js:25</code></a>
-                            </p>
-                    
-                    
-                        </div>
-                    
-                        <div class="description">
-                            <p>Contravariant handler definitions.</p>
-                    
-                        </div>
-                    
-                    
-                    
-                    </div>
-                    <div id="property_$lookup" class="property item">
-                        <h3 class="name"><code>$lookup</code></h3>
-                        <span class="type">Function</span>
-                    
-                    
-                    
-                    
-                    
-                        <div class="meta">
-                                    <p>
-                                    Defined in
-                            <a href="../files/lib_callback.js.html#l37"><code>lib&#x2F;callback.js:37</code></a>
-                            </p>
-                    
-                    
-                        </div>
-                    
-                        <div class="description">
-                            <p>Invariant lookup definitions.</p>
-                    
-                        </div>
-                    
-                    
-                    
-                    </div>
                     <div id="property_$NOT_HANDLED" class="property item">
                         <h3 class="name"><code>$NOT_HANDLED</code></h3>
                         <span class="type">Object</span>
@@ -418,32 +469,7 @@
                         </div>
                     
                         <div class="description">
-                            <p>return value to indicate not handled.</p>
-                    
-                        </div>
-                    
-                    
-                    
-                    </div>
-                    <div id="property_$provide" class="property item">
-                        <h3 class="name"><code>$provide</code></h3>
-                        <span class="type">Function</span>
-                    
-                    
-                    
-                    
-                    
-                        <div class="meta">
-                                    <p>
-                                    Defined in
-                            <a href="../files/lib_callback.js.html#l31"><code>lib&#x2F;callback.js:31</code></a>
-                            </p>
-                    
-                    
-                        </div>
-                    
-                        <div class="description">
-                            <p>Covariant provider definitions.</p>
+                            <p>return value to indicate a callback was not handled.</p>
                     
                         </div>
                     

@@ -83,7 +83,6 @@
                                 <li><a href="../classes/miruken.error.ErrorCallbackHandler.html">miruken.error.ErrorCallbackHandler</a></li>
                                 <li><a href="../classes/miruken.error.Errors.html">miruken.error.Errors</a></li>
                                 <li><a href="../classes/miruken.Facet.html">miruken.Facet</a></li>
-                                <li><a href="../classes/miruken.graph.$.html">miruken.graph.$</a></li>
                                 <li><a href="../classes/miruken.graph.Traversal.html">miruken.graph.Traversal</a></li>
                                 <li><a href="../classes/miruken.graph.Traversing.html">miruken.graph.Traversing</a></li>
                                 <li><a href="../classes/miruken.graph.TraversingAxis.html">miruken.graph.TraversingAxis</a></li>
@@ -141,10 +140,10 @@
                                 <li><a href="../classes/miruken.validate.$registerValidators.html">miruken.validate.$registerValidators</a></li>
                                 <li><a href="../classes/miruken.validate.$validateThat.html">miruken.validate.$validateThat</a></li>
                                 <li><a href="../classes/miruken.validate.miruken.callback.CallbackHandler.html">miruken.validate.miruken.callback.CallbackHandler</a></li>
+                                <li><a href="../classes/miruken.validate.ValidateJsCallbackHandler.html">miruken.validate.ValidateJsCallbackHandler</a></li>
                                 <li><a href="../classes/miruken.validate.Validating.html">miruken.validate.Validating</a></li>
                                 <li><a href="../classes/miruken.validate.Validation.html">miruken.validate.Validation</a></li>
                                 <li><a href="../classes/miruken.validate.ValidationCallbackHandler.html">miruken.validate.ValidationCallbackHandler</a></li>
-                                <li><a href="../classes/miruken.validate.ValidationJsCallbackHandler.html">miruken.validate.ValidationJsCallbackHandler</a></li>
                                 <li><a href="../classes/miruken.validate.ValidationRegistry.html">miruken.validate.ValidationRegistry</a></li>
                                 <li><a href="../classes/miruken.validate.ValidationResult.html">miruken.validate.ValidationResult</a></li>
                                 <li><a href="../classes/miruken.validate.Validator.html">miruken.validate.Validator</a></li>
@@ -223,7 +222,7 @@ new function () { // closure
     eval(this.imports);
 
     /**
-     * Validation definitions.
+     * Validation definition group.
      * @property {Function} $validate
      * @for miruken.validate.$
      */
@@ -265,7 +264,7 @@ new function () { // closure
     var Validator = StrictProtocol.extend(Validating);
     
     /**
-     * Represents the validation of an object.
+     * Callback representing the validation of an object.
      * @class Validation
      * @constructor
      * @param   {Object}    object  -  object to validate
@@ -450,9 +449,13 @@ new function () { // closure
 
     /**
      * CallbackHandler for performing validation.
+     * &lt;p&gt;
+     * Once an object is validated, it will receive a **$validation** property containing the validation results.
+     * &lt;/p&gt;
      * @class ValidationCallbackHandler
      * @extends miruken.callback.CallbackHandler
      * @uses miruken.validate.Validator
+     * @uses miruken.validate.Validating
      */        
     var ValidationCallbackHandler = CallbackHandler.extend(Validator, {
         validate: function (object, scope, results) {
@@ -575,6 +578,7 @@ new function () { // closure
     CallbackHandler.implement({
         /**
          * Marks the callback handler for validation.
+         * @for miruken.callback.CallbackHandler
          * @method $valid
          * @param   {Object}  target  -  object to validate
          * @param   {Any}     scope   -  scope of validation
@@ -588,7 +592,8 @@ new function () { // closure
         },
         /**
          * Marks the callback handler for asynchronous validation.
-         * @method $valid
+         * @for miruken.callback.CallbackHandler
+         * @method $validAsync
          * @param   {Object}  target  -  object to validate
          * @param   {Any}     scope   -  scope of validation
          * @returns {miruken.callback.CallbackHandlerAspect} validation semantics.

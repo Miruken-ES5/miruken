@@ -83,7 +83,6 @@
                                 <li><a href="../classes/miruken.error.ErrorCallbackHandler.html">miruken.error.ErrorCallbackHandler</a></li>
                                 <li><a href="../classes/miruken.error.Errors.html">miruken.error.Errors</a></li>
                                 <li><a href="../classes/miruken.Facet.html">miruken.Facet</a></li>
-                                <li><a href="../classes/miruken.graph.$.html">miruken.graph.$</a></li>
                                 <li><a href="../classes/miruken.graph.Traversal.html">miruken.graph.Traversal</a></li>
                                 <li><a href="../classes/miruken.graph.Traversing.html">miruken.graph.Traversing</a></li>
                                 <li><a href="../classes/miruken.graph.TraversingAxis.html">miruken.graph.TraversingAxis</a></li>
@@ -141,10 +140,10 @@
                                 <li><a href="../classes/miruken.validate.$registerValidators.html">miruken.validate.$registerValidators</a></li>
                                 <li><a href="../classes/miruken.validate.$validateThat.html">miruken.validate.$validateThat</a></li>
                                 <li><a href="../classes/miruken.validate.miruken.callback.CallbackHandler.html">miruken.validate.miruken.callback.CallbackHandler</a></li>
+                                <li><a href="../classes/miruken.validate.ValidateJsCallbackHandler.html">miruken.validate.ValidateJsCallbackHandler</a></li>
                                 <li><a href="../classes/miruken.validate.Validating.html">miruken.validate.Validating</a></li>
                                 <li><a href="../classes/miruken.validate.Validation.html">miruken.validate.Validation</a></li>
                                 <li><a href="../classes/miruken.validate.ValidationCallbackHandler.html">miruken.validate.ValidationCallbackHandler</a></li>
-                                <li><a href="../classes/miruken.validate.ValidationJsCallbackHandler.html">miruken.validate.ValidationJsCallbackHandler</a></li>
                                 <li><a href="../classes/miruken.validate.ValidationRegistry.html">miruken.validate.ValidationRegistry</a></li>
                                 <li><a href="../classes/miruken.validate.ValidationResult.html">miruken.validate.ValidationResult</a></li>
                                 <li><a href="../classes/miruken.validate.Validator.html">miruken.validate.Validator</a></li>
@@ -201,7 +200,7 @@
         </div>
 
         <div class="foundat">
-            Defined in: <a href="../files/lib_callback.js.html#l649"><code>lib&#x2F;callback.js:649</code></a>
+            Defined in: <a href="../files/lib_callback.js.html#l678"><code>lib&#x2F;callback.js:678</code></a>
         </div>
 
             Module: <a href="../modules/callback.html">callback</a><br>
@@ -241,7 +240,7 @@
             <div class="meta">
                         <p>
                         Defined in
-                <a href="../files/lib_callback.js.html#l649"><code>lib&#x2F;callback.js:649</code></a>
+                <a href="../files/lib_callback.js.html#l678"><code>lib&#x2F;callback.js:678</code></a>
                 </p>
         
         
@@ -295,6 +294,7 @@
         <li class="api-class-tab index"><a href="#index">Index</a></li>
 
             <li class="api-class-tab methods"><a href="#methods">Methods</a></li>
+            <li class="api-class-tab properties"><a href="#properties">Properties</a></li>
     </ul>
 
     <div>
@@ -335,6 +335,10 @@
                             </li>
                             <li class="index-item method inherited">
                                 <a href="#method_$valid">$valid</a>
+
+                            </li>
+                            <li class="index-item method inherited">
+                                <a href="#method_$validAsync">$validAsync</a>
 
                             </li>
                             <li class="index-item method inherited">
@@ -392,6 +396,24 @@
                     </ul>
                 </div>
 
+                <div class="index-section properties">
+                    <h3>Properties</h3>
+
+                    <ul class="index-list properties extends">
+                            <li class="index-item property">
+                                <a href="#property_cascadeToHandler">cascadeToHandler</a>
+
+                            </li>
+                            <li class="index-item property inherited">
+                                <a href="#property_delegate">delegate</a>
+
+                            </li>
+                            <li class="index-item property">
+                                <a href="#property_handler">handler</a>
+
+                            </li>
+                    </ul>
+                </div>
 
 
         </div>
@@ -417,7 +439,7 @@
     <div class="meta">
                 <p>Inherited from
                 <a href="../classes/miruken.callback.CallbackHandler.html#method_$bestEffort">miruken.callback.CallbackHandler</a>:
-        <a href="../files/lib_callback.js.html#l1051"><code>lib&#x2F;callback.js:1051</code></a>
+        <a href="../files/lib_callback.js.html#l1123"><code>lib&#x2F;callback.js:1123</code></a>
         </p>
 
 
@@ -460,7 +482,7 @@
     <div class="meta">
                 <p>Inherited from
                 <a href="../classes/miruken.callback.CallbackHandler.html#method_$broadcast">miruken.callback.CallbackHandler</a>:
-        <a href="../files/lib_callback.js.html#l1044"><code>lib&#x2F;callback.js:1044</code></a>
+        <a href="../files/lib_callback.js.html#l1116"><code>lib&#x2F;callback.js:1116</code></a>
         </p>
 
 
@@ -509,7 +531,7 @@
     <div class="meta">
                 <p>Inherited from
                 <a href="../classes/miruken.callback.CallbackHandler.html#method_$callOptions">miruken.callback.CallbackHandler</a>:
-        <a href="../files/lib_callback.js.html#l1065"><code>lib&#x2F;callback.js:1065</code></a>
+        <a href="../files/lib_callback.js.html#l1137"><code>lib&#x2F;callback.js:1137</code></a>
         </p>
 
 
@@ -571,7 +593,7 @@
     <div class="meta">
                 <p>Inherited from
                 <a href="../classes/miruken.callback.CallbackHandler.html#method_$notify">miruken.callback.CallbackHandler</a>:
-        <a href="../files/lib_callback.js.html#l1058"><code>lib&#x2F;callback.js:1058</code></a>
+        <a href="../files/lib_callback.js.html#l1130"><code>lib&#x2F;callback.js:1130</code></a>
         </p>
 
 
@@ -700,7 +722,7 @@
     <div class="meta">
                 <p>Inherited from
                 <a href="../classes/miruken.callback.CallbackHandler.html#method_$strict">miruken.callback.CallbackHandler</a>:
-        <a href="../files/lib_callback.js.html#l1037"><code>lib&#x2F;callback.js:1037</code></a>
+        <a href="../files/lib_callback.js.html#l1109"><code>lib&#x2F;callback.js:1109</code></a>
         </p>
 
 
@@ -752,7 +774,91 @@
     <div class="meta">
                 <p>Inherited from
                 <a href="../classes/miruken.callback.CallbackHandler.html#method_$valid">miruken.callback.CallbackHandler</a>:
-        <a href="../files/lib_validate_validate.js.html#l390"><code>lib&#x2F;validate&#x2F;validate.js:390</code></a>
+        <a href="../files/lib_validate_validate.js.html#l381"><code>lib&#x2F;validate&#x2F;validate.js:381</code></a>
+        </p>
+
+
+
+    </div>
+
+    <div class="description">
+        <p>Marks the callback handler for validation.</p>
+
+    </div>
+
+        <div class="params">
+            <h4>Parameters:</h4>
+
+            <ul class="params-list">
+                <li class="param">
+                        <code class="param-name">target</code>
+                        <span class="type">Object</span>
+
+
+                    <div class="param-description">
+                        <ul>
+<li>object to validate</li>
+</ul>
+
+                    </div>
+
+                </li>
+                <li class="param">
+                        <code class="param-name">scope</code>
+                        <span class="type">Any</span>
+
+
+                    <div class="param-description">
+                        <ul>
+<li>scope of validation</li>
+</ul>
+
+                    </div>
+
+                </li>
+            </ul>
+        </div>
+
+        <div class="returns">
+            <h4>Returns:</h4>
+
+            <div class="returns-description">
+                        <span class="type"><a href="../classes/miruken.callback.CallbackHandlerAspect.html" class="crosslink">miruken.callback.CallbackHandlerAspect</a></span>:
+                    <p>validation semantics.</p>
+
+            </div>
+        </div>
+
+
+</div>
+<div id="method_$validAsync" class="method item inherited">
+    <h3 class="name"><code>$validAsync</code></h3>
+
+        <div class="args">
+            <span class="paren">(</span><ul class="args-list inline commas">
+                <li class="arg">
+                        <code>target</code>
+                </li>
+                <li class="arg">
+                        <code>scope</code>
+                </li>
+            </ul><span class="paren">)</span>
+        </div>
+
+        <span class="returns-inline">
+            <span class="type"><a href="../classes/miruken.callback.CallbackHandlerAspect.html" class="crosslink">miruken.callback.CallbackHandlerAspect</a></span>
+        </span>
+
+
+
+
+
+
+
+    <div class="meta">
+                <p>Inherited from
+                <a href="../classes/miruken.callback.CallbackHandler.html#method_$validAsync">miruken.callback.CallbackHandler</a>:
+        <a href="../files/lib_validate_validate.js.html#l395"><code>lib&#x2F;validate&#x2F;validate.js:395</code></a>
         </p>
 
 
@@ -836,7 +942,7 @@
     <div class="meta">
                 <p>Inherited from
                 <a href="../classes/miruken.callback.CallbackHandler.html#method_aspect">miruken.callback.CallbackHandler</a>:
-        <a href="../files/lib_callback.js.html#l1186"><code>lib&#x2F;callback.js:1186</code></a>
+        <a href="../files/lib_callback.js.html#l1258"><code>lib&#x2F;callback.js:1258</code></a>
         </p>
 
 
@@ -918,7 +1024,7 @@
     <div class="meta">
                 <p>Inherited from
                 <a href="../classes/miruken.callback.CallbackHandler.html#method_defer">miruken.callback.CallbackHandler</a>:
-        <a href="../files/lib_callback.js.html#l1076"><code>lib&#x2F;callback.js:1076</code></a>
+        <a href="../files/lib_callback.js.html#l1148"><code>lib&#x2F;callback.js:1148</code></a>
         </p>
 
 
@@ -987,7 +1093,7 @@
     <div class="meta">
                 <p>Inherited from
                 <a href="../classes/miruken.callback.CallbackHandler.html#method_deferAll">miruken.callback.CallbackHandler</a>:
-        <a href="../files/lib_callback.js.html#l1090"><code>lib&#x2F;callback.js:1090</code></a>
+        <a href="../files/lib_callback.js.html#l1162"><code>lib&#x2F;callback.js:1162</code></a>
         </p>
 
 
@@ -1055,7 +1161,7 @@
     <div class="meta">
                 <p>Inherited from
                 <a href="../classes/miruken.callback.CallbackHandler.html#method_filter">miruken.callback.CallbackHandler</a>:
-        <a href="../files/lib_callback.js.html#l1176"><code>lib&#x2F;callback.js:1176</code></a>
+        <a href="../files/lib_callback.js.html#l1248"><code>lib&#x2F;callback.js:1248</code></a>
         </p>
 
 
@@ -1129,7 +1235,7 @@
     <div class="meta">
                 <p>Inherited from
                 <a href="../classes/miruken.callback.CallbackHandler.html#method_handle">miruken.callback.CallbackHandler</a>:
-        <a href="../files/lib_callback.js.html#l423"><code>lib&#x2F;callback.js:423</code></a>
+        <a href="../files/lib_callback.js.html#l441"><code>lib&#x2F;callback.js:441</code></a>
         </p>
 
 
@@ -1231,7 +1337,7 @@
     <div class="meta">
                 <p>Inherited from
                 <a href="../classes/miruken.callback.CallbackHandler.html#method_handleCallback">miruken.callback.CallbackHandler</a>:
-        <a href="../files/lib_callback.js.html#l435"><code>lib&#x2F;callback.js:435</code></a>
+        <a href="../files/lib_callback.js.html#l453"><code>lib&#x2F;callback.js:453</code></a>
         </p>
 
 
@@ -1326,7 +1432,7 @@
     <div class="meta">
                 <p>Inherited from
                 <a href="../classes/miruken.callback.CallbackHandler.html#method_lookup">miruken.callback.CallbackHandler</a>:
-        <a href="../files/lib_callback.js.html#l1141"><code>lib&#x2F;callback.js:1141</code></a>
+        <a href="../files/lib_callback.js.html#l1213"><code>lib&#x2F;callback.js:1213</code></a>
         </p>
 
 
@@ -1394,7 +1500,7 @@
     <div class="meta">
                 <p>Inherited from
                 <a href="../classes/miruken.callback.CallbackHandler.html#method_lookupAll">miruken.callback.CallbackHandler</a>:
-        <a href="../files/lib_callback.js.html#l1157"><code>lib&#x2F;callback.js:1157</code></a>
+        <a href="../files/lib_callback.js.html#l1229"><code>lib&#x2F;callback.js:1229</code></a>
         </p>
 
 
@@ -1462,7 +1568,7 @@
     <div class="meta">
                 <p>Inherited from
                 <a href="../classes/miruken.callback.CallbackHandler.html#method_next">miruken.callback.CallbackHandler</a>:
-        <a href="../files/lib_callback.js.html#l1217"><code>lib&#x2F;callback.js:1217</code></a>
+        <a href="../files/lib_callback.js.html#l1289"><code>lib&#x2F;callback.js:1289</code></a>
         </p>
 
 
@@ -1531,7 +1637,7 @@
     <div class="meta">
                 <p>Inherited from
                 <a href="../classes/miruken.callback.CallbackHandler.html#method_resolve">miruken.callback.CallbackHandler</a>:
-        <a href="../files/lib_callback.js.html#l1104"><code>lib&#x2F;callback.js:1104</code></a>
+        <a href="../files/lib_callback.js.html#l1176"><code>lib&#x2F;callback.js:1176</code></a>
         </p>
 
 
@@ -1600,7 +1706,7 @@
     <div class="meta">
                 <p>Inherited from
                 <a href="../classes/miruken.callback.CallbackHandler.html#method_resolveAll">miruken.callback.CallbackHandler</a>:
-        <a href="../files/lib_callback.js.html#l1121"><code>lib&#x2F;callback.js:1121</code></a>
+        <a href="../files/lib_callback.js.html#l1193"><code>lib&#x2F;callback.js:1193</code></a>
         </p>
 
 
@@ -1662,7 +1768,7 @@
     <div class="meta">
                 <p>Inherited from
                 <a href="../classes/miruken.callback.CallbackHandler.html#method_toDelegate">miruken.callback.CallbackHandler</a>:
-        <a href="../files/lib_callback.js.html#l481"><code>lib&#x2F;callback.js:481</code></a>
+        <a href="../files/lib_callback.js.html#l499"><code>lib&#x2F;callback.js:499</code></a>
         </p>
 
 
@@ -1711,7 +1817,7 @@
     <div class="meta">
                 <p>Inherited from
                 <a href="../classes/miruken.callback.CallbackHandler.html#method_when">miruken.callback.CallbackHandler</a>:
-        <a href="../files/lib_callback.js.html#l1197"><code>lib&#x2F;callback.js:1197</code></a>
+        <a href="../files/lib_callback.js.html#l1269"><code>lib&#x2F;callback.js:1269</code></a>
         </p>
 
 
@@ -1757,6 +1863,85 @@
 </div>
             </div>
 
+            <div id="properties" class="api-class-tabpanel">
+                <h2 class="off-left">Properties</h2>
+
+                    <div id="property_cascadeToHandler" class="property item">
+                        <h3 class="name"><code>cascadeToHandler</code></h3>
+                        <span class="type"><a href="../classes/miruken.callback.CallbackHandler.html" class="crosslink">miruken.callback.CallbackHandler</a></span>
+                    
+                    
+                    
+                    
+                    
+                        <div class="meta">
+                                    <p>
+                                    Defined in
+                            <a href="../files/lib_callback.js.html#l702"><code>lib&#x2F;callback.js:702</code></a>
+                            </p>
+                    
+                    
+                        </div>
+                    
+                        <div class="description">
+                            <p>Gets the secondary handler.</p>
+                    
+                        </div>
+                    
+                    
+                    
+                    </div>
+                    <div id="property_delegate" class="property item inherited">
+                        <h3 class="name"><code>delegate</code></h3>
+                        <span class="type">Object</span>
+                    
+                    
+                    
+                    
+                    
+                        <div class="meta">
+                                    <p>Inherited from
+                                    <a href="../classes/miruken.callback.CallbackHandler.html#property_delegate">miruken.callback.CallbackHandler</a>:
+                            <a href="../files/lib_callback.js.html#l433"><code>lib&#x2F;callback.js:433</code></a>
+                            </p>
+                    
+                    
+                        </div>
+                    
+                        <div class="description">
+                            <p>Gets the delegate.</p>
+                    
+                        </div>
+                    
+                    
+                    
+                    </div>
+                    <div id="property_handler" class="property item">
+                        <h3 class="name"><code>handler</code></h3>
+                        <span class="type"><a href="../classes/miruken.callback.CallbackHandler.html" class="crosslink">miruken.callback.CallbackHandler</a></span>
+                    
+                    
+                    
+                    
+                    
+                        <div class="meta">
+                                    <p>
+                                    Defined in
+                            <a href="../files/lib_callback.js.html#l695"><code>lib&#x2F;callback.js:695</code></a>
+                            </p>
+                    
+                    
+                        </div>
+                    
+                        <div class="description">
+                            <p>Gets the primary handler.</p>
+                    
+                        </div>
+                    
+                    
+                    
+                    </div>
+            </div>
 
 
     </div>

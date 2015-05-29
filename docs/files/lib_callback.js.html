@@ -83,7 +83,6 @@
                                 <li><a href="../classes/miruken.error.ErrorCallbackHandler.html">miruken.error.ErrorCallbackHandler</a></li>
                                 <li><a href="../classes/miruken.error.Errors.html">miruken.error.Errors</a></li>
                                 <li><a href="../classes/miruken.Facet.html">miruken.Facet</a></li>
-                                <li><a href="../classes/miruken.graph.$.html">miruken.graph.$</a></li>
                                 <li><a href="../classes/miruken.graph.Traversal.html">miruken.graph.Traversal</a></li>
                                 <li><a href="../classes/miruken.graph.Traversing.html">miruken.graph.Traversing</a></li>
                                 <li><a href="../classes/miruken.graph.TraversingAxis.html">miruken.graph.TraversingAxis</a></li>
@@ -141,10 +140,10 @@
                                 <li><a href="../classes/miruken.validate.$registerValidators.html">miruken.validate.$registerValidators</a></li>
                                 <li><a href="../classes/miruken.validate.$validateThat.html">miruken.validate.$validateThat</a></li>
                                 <li><a href="../classes/miruken.validate.miruken.callback.CallbackHandler.html">miruken.validate.miruken.callback.CallbackHandler</a></li>
+                                <li><a href="../classes/miruken.validate.ValidateJsCallbackHandler.html">miruken.validate.ValidateJsCallbackHandler</a></li>
                                 <li><a href="../classes/miruken.validate.Validating.html">miruken.validate.Validating</a></li>
                                 <li><a href="../classes/miruken.validate.Validation.html">miruken.validate.Validation</a></li>
                                 <li><a href="../classes/miruken.validate.ValidationCallbackHandler.html">miruken.validate.ValidationCallbackHandler</a></li>
-                                <li><a href="../classes/miruken.validate.ValidationJsCallbackHandler.html">miruken.validate.ValidationJsCallbackHandler</a></li>
                                 <li><a href="../classes/miruken.validate.ValidationRegistry.html">miruken.validate.ValidationRegistry</a></li>
                                 <li><a href="../classes/miruken.validate.ValidationResult.html">miruken.validate.ValidationResult</a></li>
                                 <li><a href="../classes/miruken.validate.Validator.html">miruken.validate.Validator</a></li>
@@ -203,7 +202,7 @@ var miruken = require(&#x27;./miruken.js&#x27;),
 new function () { // closure
 
     /**
-     * Package providing message passing support.&lt;br/&gt;
+     * Package providing message handling support.&lt;br/&gt;
      * Requires the {{#crossLinkModule &quot;miruken&quot;}}{{/crossLinkModule}} module.
      * @module miruken
      * @submodule callback
@@ -222,32 +221,42 @@ new function () { // closure
 
     var _definitions = {},
         /**
-         * Contravariant handler definitions.
-         * @property {Function} $handle
+         * Definition for handling callbacks contravariantly.
+         * @method $handle
          * @for miruken.callback.$
          */
         $handle = $define(&#x27;$handle&#x27;,  Variance.Contravariant),
         /**
-         * Covariant provider definitions.
-         * @property {Function} $provide  
+         * Definition for providing callbacks covariantly.
+         * @method $provide  
          * @for miruken.callback.$
          */        
         $provide = $define(&#x27;$provide&#x27;, Variance.Covariant),
         /**
-         * Invariant lookup definitions.
-         * @property {Function} $lookup  
+         * Definition for matching callbacks invariantly.
+         * @method $lookup  
          * @for miruken.callback.$
          */                
         $lookup = $define(&#x27;$lookup&#x27; , Variance.Invariant),
         /**
-         * return value to indicate not handled.
+         * return value to indicate a callback was not handled.
          * @property {Object} $NOT_HANDLED
          * @for miruken.callback.$
          */                
         $NOT_HANDLED = {};
 
     /**
-     * Metamacro to register callback handlers.
+     * Metamacro to process callback handler definitions.
+     * &lt;pre&gt;
+     *    var Bank = Base.extend(**$callbacks**, {
+     *        $handle: [
+     *            Deposit, function (deposit, composer) {
+     *                // perform the deposit
+     *            }
+     *        ]
+     *    })
+     * &lt;/pre&gt;
+     * would register a handler in the Bank class for Deposit callbacks.
      * @class $callbacks
      * @extends miruken.MetaMacro
      */
@@ -367,7 +376,9 @@ new function () { // closure
                  */
                 setException: function (exception) { _exception = exception; },
                 /**
-                 * Attempts to invoke the method on the target.
+                 * Attempts to invoke the method on the target.&lt;br/&gt;
+                 * During invocation, the receiver will have access to a global **$composer** property
+                 * representing the initiating {{#crossLink &quot;miruken.callback.CallbackHandler&quot;}}{{/crossLink}}.
                  * @method invokeOn
                  * @param   {Object}  target  - method receiver
                  * @returns {boolean} true if the method was accepted.
@@ -437,10 +448,10 @@ new function () { // closure
     });
 
     /**
-     * Represents the lookup of a key.
+     * Callback representing the invariant lookup of a key.
      * @class Lookup
      * @constructor
-     * @param   {string}   key   -  lookup key
+     * @param   {Any}      key   -  lookup key
      * @param   {boolean}  many  -  lookup cardinality
      * @extends Base
      */
@@ -486,7 +497,7 @@ new function () { // closure
     });
 
     /**
-     * Represents the deferred handling of a callback.
+     * Callback representing the deferred handling of another callback.
      * @class Deferred
      * @constructor
      * @param   {Object}   callback  -  callback
@@ -534,10 +545,10 @@ new function () { // closure
     });
 
     /**
-     * Represents the resolution of a key.
+     * Callback representing the covariant resolution of a key.
      * @class Resolution
      * @constructor
-     * @param   {string}   key   -  resolution key
+     * @param   {any}   key      -  resolution key
      * @param   {boolean}  many  -  resolution cardinality
      * @extends Base
      */
@@ -605,7 +616,8 @@ new function () { // closure
     });
 
     /**
-     * Base class for handling arbitrary callbacks.
+     * Base class for handling arbitrary callbacks.&lt;br/&gt;
+     * See {{#crossLink &quot;miruken.callback.$callbacks&quot;}}{{/crossLink}}
      * @class CallbackHandler
      * @constructor
      * @param  {Object}  [delegate]  -  delegate
@@ -616,6 +628,11 @@ new function () { // closure
         constructor: function _(delegate) {
             var spec = _.spec || (_.spec = {});
             spec.value = delegate;
+            /**
+             * Gets the delegate.
+             * @property {Object} delegate
+             * @readOnly
+             */            
             Object.defineProperty(this, &#x27;delegate&#x27;, spec);
             delete spec.value;
         },
@@ -692,7 +709,8 @@ new function () { // closure
     });
 
     /**
-     * Base class for all CallbackHandler decorators.
+     * Base class for all CallbackHandler decorators.&lt;br/&gt;
+     * See [Decorator Pattern](http://en.wikipedia.org/wiki/Decorator_pattern)
      * @class CallbackHandlerDecorator
      * @constructor
      * @param  {miruken.callback.CallbackHandler}  decoratee  -  decoratee
@@ -703,6 +721,10 @@ new function () { // closure
             if ($isNothing(decoratee)) {
                 throw new TypeError(&quot;No decoratee specified.&quot;);
             }
+            /**
+             * Gets/Sets the decoratee.
+             * @property {miruken.callback.CallbackHandler} decoratee
+             */                        
             Object.defineProperty(this, &#x27;decoratee&#x27;, {
                 get: function () { return decoratee; },
                 set: function (value) { decoratee = value.toCallbackHandler() }
@@ -716,10 +738,10 @@ new function () { // closure
     });
 
     /**
-     * Marks all callbacks as reentrant.
+     * Marks all handled callbacks as reentrant and continues processing.
      * @class ReentrantScope
      * @constructor
-     * @param  {miruken.callback.CallbackHandler)  handler  -  delegating handler
+     * @param  {miruken.callback.CallbackHandler)  handler  -  forwarding handler
      * @extends miruken.callback.CallbackHandler
      */
     var ReentrantScope = CallbackHandler.extend({
@@ -751,6 +773,11 @@ new function () { // closure
             }
             var spec = _.spec || (_.spec = {});
             spec.value = filter;
+            /**
+             * Gets the callback filter.
+             * @property {Function} filter
+             * @readOnly
+             */                                    
             Object.defineProperty(this, &#x27;_filter&#x27;, spec);
             delete spec.value;
         },
@@ -769,7 +796,8 @@ new function () { // closure
     });                                                                   
 
     /**
-     * Identifies a reject callback.
+     * Identifies a rejected callback.  This usually occurs from aspect processing.&lt;br/&gt;
+     * See {{#crossLink &quot;miruken.callback.CallbackHandlerAspect&quot;}}{{/crossLink}}
      * @class RejectedError
      * @extends Error
      */
@@ -862,8 +890,18 @@ new function () { // closure
             }
             var spec = _.spec || (_.spec = {});
             spec.value = handler.toCallbackHandler();
+            /**
+             * Gets the primary handler.
+             * @property {miruken.callback.CallbackHandler} handler
+             * @readOnly
+             */                                                
             Object.defineProperty(this, &#x27;handler&#x27;, spec);
             spec.value = cascadeToHandler.toCallbackHandler();
+            /**
+             * Gets the secondary handler.
+             * @property {miruken.callback.CallbackHandler} cascadeToHandler
+             * @readOnly
+             */                                                            
             Object.defineProperty(this, &#x27;cascadeToHandler&#x27;, spec);
             delete spec.value;
         },
@@ -881,7 +919,8 @@ new function () { // closure
     });
 
     /**
-     * Represents zero or more {{#crossLink &quot;miruken.callback.CallbackHandler&quot;}}{{/crossLink}}.
+     * Encapsulates zero or more {{#crossLink &quot;miruken.callback.CallbackHandler&quot;}}{{/crossLink}}.&lt;br/&gt;
+     * See [Composite Pattern](http://en.wikipedia.org/wiki/Composite_pattern)
      * @class CompositeCallbackHandler
      * @constructor
      * @param  {Arguments}  arguments  -  callback handlers
@@ -975,6 +1014,11 @@ new function () { // closure
             }
             var spec = _.spec || (_.spec = {});
             spec.value = condition;
+            /**
+             * Gets the callback condiition.
+             * @property {Function} condition
+             * @readOnly
+             */                                                                        
             Object.defineProperty(this, &#x27;condition&#x27;, spec);
             delete spec.value;
         },
@@ -1032,7 +1076,8 @@ new function () { // closure
     };
 
     /**
-     * Shortcut for exposing a method.
+     * Shortcut for exposing a method as a
+     * {{#crossLink &quot;miruken.callback.CallbackHandler&quot;}}{{/crossLink}}.
      * @class MethodCallbackHandler
      * @constructor
      * @param  {string}    methodName  -  method name
@@ -1048,8 +1093,18 @@ new function () { // closure
             }
             var spec = _.spec || (_.spec = {});
             spec.value = methodName;
+            /**
+             * Gets the method name.
+             * @property {string} methodName
+             * @readOnly
+             */
             Object.defineProperty(this, &#x27;methodName&#x27;, spec);
             spec.value = method;
+            /**
+             * Gets the method function.
+             * @property {Function} method
+             * @readOnly
+             */            
             Object.defineProperty(this, &#x27;method&#x27;, spec);
             delete spec.value;
         },
@@ -1170,7 +1225,7 @@ new function () { // closure
      * Handles invocation semantics.
      * @class InvocationOptionsHandler
      * @constructor
-     * @param   {miruken.callback.CallbackHandler}      handler  -  delegate callback handler
+     * @param   {miruken.callback.CallbackHandler}      handler  -  forwarding handler
      * @param   {miruken.callback.InvocationSemantics}  options  -  invocation semantics
      * @extends miruken.callback.CallbackHandler
      */
@@ -1178,8 +1233,18 @@ new function () { // closure
         constructor: function _(handler, options) {
             var spec = _.spec || (_.spec = {});
             spec.value = handler;
+            /**
+             * Gets the forwarding handler.
+             * @property {miruken.callback.CallbackHandler} handler
+             * @readOnly
+             */                        
             Object.defineProperty(this, &#x27;handler&#x27;, spec);
             spec.value = new InvocationSemantics(options);
+            /**
+             * Gets the invocation semantics.
+             * @property {miruken.callback.InvocationSemantics} semantics
+             * @readOnly
+             */                                    
             Object.defineProperty(this, &#x27;semantics&#x27;, spec);
             delete spec.value;
         },
@@ -1197,13 +1262,19 @@ new function () { // closure
      * {{#crossLink &quot;miruken.callback.HandleMethod&quot;}}{{/crossLink}}.
      * @class InvocationDelegate
      * @constructor
-     * @param   {miruken.callback.CallbackHandler}  handler  -  delegting callback handler 
+     * @param   {miruken.callback.CallbackHandler}  handler  -  forwarding handler 
      * @extends miruken.Delegate
      */
     var InvocationDelegate = Delegate.extend({
         constructor: function _(handler) {
             var spec = _.spec || (_.spec = {});
             spec.value = handler;
+            /**
+             * Gets the handler that handles the 
+             * {{#crossLink &quot;miruken.callback.HandleMethod&quot;}}{{/crossLink}}.
+             * @property {miruken.callback.CallbackHandler} handler
+             * @readOnly
+             */                                                
             Object.defineProperty(this, &#x27;handler&#x27;, spec);
             delete spec.value;
         },
@@ -1430,11 +1501,12 @@ new function () { // closure
     });
 
     /**
-     * Defines a new handler relationship.
+     * Defines a new handler grouping.  This is the main extensibility point for handling callbacks.
      * @method $define
-     * @param    {string}           tag       - name of definition
-     * @param    {miruken.Variance} variance  - variance of definition
-     * @return   {Function} function to add to definition.
+     * @param   {string}           tag       - group tag
+     * @param   {miruken.Variance} variance  - group variance
+     * @return  {Function} function to add to a group.
+     * @throws  {TypeError} if group already defined.
      * @for $
      */
     function $define(tag, variance) {
