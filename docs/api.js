@@ -109,8 +109,7 @@ YUI.add("yuidoc-meta", function(Y) {
         "miruken.validate.ValidationCallbackHandler",
         "miruken.validate.ValidationRegistry",
         "miruken.validate.ValidationResult",
-        "miruken.validate.Validator",
-        "miruken.validate.miruken.callback.CallbackHandler"
+        "miruken.validate.Validator"
     ],
     "modules": [
         "callback",

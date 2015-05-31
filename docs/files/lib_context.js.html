@@ -139,7 +139,6 @@
                                 <li><a href="../classes/miruken.validate.$.html">miruken.validate.$</a></li>
                                 <li><a href="../classes/miruken.validate.$registerValidators.html">miruken.validate.$registerValidators</a></li>
                                 <li><a href="../classes/miruken.validate.$validateThat.html">miruken.validate.$validateThat</a></li>
-                                <li><a href="../classes/miruken.validate.miruken.callback.CallbackHandler.html">miruken.validate.miruken.callback.CallbackHandler</a></li>
                                 <li><a href="../classes/miruken.validate.ValidateJsCallbackHandler.html">miruken.validate.ValidateJsCallbackHandler</a></li>
                                 <li><a href="../classes/miruken.validate.Validating.html">miruken.validate.Validating</a></li>
                                 <li><a href="../classes/miruken.validate.Validation.html">miruken.validate.Validation</a></li>
@@ -672,20 +671,21 @@ new function () { // closure
      * Context traversal
      */
     var axisControl = {
-            axis: function (axis) {
-                return _newContextTraversal(this, axis);   
-            }
-        },
+        axis: function (axis) {
+            var context   = this,
+                traversal = pcopy(context);
+            traversal.handle = function (callback, greedy, composer) {
+                return context.handleAxis(axis, callback, greedy, composer);
+            };
+            return traversal;
+        }},
+        applyAxis = axisControl.axis,
         axisChoices = Array2.combine(TraversingAxis.names, TraversingAxis.values);
 
     for (var name in axisChoices) {
         var axis = axisChoices[name],
             key  = &#x27;$&#x27; + name.charAt(0).toLowerCase() + name.slice(1);
-        axisControl[key] = function (axis) {
-            return function () {
-                return _newContextTraversal(this, axis);
-            };
-        }(axis);
+        axisControl[key] = Function2.partial(applyAxis, axis);
     }
 
     /**
@@ -793,37 +793,6 @@ new function () { // closure
      */
 
     Context.implement(axisControl);
-
-    function _newContextTraversal(context, axis) {
-        function Traversal() {
-            for (var key in context) {
-                if (key in Base.prototype) {
-                    continue;
-                }
-                var member = context[key];
-                if ($isFunction(member))
-                    this[key] = (function (k, m) {
-                        return function () {
-                            var owner       = (k in CallbackHandler.prototype) ? this : context, 
-                                returnValue = m.apply(owner, arguments);
-                            if (returnValue === context) {
-                                returnValue = this;
-                            }
-                            else if (returnValue &amp;&amp; returnValue.decoratee == context) {
-                                returnValue.decoratee = this;
-                            }
-                            return returnValue;
-                        }
-                    })(key, member);
-            }
-            this.extend({
-                handle: function (callback, greedy, composer) {
-                    return this.handleAxis(axis, callback, greedy, composer);
-                }});
-        }
-        Traversal.prototype = context.constructor.prototype;
-        return new Traversal();
-    }
 
     /**
      * Enhances Functions to create instances in a context.

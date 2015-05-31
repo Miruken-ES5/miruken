@@ -100,8 +100,7 @@
                 "miruken.validate.$validateThat": 1
             },
             "fors": {
-                "miruken.validate.$": 1,
-                "miruken.callback.CallbackHandler": 1
+                "miruken.validate.$": 1
             },
             "namespaces": {
                 "miruken.validate": 1
@@ -129,13 +128,13 @@
                 "callback": 1
             },
             "classes": {
-                "miruken.callback.CallbackHandler": 1,
                 "miruken.callback.$callbacks": 1,
                 "miruken.callback.HandleMethod": 1,
                 "miruken.callback.Lookup": 1,
                 "miruken.callback.Deferred": 1,
                 "miruken.callback.Resolution": 1,
                 "miruken.callback.Reentrant": 1,
+                "miruken.callback.CallbackHandler": 1,
                 "miruken.callback.CallbackHandlerDecorator": 1,
                 "miruken.callback.ReentrantScope": 1,
                 "miruken.callback.CallbackHandlerFilter": 1,
@@ -155,8 +154,7 @@
             "fors": {
                 "miruken.callback.$": 1,
                 "miruken.callback.CallbackHandler": 1,
-                "$": 1,
-                "miruken.$": 1
+                "$": 1
             },
             "namespaces": {
                 "miruken.callback": 1
@@ -316,8 +314,6 @@
                 "miruken.validate.ValidationResult": 1,
                 "miruken.validate.ValidationCallbackHandler": 1,
                 "miruken.validate.$validateThat": 1,
-                "miruken.validate.miruken.callback.CallbackHandler": 1,
-                "miruken.callback.CallbackHandler": 1,
                 "miruken.validate.$registerValidators": 1,
                 "miruken.validate.ValidationRegistry": 1,
                 "miruken.validate.ValidateJsCallbackHandler": 1,
@@ -328,6 +324,7 @@
                 "miruken.callback.Deferred": 1,
                 "miruken.callback.Resolution": 1,
                 "miruken.callback.Reentrant": 1,
+                "miruken.callback.CallbackHandler": 1,
                 "miruken.callback.CallbackHandlerDecorator": 1,
                 "miruken.callback.ReentrantScope": 1,
                 "miruken.callback.CallbackHandlerFilter": 1,
@@ -343,7 +340,6 @@
                 "miruken.callback.InvocationSemantics": 1,
                 "miruken.callback.InvocationOptionsHandler": 1,
                 "miruken.callback.InvocationDelegate": 1,
-                "miruken.$": 1,
                 "miruken.context.ContextState": 1,
                 "miruken.context.ContextObserver": 1,
                 "miruken.context.Context": 1,
@@ -358,6 +354,7 @@
                 "miruken.graph.Traversing": 1,
                 "miruken.graph.TraversingMixin": 1,
                 "miruken.graph.Traversal": 1,
+                "miruken.$": 1,
                 "miruken.Modifier": 1,
                 "miruken.Enum": 1,
                 "miruken.Variance": 1,
@@ -391,14 +388,14 @@
             "fors": {
                 "miruken.ioc.$": 1,
                 "miruken.validate.$": 1,
-                "miruken.callback.CallbackHandler": 1,
                 "miruken.callback.$": 1,
+                "miruken.callback.CallbackHandler": 1,
                 "$": 1,
-                "miruken.$": 1,
                 "miruken.context.Context": 1,
                 "Function": 1,
                 "miruken.context.Function": 1,
-                "miruken.Modifier": 1
+                "miruken.Modifier": 1,
+                "miruken.$": 1
             },
             "namespaces": {
                 "miruken.ioc": 1,
@@ -490,14 +487,12 @@
                 "miruken.validate.ValidationResult": 1,
                 "miruken.validate.ValidationCallbackHandler": 1,
                 "miruken.validate.$validateThat": 1,
-                "miruken.validate.miruken.callback.CallbackHandler": 1,
                 "miruken.validate.$registerValidators": 1,
                 "miruken.validate.ValidationRegistry": 1,
                 "miruken.validate.ValidateJsCallbackHandler": 1
             },
             "fors": {
-                "miruken.validate.$": 1,
-                "miruken.callback.CallbackHandler": 1
+                "miruken.validate.$": 1
             },
             "is_submodule": 1,
             "namespaces": {
@@ -513,7 +508,6 @@
             "name": "callback",
             "submodules": {},
             "classes": {
-                "miruken.callback.CallbackHandler": 1,
                 "miruken.callback.$": 1,
                 "miruken.callback.$callbacks": 1,
                 "miruken.callback.HandleMethod": 1,
@@ -521,6 +515,7 @@
                 "miruken.callback.Deferred": 1,
                 "miruken.callback.Resolution": 1,
                 "miruken.callback.Reentrant": 1,
+                "miruken.callback.CallbackHandler": 1,
                 "miruken.callback.CallbackHandlerDecorator": 1,
                 "miruken.callback.ReentrantScope": 1,
                 "miruken.callback.CallbackHandlerFilter": 1,
@@ -535,14 +530,12 @@
                 "miruken.callback.InvocationOptions": 1,
                 "miruken.callback.InvocationSemantics": 1,
                 "miruken.callback.InvocationOptionsHandler": 1,
-                "miruken.callback.InvocationDelegate": 1,
-                "miruken.$": 1
+                "miruken.callback.InvocationDelegate": 1
             },
             "fors": {
                 "miruken.callback.$": 1,
                 "miruken.callback.CallbackHandler": 1,
-                "$": 1,
-                "miruken.$": 1
+                "$": 1
             },
             "is_submodule": 1,
             "namespaces": {
@@ -550,8 +543,8 @@
             },
             "module": "miruken",
             "namespace": "",
-            "file": "lib/miruken.js",
-            "line": 5,
+            "file": "lib/callback.js",
+            "line": 1053,
             "description": "Package providing message handling support.<br/>\nRequires the {{#crossLinkModule \"miruken\"}}{{/crossLinkModule}} module."
         },
         "context": {
@@ -1465,43 +1458,6 @@
             "description": "Metamacro for class-based validation.",
             "extends": "miruken.MetaMacro"
         },
-        "miruken.validate.miruken.callback.CallbackHandler": {
-            "name": "miruken.validate.miruken.callback.CallbackHandler",
-            "shortname": "miruken.callback.CallbackHandler",
-            "classitems": [],
-            "plugins": [],
-            "extensions": [],
-            "plugin_for": [],
-            "extension_for": [],
-            "module": "miruken",
-            "submodule": "validate",
-            "namespace": "miruken.validate"
-        },
-        "miruken.callback.CallbackHandler": {
-            "name": "miruken.callback.CallbackHandler",
-            "shortname": "CallbackHandler",
-            "classitems": [],
-            "plugins": [],
-            "extensions": [],
-            "plugin_for": [],
-            "extension_for": [],
-            "module": "miruken",
-            "submodule": "callback",
-            "namespace": "miruken.callback",
-            "file": "lib/callback.js",
-            "line": 411,
-            "description": "Base class for handling arbitrary callbacks.<br/>\nSee {{#crossLink \"miruken.callback.$callbacks\"}}{{/crossLink}}",
-            "is_constructor": 1,
-            "params": [
-                {
-                    "name": "delegate",
-                    "description": "-  delegate",
-                    "type": "Object",
-                    "optional": true
-                }
-            ],
-            "extends": "Base"
-        },
         "miruken.validate.$registerValidators": {
             "name": "miruken.validate.$registerValidators",
             "shortname": "$registerValidators",
@@ -1732,6 +1688,31 @@
                     "name": "callback",
                     "description": "-  callback to mark",
                     "type": "Object"
+                }
+            ],
+            "extends": "Base"
+        },
+        "miruken.callback.CallbackHandler": {
+            "name": "miruken.callback.CallbackHandler",
+            "shortname": "CallbackHandler",
+            "classitems": [],
+            "plugins": [],
+            "extensions": [],
+            "plugin_for": [],
+            "extension_for": [],
+            "module": "miruken",
+            "submodule": "callback",
+            "namespace": "miruken.callback",
+            "file": "lib/callback.js",
+            "line": 411,
+            "description": "Base class for handling arbitrary callbacks.<br/>\nSee {{#crossLink \"miruken.callback.$callbacks\"}}{{/crossLink}}",
+            "is_constructor": 1,
+            "params": [
+                {
+                    "name": "delegate",
+                    "description": "-  delegate",
+                    "type": "Object",
+                    "optional": true
                 }
             ],
             "extends": "Base"
@@ -2124,25 +2105,6 @@
             ],
             "extends": "miruken.Delegate"
         },
-        "miruken.$": {
-            "name": "miruken.$",
-            "shortname": "miruken.$",
-            "classitems": [],
-            "plugins": [],
-            "extensions": [],
-            "plugin_for": [],
-            "extension_for": [],
-            "module": "miruken",
-            "submodule": "callback",
-            "namespace": "miruken",
-            "file": "lib/miruken.js",
-            "line": 5,
-            "description": "Package containing enhancements to the javascript language.",
-            "mainName": "miruken",
-            "tag": "main",
-            "itemtype": "main",
-            "_main": true
-        },
         "miruken.context.ContextState": {
             "name": "miruken.context.ContextState",
             "shortname": "ContextState",
@@ -2398,6 +2360,24 @@
             "description": "Helper class for traversing a graph.",
             "static": 1,
             "extends": "Abstract"
+        },
+        "miruken.$": {
+            "name": "miruken.$",
+            "shortname": "miruken.$",
+            "classitems": [],
+            "plugins": [],
+            "extensions": [],
+            "plugin_for": [],
+            "extension_for": [],
+            "module": "miruken",
+            "namespace": "miruken",
+            "file": "lib/miruken.js",
+            "line": 5,
+            "description": "Package containing enhancements to the javascript language.",
+            "mainName": "miruken",
+            "tag": "main",
+            "itemtype": "main",
+            "_main": true
         },
         "miruken.Modifier": {
             "name": "miruken.Modifier",
@@ -5092,58 +5072,6 @@
             "namespace": "miruken.validate"
         },
         {
-            "file": "lib/validate/validate.js",
-            "line": 375,
-            "description": "Marks the callback handler for validation.",
-            "itemtype": "method",
-            "name": "$valid",
-            "params": [
-                {
-                    "name": "target",
-                    "description": "-  object to validate",
-                    "type": "Object"
-                },
-                {
-                    "name": "scope",
-                    "description": "-  scope of validation",
-                    "type": "Any"
-                }
-            ],
-            "return": {
-                "description": "validation semantics.",
-                "type": "miruken.callback.CallbackHandlerAspect"
-            },
-            "class": "miruken.callback.CallbackHandler",
-            "module": "miruken",
-            "submodule": "validate"
-        },
-        {
-            "file": "lib/validate/validate.js",
-            "line": 389,
-            "description": "Marks the callback handler for asynchronous validation.",
-            "itemtype": "method",
-            "name": "$validAsync",
-            "params": [
-                {
-                    "name": "target",
-                    "description": "-  object to validate",
-                    "type": "Object"
-                },
-                {
-                    "name": "scope",
-                    "description": "-  scope of validation",
-                    "type": "Any"
-                }
-            ],
-            "return": {
-                "description": "validation semantics.",
-                "type": "miruken.callback.CallbackHandlerAspect"
-            },
-            "class": "miruken.callback.CallbackHandler",
-            "module": "miruken",
-            "submodule": "validate"
-        },
-        {
             "file": "lib/validate/validatejs.js",
             "line": 29,
             "description": "Shortcut to indicate required property.",
@@ -6406,9 +6334,64 @@
                 "description": "effective promise.",
                 "type": "Promise"
             },
-            "class": "miruken.$",
+            "class": "miruken.callback.$",
             "module": "miruken",
-            "submodule": "callback"
+            "submodule": "callback",
+            "namespace": "miruken.callback"
+        },
+        {
+            "file": "lib/callback.js",
+            "line": 1590,
+            "description": "Marks the callback handler for validation.",
+            "itemtype": "method",
+            "name": "$valid",
+            "params": [
+                {
+                    "name": "target",
+                    "description": "-  object to validate",
+                    "type": "Object"
+                },
+                {
+                    "name": "scope",
+                    "description": "-  scope of validation",
+                    "type": "Any"
+                }
+            ],
+            "return": {
+                "description": "validation semantics.",
+                "type": "miruken.callback.CallbackHandlerAspect"
+            },
+            "class": "miruken.callback.CallbackHandler",
+            "module": "miruken",
+            "submodule": "callback",
+            "namespace": "miruken.callback"
+        },
+        {
+            "file": "lib/callback.js",
+            "line": 1600,
+            "description": "Marks the callback handler for asynchronous validation.",
+            "itemtype": "method",
+            "name": "$validAsync",
+            "params": [
+                {
+                    "name": "target",
+                    "description": "-  object to validate",
+                    "type": "Object"
+                },
+                {
+                    "name": "scope",
+                    "description": "-  scope of validation",
+                    "type": "Any"
+                }
+            ],
+            "return": {
+                "description": "validation semantics.",
+                "type": "miruken.callback.CallbackHandlerAspect"
+            },
+            "class": "miruken.callback.CallbackHandler",
+            "module": "miruken",
+            "submodule": "callback",
+            "namespace": "miruken.callback"
         },
         {
             "file": "lib/context.js",
@@ -6889,7 +6872,7 @@
         },
         {
             "file": "lib/context.js",
-            "line": 493,
+            "line": 494,
             "description": "Sets the default callback handler axis to\n{{#crossLink \"miruken.graph.TraversingAxis/Self:property\"}}{{/crossLink}}.",
             "itemtype": "method",
             "name": "$self",
@@ -6904,7 +6887,7 @@
         },
         {
             "file": "lib/context.js",
-            "line": 501,
+            "line": 502,
             "description": "Sets the default callback handler axis to\n{{#crossLink \"miruken.graph.TraversingAxis/Root:property\"}}{{/crossLink}}.",
             "itemtype": "method",
             "name": "$root",
@@ -6919,7 +6902,7 @@
         },
         {
             "file": "lib/context.js",
-            "line": 509,
+            "line": 510,
             "description": "Sets the default callback handler axis to\n{{#crossLink \"miruken.graph.TraversingAxis/Child:property\"}}{{/crossLink}}.",
             "itemtype": "method",
             "name": "$child",
@@ -6934,7 +6917,7 @@
         },
         {
             "file": "lib/context.js",
-            "line": 517,
+            "line": 518,
             "description": "Sets the default callback handler axis to\n{{#crossLink \"miruken.graph.TraversingAxis/Sibling:property\"}}{{/crossLink}}.",
             "itemtype": "method",
             "name": "$sibling",
@@ -6949,7 +6932,7 @@
         },
         {
             "file": "lib/context.js",
-            "line": 525,
+            "line": 526,
             "description": "Sets the default callback handler axis to\n{{#crossLink \"miruken.graph.TraversingAxis/Ancestor:property\"}}{{/crossLink}}.",
             "itemtype": "method",
             "name": "$ancestor",
@@ -6964,7 +6947,7 @@
         },
         {
             "file": "lib/context.js",
-            "line": 533,
+            "line": 534,
             "description": "Sets the default callback handler axis to\n{{#crossLink \"miruken.graph.TraversingAxis/Descendant:property\"}}{{/crossLink}}.",
             "itemtype": "method",
             "name": "$descendant",
@@ -6979,7 +6962,7 @@
         },
         {
             "file": "lib/context.js",
-            "line": 541,
+            "line": 542,
             "description": "Sets the default callback handler axis to\n{{#crossLink \"miruken.graph.TraversingAxis/DescendantReverse:property\"}}{{/crossLink}}.",
             "itemtype": "method",
             "name": "$descendantReverse",
@@ -6994,7 +6977,7 @@
         },
         {
             "file": "lib/context.js",
-            "line": 549,
+            "line": 550,
             "description": "Sets the default callback handler axis to\n{{#crossLink \"miruken.graph.TraversingAxis/ChildOrSelf:property\"}}{{/crossLink}}.",
             "itemtype": "method",
             "name": "$childOrSelf",
@@ -7009,7 +6992,7 @@
         },
         {
             "file": "lib/context.js",
-            "line": 557,
+            "line": 558,
             "description": "Sets the default callback handler axis to\n{{#crossLink \"miruken.graph.TraversingAxis/SiblingOrSelf:property\"}}{{/crossLink}}.",
             "itemtype": "method",
             "name": "$siblingOrSelf",
@@ -7024,7 +7007,7 @@
         },
         {
             "file": "lib/context.js",
-            "line": 565,
+            "line": 566,
             "description": "Sets the default callback handler axis to\n{{#crossLink \"miruken.graph.TraversingAxis/AncestorOrSelf:property\"}}{{/crossLink}}.",
             "itemtype": "method",
             "name": "$ancestorOrSelf",
@@ -7039,7 +7022,7 @@
         },
         {
             "file": "lib/context.js",
-            "line": 573,
+            "line": 574,
             "description": "Sets the default callback handler axis to\n{{#crossLink \"miruken.graph.TraversingAxis/DescendantOrSelf:property\"}}{{/crossLink}}.",
             "itemtype": "method",
             "name": "$descendantOrSelf",
@@ -7054,7 +7037,7 @@
         },
         {
             "file": "lib/context.js",
-            "line": 581,
+            "line": 582,
             "description": "Sets the default callback handler axis to\n{{#crossLink \"miruken.graph.TraversingAxis/DescendantOrSelfReverse:property\"}}{{/crossLink}}.",
             "itemtype": "method",
             "name": "$descendantOrSelfReverse",
@@ -7069,7 +7052,7 @@
         },
         {
             "file": "lib/context.js",
-            "line": 589,
+            "line": 590,
             "description": "Sets the default callback handler axis to\n{{#crossLink \"miruken.graph.TraversingAxis/AncestorSiblingOrSelf:property\"}}{{/crossLink}}.",
             "itemtype": "method",
             "name": "$ancestorSiblingOrSelf",
@@ -7084,7 +7067,7 @@
         },
         {
             "file": "lib/context.js",
-            "line": 630,
+            "line": 600,
             "description": "Enhances Functions to create instances in a context.",
             "itemtype": "method",
             "name": "newInContext",
@@ -7094,7 +7077,7 @@
         },
         {
             "file": "lib/context.js",
-            "line": 647,
+            "line": 617,
             "description": "Enhances Functions to create instances in a child context.",
             "itemtype": "method",
             "name": "newInChildContext",
@@ -9310,14 +9293,6 @@
         },
         {
             "message": "replacing incorrect tag: returns with return",
-            "line": " lib/validate/validate.js:375"
-        },
-        {
-            "message": "replacing incorrect tag: returns with return",
-            "line": " lib/validate/validate.js:389"
-        },
-        {
-            "message": "replacing incorrect tag: returns with return",
             "line": " lib/validate/validatejs.js:90"
         },
         {
@@ -9462,6 +9437,14 @@
         },
         {
             "message": "replacing incorrect tag: returns with return",
+            "line": " lib/callback.js:1590"
+        },
+        {
+            "message": "replacing incorrect tag: returns with return",
+            "line": " lib/callback.js:1600"
+        },
+        {
+            "message": "replacing incorrect tag: returns with return",
             "line": " lib/context.js:129"
         },
         {
@@ -9506,55 +9489,55 @@
         },
         {
             "message": "replacing incorrect tag: returns with return",
-            "line": " lib/context.js:493"
+            "line": " lib/context.js:494"
         },
         {
             "message": "replacing incorrect tag: returns with return",
-            "line": " lib/context.js:501"
+            "line": " lib/context.js:502"
         },
         {
             "message": "replacing incorrect tag: returns with return",
-            "line": " lib/context.js:509"
+            "line": " lib/context.js:510"
         },
         {
             "message": "replacing incorrect tag: returns with return",
-            "line": " lib/context.js:517"
+            "line": " lib/context.js:518"
         },
         {
             "message": "replacing incorrect tag: returns with return",
-            "line": " lib/context.js:525"
+            "line": " lib/context.js:526"
         },
         {
             "message": "replacing incorrect tag: returns with return",
-            "line": " lib/context.js:533"
+            "line": " lib/context.js:534"
         },
         {
             "message": "replacing incorrect tag: returns with return",
-            "line": " lib/context.js:541"
+            "line": " lib/context.js:542"
         },
         {
             "message": "replacing incorrect tag: returns with return",
-            "line": " lib/context.js:549"
+            "line": " lib/context.js:550"
         },
         {
             "message": "replacing incorrect tag: returns with return",
-            "line": " lib/context.js:557"
+            "line": " lib/context.js:558"
         },
         {
             "message": "replacing incorrect tag: returns with return",
-            "line": " lib/context.js:565"
+            "line": " lib/context.js:566"
         },
         {
             "message": "replacing incorrect tag: returns with return",
-            "line": " lib/context.js:573"
+            "line": " lib/context.js:574"
         },
         {
             "message": "replacing incorrect tag: returns with return",
-            "line": " lib/context.js:581"
+            "line": " lib/context.js:582"
         },
         {
             "message": "replacing incorrect tag: returns with return",
-            "line": " lib/context.js:589"
+            "line": " lib/context.js:590"
         },
         {
             "message": "replacing incorrect tag: returns with return",

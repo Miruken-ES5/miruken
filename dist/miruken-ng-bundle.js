@@ -3593,7 +3593,7 @@ new function () { // closure
      * @method getEffectivePromise
      * @param    {Object}  object  -  source object
      * @returns  {Promise} effective promise.
-     * @for miruken.$
+     * @for miruken.callback.$
      */
     function getEffectivePromise(object) {
         if (object instanceof HandleMethod) {
@@ -3601,6 +3601,26 @@ new function () { // closure
         }
         return $isPromise(object) ? object : null;
     }
+
+    /**
+     * Marks the callback handler for validation.
+     * @for miruken.callback.CallbackHandler
+     * @method $valid
+     * @param   {Object}  target  -  object to validate
+     * @param   {Any}     scope   -  scope of validation
+     * @returns {miruken.callback.CallbackHandlerAspect} validation semantics.
+     * @for miruken.callback.CallbackHandler
+     */                
+
+    /**
+     * Marks the callback handler for asynchronous validation.
+     * @for miruken.callback.CallbackHandler
+     * @method $validAsync
+     * @param   {Object}  target  -  object to validate
+     * @param   {Any}     scope   -  scope of validation
+     * @returns {miruken.callback.CallbackHandlerAspect} validation semantics.
+     * @for miruken.callback.CallbackHandler
+     */                        
 
     if (typeof module !== 'undefined' && module.exports) {
         module.exports = exports = callback;
@@ -4088,20 +4108,21 @@ new function () { // closure
      * Context traversal
      */
     var axisControl = {
-            axis: function (axis) {
-                return _newContextTraversal(this, axis);   
-            }
-        },
+        axis: function (axis) {
+            var context   = this,
+                traversal = pcopy(context);
+            traversal.handle = function (callback, greedy, composer) {
+                return context.handleAxis(axis, callback, greedy, composer);
+            };
+            return traversal;
+        }},
+        applyAxis = axisControl.axis,
         axisChoices = Array2.combine(TraversingAxis.names, TraversingAxis.values);
 
     for (var name in axisChoices) {
         var axis = axisChoices[name],
             key  = '$' + name.charAt(0).toLowerCase() + name.slice(1);
-        axisControl[key] = function (axis) {
-            return function () {
-                return _newContextTraversal(this, axis);
-            };
-        }(axis);
+        axisControl[key] = Function2.partial(applyAxis, axis);
     }
 
     /**
@@ -4209,37 +4230,6 @@ new function () { // closure
      */
 
     Context.implement(axisControl);
-
-    function _newContextTraversal(context, axis) {
-        function Traversal() {
-            for (var key in context) {
-                if (key in Base.prototype) {
-                    continue;
-                }
-                var member = context[key];
-                if ($isFunction(member))
-                    this[key] = (function (k, m) {
-                        return function () {
-                            var owner       = (k in CallbackHandler.prototype) ? this : context, 
-                                returnValue = m.apply(owner, arguments);
-                            if (returnValue === context) {
-                                returnValue = this;
-                            }
-                            else if (returnValue && returnValue.decoratee == context) {
-                                returnValue.decoratee = this;
-                            }
-                            return returnValue;
-                        }
-                    })(key, member);
-            }
-            this.extend({
-                handle: function (callback, greedy, composer) {
-                    return this.handleAxis(axis, callback, greedy, composer);
-                }});
-        }
-        Traversal.prototype = context.constructor.prototype;
-        return new Traversal();
-    }
 
     /**
      * Enhances Functions to create instances in a context.
@@ -9221,29 +9211,11 @@ new function () { // closure
     }
 
     CallbackHandler.implement({
-        /**
-         * Marks the callback handler for validation.
-         * @for miruken.callback.CallbackHandler
-         * @method $valid
-         * @param   {Object}  target  -  object to validate
-         * @param   {Any}     scope   -  scope of validation
-         * @returns {miruken.callback.CallbackHandlerAspect} validation semantics.
-         * @for miruken.callback.CallbackHandler
-         */                
         $valid: function (target, scope) {
             return this.aspect(function (_, composer) {
                 return Validator(composer).validate(target, scope).valid;
             });
         },
-        /**
-         * Marks the callback handler for asynchronous validation.
-         * @for miruken.callback.CallbackHandler
-         * @method $validAsync
-         * @param   {Object}  target  -  object to validate
-         * @param   {Any}     scope   -  scope of validation
-         * @returns {miruken.callback.CallbackHandlerAspect} validation semantics.
-         * @for miruken.callback.CallbackHandler
-         */                        
         $validAsync: function (target, scope) {
             return this.aspect(function (_, composer) {
                 return Validator(composer).validateAsync(target, scope).then(function (results) {

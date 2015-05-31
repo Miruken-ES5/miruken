@@ -139,7 +139,6 @@
                                 <li><a href="../classes/miruken.validate.$.html">miruken.validate.$</a></li>
                                 <li><a href="../classes/miruken.validate.$registerValidators.html">miruken.validate.$registerValidators</a></li>
                                 <li><a href="../classes/miruken.validate.$validateThat.html">miruken.validate.$validateThat</a></li>
-                                <li><a href="../classes/miruken.validate.miruken.callback.CallbackHandler.html">miruken.validate.miruken.callback.CallbackHandler</a></li>
                                 <li><a href="../classes/miruken.validate.ValidateJsCallbackHandler.html">miruken.validate.ValidateJsCallbackHandler</a></li>
                                 <li><a href="../classes/miruken.validate.Validating.html">miruken.validate.Validating</a></li>
                                 <li><a href="../classes/miruken.validate.Validation.html">miruken.validate.Validation</a></li>
@@ -1776,7 +1775,7 @@ new function () { // closure
      * @method getEffectivePromise
      * @param    {Object}  object  -  source object
      * @returns  {Promise} effective promise.
-     * @for miruken.$
+     * @for miruken.callback.$
      */
     function getEffectivePromise(object) {
         if (object instanceof HandleMethod) {
@@ -1784,6 +1783,26 @@ new function () { // closure
         }
         return $isPromise(object) ? object : null;
     }
+
+    /**
+     * Marks the callback handler for validation.
+     * @for miruken.callback.CallbackHandler
+     * @method $valid
+     * @param   {Object}  target  -  object to validate
+     * @param   {Any}     scope   -  scope of validation
+     * @returns {miruken.callback.CallbackHandlerAspect} validation semantics.
+     * @for miruken.callback.CallbackHandler
+     */                
+
+    /**
+     * Marks the callback handler for asynchronous validation.
+     * @for miruken.callback.CallbackHandler
+     * @method $validAsync
+     * @param   {Object}  target  -  object to validate
+     * @param   {Any}     scope   -  scope of validation
+     * @returns {miruken.callback.CallbackHandlerAspect} validation semantics.
+     * @for miruken.callback.CallbackHandler
+     */                        
 
     if (typeof module !== &#x27;undefined&#x27; &amp;&amp; module.exports) {
         module.exports = exports = callback;
