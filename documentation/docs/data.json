@@ -3733,7 +3733,7 @@
                 {
                     "name": "modifier",
                     "description": "-  modifier flags",
-                    "type": "{miruken.ioc.DependencyModifiers"
+                    "type": "miruken.ioc.DependencyModifiers"
                 }
             ],
             "return": {
