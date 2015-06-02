@@ -139,7 +139,6 @@
                                 <li><a href="../classes/miruken.validate.$.html">miruken.validate.$</a></li>
                                 <li><a href="../classes/miruken.validate.$registerValidators.html">miruken.validate.$registerValidators</a></li>
                                 <li><a href="../classes/miruken.validate.$validateThat.html">miruken.validate.$validateThat</a></li>
-                                <li><a href="../classes/miruken.validate.miruken.callback.CallbackHandler.html">miruken.validate.miruken.callback.CallbackHandler</a></li>
                                 <li><a href="../classes/miruken.validate.ValidateJsCallbackHandler.html">miruken.validate.ValidateJsCallbackHandler</a></li>
                                 <li><a href="../classes/miruken.validate.Validating.html">miruken.validate.Validating</a></li>
                                 <li><a href="../classes/miruken.validate.Validation.html">miruken.validate.Validation</a></li>
@@ -301,6 +300,18 @@ In addition, it maintains parent-child relationships and thus can participate in
                     <h3>Methods</h3>
 
                     <ul class="index-list methods extends">
+                            <li class="index-item method">
+                                <a href="#method_$ancestor">$ancestor</a>
+
+                            </li>
+                            <li class="index-item method">
+                                <a href="#method_$ancestorOrSelf">$ancestorOrSelf</a>
+
+                            </li>
+                            <li class="index-item method">
+                                <a href="#method_$ancestorSiblingOrSelf">$ancestorSiblingOrSelf</a>
+
+                            </li>
                             <li class="index-item method inherited">
                                 <a href="#method_$bestEffort">$bestEffort</a>
 
@@ -313,6 +324,30 @@ In addition, it maintains parent-child relationships and thus can participate in
                                 <a href="#method_$callOptions">$callOptions</a>
 
                             </li>
+                            <li class="index-item method">
+                                <a href="#method_$child">$child</a>
+
+                            </li>
+                            <li class="index-item method">
+                                <a href="#method_$childOrSelf">$childOrSelf</a>
+
+                            </li>
+                            <li class="index-item method">
+                                <a href="#method_$descendant">$descendant</a>
+
+                            </li>
+                            <li class="index-item method">
+                                <a href="#method_$descendantOrSelf">$descendantOrSelf</a>
+
+                            </li>
+                            <li class="index-item method">
+                                <a href="#method_$descendantOrSelfReverse">$descendantOrSelfReverse</a>
+
+                            </li>
+                            <li class="index-item method">
+                                <a href="#method_$descendantReverse">$descendantReverse</a>
+
+                            </li>
                             <li class="index-item method inherited">
                                 <a href="#method_$notify">$notify</a>
 
@@ -323,6 +358,22 @@ In addition, it maintains parent-child relationships and thus can participate in
                             </li>
                             <li class="index-item method inherited">
                                 <a href="#method_$recoverError">$recoverError</a>
+
+                            </li>
+                            <li class="index-item method">
+                                <a href="#method_$root">$root</a>
+
+                            </li>
+                            <li class="index-item method">
+                                <a href="#method_$self">$self</a>
+
+                            </li>
+                            <li class="index-item method">
+                                <a href="#method_$sibling">$sibling</a>
+
+                            </li>
+                            <li class="index-item method">
+                                <a href="#method_$siblingOrSelf">$siblingOrSelf</a>
 
                             </li>
                             <li class="index-item method inherited">
@@ -365,24 +416,8 @@ In addition, it maintains parent-child relationships and thus can participate in
                                 <a href="#method_filter">filter</a>
 
                             </li>
-                            <li class="index-item method">
-                                <a href="#method_getChildren">getChildren</a>
-
-                            </li>
                             <li class="index-item method inherited">
                                 <a href="#method_getHandlers">getHandlers</a>
-
-                            </li>
-                            <li class="index-item method">
-                                <a href="#method_getParent">getParent</a>
-
-                            </li>
-                            <li class="index-item method">
-                                <a href="#method_getRoot">getRoot</a>
-
-                            </li>
-                            <li class="index-item method">
-                                <a href="#method_getState">getState</a>
 
                             </li>
                             <li class="index-item method inherited">
@@ -464,8 +499,24 @@ In addition, it maintains parent-child relationships and thus can participate in
                     <h3>Properties</h3>
 
                     <ul class="index-list properties extends">
+                            <li class="index-item property">
+                                <a href="#property_children">children</a>
+
+                            </li>
                             <li class="index-item property inherited">
                                 <a href="#property_delegate">delegate</a>
+
+                            </li>
+                            <li class="index-item property">
+                                <a href="#property_parent">parent</a>
+
+                            </li>
+                            <li class="index-item property">
+                                <a href="#property_root">root</a>
+
+                            </li>
+                            <li class="index-item property">
+                                <a href="#property_state">state</a>
 
                             </li>
                     </ul>
@@ -477,6 +528,138 @@ In addition, it maintains parent-child relationships and thus can participate in
             <div id="methods" class="api-class-tabpanel">
                 <h2 class="off-left">Methods</h2>
 
+<div id="method_$ancestor" class="method item">
+    <h3 class="name"><code>$ancestor</code></h3>
+
+        <span class="paren">()</span>
+
+        <span class="returns-inline">
+            <span class="type"><a href="../classes/miruken.context.Context.html" class="crosslink">miruken.context.Context</a></span>
+        </span>
+
+
+
+
+
+
+
+    <div class="meta">
+                <p>
+                Defined in
+        <a href="../files/lib_context.js.html#l526"><code>lib&#x2F;context.js:526</code></a>
+        </p>
+
+
+
+    </div>
+
+    <div class="description">
+        <p>Sets the default callback handler axis to
+<a href="../classes/miruken.graph.TraversingAxis.html#property_Ancestor" class="crosslink">Ancestor</a>.</p>
+
+    </div>
+
+
+        <div class="returns">
+            <h4>Returns:</h4>
+
+            <div class="returns-description">
+                        <span class="type"><a href="../classes/miruken.context.Context.html" class="crosslink">miruken.context.Context</a></span>:
+                    <p>default traversal axis.</p>
+
+            </div>
+        </div>
+
+
+</div>
+<div id="method_$ancestorOrSelf" class="method item">
+    <h3 class="name"><code>$ancestorOrSelf</code></h3>
+
+        <span class="paren">()</span>
+
+        <span class="returns-inline">
+            <span class="type"><a href="../classes/miruken.context.Context.html" class="crosslink">miruken.context.Context</a></span>
+        </span>
+
+
+
+
+
+
+
+    <div class="meta">
+                <p>
+                Defined in
+        <a href="../files/lib_context.js.html#l566"><code>lib&#x2F;context.js:566</code></a>
+        </p>
+
+
+
+    </div>
+
+    <div class="description">
+        <p>Sets the default callback handler axis to
+<a href="../classes/miruken.graph.TraversingAxis.html#property_AncestorOrSelf" class="crosslink">AncestorOrSelf</a>.</p>
+
+    </div>
+
+
+        <div class="returns">
+            <h4>Returns:</h4>
+
+            <div class="returns-description">
+                        <span class="type"><a href="../classes/miruken.context.Context.html" class="crosslink">miruken.context.Context</a></span>:
+                    <p>default traversal axis.</p>
+
+            </div>
+        </div>
+
+
+</div>
+<div id="method_$ancestorSiblingOrSelf" class="method item">
+    <h3 class="name"><code>$ancestorSiblingOrSelf</code></h3>
+
+        <span class="paren">()</span>
+
+        <span class="returns-inline">
+            <span class="type"><a href="../classes/miruken.context.Context.html" class="crosslink">miruken.context.Context</a></span>
+        </span>
+
+
+
+
+
+
+
+    <div class="meta">
+                <p>
+                Defined in
+        <a href="../files/lib_context.js.html#l590"><code>lib&#x2F;context.js:590</code></a>
+        </p>
+
+
+
+    </div>
+
+    <div class="description">
+        <p>Sets the default callback handler axis to
+<a href="../classes/miruken.graph.TraversingAxis.html#property_AncestorSiblingOrSelf" class="crosslink">AncestorSiblingOrSelf</a>.</p>
+
+    </div>
+
+
+        <div class="returns">
+            <h4>Returns:</h4>
+
+            <div class="returns-description">
+                        <span class="type"><a href="../classes/miruken.context.Context.html" class="crosslink">miruken.context.Context</a></span>:
+                    <p>default traversal axis.</p>
+
+            </div>
+        </div>
+
+
+</div>
 <div id="method_$bestEffort" class="method item inherited">
     <h3 class="name"><code>$bestEffort</code></h3>
 
@@ -495,7 +678,7 @@ In addition, it maintains parent-child relationships and thus can participate in
     <div class="meta">
                 <p>Inherited from
                 <a href="../classes/miruken.callback.CallbackHandler.html#method_$bestEffort">miruken.callback.CallbackHandler</a>:
-        <a href="../files/lib_callback.js.html#l1123"><code>lib&#x2F;callback.js:1123</code></a>
+        <a href="../files/lib_callback.js.html#l1114"><code>lib&#x2F;callback.js:1114</code></a>
         </p>
 
 
@@ -538,7 +721,7 @@ In addition, it maintains parent-child relationships and thus can participate in
     <div class="meta">
                 <p>Inherited from
                 <a href="../classes/miruken.callback.CallbackHandler.html#method_$broadcast">miruken.callback.CallbackHandler</a>:
-        <a href="../files/lib_callback.js.html#l1116"><code>lib&#x2F;callback.js:1116</code></a>
+        <a href="../files/lib_callback.js.html#l1107"><code>lib&#x2F;callback.js:1107</code></a>
         </p>
 
 
@@ -587,7 +770,7 @@ In addition, it maintains parent-child relationships and thus can participate in
     <div class="meta">
                 <p>Inherited from
                 <a href="../classes/miruken.callback.CallbackHandler.html#method_$callOptions">miruken.callback.CallbackHandler</a>:
-        <a href="../files/lib_callback.js.html#l1137"><code>lib&#x2F;callback.js:1137</code></a>
+        <a href="../files/lib_callback.js.html#l1128"><code>lib&#x2F;callback.js:1128</code></a>
         </p>
 
 
@@ -631,6 +814,270 @@ In addition, it maintains parent-child relationships and thus can participate in
 
 
 </div>
+<div id="method_$child" class="method item">
+    <h3 class="name"><code>$child</code></h3>
+
+        <span class="paren">()</span>
+
+        <span class="returns-inline">
+            <span class="type"><a href="../classes/miruken.context.Context.html" class="crosslink">miruken.context.Context</a></span>
+        </span>
+
+
+
+
+
+
+
+    <div class="meta">
+                <p>
+                Defined in
+        <a href="../files/lib_context.js.html#l510"><code>lib&#x2F;context.js:510</code></a>
+        </p>
+
+
+
+    </div>
+
+    <div class="description">
+        <p>Sets the default callback handler axis to
+<a href="../classes/miruken.graph.TraversingAxis.html#property_Child" class="crosslink">Child</a>.</p>
+
+    </div>
+
+
+        <div class="returns">
+            <h4>Returns:</h4>
+
+            <div class="returns-description">
+                        <span class="type"><a href="../classes/miruken.context.Context.html" class="crosslink">miruken.context.Context</a></span>:
+                    <p>default traversal axis.</p>
+
+            </div>
+        </div>
+
+
+</div>
+<div id="method_$childOrSelf" class="method item">
+    <h3 class="name"><code>$childOrSelf</code></h3>
+
+        <span class="paren">()</span>
+
+        <span class="returns-inline">
+            <span class="type"><a href="../classes/miruken.context.Context.html" class="crosslink">miruken.context.Context</a></span>
+        </span>
+
+
+
+
+
+
+
+    <div class="meta">
+                <p>
+                Defined in
+        <a href="../files/lib_context.js.html#l550"><code>lib&#x2F;context.js:550</code></a>
+        </p>
+
+
+
+    </div>
+
+    <div class="description">
+        <p>Sets the default callback handler axis to
+<a href="../classes/miruken.graph.TraversingAxis.html#property_ChildOrSelf" class="crosslink">ChildOrSelf</a>.</p>
+
+    </div>
+
+
+        <div class="returns">
+            <h4>Returns:</h4>
+
+            <div class="returns-description">
+                        <span class="type"><a href="../classes/miruken.context.Context.html" class="crosslink">miruken.context.Context</a></span>:
+                    <p>default traversal axis.</p>
+
+            </div>
+        </div>
+
+
+</div>
+<div id="method_$descendant" class="method item">
+    <h3 class="name"><code>$descendant</code></h3>
+
+        <span class="paren">()</span>
+
+        <span class="returns-inline">
+            <span class="type"><a href="../classes/miruken.context.Context.html" class="crosslink">miruken.context.Context</a></span>
+        </span>
+
+
+
+
+
+
+
+    <div class="meta">
+                <p>
+                Defined in
+        <a href="../files/lib_context.js.html#l534"><code>lib&#x2F;context.js:534</code></a>
+        </p>
+
+
+
+    </div>
+
+    <div class="description">
+        <p>Sets the default callback handler axis to
+<a href="../classes/miruken.graph.TraversingAxis.html#property_Descendant" class="crosslink">Descendant</a>.</p>
+
+    </div>
+
+
+        <div class="returns">
+            <h4>Returns:</h4>
+
+            <div class="returns-description">
+                        <span class="type"><a href="../classes/miruken.context.Context.html" class="crosslink">miruken.context.Context</a></span>:
+                    <p>default traversal axis.</p>
+
+            </div>
+        </div>
+
+
+</div>
+<div id="method_$descendantOrSelf" class="method item">
+    <h3 class="name"><code>$descendantOrSelf</code></h3>
+
+        <span class="paren">()</span>
+
+        <span class="returns-inline">
+            <span class="type"><a href="../classes/miruken.context.Context.html" class="crosslink">miruken.context.Context</a></span>
+        </span>
+
+
+
+
+
+
+
+    <div class="meta">
+                <p>
+                Defined in
+        <a href="../files/lib_context.js.html#l574"><code>lib&#x2F;context.js:574</code></a>
+        </p>
+
+
+
+    </div>
+
+    <div class="description">
+        <p>Sets the default callback handler axis to
+<a href="../classes/miruken.graph.TraversingAxis.html#property_DescendantOrSelf" class="crosslink">DescendantOrSelf</a>.</p>
+
+    </div>
+
+
+        <div class="returns">
+            <h4>Returns:</h4>
+
+            <div class="returns-description">
+                        <span class="type"><a href="../classes/miruken.context.Context.html" class="crosslink">miruken.context.Context</a></span>:
+                    <p>default traversal axis.</p>
+
+            </div>
+        </div>
+
+
+</div>
+<div id="method_$descendantOrSelfReverse" class="method item">
+    <h3 class="name"><code>$descendantOrSelfReverse</code></h3>
+
+        <span class="paren">()</span>
+
+        <span class="returns-inline">
+            <span class="type"><a href="../classes/miruken.context.Context.html" class="crosslink">miruken.context.Context</a></span>
+        </span>
+
+
+
+
+
+
+
+    <div class="meta">
+                <p>
+                Defined in
+        <a href="../files/lib_context.js.html#l582"><code>lib&#x2F;context.js:582</code></a>
+        </p>
+
+
+
+    </div>
+
+    <div class="description">
+        <p>Sets the default callback handler axis to
+<a href="../classes/miruken.graph.TraversingAxis.html#property_DescendantOrSelfReverse" class="crosslink">DescendantOrSelfReverse</a>.</p>
+
+    </div>
+
+
+        <div class="returns">
+            <h4>Returns:</h4>
+
+            <div class="returns-description">
+                        <span class="type"><a href="../classes/miruken.context.Context.html" class="crosslink">miruken.context.Context</a></span>:
+                    <p>default traversal axis.</p>
+
+            </div>
+        </div>
+
+
+</div>
+<div id="method_$descendantReverse" class="method item">
+    <h3 class="name"><code>$descendantReverse</code></h3>
+
+        <span class="paren">()</span>
+
+        <span class="returns-inline">
+            <span class="type"><a href="../classes/miruken.context.Context.html" class="crosslink">miruken.context.Context</a></span>
+        </span>
+
+
+
+
+
+
+
+    <div class="meta">
+                <p>
+                Defined in
+        <a href="../files/lib_context.js.html#l542"><code>lib&#x2F;context.js:542</code></a>
+        </p>
+
+
+
+    </div>
+
+    <div class="description">
+        <p>Sets the default callback handler axis to
+<a href="../classes/miruken.graph.TraversingAxis.html#property_DescendantReverse" class="crosslink">DescendantReverse</a>.</p>
+
+    </div>
+
+
+        <div class="returns">
+            <h4>Returns:</h4>
+
+            <div class="returns-description">
+                        <span class="type"><a href="../classes/miruken.context.Context.html" class="crosslink">miruken.context.Context</a></span>:
+                    <p>default traversal axis.</p>
+
+            </div>
+        </div>
+
+
+</div>
 <div id="method_$notify" class="method item inherited">
     <h3 class="name"><code>$notify</code></h3>
 
@@ -649,7 +1096,7 @@ In addition, it maintains parent-child relationships and thus can participate in
     <div class="meta">
                 <p>Inherited from
                 <a href="../classes/miruken.callback.CallbackHandler.html#method_$notify">miruken.callback.CallbackHandler</a>:
-        <a href="../files/lib_callback.js.html#l1130"><code>lib&#x2F;callback.js:1130</code></a>
+        <a href="../files/lib_callback.js.html#l1121"><code>lib&#x2F;callback.js:1121</code></a>
         </p>
 
 
@@ -760,6 +1207,182 @@ In addition, it maintains parent-child relationships and thus can participate in
 
 
 </div>
+<div id="method_$root" class="method item">
+    <h3 class="name"><code>$root</code></h3>
+
+        <span class="paren">()</span>
+
+        <span class="returns-inline">
+            <span class="type"><a href="../classes/miruken.context.Context.html" class="crosslink">miruken.context.Context</a></span>
+        </span>
+
+
+
+
+
+
+
+    <div class="meta">
+                <p>
+                Defined in
+        <a href="../files/lib_context.js.html#l502"><code>lib&#x2F;context.js:502</code></a>
+        </p>
+
+
+
+    </div>
+
+    <div class="description">
+        <p>Sets the default callback handler axis to
+<a href="../classes/miruken.graph.TraversingAxis.html#property_Root" class="crosslink">Root</a>.</p>
+
+    </div>
+
+
+        <div class="returns">
+            <h4>Returns:</h4>
+
+            <div class="returns-description">
+                        <span class="type"><a href="../classes/miruken.context.Context.html" class="crosslink">miruken.context.Context</a></span>:
+                    <p>default traversal axis.</p>
+
+            </div>
+        </div>
+
+
+</div>
+<div id="method_$self" class="method item">
+    <h3 class="name"><code>$self</code></h3>
+
+        <span class="paren">()</span>
+
+        <span class="returns-inline">
+            <span class="type"><a href="../classes/miruken.context.Context.html" class="crosslink">miruken.context.Context</a></span>
+        </span>
+
+
+
+
+
+
+
+    <div class="meta">
+                <p>
+                Defined in
+        <a href="../files/lib_context.js.html#l494"><code>lib&#x2F;context.js:494</code></a>
+        </p>
+
+
+
+    </div>
+
+    <div class="description">
+        <p>Sets the default callback handler axis to
+<a href="../classes/miruken.graph.TraversingAxis.html#property_Self" class="crosslink">Self</a>.</p>
+
+    </div>
+
+
+        <div class="returns">
+            <h4>Returns:</h4>
+
+            <div class="returns-description">
+                        <span class="type"><a href="../classes/miruken.context.Context.html" class="crosslink">miruken.context.Context</a></span>:
+                    <p>default traversal axis.</p>
+
+            </div>
+        </div>
+
+
+</div>
+<div id="method_$sibling" class="method item">
+    <h3 class="name"><code>$sibling</code></h3>
+
+        <span class="paren">()</span>
+
+        <span class="returns-inline">
+            <span class="type"><a href="../classes/miruken.context.Context.html" class="crosslink">miruken.context.Context</a></span>
+        </span>
+
+
+
+
+
+
+
+    <div class="meta">
+                <p>
+                Defined in
+        <a href="../files/lib_context.js.html#l518"><code>lib&#x2F;context.js:518</code></a>
+        </p>
+
+
+
+    </div>
+
+    <div class="description">
+        <p>Sets the default callback handler axis to
+<a href="../classes/miruken.graph.TraversingAxis.html#property_Sibling" class="crosslink">Sibling</a>.</p>
+
+    </div>
+
+
+        <div class="returns">
+            <h4>Returns:</h4>
+
+            <div class="returns-description">
+                        <span class="type"><a href="../classes/miruken.context.Context.html" class="crosslink">miruken.context.Context</a></span>:
+                    <p>default traversal axis.</p>
+
+            </div>
+        </div>
+
+
+</div>
+<div id="method_$siblingOrSelf" class="method item">
+    <h3 class="name"><code>$siblingOrSelf</code></h3>
+
+        <span class="paren">()</span>
+
+        <span class="returns-inline">
+            <span class="type"><a href="../classes/miruken.context.Context.html" class="crosslink">miruken.context.Context</a></span>
+        </span>
+
+
+
+
+
+
+
+    <div class="meta">
+                <p>
+                Defined in
+        <a href="../files/lib_context.js.html#l558"><code>lib&#x2F;context.js:558</code></a>
+        </p>
+
+
+
+    </div>
+
+    <div class="description">
+        <p>Sets the default callback handler axis to
+<a href="../classes/miruken.graph.TraversingAxis.html#property_SiblingOrSelf" class="crosslink">SiblingOrSelf</a>.</p>
+
+    </div>
+
+
+        <div class="returns">
+            <h4>Returns:</h4>
+
+            <div class="returns-description">
+                        <span class="type"><a href="../classes/miruken.context.Context.html" class="crosslink">miruken.context.Context</a></span>:
+                    <p>default traversal axis.</p>
+
+            </div>
+        </div>
+
+
+</div>
 <div id="method_$strict" class="method item inherited">
     <h3 class="name"><code>$strict</code></h3>
 
@@ -778,7 +1401,7 @@ In addition, it maintains parent-child relationships and thus can participate in
     <div class="meta">
                 <p>Inherited from
                 <a href="../classes/miruken.callback.CallbackHandler.html#method_$strict">miruken.callback.CallbackHandler</a>:
-        <a href="../files/lib_callback.js.html#l1109"><code>lib&#x2F;callback.js:1109</code></a>
+        <a href="../files/lib_callback.js.html#l1100"><code>lib&#x2F;callback.js:1100</code></a>
         </p>
 
 
@@ -830,7 +1453,7 @@ In addition, it maintains parent-child relationships and thus can participate in
     <div class="meta">
                 <p>Inherited from
                 <a href="../classes/miruken.callback.CallbackHandler.html#method_$valid">miruken.callback.CallbackHandler</a>:
-        <a href="../files/lib_validate_validate.js.html#l381"><code>lib&#x2F;validate&#x2F;validate.js:381</code></a>
+        <a href="../files/lib_callback.js.html#l1590"><code>lib&#x2F;callback.js:1590</code></a>
         </p>
 
 
@@ -914,7 +1537,7 @@ In addition, it maintains parent-child relationships and thus can participate in
     <div class="meta">
                 <p>Inherited from
                 <a href="../classes/miruken.callback.CallbackHandler.html#method_$validAsync">miruken.callback.CallbackHandler</a>:
-        <a href="../files/lib_validate_validate.js.html#l395"><code>lib&#x2F;validate&#x2F;validate.js:395</code></a>
+        <a href="../files/lib_callback.js.html#l1600"><code>lib&#x2F;callback.js:1600</code></a>
         </p>
 
 
@@ -990,7 +1613,7 @@ In addition, it maintains parent-child relationships and thus can participate in
     <div class="meta">
                 <p>Inherited from
                 <a href="../classes/miruken.callback.CompositeCallbackHandler.html#method_addHandlers">miruken.callback.CompositeCallbackHandler</a>:
-        <a href="../files/lib_callback.js.html#l741"><code>lib&#x2F;callback.js:741</code></a>
+        <a href="../files/lib_callback.js.html#l732"><code>lib&#x2F;callback.js:732</code></a>
         </p>
 
 
@@ -1042,7 +1665,7 @@ In addition, it maintains parent-child relationships and thus can participate in
     <div class="meta">
                 <p>Inherited from
                 <a href="../classes/miruken.callback.CallbackHandler.html#method_aspect">miruken.callback.CallbackHandler</a>:
-        <a href="../files/lib_callback.js.html#l1258"><code>lib&#x2F;callback.js:1258</code></a>
+        <a href="../files/lib_callback.js.html#l1249"><code>lib&#x2F;callback.js:1249</code></a>
         </p>
 
 
@@ -1124,7 +1747,7 @@ In addition, it maintains parent-child relationships and thus can participate in
     <div class="meta">
                 <p>Inherited from
                 <a href="../classes/miruken.callback.CallbackHandler.html#method_defer">miruken.callback.CallbackHandler</a>:
-        <a href="../files/lib_callback.js.html#l1148"><code>lib&#x2F;callback.js:1148</code></a>
+        <a href="../files/lib_callback.js.html#l1139"><code>lib&#x2F;callback.js:1139</code></a>
         </p>
 
 
@@ -1193,7 +1816,7 @@ In addition, it maintains parent-child relationships and thus can participate in
     <div class="meta">
                 <p>Inherited from
                 <a href="../classes/miruken.callback.CallbackHandler.html#method_deferAll">miruken.callback.CallbackHandler</a>:
-        <a href="../files/lib_callback.js.html#l1162"><code>lib&#x2F;callback.js:1162</code></a>
+        <a href="../files/lib_callback.js.html#l1153"><code>lib&#x2F;callback.js:1153</code></a>
         </p>
 
 
@@ -1283,7 +1906,7 @@ In addition, it maintains parent-child relationships and thus can participate in
     <div class="meta">
                 <p>
                 Defined in
-        <a href="../files/lib_context.js.html#l261"><code>lib&#x2F;context.js:261</code></a>
+        <a href="../files/lib_context.js.html#l257"><code>lib&#x2F;context.js:257</code></a>
         </p>
 
 
@@ -1323,7 +1946,7 @@ In addition, it maintains parent-child relationships and thus can participate in
     <div class="meta">
                 <p>Inherited from
                 <a href="../classes/miruken.callback.CallbackHandler.html#method_filter">miruken.callback.CallbackHandler</a>:
-        <a href="../files/lib_callback.js.html#l1248"><code>lib&#x2F;callback.js:1248</code></a>
+        <a href="../files/lib_callback.js.html#l1239"><code>lib&#x2F;callback.js:1239</code></a>
         </p>
 
 
@@ -1367,49 +1990,6 @@ In addition, it maintains parent-child relationships and thus can participate in
 
 
 </div>
-<div id="method_getChildren" class="method item">
-    <h3 class="name"><code>getChildren</code></h3>
-
-        <span class="paren">()</span>
-
-        <span class="returns-inline">
-            <span class="type">Array</span>
-        </span>
-
-
-
-
-
-
-
-    <div class="meta">
-                <p>
-                Defined in
-        <a href="../files/lib_context.js.html#l124"><code>lib&#x2F;context.js:124</code></a>
-        </p>
-
-
-
-    </div>
-
-    <div class="description">
-        <p>Gets the context children.</p>
-
-    </div>
-
-
-        <div class="returns">
-            <h4>Returns:</h4>
-
-            <div class="returns-description">
-                        <span class="type">Array</span>:
-                    <p>context children.</p>
-
-            </div>
-        </div>
-
-
-</div>
 <div id="method_getHandlers" class="method item inherited">
     <h3 class="name"><code>getHandlers</code></h3>
 
@@ -1428,7 +2008,7 @@ In addition, it maintains parent-child relationships and thus can participate in
     <div class="meta">
                 <p>Inherited from
                 <a href="../classes/miruken.callback.CompositeCallbackHandler.html#method_getHandlers">miruken.callback.CompositeCallbackHandler</a>:
-        <a href="../files/lib_callback.js.html#l735"><code>lib&#x2F;callback.js:735</code></a>
+        <a href="../files/lib_callback.js.html#l726"><code>lib&#x2F;callback.js:726</code></a>
         </p>
 
 
@@ -1447,135 +2027,6 @@ In addition, it maintains parent-child relationships and thus can participate in
             <div class="returns-description">
                         <span class="type">Array</span>:
                     <p>participating callback handlers.</p>
-
-            </div>
-        </div>
-
-
-</div>
-<div id="method_getParent" class="method item">
-    <h3 class="name"><code>getParent</code></h3>
-
-        <span class="paren">()</span>
-
-        <span class="returns-inline">
-            <span class="type"><a href="../classes/miruken.context.Context.html" class="crosslink">miruken.context.Context</a></span>
-        </span>
-
-
-
-
-
-
-
-    <div class="meta">
-                <p>
-                Defined in
-        <a href="../files/lib_context.js.html#l116"><code>lib&#x2F;context.js:116</code></a>
-        </p>
-
-
-
-    </div>
-
-    <div class="description">
-        <p>Gets the parent context.</p>
-
-    </div>
-
-
-        <div class="returns">
-            <h4>Returns:</h4>
-
-            <div class="returns-description">
-                        <span class="type"><a href="../classes/miruken.context.Context.html" class="crosslink">miruken.context.Context</a></span>:
-                    <p>parent context.</p>
-
-            </div>
-        </div>
-
-
-</div>
-<div id="method_getRoot" class="method item">
-    <h3 class="name"><code>getRoot</code></h3>
-
-        <span class="paren">()</span>
-
-        <span class="returns-inline">
-            <span class="type"><a href="../classes/miruken.context.Context.html" class="crosslink">miruken.context.Context</a></span>
-        </span>
-
-
-
-
-
-
-
-    <div class="meta">
-                <p>
-                Defined in
-        <a href="../files/lib_context.js.html#l140"><code>lib&#x2F;context.js:140</code></a>
-        </p>
-
-
-
-    </div>
-
-    <div class="description">
-        <p>Gets the root context.</p>
-
-    </div>
-
-
-        <div class="returns">
-            <h4>Returns:</h4>
-
-            <div class="returns-description">
-                        <span class="type"><a href="../classes/miruken.context.Context.html" class="crosslink">miruken.context.Context</a></span>:
-                    <p>root context.</p>
-
-            </div>
-        </div>
-
-
-</div>
-<div id="method_getState" class="method item">
-    <h3 class="name"><code>getState</code></h3>
-
-        <span class="paren">()</span>
-
-        <span class="returns-inline">
-            <span class="type"><a href="../classes/miruken.context.ContextState.html" class="crosslink">miruken.context.ContextState</a></span>
-        </span>
-
-
-
-
-
-
-
-    <div class="meta">
-                <p>
-                Defined in
-        <a href="../files/lib_context.js.html#l108"><code>lib&#x2F;context.js:108</code></a>
-        </p>
-
-
-
-    </div>
-
-    <div class="description">
-        <p>Gets the context state.</p>
-
-    </div>
-
-
-        <div class="returns">
-            <h4>Returns:</h4>
-
-            <div class="returns-description">
-                        <span class="type"><a href="../classes/miruken.context.ContextState.html" class="crosslink">miruken.context.ContextState</a></span>:
-                    <p>context state.</p>
 
             </div>
         </div>
@@ -1612,7 +2063,7 @@ In addition, it maintains parent-child relationships and thus can participate in
     <div class="meta">
                 <p>Inherited from
                 <a href="../classes/miruken.callback.CallbackHandler.html#method_handle">miruken.callback.CallbackHandler</a>:
-        <a href="../files/lib_callback.js.html#l441"><code>lib&#x2F;callback.js:441</code></a>
+        <a href="../files/lib_callback.js.html#l432"><code>lib&#x2F;callback.js:432</code></a>
         </p>
 
 
@@ -1717,7 +2168,7 @@ In addition, it maintains parent-child relationships and thus can participate in
     <div class="meta">
                 <p>
                 Defined in
-        <a href="../files/lib_context.js.html#l192"><code>lib&#x2F;context.js:192</code></a>
+        <a href="../files/lib_context.js.html#l188"><code>lib&#x2F;context.js:188</code></a>
         </p>
 
 
@@ -1832,7 +2283,7 @@ In addition, it maintains parent-child relationships and thus can participate in
     <div class="meta">
                 <p>Inherited from
                 <a href="../classes/miruken.callback.CallbackHandler.html#method_handleCallback">miruken.callback.CallbackHandler</a>:
-        <a href="../files/lib_callback.js.html#l453"><code>lib&#x2F;callback.js:453</code></a>
+        <a href="../files/lib_callback.js.html#l444"><code>lib&#x2F;callback.js:444</code></a>
         </p>
 
 
@@ -1921,7 +2372,7 @@ In addition, it maintains parent-child relationships and thus can participate in
     <div class="meta">
                 <p>
                 Defined in
-        <a href="../files/lib_context.js.html#l132"><code>lib&#x2F;context.js:132</code></a>
+        <a href="../files/lib_context.js.html#l129"><code>lib&#x2F;context.js:129</code></a>
         </p>
 
 
@@ -1970,7 +2421,7 @@ In addition, it maintains parent-child relationships and thus can participate in
     <div class="meta">
                 <p>Inherited from
                 <a href="../classes/miruken.callback.CallbackHandler.html#method_lookup">miruken.callback.CallbackHandler</a>:
-        <a href="../files/lib_callback.js.html#l1213"><code>lib&#x2F;callback.js:1213</code></a>
+        <a href="../files/lib_callback.js.html#l1204"><code>lib&#x2F;callback.js:1204</code></a>
         </p>
 
 
@@ -2038,7 +2489,7 @@ In addition, it maintains parent-child relationships and thus can participate in
     <div class="meta">
                 <p>Inherited from
                 <a href="../classes/miruken.callback.CallbackHandler.html#method_lookupAll">miruken.callback.CallbackHandler</a>:
-        <a href="../files/lib_callback.js.html#l1229"><code>lib&#x2F;callback.js:1229</code></a>
+        <a href="../files/lib_callback.js.html#l1220"><code>lib&#x2F;callback.js:1220</code></a>
         </p>
 
 
@@ -2149,7 +2600,7 @@ In addition, it maintains parent-child relationships and thus can participate in
     <div class="meta">
                 <p>Inherited from
                 <a href="../classes/miruken.callback.CallbackHandler.html#method_next">miruken.callback.CallbackHandler</a>:
-        <a href="../files/lib_callback.js.html#l1289"><code>lib&#x2F;callback.js:1289</code></a>
+        <a href="../files/lib_callback.js.html#l1280"><code>lib&#x2F;callback.js:1280</code></a>
         </p>
 
 
@@ -2217,7 +2668,7 @@ In addition, it maintains parent-child relationships and thus can participate in
     <div class="meta">
                 <p>
                 Defined in
-        <a href="../files/lib_context.js.html#l218"><code>lib&#x2F;context.js:218</code></a>
+        <a href="../files/lib_context.js.html#l214"><code>lib&#x2F;context.js:214</code></a>
         </p>
 
 
@@ -2280,7 +2731,7 @@ In addition, it maintains parent-child relationships and thus can participate in
     <div class="meta">
                 <p>Inherited from
                 <a href="../classes/miruken.callback.CompositeCallbackHandler.html#method_removeHandlers">miruken.callback.CompositeCallbackHandler</a>:
-        <a href="../files/lib_callback.js.html#l755"><code>lib&#x2F;callback.js:755</code></a>
+        <a href="../files/lib_callback.js.html#l746"><code>lib&#x2F;callback.js:746</code></a>
         </p>
 
 
@@ -2330,7 +2781,7 @@ In addition, it maintains parent-child relationships and thus can participate in
     <div class="meta">
                 <p>Inherited from
                 <a href="../classes/miruken.callback.CallbackHandler.html#method_resolve">miruken.callback.CallbackHandler</a>:
-        <a href="../files/lib_callback.js.html#l1176"><code>lib&#x2F;callback.js:1176</code></a>
+        <a href="../files/lib_callback.js.html#l1167"><code>lib&#x2F;callback.js:1167</code></a>
         </p>
 
 
@@ -2399,7 +2850,7 @@ In addition, it maintains parent-child relationships and thus can participate in
     <div class="meta">
                 <p>Inherited from
                 <a href="../classes/miruken.callback.CallbackHandler.html#method_resolveAll">miruken.callback.CallbackHandler</a>:
-        <a href="../files/lib_callback.js.html#l1193"><code>lib&#x2F;callback.js:1193</code></a>
+        <a href="../files/lib_callback.js.html#l1184"><code>lib&#x2F;callback.js:1184</code></a>
         </p>
 
 
@@ -2468,7 +2919,7 @@ In addition, it maintains parent-child relationships and thus can participate in
     <div class="meta">
                 <p>
                 Defined in
-        <a href="../files/lib_context.js.html#l169"><code>lib&#x2F;context.js:169</code></a>
+        <a href="../files/lib_context.js.html#l165"><code>lib&#x2F;context.js:165</code></a>
         </p>
 
 
@@ -2530,7 +2981,7 @@ In addition, it maintains parent-child relationships and thus can participate in
     <div class="meta">
                 <p>Inherited from
                 <a href="../classes/miruken.callback.CallbackHandler.html#method_toDelegate">miruken.callback.CallbackHandler</a>:
-        <a href="../files/lib_callback.js.html#l499"><code>lib&#x2F;callback.js:499</code></a>
+        <a href="../files/lib_callback.js.html#l490"><code>lib&#x2F;callback.js:490</code></a>
         </p>
 
 
@@ -2582,7 +3033,7 @@ In addition, it maintains parent-child relationships and thus can participate in
     <div class="meta">
                 <p>Inherited from
                 <a href="../classes/miruken.graph.Traversing.html#method_traverse">miruken.graph.Traversing</a>:
-        <a href="../files/lib_graph.js.html#l87"><code>lib&#x2F;graph.js:87</code></a>
+        <a href="../files/lib_graph.js.html#l100"><code>lib&#x2F;graph.js:100</code></a>
         </p>
 
 
@@ -2663,7 +3114,7 @@ In addition, it maintains parent-child relationships and thus can participate in
     <div class="meta">
                 <p>
                 Defined in
-        <a href="../files/lib_context.js.html#l251"><code>lib&#x2F;context.js:251</code></a>
+        <a href="../files/lib_context.js.html#l247"><code>lib&#x2F;context.js:247</code></a>
         </p>
 
 
@@ -2713,7 +3164,7 @@ In addition, it maintains parent-child relationships and thus can participate in
     <div class="meta">
                 <p>
                 Defined in
-        <a href="../files/lib_context.js.html#l233"><code>lib&#x2F;context.js:233</code></a>
+        <a href="../files/lib_context.js.html#l229"><code>lib&#x2F;context.js:229</code></a>
         </p>
 
 
@@ -2781,7 +3232,7 @@ In addition, it maintains parent-child relationships and thus can participate in
     <div class="meta">
                 <p>Inherited from
                 <a href="../classes/miruken.callback.CallbackHandler.html#method_when">miruken.callback.CallbackHandler</a>:
-        <a href="../files/lib_callback.js.html#l1269"><code>lib&#x2F;callback.js:1269</code></a>
+        <a href="../files/lib_callback.js.html#l1260"><code>lib&#x2F;callback.js:1260</code></a>
         </p>
 
 
@@ -2830,6 +3281,31 @@ In addition, it maintains parent-child relationships and thus can participate in
             <div id="properties" class="api-class-tabpanel">
                 <h2 class="off-left">Properties</h2>
 
+                    <div id="property_children" class="property item">
+                        <h3 class="name"><code>children</code></h3>
+                        <span class="type">Array</span>
+                    
+                    
+                    
+                    
+                    
+                        <div class="meta">
+                                    <p>
+                                    Defined in
+                            <a href="../files/lib_context.js.html#l122"><code>lib&#x2F;context.js:122</code></a>
+                            </p>
+                    
+                    
+                        </div>
+                    
+                        <div class="description">
+                            <p>Gets the context children.</p>
+                    
+                        </div>
+                    
+                    
+                    
+                    </div>
                     <div id="property_delegate" class="property item inherited">
                         <h3 class="name"><code>delegate</code></h3>
                         <span class="type">Object</span>
@@ -2841,7 +3317,7 @@ In addition, it maintains parent-child relationships and thus can participate in
                         <div class="meta">
                                     <p>Inherited from
                                     <a href="../classes/miruken.callback.CallbackHandler.html#property_delegate">miruken.callback.CallbackHandler</a>:
-                            <a href="../files/lib_callback.js.html#l433"><code>lib&#x2F;callback.js:433</code></a>
+                            <a href="../files/lib_callback.js.html#l424"><code>lib&#x2F;callback.js:424</code></a>
                             </p>
                     
                     
@@ -2849,6 +3325,81 @@ In addition, it maintains parent-child relationships and thus can participate in
                     
                         <div class="description">
                             <p>Gets the delegate.</p>
+                    
+                        </div>
+                    
+                    
+                    
+                    </div>
+                    <div id="property_parent" class="property item">
+                        <h3 class="name"><code>parent</code></h3>
+                        <span class="type"><a href="../classes/miruken.context.Context.html" class="crosslink">miruken.context.Context</a></span>
+                    
+                    
+                    
+                    
+                    
+                        <div class="meta">
+                                    <p>
+                                    Defined in
+                            <a href="../files/lib_context.js.html#l115"><code>lib&#x2F;context.js:115</code></a>
+                            </p>
+                    
+                    
+                        </div>
+                    
+                        <div class="description">
+                            <p>Gets the parent context.</p>
+                    
+                        </div>
+                    
+                    
+                    
+                    </div>
+                    <div id="property_root" class="property item">
+                        <h3 class="name"><code>root</code></h3>
+                        <span class="type"><a href="../classes/miruken.context.Context.html" class="crosslink">miruken.context.Context</a></span>
+                    
+                    
+                    
+                    
+                    
+                        <div class="meta">
+                                    <p>
+                                    Defined in
+                            <a href="../files/lib_context.js.html#l137"><code>lib&#x2F;context.js:137</code></a>
+                            </p>
+                    
+                    
+                        </div>
+                    
+                        <div class="description">
+                            <p>Gets the root context.</p>
+                    
+                        </div>
+                    
+                    
+                    
+                    </div>
+                    <div id="property_state" class="property item">
+                        <h3 class="name"><code>state</code></h3>
+                        <span class="type"><a href="../classes/miruken.context.ContextState.html" class="crosslink">miruken.context.ContextState</a></span>
+                    
+                    
+                    
+                    
+                    
+                        <div class="meta">
+                                    <p>
+                                    Defined in
+                            <a href="../files/lib_context.js.html#l108"><code>lib&#x2F;context.js:108</code></a>
+                            </p>
+                    
+                    
+                        </div>
+                    
+                        <div class="description">
+                            <p>Gets the context state.</p>
                     
                         </div>
                     

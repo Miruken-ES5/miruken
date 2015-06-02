@@ -139,7 +139,6 @@
                                 <li><a href="../classes/miruken.validate.$.html">miruken.validate.$</a></li>
                                 <li><a href="../classes/miruken.validate.$registerValidators.html">miruken.validate.$registerValidators</a></li>
                                 <li><a href="../classes/miruken.validate.$validateThat.html">miruken.validate.$validateThat</a></li>
-                                <li><a href="../classes/miruken.validate.miruken.callback.CallbackHandler.html">miruken.validate.miruken.callback.CallbackHandler</a></li>
                                 <li><a href="../classes/miruken.validate.ValidateJsCallbackHandler.html">miruken.validate.ValidateJsCallbackHandler</a></li>
                                 <li><a href="../classes/miruken.validate.Validating.html">miruken.validate.Validating</a></li>
                                 <li><a href="../classes/miruken.validate.Validation.html">miruken.validate.Validation</a></li>
@@ -200,7 +199,7 @@
         </div>
 
         <div class="foundat">
-            Defined in: <a href="../files/lib_validate_validate.js.html#l121"><code>lib&#x2F;validate&#x2F;validate.js:121</code></a>
+            Defined in: <a href="../files/lib_validate_validate.js.html#l117"><code>lib&#x2F;validate&#x2F;validate.js:117</code></a>
         </div>
 
             Module: <a href="../modules/validate.html">validate</a><br>
@@ -210,7 +209,7 @@
 
 
 <div class="box intro">
-    <p>Captures the validation errors.</p>
+    <p>Captures structured validation errors.</p>
 
 </div>
 
@@ -231,7 +230,7 @@
             <div class="meta">
                         <p>
                         Defined in
-                <a href="../files/lib_validate_validate.js.html#l121"><code>lib&#x2F;validate&#x2F;validate.js:121</code></a>
+                <a href="../files/lib_validate_validate.js.html#l117"><code>lib&#x2F;validate&#x2F;validate.js:117</code></a>
                 </p>
         
         
@@ -253,6 +252,7 @@
         <li class="api-class-tab index"><a href="#index">Index</a></li>
 
             <li class="api-class-tab methods"><a href="#methods">Methods</a></li>
+            <li class="api-class-tab properties"><a href="#properties">Properties</a></li>
     </ul>
 
     <div>
@@ -272,20 +272,26 @@
 
                             </li>
                             <li class="index-item method">
-                                <a href="#method_getErrors">getErrors</a>
-
-                            </li>
-                            <li class="index-item method">
-                                <a href="#method_isValid">isValid</a>
-
-                            </li>
-                            <li class="index-item method">
                                 <a href="#method_reset">reset</a>
 
                             </li>
                     </ul>
                 </div>
 
+                <div class="index-section properties">
+                    <h3>Properties</h3>
+
+                    <ul class="index-list properties extends">
+                            <li class="index-item property">
+                                <a href="#property_errors">errors</a>
+
+                            </li>
+                            <li class="index-item property">
+                                <a href="#property_valid">valid</a>
+
+                            </li>
+                    </ul>
+                </div>
 
 
         </div>
@@ -317,7 +323,7 @@
     <div class="meta">
                 <p>
                 Defined in
-        <a href="../files/lib_validate_validate.js.html#l205"><code>lib&#x2F;validate&#x2F;validate.js:205</code></a>
+        <a href="../files/lib_validate_validate.js.html#l199"><code>lib&#x2F;validate&#x2F;validate.js:199</code></a>
         </p>
 
 
@@ -397,7 +403,7 @@
     <div class="meta">
                 <p>
                 Defined in
-        <a href="../files/lib_validate_validate.js.html#l196"><code>lib&#x2F;validate&#x2F;validate.js:196</code></a>
+        <a href="../files/lib_validate_validate.js.html#l190"><code>lib&#x2F;validate&#x2F;validate.js:190</code></a>
         </p>
 
 
@@ -432,92 +438,6 @@
 
 
 </div>
-<div id="method_getErrors" class="method item">
-    <h3 class="name"><code>getErrors</code></h3>
-
-        <span class="paren">()</span>
-
-        <span class="returns-inline">
-            <span class="type">Object</span>
-        </span>
-
-
-
-
-
-
-
-    <div class="meta">
-                <p>
-                Defined in
-        <a href="../files/lib_validate_validate.js.html#l154"><code>lib&#x2F;validate&#x2F;validate.js:154</code></a>
-        </p>
-
-
-
-    </div>
-
-    <div class="description">
-        <p>Gets aggregated validation errors.</p>
-
-    </div>
-
-
-        <div class="returns">
-            <h4>Returns:</h4>
-
-            <div class="returns-description">
-                        <span class="type">Object</span>:
-                    <p>name/value pairs of aggregated errors.</p>
-
-            </div>
-        </div>
-
-
-</div>
-<div id="method_isValid" class="method item">
-    <h3 class="name"><code>isValid</code></h3>
-
-        <span class="paren">()</span>
-
-        <span class="returns-inline">
-            <span class="type">Boolean</span>
-        </span>
-
-
-
-
-
-
-
-    <div class="meta">
-                <p>
-                Defined in
-        <a href="../files/lib_validate_validate.js.html#l132"><code>lib&#x2F;validate&#x2F;validate.js:132</code></a>
-        </p>
-
-
-
-    </div>
-
-    <div class="description">
-        <p>Determines if object is valid.</p>
-
-    </div>
-
-
-        <div class="returns">
-            <h4>Returns:</h4>
-
-            <div class="returns-description">
-                        <span class="type">Boolean</span>:
-                    <p>true if object is valid.</p>
-
-            </div>
-        </div>
-
-
-</div>
 <div id="method_reset" class="method item">
     <h3 class="name"><code>reset</code></h3>
 
@@ -537,7 +457,7 @@
     <div class="meta">
                 <p>
                 Defined in
-        <a href="../files/lib_validate_validate.js.html#l227"><code>lib&#x2F;validate&#x2F;validate.js:227</code></a>
+        <a href="../files/lib_validate_validate.js.html#l221"><code>lib&#x2F;validate&#x2F;validate.js:221</code></a>
         </p>
 
 
@@ -564,6 +484,60 @@
 </div>
             </div>
 
+            <div id="properties" class="api-class-tabpanel">
+                <h2 class="off-left">Properties</h2>
+
+                    <div id="property_errors" class="property item">
+                        <h3 class="name"><code>errors</code></h3>
+                        <span class="type">Object</span>
+                    
+                    
+                    
+                    
+                    
+                        <div class="meta">
+                                    <p>
+                                    Defined in
+                            <a href="../files/lib_validate_validate.js.html#l149"><code>lib&#x2F;validate&#x2F;validate.js:149</code></a>
+                            </p>
+                    
+                    
+                        </div>
+                    
+                        <div class="description">
+                            <p>Gets aggregated validation errors.</p>
+                    
+                        </div>
+                    
+                    
+                    
+                    </div>
+                    <div id="property_valid" class="property item">
+                        <h3 class="name"><code>valid</code></h3>
+                        <span class="type">Boolean</span>
+                    
+                    
+                    
+                    
+                    
+                        <div class="meta">
+                                    <p>
+                                    Defined in
+                            <a href="../files/lib_validate_validate.js.html#l128"><code>lib&#x2F;validate&#x2F;validate.js:128</code></a>
+                            </p>
+                    
+                    
+                        </div>
+                    
+                        <div class="description">
+                            <p>true if object is valid, false otherwisw.</p>
+                    
+                        </div>
+                    
+                    
+                    
+                    </div>
+            </div>
 
 
     </div>

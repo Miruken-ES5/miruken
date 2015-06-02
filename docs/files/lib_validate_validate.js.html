@@ -139,7 +139,6 @@
                                 <li><a href="../classes/miruken.validate.$.html">miruken.validate.$</a></li>
                                 <li><a href="../classes/miruken.validate.$registerValidators.html">miruken.validate.$registerValidators</a></li>
                                 <li><a href="../classes/miruken.validate.$validateThat.html">miruken.validate.$validateThat</a></li>
-                                <li><a href="../classes/miruken.validate.miruken.callback.CallbackHandler.html">miruken.validate.miruken.callback.CallbackHandler</a></li>
                                 <li><a href="../classes/miruken.validate.ValidateJsCallbackHandler.html">miruken.validate.ValidateJsCallbackHandler</a></li>
                                 <li><a href="../classes/miruken.validate.Validating.html">miruken.validate.Validating</a></li>
                                 <li><a href="../classes/miruken.validate.Validation.html">miruken.validate.Validation</a></li>
@@ -281,27 +280,23 @@ new function () { // closure
             results = results || new ValidationResult;
             this.extend({
                 /**
-                 * Determines if validation should be asynchronous.
-                 * @method isAsync
-                 * @returns {boolean} true if asynchronous
+                 * true if asynchronous, false if synchronous.
+                 * @property {boolean} async
                  */                
                 isAsync: function () { return async; },
                 /**
-                 * Gets the target to validate.
-                 * @method getObject
-                 * @returns {Object} target to validate.
+                 * Gets the target object to validate.
+                 * @property {Object} object
                  */                                
                 getObject: function () { return object; },
                 /**
                  * Gets the scope of validation.
-                 * @method getScope
-                 * @returns {Any} scope of validation.
+                 * @property {Any} scope
                  */                                                
                 getScope: function () { return scope; },
                 /**
                  * Gets the validation results.
-                 * @method getResults
-                 * @returns {miruken.validate.ValidationResult} validation results.
+                 * @property {miruken.validate.ValidationResult} results
                  */                                                                
                 getResults: function () { return results; },
                 getAsyncResults: function () { return _asyncResults; },
@@ -317,7 +312,7 @@ new function () { // closure
     var IGNORE = [&#x27;isValid&#x27;, &#x27;valid&#x27;, &#x27;getErrors&#x27;, &#x27;errors&#x27;, &#x27;addKey&#x27;, &#x27;addError&#x27;];
 
     /**
-     * Captures the validation errors.
+     * Captures structured validation errors.
      * @class ValidationResult
      * @constructor
      * @extends Base
@@ -328,9 +323,8 @@ new function () { // closure
             var _errors, _summary;
             this.extend({
                 /**
-                 * Determines if object is valid.
-                 * @method isValid
-                 * @returns {boolean} true if object is valid.
+                 * true if object is valid, false otherwisw.
+                 * @property {boolean} valid
                  */                
                 isValid: function () {
                     if (_errors || _summary) {
@@ -351,8 +345,7 @@ new function () { // closure
                 },
                 /**
                  * Gets aggregated validation errors.
-                 * @method getErrors
-                 * @returns {Object} name/value pairs of aggregated errors.
+                 * @property {Object} errors
                  */                                
                 getErrors: function () {
                     if (_summary) {
@@ -576,29 +569,11 @@ new function () { // closure
     }
 
     CallbackHandler.implement({
-        /**
-         * Marks the callback handler for validation.
-         * @for miruken.callback.CallbackHandler
-         * @method $valid
-         * @param   {Object}  target  -  object to validate
-         * @param   {Any}     scope   -  scope of validation
-         * @returns {miruken.callback.CallbackHandlerAspect} validation semantics.
-         * @for miruken.callback.CallbackHandler
-         */                
         $valid: function (target, scope) {
             return this.aspect(function (_, composer) {
                 return Validator(composer).validate(target, scope).valid;
             });
         },
-        /**
-         * Marks the callback handler for asynchronous validation.
-         * @for miruken.callback.CallbackHandler
-         * @method $validAsync
-         * @param   {Object}  target  -  object to validate
-         * @param   {Any}     scope   -  scope of validation
-         * @returns {miruken.callback.CallbackHandlerAspect} validation semantics.
-         * @for miruken.callback.CallbackHandler
-         */                        
         $validAsync: function (target, scope) {
             return this.aspect(function (_, composer) {
                 return Validator(composer).validateAsync(target, scope).then(function (results) {

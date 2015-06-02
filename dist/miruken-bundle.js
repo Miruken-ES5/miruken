@@ -1975,24 +1975,21 @@ new function () { // closure
             this.extend({
                 /**
                  * Gets the lookup key.
-                 * @method getKey
-                 * @returns {Any} lookup key
+                 * @property {Any} key
                  */
                 getKey: function () { return key; },
                 /**
-                 * Gets the lookup cardinality.
-                 * @method isMany
-                 * @returns {boolean} true if lookup all, otherwise first. 
+                 * true if lookup all, false otherwise.
+                 * @property {boolean} many
                  */
                 isMany: function () { return many; },
                 /**
                  * Gets the matching results.
-                 * @method getResults
-                 * @returns {Array} results of lookup.
+                 * @property {Array} results
                  */
                 getResults: function () { return _results; },
                 /**
-                 * Adds the lookup result.
+                 * Adds a lookup result.
                  * @param  {Any}  reault - lookup result
                  */
                 addResult: function (result) {
@@ -2022,26 +2019,23 @@ new function () { // closure
             var _pending = [];
             this.extend({
                 /**
-                 * Gets the cardinality of handle.
-                 * @method isMany
-                 * @returns {boolean} true if all handlers, otherwise first. 
+                 * true if handle all, false otherwise.
+                 * @property {boolean} many
                  */
                 isMany: function () { return many; },
                 /**
                  * Gets the callback.
-                 * @method getCallback
-                 * @returns {Object} callback.
+                 * @property {Object} callback
                  */
                 getCallback: function () { return callback; },
                 /**
                  * Gets the pending promises.
-                 * @method getPending
-                 * @returns {Array} pending promises.
+                 * @property {Array} pending
                  */
                 getPending: function () { return _pending; },
                 /**
-                 * Tracks the pending promise.
-                 * @param  {miruken.Promise}  promise - handle promise
+                 * Tracks a pending promise.
+                 * @param {miruken.Promise}  promise - handle promise
                  */
                 track: function (promise) {
                     if ($isPromise(promise)) {
@@ -2072,25 +2066,22 @@ new function () { // closure
             this.extend({
                 /**
                  * Gets the key.
-                 * @method getKey
-                 * @returns {Any} key
+                 * @property {Any} key
                  */                
                 getKey: function () { return key; },
                 /**
-                 * Gets the cardinality of resolution.
-                 * @method isMany
-                 * @returns {boolean} true if resolve all, otherwise first. 
+                 * true if resolve all, false otherwise.
+                 * @property {boolean} many
                  */                
                 isMany: function () { return many; },
                 /**
                  * Gets the resolutions.
-                 * @method getResolutions
-                 * @returns {Array} resolutions.
+                 * @property {Array} resolutions
                  */                
                 getResolutions: function () { return _resolutions; },
                 /**
                  * Adds a resolution.
-                 * @param  {Any}  resolution - resolution
+                 * @param {Any} resolution  -  resolution
                  */
                 resolve: function (resolution) {
                     if (!(_instant && $isPromise(resolution))) {
@@ -3293,7 +3284,7 @@ new function () { // closure
      * @method getEffectivePromise
      * @param    {Object}  object  -  source object
      * @returns  {Promise} effective promise.
-     * @for miruken.$
+     * @for miruken.callback.$
      */
     function getEffectivePromise(object) {
         if (object instanceof HandleMethod) {
@@ -3301,6 +3292,26 @@ new function () { // closure
         }
         return $isPromise(object) ? object : null;
     }
+
+    /**
+     * Marks the callback handler for validation.
+     * @for miruken.callback.CallbackHandler
+     * @method $valid
+     * @param   {Object}  target  -  object to validate
+     * @param   {Any}     scope   -  scope of validation
+     * @returns {miruken.callback.CallbackHandlerAspect} validation semantics.
+     * @for miruken.callback.CallbackHandler
+     */                
+
+    /**
+     * Marks the callback handler for asynchronous validation.
+     * @for miruken.callback.CallbackHandler
+     * @method $validAsync
+     * @param   {Object}  target  -  object to validate
+     * @param   {Any}     scope   -  scope of validation
+     * @returns {miruken.callback.CallbackHandlerAspect} validation semantics.
+     * @for miruken.callback.CallbackHandler
+     */                        
 
     if (typeof module !== 'undefined' && module.exports) {
         module.exports = exports = callback;
@@ -3421,24 +3432,21 @@ new function () { // closure
             this.extend({
                 /**
                  * Gets the context state.
-                 * @method getState
-                 * @returns {miruken.context.ContextState} context state.
+                 * @property {miruken.context.ContextState} state
                  */
                 getState: function () {
                     return _state; 
                 },
                 /**
                  * Gets the parent context.
-                 * @method getParent
-                 * @returns {miruken.context.Context} parent context.
+                 * @property {miruken.context.Context} parent
                  */                
                 getParent: function () {
                     return _parent; 
                 },
                 /**
                  * Gets the context children.
-                 * @method getChildren
-                 * @returns {Array} context children.
+                 * @property {Array} children
                  */                                
                 getChildren: function () {
                     return _children.copy(); 
@@ -3453,8 +3461,7 @@ new function () { // closure
                 },
                 /**
                  * Gets the root context.
-                 * @method getRoot
-                 * @returns {miruken.context.Context} root context.
+                 * @property {miruken.context.Context} root
                  */                                
                 getRoot: function () {
                     var root = this;    
@@ -3792,54 +3799,128 @@ new function () { // closure
      * Context traversal
      */
     var axisControl = {
-            axis: function (axis) {
-                return _newContextTraversal(this, axis);   
-            }
-        },
+        axis: function (axis) {
+            var context   = this,
+                traversal = pcopy(context);
+            traversal.handle = function (callback, greedy, composer) {
+                return context.handleAxis(axis, callback, greedy, composer);
+            };
+            return traversal;
+        }},
+        applyAxis = axisControl.axis,
         axisChoices = Array2.combine(TraversingAxis.names, TraversingAxis.values);
 
     for (var name in axisChoices) {
         var axis = axisChoices[name],
             key  = '$' + name.charAt(0).toLowerCase() + name.slice(1);
-        axisControl[key] = function (axis) {
-            return function () {
-                return _newContextTraversal(this, axis);
-            };
-        }(axis);
+        axisControl[key] = Function2.partial(applyAxis, axis);
     }
-    
-    Context.implement(axisControl);
 
-    function _newContextTraversal(context, axis) {
-        function Traversal() {
-            for (var key in context) {
-                if (key in Base.prototype) {
-                    continue;
-                }
-                var member = context[key];
-                if ($isFunction(member))
-                    this[key] = (function (k, m) {
-                        return function () {
-                            var owner       = (k in CallbackHandler.prototype) ? this : context, 
-                                returnValue = m.apply(owner, arguments);
-                            if (returnValue === context) {
-                                returnValue = this;
-                            }
-                            else if (returnValue && returnValue.decoratee == context) {
-                                returnValue.decoratee = this;
-                            }
-                            return returnValue;
-                        }
-                    })(key, member);
-            }
-            this.extend({
-                handle: function (callback, greedy, composer) {
-                    return this.handleAxis(axis, callback, greedy, composer);
-                }});
-        }
-        Traversal.prototype = context.constructor.prototype;
-        return new Traversal();
-    }
+    /**
+     * Sets the default callback handler axis to
+     * {{#crossLink "miruken.graph.TraversingAxis/Self:property"}}{{/crossLink}}.
+     * @method $self
+     * @returns {miruken.context.Context} default traversal axis.
+     * @for miruken.context.Context
+     */
+
+    /**
+     * Sets the default callback handler axis to
+     * {{#crossLink "miruken.graph.TraversingAxis/Root:property"}}{{/crossLink}}.
+     * @method $root
+     * @returns {miruken.context.Context} default traversal axis.
+     * @for miruken.context.Context
+     */
+
+    /**
+     * Sets the default callback handler axis to
+     * {{#crossLink "miruken.graph.TraversingAxis/Child:property"}}{{/crossLink}}.
+     * @method $child
+     * @returns {miruken.context.Context} default traversal axis.
+     * @for miruken.context.Context
+     */
+
+    /**
+     * Sets the default callback handler axis to
+     * {{#crossLink "miruken.graph.TraversingAxis/Sibling:property"}}{{/crossLink}}.
+     * @method $sibling
+     * @returns {miruken.context.Context} default traversal axis.
+     * @for miruken.context.Context
+     */
+
+    /**
+     * Sets the default callback handler axis to
+     * {{#crossLink "miruken.graph.TraversingAxis/Ancestor:property"}}{{/crossLink}}.
+     * @method $ancestor
+     * @returns {miruken.context.Context} default traversal axis.
+     * @for miruken.context.Context
+     */
+
+    /**
+     * Sets the default callback handler axis to
+     * {{#crossLink "miruken.graph.TraversingAxis/Descendant:property"}}{{/crossLink}}.
+     * @method $descendant
+     * @returns {miruken.context.Context} default traversal axis.
+     * @for miruken.context.Context
+     */
+
+    /**
+     * Sets the default callback handler axis to
+     * {{#crossLink "miruken.graph.TraversingAxis/DescendantReverse:property"}}{{/crossLink}}.
+     * @method $descendantReverse
+     * @returns {miruken.context.Context} default traversal axis.
+     * @for miruken.context.Context
+     */        
+
+    /**
+     * Sets the default callback handler axis to
+     * {{#crossLink "miruken.graph.TraversingAxis/ChildOrSelf:property"}}{{/crossLink}}.
+     * @method $childOrSelf
+     * @returns {miruken.context.Context} default traversal axis.
+     * @for miruken.context.Context
+     */
+
+    /**
+     * Sets the default callback handler axis to
+     * {{#crossLink "miruken.graph.TraversingAxis/SiblingOrSelf:property"}}{{/crossLink}}.
+     * @method $siblingOrSelf
+     * @returns {miruken.context.Context} default traversal axis.
+     * @for miruken.context.Context
+     */
+
+    /**
+     * Sets the default callback handler axis to
+     * {{#crossLink "miruken.graph.TraversingAxis/AncestorOrSelf:property"}}{{/crossLink}}.
+     * @method $ancestorOrSelf
+     * @returns {miruken.context.Context} default traversal axis.
+     * @for miruken.context.Context
+     */        
+
+    /**
+     * Sets the default callback handler axis to
+     * {{#crossLink "miruken.graph.TraversingAxis/DescendantOrSelf:property"}}{{/crossLink}}.
+     * @method $descendantOrSelf
+     * @returns {miruken.context.Context} default traversal axis.
+     * @for miruken.context.Context
+     */
+
+    /**
+     * Sets the default callback handler axis to
+     * {{#crossLink "miruken.graph.TraversingAxis/DescendantOrSelfReverse:property"}}{{/crossLink}}.
+     * @method $descendantOrSelfReverse
+     * @returns {miruken.context.Context} default traversal axis.
+     * @for miruken.context.Context
+     */
+
+    /**
+     * Sets the default callback handler axis to
+     * {{#crossLink "miruken.graph.TraversingAxis/AncestorSiblingOrSelf:property"}}{{/crossLink}}.
+     * @method $ancestorSiblingOrSelf
+     * @returns {miruken.context.Context} default traversal axis.
+     * @for miruken.context.Context
+     */
+
+    Context.implement(axisControl);
 
     /**
      * Enhances Functions to create instances in a context.
@@ -4053,56 +4134,69 @@ new function () { // closure
      */
     var TraversingAxis = Enum({
         /**
+         * Traverse only current node.
          * @property {number} Self
          */
         Self: 1,
         /**
+         * Traverse only current node root.
          * @property {number} Root
-         */        
+         */
         Root: 2,
         /**
+         * Traverse current node children.
          * @property {number} Child
-         */                
+         */
         Child: 3,
         /**
+         * Traverse current node siblings.
          * @property {number} Sibling
-         */                        
+         */
         Sibling: 4,
         /**
+         * Traverse current node ancestors.
          * @property {number} Ancestor
-         */                                
+         */
         Ancestor: 5,
         /**
+         * Traverse current node descendants.
          * @property {number} Descendant
-         */                                        
+         */
         Descendant: 6,
         /**
+         * Traverse current node descendants in reverse.
          * @property {number} DescendantReverse
-         */                                        
+         */
         DescendantReverse: 7,
         /**
+         * Traverse current node and children.
          * @property {number} ChildOrSelf
-         */                                                
+         */
         ChildOrSelf: 8,
         /**
+         * Traverse current node and siblings.
          * @property {number} SiblingOrSelf
-         */                                                        
+         */
         SiblingOrSelf: 9,
         /**
+         * Traverse current node and ancestors.
          * @property {number} AncestorOrSelf
-         */                                                                
+         */
         AncestorOrSelf: 10,
         /**
+         * Traverse current node and descendents.
          * @property {number} DescendantOrSelf
-         */                                                                        
+         */
         DescendantOrSelf: 11,
         /**
+         * Traverse current node and descendents in reverse.
          * @property {number} DescendantOrSelfReverse
-         */                                                                                
+         */
         DescendantOrSelfReverse: 12,
         /**
+         * Traverse current node, ancestors and siblings.
          * @property {number} AncestorSiblingOrSelf 
-         */                                                                                        
+         */
         AncestorSiblingOrSelf: 13
     });
 
@@ -5013,12 +5107,12 @@ new function () { // closure
          * See {{#crossLink "miruken.Modifier/$optional:attribute"}}{{/crossLink}}
          * @property {number} Optional
          */
-        Optional:   1 << 4,
+        Optional: 1 << 4,
         /**
          * See {{#crossLink "miruken.Modifier/$promise:attribute"}}{{/crossLink}}
          * @property {number} Promise
          */
-        Promise:    1 << 5,
+        Promise: 1 << 5,
         /**
          * See {{#crossLink "miruken.Modifier/$eq:attribute"}}{{/crossLink}}
          * @property {number} Invariant
@@ -5171,8 +5265,7 @@ new function () { // closure
     });
 
     /**
-     * Defines a component specification to be managed by a
-     * {{#crossLink "miruken.ioc.Container"}}{{/crossLink}}.
+     * Describes a component to be managed by a {{#crossLink "miruken.ioc.Container"}}{{/crossLink}}.
      * @class ComponentModel
      * @constructor
      * @extends Base
@@ -5184,23 +5277,16 @@ new function () { // closure
                 _invariant = false, _burden = {};
             this.extend({
                 /**
-                 * Gets the component key.
-                 * @method getKey
-                 * @returns {Any} component key
+                 * Gets/sets the component key.
+                 * @property {Any} key
                  */
                 getKey: function () {
                     return _key || _class
                 },
-                /**
-                 * Sets the component key.
-                 * @method setKey
-                 * @param {Any} value  - component key
-                 */
                 setKey: function (value) { _key = value; },
                 /**
-                 * Gets the component class.
-                 * @method getClass
-                 * @returns {Function} component class
+                 * Gets/sets the component class.
+                 * @property {Functon} class
                  */
                 getClass: function () {
                     var clazz = _class;
@@ -5209,11 +5295,6 @@ new function () { // closure
                     }
                     return clazz;
                 },
-                /**
-                 * Sets the component class.
-                 * @method setClass
-                 * @param {Function} value  -  component class
-                 */
                 setClass: function (value) {
                     if ($isSomething(value) && !$isClass(value)) {
                         throw new TypeError(format("%1 is not a class.", value));
@@ -5221,30 +5302,18 @@ new function () { // closure
                     _class = value;
                 },
                 /**
-                 * Determines if the component is invariant.
-                 * @method isInvariant
-                 * @returns {boolean} true if component is invariant, false othereise.
+                 * true if component is invariant, false otherwise.
+                 * @property {boolean} invariant
                  */                                                
                 isInvariant: function () {
                     return _invariant;
                 },
-                /**
-                 * Sets the component invariance.
-                 * @method setInvariant
-                 * @param {bool} value  -  true if component is invariant, false othereise.
-                 */
                 setInvariant: function (value) { _invariant = !!value; },
                 /**
-                 * Gets the component lifestyle.
-                 * @method getLifestyle
-                 * @returns {miruken.ioc.Lifestyle} component lifestyle.
+                 * Gets/sets the component lifestyle.
+                 * @property {miruken.ioc.Lifestyle} lifestyle
                  */
                 getLifestyle: function () { return _lifestyle; },
-                /**
-                 * Sets the component lifestyle.
-                 * @method setLifestyle
-                 * @param {miruken.ioc.Lifestyle} value  -  component lifestyle
-                 */
                 setLifestyle: function (value) {
                     if (!$isSomething(value) && !(value instanceof Lifestyle)) {
                         throw new TypeError(format("%1 is not a Lifestyle.", value));
@@ -5252,9 +5321,8 @@ new function () { // closure
                     _lifestyle = value; 
                 },
                 /**
-                 * Gets the component factory.
-                 * @method getFactory
-                 * @returns {Function} component factory.
+                 * Gets/sets the component factory.
+                 * @property {Function} factory
                  */
                 getFactory: function () {
                     var factory = _factory,
@@ -5276,11 +5344,6 @@ new function () { // closure
                     }
                     return factory;
                 },
-                /**
-                 * Sets the component factory.
-                 * @method setFactory
-                 * @param {Function} value  -  component factory
-                 */
                 setFactory: function (value) {
                     if ($isSomething(value) && !$isFunction(value)) {
                         throw new TypeError(format("%1 is not a function.", value));
@@ -5335,8 +5398,7 @@ new function () { // closure
                 },
                 /**
                  * Gets the component dependency burden.
-                 * @method getBurden
-                 * @return {Object} hash of component dependencies.
+                 * @property {Object} burden
                  */                                
                 getBurden: function () { return _burden; }
             });
@@ -8230,27 +8292,23 @@ new function () { // closure
             results = results || new ValidationResult;
             this.extend({
                 /**
-                 * Determines if validation should be asynchronous.
-                 * @method isAsync
-                 * @returns {boolean} true if asynchronous
+                 * true if asynchronous, false if synchronous.
+                 * @property {boolean} async
                  */                
                 isAsync: function () { return async; },
                 /**
-                 * Gets the target to validate.
-                 * @method getObject
-                 * @returns {Object} target to validate.
+                 * Gets the target object to validate.
+                 * @property {Object} object
                  */                                
                 getObject: function () { return object; },
                 /**
                  * Gets the scope of validation.
-                 * @method getScope
-                 * @returns {Any} scope of validation.
+                 * @property {Any} scope
                  */                                                
                 getScope: function () { return scope; },
                 /**
                  * Gets the validation results.
-                 * @method getResults
-                 * @returns {miruken.validate.ValidationResult} validation results.
+                 * @property {miruken.validate.ValidationResult} results
                  */                                                                
                 getResults: function () { return results; },
                 getAsyncResults: function () { return _asyncResults; },
@@ -8266,7 +8324,7 @@ new function () { // closure
     var IGNORE = ['isValid', 'valid', 'getErrors', 'errors', 'addKey', 'addError'];
 
     /**
-     * Captures the validation errors.
+     * Captures structured validation errors.
      * @class ValidationResult
      * @constructor
      * @extends Base
@@ -8277,9 +8335,8 @@ new function () { // closure
             var _errors, _summary;
             this.extend({
                 /**
-                 * Determines if object is valid.
-                 * @method isValid
-                 * @returns {boolean} true if object is valid.
+                 * true if object is valid, false otherwisw.
+                 * @property {boolean} valid
                  */                
                 isValid: function () {
                     if (_errors || _summary) {
@@ -8300,8 +8357,7 @@ new function () { // closure
                 },
                 /**
                  * Gets aggregated validation errors.
-                 * @method getErrors
-                 * @returns {Object} name/value pairs of aggregated errors.
+                 * @property {Object} errors
                  */                                
                 getErrors: function () {
                     if (_summary) {
@@ -8525,29 +8581,11 @@ new function () { // closure
     }
 
     CallbackHandler.implement({
-        /**
-         * Marks the callback handler for validation.
-         * @for miruken.callback.CallbackHandler
-         * @method $valid
-         * @param   {Object}  target  -  object to validate
-         * @param   {Any}     scope   -  scope of validation
-         * @returns {miruken.callback.CallbackHandlerAspect} validation semantics.
-         * @for miruken.callback.CallbackHandler
-         */                
         $valid: function (target, scope) {
             return this.aspect(function (_, composer) {
                 return Validator(composer).validate(target, scope).valid;
             });
         },
-        /**
-         * Marks the callback handler for asynchronous validation.
-         * @for miruken.callback.CallbackHandler
-         * @method $validAsync
-         * @param   {Object}  target  -  object to validate
-         * @param   {Any}     scope   -  scope of validation
-         * @returns {miruken.callback.CallbackHandlerAspect} validation semantics.
-         * @for miruken.callback.CallbackHandler
-         */                        
         $validAsync: function (target, scope) {
             return this.aspect(function (_, composer) {
                 return Validator(composer).validateAsync(target, scope).then(function (results) {
