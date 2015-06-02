@@ -6,6 +6,7 @@ module.exports = require('./ng.js');
 },{"./ng.js":2}],2:[function(require,module,exports){
 (function (global){
 var miruken = require('../miruken');
+              require('../ioc');
               require('../mvc');
 
 new function () { // closure
@@ -15,6 +16,15 @@ new function () { // closure
     }
 
     /**
+     * Package providing [AngularJS](https://angularjs.org) integration.<br/>
+     * Requires the {{#crossLinkModule "miruken"}}{{/crossLinkModule}},
+     * {{#crossLinkModule "callback"}}{{/crossLinkModule}},
+     * {{#crossLinkModule "context"}}{{/crossLinkModule}},
+     * {{#crossLinkModule "validate"}}{{/crossLinkModule}},
+     * {{#crossLinkModule "error"}}{{/crossLinkModule}} and
+     * {{#crossLinkModule "ioc"}}{{/crossLinkModule}} modules.
+     * @module miruken
+     * @submodule ng
      * @namespace miruken.ng
      */
     var ng = new base2.Package(this, {
@@ -38,12 +48,17 @@ new function () { // closure
     angular.module('ng').run(['$rootScope', '$injector', _instrumentScopes]);
 
     /**
-     * Description goes here
+     * Marks a class to be called during the run phase of an Angular module setup.<br/>
+     * See [Module Loading & Dependencies](https://docs.angularjs.org/guide/module)
      * @class Runner
      * @constructor
      * @extends Base     
      */
     var Runner = Base.extend({
+        /**
+         * Executed during the run phase of an Angular module.
+         * @method run
+         */            
         run: function () {}
     });
 
@@ -307,7 +322,7 @@ new function () { // closure
 }
 
 }).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
-},{"../miruken":12,"../mvc":13}],3:[function(require,module,exports){
+},{"../ioc":10,"../miruken":12,"../mvc":13}],3:[function(require,module,exports){
 /*
   base2 - copyright 2007-2009, Dean Edwards
   http://code.google.com/p/base2/
@@ -3604,7 +3619,6 @@ new function () { // closure
 
     /**
      * Marks the callback handler for validation.
-     * @for miruken.callback.CallbackHandler
      * @method $valid
      * @param   {Object}  target  -  object to validate
      * @param   {Any}     scope   -  scope of validation
@@ -3614,7 +3628,6 @@ new function () { // closure
 
     /**
      * Marks the callback handler for asynchronous validation.
-     * @for miruken.callback.CallbackHandler
      * @method $validAsync
      * @param   {Object}  target  -  object to validate
      * @param   {Any}     scope   -  scope of validation
@@ -4116,7 +4129,7 @@ new function () { // closure
             };
             return traversal;
         }},
-        applyAxis = axisControl.axis,
+        applyAxis   = axisControl.axis,
         axisChoices = Array2.combine(TraversingAxis.names, TraversingAxis.values);
 
     for (var name in axisChoices) {
@@ -8538,12 +8551,10 @@ new function () { // closure
         version: miruken.version,
         parent:  miruken,
         imports: "miruken,miruken.callback,miruken.context,miruken.validate",
-        exports: "Model,Controller,MasterDetail,MasterDetailAware,$root"
+        exports: "Model,ViewRegion,Controller,MasterDetail,MasterDetailAware"
     });
 
     eval(this.imports);
-
-    var $root = $createModifier();
 
     /**
      * Base class for modelling concepts using one or more 
@@ -8672,13 +8683,28 @@ new function () { // closure
     });
 
     /**
+     * Protocol representing a region on the screen where a controller can be rendered.
+     * @class ViewRegion
+     * @extends StrictProtocol
+     */
+    var ViewRegion = StrictProtocol.extend({
+        /**
+         * Renders the controller in the view region.
+         * @method presentController
+         * @param   {miruken.mvc.Controller} controller  -  controller
+         * @returns {Promise} promise when rendering complete.
+         */                                        
+        presentController: function (controller) {}
+    });
+    
+    /**
      * Base class for controllers.
      * @class Controller
      * @constructor
      * @extends miruken.callback.CallbackHandler
      * @uses miruken.context.Contextual
      * @uses miruken.validate.Validating
-     */    
+     */
     var Controller = CallbackHandler.extend(
         $inferProperties, $contextual, $validateThat, Validating, {
         validate: function (target, scope) {

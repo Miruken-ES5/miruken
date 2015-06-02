@@ -3295,7 +3295,6 @@ new function () { // closure
 
     /**
      * Marks the callback handler for validation.
-     * @for miruken.callback.CallbackHandler
      * @method $valid
      * @param   {Object}  target  -  object to validate
      * @param   {Any}     scope   -  scope of validation
@@ -3305,7 +3304,6 @@ new function () { // closure
 
     /**
      * Marks the callback handler for asynchronous validation.
-     * @for miruken.callback.CallbackHandler
      * @method $validAsync
      * @param   {Object}  target  -  object to validate
      * @param   {Any}     scope   -  scope of validation
@@ -3807,7 +3805,7 @@ new function () { // closure
             };
             return traversal;
         }},
-        applyAxis = axisControl.axis,
+        applyAxis   = axisControl.axis,
         axisChoices = Array2.combine(TraversingAxis.names, TraversingAxis.values);
 
     for (var name in axisChoices) {

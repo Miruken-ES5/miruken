@@ -3295,7 +3295,6 @@ new function () { // closure
 
     /**
      * Marks the callback handler for validation.
-     * @for miruken.callback.CallbackHandler
      * @method $valid
      * @param   {Object}  target  -  object to validate
      * @param   {Any}     scope   -  scope of validation
@@ -3305,7 +3304,6 @@ new function () { // closure
 
     /**
      * Marks the callback handler for asynchronous validation.
-     * @for miruken.callback.CallbackHandler
      * @method $validAsync
      * @param   {Object}  target  -  object to validate
      * @param   {Any}     scope   -  scope of validation
@@ -3807,7 +3805,7 @@ new function () { // closure
             };
             return traversal;
         }},
-        applyAxis = axisControl.axis,
+        applyAxis   = axisControl.axis,
         axisChoices = Array2.combine(TraversingAxis.names, TraversingAxis.values);
 
     for (var name in axisChoices) {
@@ -8229,12 +8227,10 @@ new function () { // closure
         version: miruken.version,
         parent:  miruken,
         imports: "miruken,miruken.callback,miruken.context,miruken.validate",
-        exports: "Model,Controller,MasterDetail,MasterDetailAware,$root"
+        exports: "Model,ViewRegion,Controller,MasterDetail,MasterDetailAware"
     });
 
     eval(this.imports);
-
-    var $root = $createModifier();
 
     /**
      * Base class for modelling concepts using one or more 
@@ -8363,13 +8359,28 @@ new function () { // closure
     });
 
     /**
+     * Protocol representing a region on the screen where a controller can be rendered.
+     * @class ViewRegion
+     * @extends StrictProtocol
+     */
+    var ViewRegion = StrictProtocol.extend({
+        /**
+         * Renders the controller in the view region.
+         * @method presentController
+         * @param   {miruken.mvc.Controller} controller  -  controller
+         * @returns {Promise} promise when rendering complete.
+         */                                        
+        presentController: function (controller) {}
+    });
+    
+    /**
      * Base class for controllers.
      * @class Controller
      * @constructor
      * @extends miruken.callback.CallbackHandler
      * @uses miruken.context.Contextual
      * @uses miruken.validate.Validating
-     */    
+     */
     var Controller = CallbackHandler.extend(
         $inferProperties, $contextual, $validateThat, Validating, {
         validate: function (target, scope) {
