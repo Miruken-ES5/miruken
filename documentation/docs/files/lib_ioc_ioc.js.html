@@ -1,0 +1,1436 @@
+---
+layout: apidoc
+title:  "MirukenJS"
+date:   2015-06-01 00:00:00
+categories: apidocs
+yuiGridsUrl: http://yui.yahooapis.com/3.9.1/build/cssgrids/cssgrids-min.css
+yuiSeedUrl: http://yui.yahooapis.com/combo?3.9.1/build/yui/yui-min.js
+projectAssets: ../assets
+---
+<div id="hd" class="yui3-g header">
+    <div class="yui3-u-1-4 version">
+        <em>API Docs for: 0.1.0</em>
+    </div>
+</div>
+<div id="bd" class="yui3-g">
+
+    <div class="yui3-u-1-4">
+        <div id="docs-sidebar" class="sidebar apidocs">
+            <div id="api-list">
+                <h2 class="off-left">APIs</h2>
+                <div id="api-tabview" class="tabview">
+                    <ul class="tabs">
+                        <li><a href="#api-classes">Classes</a></li>
+                        <li><a href="#api-modules">Modules</a></li>
+                    </ul>
+            
+                    <div id="api-tabview-filter">
+                        <input type="search" id="api-filter" placeholder="Type to filter APIs">
+                    </div>
+            
+                    <div id="api-tabview-panel">
+                        <ul id="api-classes" class="apis classes">
+                            <li><a href="../classes/miruken.$.html">miruken.$</a></li>
+                            <li><a href="../classes/miruken.$inferProperties.html">miruken.$inferProperties</a></li>
+                            <li><a href="../classes/miruken.$inhertStatic.html">miruken.$inhertStatic</a></li>
+                            <li><a href="../classes/miruken.$properties.html">miruken.$properties</a></li>
+                            <li><a href="../classes/miruken.$proxyProtocol.html">miruken.$proxyProtocol</a></li>
+                            <li><a href="../classes/miruken.ArrayManager.html">miruken.ArrayManager</a></li>
+                            <li><a href="../classes/miruken.callback.$.html">miruken.callback.$</a></li>
+                            <li><a href="../classes/miruken.callback.$callbacks.html">miruken.callback.$callbacks</a></li>
+                            <li><a href="../classes/miruken.callback.AcceptingCallbackHandler.html">miruken.callback.AcceptingCallbackHandler</a></li>
+                            <li><a href="../classes/miruken.callback.CallbackHandler.html">miruken.callback.CallbackHandler</a></li>
+                            <li><a href="../classes/miruken.callback.CallbackHandlerAspect.html">miruken.callback.CallbackHandlerAspect</a></li>
+                            <li><a href="../classes/miruken.callback.CallbackHandlerDecorator.html">miruken.callback.CallbackHandlerDecorator</a></li>
+                            <li><a href="../classes/miruken.callback.CallbackHandlerFilter.html">miruken.callback.CallbackHandlerFilter</a></li>
+                            <li><a href="../classes/miruken.callback.CascadeCallbackHandler.html">miruken.callback.CascadeCallbackHandler</a></li>
+                            <li><a href="../classes/miruken.callback.CompositeCallbackHandler.html">miruken.callback.CompositeCallbackHandler</a></li>
+                            <li><a href="../classes/miruken.callback.ConditionalCallbackHandler.html">miruken.callback.ConditionalCallbackHandler</a></li>
+                            <li><a href="../classes/miruken.callback.Deferred.html">miruken.callback.Deferred</a></li>
+                            <li><a href="../classes/miruken.callback.HandleMethod.html">miruken.callback.HandleMethod</a></li>
+                            <li><a href="../classes/miruken.callback.InvocationDelegate.html">miruken.callback.InvocationDelegate</a></li>
+                            <li><a href="../classes/miruken.callback.InvocationOptions.html">miruken.callback.InvocationOptions</a></li>
+                            <li><a href="../classes/miruken.callback.InvocationOptionsHandler.html">miruken.callback.InvocationOptionsHandler</a></li>
+                            <li><a href="../classes/miruken.callback.InvocationSemantics.html">miruken.callback.InvocationSemantics</a></li>
+                            <li><a href="../classes/miruken.callback.Lookup.html">miruken.callback.Lookup</a></li>
+                            <li><a href="../classes/miruken.callback.MethodCallbackHandler.html">miruken.callback.MethodCallbackHandler</a></li>
+                            <li><a href="../classes/miruken.callback.ProvidingCallbackHandler.html">miruken.callback.ProvidingCallbackHandler</a></li>
+                            <li><a href="../classes/miruken.callback.Reentrant.html">miruken.callback.Reentrant</a></li>
+                            <li><a href="../classes/miruken.callback.ReentrantScope.html">miruken.callback.ReentrantScope</a></li>
+                            <li><a href="../classes/miruken.callback.RejectedError.html">miruken.callback.RejectedError</a></li>
+                            <li><a href="../classes/miruken.callback.Resolution.html">miruken.callback.Resolution</a></li>
+                            <li><a href="../classes/miruken.ClassMeta.html">miruken.ClassMeta</a></li>
+                            <li><a href="../classes/miruken.context.$contextual.html">miruken.context.$contextual</a></li>
+                            <li><a href="../classes/miruken.context.Context.html">miruken.context.Context</a></li>
+                            <li><a href="../classes/miruken.context.ContextObserver.html">miruken.context.ContextObserver</a></li>
+                            <li><a href="../classes/miruken.context.ContextState.html">miruken.context.ContextState</a></li>
+                            <li><a href="../classes/miruken.context.Contextual.html">miruken.context.Contextual</a></li>
+                            <li><a href="../classes/miruken.context.ContextualHelper.html">miruken.context.ContextualHelper</a></li>
+                            <li><a href="../classes/miruken.context.ContextualMixin.html">miruken.context.ContextualMixin</a></li>
+                            <li><a href="../classes/miruken.context.Function.html">miruken.context.Function</a></li>
+                            <li><a href="../classes/miruken.Delegate.html">miruken.Delegate</a></li>
+                            <li><a href="../classes/miruken.Disposing.html">miruken.Disposing</a></li>
+                            <li><a href="../classes/miruken.DisposingMixin.html">miruken.DisposingMixin</a></li>
+                            <li><a href="../classes/miruken.Enum.html">miruken.Enum</a></li>
+                            <li><a href="../classes/miruken.error.ErrorCallbackHandler.html">miruken.error.ErrorCallbackHandler</a></li>
+                            <li><a href="../classes/miruken.error.Errors.html">miruken.error.Errors</a></li>
+                            <li><a href="../classes/miruken.Facet.html">miruken.Facet</a></li>
+                            <li><a href="../classes/miruken.graph.Traversal.html">miruken.graph.Traversal</a></li>
+                            <li><a href="../classes/miruken.graph.Traversing.html">miruken.graph.Traversing</a></li>
+                            <li><a href="../classes/miruken.graph.TraversingAxis.html">miruken.graph.TraversingAxis</a></li>
+                            <li><a href="../classes/miruken.graph.TraversingMixin.html">miruken.graph.TraversingMixin</a></li>
+                            <li><a href="../classes/miruken.IndexedList.html">miruken.IndexedList</a></li>
+                            <li><a href="../classes/miruken.InstanceMeta.html">miruken.InstanceMeta</a></li>
+                            <li><a href="../classes/miruken.Interceptor.html">miruken.Interceptor</a></li>
+                            <li><a href="../classes/miruken.InterceptorSelector.html">miruken.InterceptorSelector</a></li>
+                            <li><a href="../classes/miruken.Invoking.html">miruken.Invoking</a></li>
+                            <li><a href="../classes/miruken.ioc.$.html">miruken.ioc.$</a></li>
+                            <li><a href="../classes/miruken.ioc.$container.html">miruken.ioc.$container</a></li>
+                            <li><a href="../classes/miruken.ioc.BasedOnBuilder.html">miruken.ioc.BasedOnBuilder</a></li>
+                            <li><a href="../classes/miruken.ioc.ComponentBuilder.html">miruken.ioc.ComponentBuilder</a></li>
+                            <li><a href="../classes/miruken.ioc.ComponentModel.html">miruken.ioc.ComponentModel</a></li>
+                            <li><a href="../classes/miruken.ioc.ComponentModelError.html">miruken.ioc.ComponentModelError</a></li>
+                            <li><a href="../classes/miruken.ioc.ComponentPolicy.html">miruken.ioc.ComponentPolicy</a></li>
+                            <li><a href="../classes/miruken.ioc.Container.html">miruken.ioc.Container</a></li>
+                            <li><a href="../classes/miruken.ioc.ContextualLifestyle.html">miruken.ioc.ContextualLifestyle</a></li>
+                            <li><a href="../classes/miruken.ioc.DependencyInspector.html">miruken.ioc.DependencyInspector</a></li>
+                            <li><a href="../classes/miruken.ioc.DependencyManager.html">miruken.ioc.DependencyManager</a></li>
+                            <li><a href="../classes/miruken.ioc.DependencyModel.html">miruken.ioc.DependencyModel</a></li>
+                            <li><a href="../classes/miruken.ioc.DependencyModifiers.html">miruken.ioc.DependencyModifiers</a></li>
+                            <li><a href="../classes/miruken.ioc.DependencyResolution.html">miruken.ioc.DependencyResolution</a></li>
+                            <li><a href="../classes/miruken.ioc.DependencyResolutionError.html">miruken.ioc.DependencyResolutionError</a></li>
+                            <li><a href="../classes/miruken.ioc.FromBuilder.html">miruken.ioc.FromBuilder</a></li>
+                            <li><a href="../classes/miruken.ioc.FromPackageBuilder.html">miruken.ioc.FromPackageBuilder</a></li>
+                            <li><a href="../classes/miruken.ioc.Installer.html">miruken.ioc.Installer</a></li>
+                            <li><a href="../classes/miruken.ioc.InterceptorBuilder.html">miruken.ioc.InterceptorBuilder</a></li>
+                            <li><a href="../classes/miruken.ioc.IoContainer.html">miruken.ioc.IoContainer</a></li>
+                            <li><a href="../classes/miruken.ioc.KeyBuilder.html">miruken.ioc.KeyBuilder</a></li>
+                            <li><a href="../classes/miruken.ioc.Lifestyle.html">miruken.ioc.Lifestyle</a></li>
+                            <li><a href="../classes/miruken.ioc.Registration.html">miruken.ioc.Registration</a></li>
+                            <li><a href="../classes/miruken.ioc.SingletonLifestyle.html">miruken.ioc.SingletonLifestyle</a></li>
+                            <li><a href="../classes/miruken.ioc.TransientLifestyle.html">miruken.ioc.TransientLifestyle</a></li>
+                            <li><a href="../classes/miruken.MetaBase.html">miruken.MetaBase</a></li>
+                            <li><a href="../classes/miruken.MetaMacro.html">miruken.MetaMacro</a></li>
+                            <li><a href="../classes/miruken.MetaStep.html">miruken.MetaStep</a></li>
+                            <li><a href="../classes/miruken.Miruken.html">miruken.Miruken</a></li>
+                            <li><a href="../classes/miruken.Modifier.html">miruken.Modifier</a></li>
+                            <li><a href="../classes/miruken.mvc.Controller.html">miruken.mvc.Controller</a></li>
+                            <li><a href="../classes/miruken.mvc.MasterDetail.html">miruken.mvc.MasterDetail</a></li>
+                            <li><a href="../classes/miruken.mvc.MasterDetailAware.html">miruken.mvc.MasterDetailAware</a></li>
+                            <li><a href="../classes/miruken.mvc.Model.html">miruken.mvc.Model</a></li>
+                            <li><a href="../classes/miruken.ng.Directive.html">miruken.ng.Directive</a></li>
+                            <li><a href="../classes/miruken.ng.Runner.html">miruken.ng.Runner</a></li>
+                            <li><a href="../classes/miruken.ng.UseModelValidation.html">miruken.ng.UseModelValidation</a></li>
+                            <li><a href="../classes/miruken.ObjectDelegate.html">miruken.ObjectDelegate</a></li>
+                            <li><a href="../classes/miruken.Parenting.html">miruken.Parenting</a></li>
+                            <li><a href="../classes/miruken.Protocol.html">miruken.Protocol</a></li>
+                            <li><a href="../classes/miruken.ProxyBuilder.html">miruken.ProxyBuilder</a></li>
+                            <li><a href="../classes/miruken.Starting.html">miruken.Starting</a></li>
+                            <li><a href="../classes/miruken.Startup.html">miruken.Startup</a></li>
+                            <li><a href="../classes/miruken.StrictProtocol.html">miruken.StrictProtocol</a></li>
+                            <li><a href="../classes/miruken.validate.$.html">miruken.validate.$</a></li>
+                            <li><a href="../classes/miruken.validate.$registerValidators.html">miruken.validate.$registerValidators</a></li>
+                            <li><a href="../classes/miruken.validate.$validateThat.html">miruken.validate.$validateThat</a></li>
+                            <li><a href="../classes/miruken.validate.ValidateJsCallbackHandler.html">miruken.validate.ValidateJsCallbackHandler</a></li>
+                            <li><a href="../classes/miruken.validate.Validating.html">miruken.validate.Validating</a></li>
+                            <li><a href="../classes/miruken.validate.Validation.html">miruken.validate.Validation</a></li>
+                            <li><a href="../classes/miruken.validate.ValidationCallbackHandler.html">miruken.validate.ValidationCallbackHandler</a></li>
+                            <li><a href="../classes/miruken.validate.ValidationRegistry.html">miruken.validate.ValidationRegistry</a></li>
+                            <li><a href="../classes/miruken.validate.ValidationResult.html">miruken.validate.ValidationResult</a></li>
+                            <li><a href="../classes/miruken.validate.Validator.html">miruken.validate.Validator</a></li>
+                            <li><a href="../classes/miruken.Variance.html">miruken.Variance</a></li>
+                        </ul>
+            
+                        <ul id="api-modules" class="apis modules">
+                            <li><a href="../modules/callback.html">callback</a></li>
+                            <li><a href="../modules/context.html">context</a></li>
+                            <li><a href="../modules/error.html">error</a></li>
+                            <li><a href="../modules/graph.html">graph</a></li>
+                            <li><a href="../modules/ioc.html">ioc</a></li>
+                            <li><a href="../modules/miruken.html">miruken</a></li>
+                            <li><a href="../modules/mvc.html">mvc</a></li>
+                            <li><a href="../modules/validate.html">validate</a></li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="yui3-u-3-4">
+            <div id="api-options">
+                Show:
+                <label for="api-show-inherited">
+                    <input type="checkbox" id="api-show-inherited" checked>
+                    Inherited
+                </label>
+        
+                <label for="api-show-protected">
+                    <input type="checkbox" id="api-show-protected">
+                    Protected
+                </label>
+        
+                <label for="api-show-private">
+                    <input type="checkbox" id="api-show-private">
+                    Private
+                </label>
+                <label for="api-show-deprecated">
+                    <input type="checkbox" id="api-show-deprecated">
+                    Deprecated
+                </label>
+        
+            </div>
+        
+        <div class="apidocs">
+            <div id="docs-main">
+                <div class="content">
+                    <h1 class="file-heading">File: lib\ioc\ioc.js</h1>
+                    
+                    <div class="file">
+                        <pre class="code prettyprint linenums">
+                    var miruken = require(&#x27;../miruken.js&#x27;),
+                        Promise = require(&#x27;bluebird&#x27;);
+                                  require(&#x27;../callback.js&#x27;),
+                                  require(&#x27;../context.js&#x27;),
+                                  require(&#x27;../validate&#x27;);
+                    
+                    new function () { // closure
+                    
+                        /**
+                         * Package providing Inversion-of-Control capabilities.&lt;br/&gt;
+                         * Requires the {{#crossLinkModule &quot;miruken&quot;}}{{/crossLinkModule}},
+                         * {{#crossLinkModule &quot;callback&quot;}}{{/crossLinkModule}},
+                         * {{#crossLinkModule &quot;context&quot;}}{{/crossLinkModule}} and 
+                         * {{#crossLinkModule &quot;validate&quot;}}{{/crossLinkModule}} modules.
+                         * @module miruken
+                         * @submodule ioc
+                         * @namespace miruken.ioc
+                         * @Class $
+                         */        
+                        var ioc = new base2.Package(this, {
+                            name:    &quot;ioc&quot;,
+                            version: miruken.version,
+                            parent:  miruken,
+                            imports: &quot;miruken,miruken.graph,miruken.callback,miruken.context,miruken.validate&quot;,
+                            exports: &quot;Container,Registration,ComponentPolicy,Lifestyle,TransientLifestyle,SingletonLifestyle,ContextualLifestyle,DependencyModifiers,DependencyModel,DependencyManager,DependencyInspector,ComponentModel,ComponentBuilder,ComponentModelError,IoContainer,DependencyResolution,DependencyResolutionError,$component,$$composer,$container&quot;
+                        });
+                    
+                        eval(this.imports);
+                    
+                        /**
+                         * Symbol for injecting composer dependency.&lt;br/&gt;
+                         * See {{#crossLink &quot;miruken.callback.CallbackHandler&quot;}}{{/crossLink}}
+                         * @property {Object} $$composer
+                         * @for miruken.ioc.$
+                         */    
+                        var $$composer = {};
+                        
+                        /**
+                         * Modifier to request container dependency.&lt;br/&gt;
+                         * See {{#crossLink &quot;miruken.ioc.Container&quot;}}{{/crossLink}}
+                         * @class $container
+                         * @extend miruken.Modifier
+                         */            
+                        var $container = $createModifier();
+                        
+                        /**
+                         * Shared proxy builder
+                         * @property {miruken.ProxyBuilder} proxyBuilder
+                         * @for miruken.ioc.$
+                         */            
+                        var $proxyBuilder = new ProxyBuilder;
+                    
+                        /**
+                         * Protocol for exposing container capabilities.
+                         * @class Container
+                         * @extends miruken.StrictProtocol
+                         * @uses miruken.Invoking
+                         * @uses miruken.Disposing
+                         */            
+                        var Container = StrictProtocol.extend(Invoking, Disposing, {
+                            /**
+                             * Registers on or more components in the container.
+                             * @method register
+                             * @param   {Arguments}  [...registrations]  -  registrations
+                             * @return {Function} function to unregister components.
+                             */
+                            register: function (/*registrations*/) {},
+                            /**
+                             * Adds a configured component to the container with policies.
+                             * @method addComponent
+                             * @param   {miruken.ioc.ComponentModel} componentModel  -  component model
+                             * @param   {Array}                      [...policies]   -  component policies
+                             * @return {Function} function to remove component.
+                             */
+                            addComponent: function (componentModel, policies) {},
+                            /**
+                             * Resolves the component for the key.
+                             * @method resolve
+                             * @param   {Any}  key  -  key used to identify the component
+                             * @returns {Object | Promise}  component satisfying the key.
+                             * @async
+                             */
+                            resolve: function (key) {},
+                            /**
+                             * Resolves all the components for the key.
+                             * @method resolveAll
+                             * @param   {Any}  key  -  key used to identify the component
+                             * @returns {Array} components or promises satisfying the key.
+                             * @async
+                             */
+                            resolveAll: function (key) {}
+                        });
+                    
+                        /**
+                         * Protocol for registering components in a {{#crossLink &quot;miruken.ioc.Container&quot;}}{{/crossLink}}.
+                         * @class Registration
+                         * @extends miruken.Protocol
+                         */                
+                        var Registration = Protocol.extend({
+                            /**
+                             * Encapsulates the regisration of one or more components in a container.
+                             * @method register
+                             * @param {miruken.ioc.Container}            container  -  container to register components
+                             * @param {miruken.callback.CallbackHandler} composer   -  composition handler
+                             * @return {Function} function to unregister components.
+                             */
+                             register: function (container, composer) {}
+                        });
+                    
+                         /**
+                         * Protocol for applying policies to a {{#crossLink &quot;miruken.ioc.ComponentModel&quot;}}{{/crossLink}}
+                         * @class ComponentPolicy
+                         * @extends miruken.Protocol
+                         */                
+                        var ComponentPolicy = Protocol.extend({
+                            /**
+                             * Applies the policy to the component model.
+                             * @method apply
+                             * @param {miruken.ioc.ComponentModel} componentModel  -  component model
+                             */
+                             apply: function (componentModel) {}
+                        });
+                    
+                        /**
+                         * DependencyModifiers flags enum
+                         * @class DependencyModifiers
+                         * @extends miruken.Enum
+                         */    
+                        var DependencyModifiers = Enum({
+                            /**
+                             * No dependency modifiers.
+                             * @property {number} None
+                             */
+                            None: 0,
+                            /**
+                             * See {{#crossLink &quot;miruken.Modifier/$use:attribute&quot;}}{{/crossLink}}
+                             * @property {number} Use
+                             */
+                            Use: 1 &lt;&lt; 0,
+                            /**
+                             * See {{#crossLink &quot;miruken.Modifier/$lazy:attribute&quot;}}{{/crossLink}}
+                             * @property {number} Lazy
+                             */
+                            Lazy: 1 &lt;&lt; 1,
+                            /**
+                             * See {{#crossLink &quot;miruken.Modifier/$every:attribute&quot;}}{{/crossLink}}
+                             * @property {number} Every
+                             */
+                            Every: 1 &lt;&lt; 2,
+                            /**
+                             * See {{#crossLink &quot;miruken.Modifier/$eval:attribute&quot;}}{{/crossLink}}
+                             * @property {number} Dynamic
+                             */
+                            Dynamic:    1 &lt;&lt; 3,
+                            /**
+                             * See {{#crossLink &quot;miruken.Modifier/$optional:attribute&quot;}}{{/crossLink}}
+                             * @property {number} Optional
+                             */
+                            Optional: 1 &lt;&lt; 4,
+                            /**
+                             * See {{#crossLink &quot;miruken.Modifier/$promise:attribute&quot;}}{{/crossLink}}
+                             * @property {number} Promise
+                             */
+                            Promise: 1 &lt;&lt; 5,
+                            /**
+                             * See {{#crossLink &quot;miruken.Modifier/$eq:attribute&quot;}}{{/crossLink}}
+                             * @property {number} Invariant
+                             */
+                            Invariant: 1 &lt;&lt; 6,
+                            /**
+                             * See {{#crossLink &quot;miruken.ioc.$container&quot;}}{{/crossLink}}
+                             * @property {number} Container
+                             */
+                            Container: 1 &lt;&lt; 7,
+                            /**
+                             * See {{#crossLink &quot;miruken.Modifier/$child:attribute&quot;}}{{/crossLink}}
+                             * @property {number} Child
+                             */        
+                            Child: 1 &lt;&lt; 8
+                            });
+                    
+                        /**
+                         * Describes a component dependency.
+                         * @class DependencyModel
+                         * @constructor
+                         * @param {Any} dependency  -  annotated dependency
+                         * @param {miruken.ioc.DependencyModifiers} modifiers  -  dependency annotations
+                         * @extends Base
+                         */
+                        var DependencyModel = Base.extend({
+                            constructor: function _(dependency, modifiers) {
+                                modifiers = modifiers || DependencyModifiers.None;
+                                if (dependency instanceof Modifier) {
+                                    if ($use.test(dependency)) {
+                                        modifiers = modifiers | DependencyModifiers.Use;
+                                    }
+                                    if ($lazy.test(dependency)) {
+                                        modifiers = modifiers | DependencyModifiers.Lazy;
+                                    }
+                                    if ($every.test(dependency)) {
+                                        modifiers = modifiers | DependencyModifiers.Every;
+                                    }
+                                    if ($eval.test(dependency)) {
+                                        modifiers = modifiers | DependencyModifiers.Dynamic;
+                                    }
+                                    if ($child.test(dependency)) {
+                                        modifiers = modifiers | DependencyModifiers.Child;
+                                    }
+                                    if ($optional.test(dependency)) {
+                                        modifiers = modifiers | DependencyModifiers.Optional;
+                                    }
+                                    if ($promise.test(dependency)) {
+                                        modifiers = modifiers | DependencyModifiers.Promise;
+                                    }
+                                    if ($container.test(dependency)) {
+                                        modifiers = modifiers | DependencyModifiers.Container;
+                                    }
+                                    if ($eq.test(dependency)) {
+                                        modifiers = modifiers | DependencyModifiers.Invariant;
+                                    }
+                                    dependency = Modifier.unwrap(dependency);
+                                }
+                                var spec = _.spec || (_.spec = {});
+                                spec.value = dependency;
+                                /**
+                                 * Gets the dependency.
+                                 * @property {Any} dependency
+                                 * @readOnly
+                                 */            
+                                Object.defineProperty(this, &#x27;dependency&#x27;, spec);
+                                spec.value = modifiers;
+                                /**
+                                 * Gets the dependency flags.
+                                 * @property {miruken.ioc.DependencyModifiers} modifiers
+                                 * @readOnly
+                                 */                        
+                                Object.defineProperty(this, &#x27;modifiers&#x27;, spec);
+                                delete spec.value;
+                            },
+                            /**
+                             * Tests if the receiving dependency is annotated with the modifier.
+                             * @method test
+                             * @param   {miruken.ioc.DependencyModifiers}  modifier  -  modifier flags
+                             * @returns {boolean} true if the dependency is annotated with modifier(s).
+                             */        
+                            test: function (modifier) {
+                                return (this.modifiers &amp; modifier) === modifier;
+                            }
+                        }, {
+                            coerce: function (object) {
+                               return (object === undefined) ? undefined : new DependencyModel(object);
+                            }
+                        });
+                    
+                        /**
+                         * Manages an array of dependencies.
+                         * @class DependencyManager
+                         * @constructor
+                         * @param {Array} dependencies  -  dependencies
+                         * @extends miruken.ArrayManager
+                         */
+                        var DependencyManager = ArrayManager.extend({
+                            constructor: function (dependencies) {
+                                this.base(dependencies);
+                            },
+                            mapItem: function (item) {
+                                return !(item !== undefined &amp;&amp; item instanceof DependencyModel) 
+                                     ? DependencyModel(item) 
+                                     : item;
+                            }                         
+                        });
+                    
+                        /**
+                         * Extracts dependencies from a component model.
+                         * @class DependencyInspector
+                         * @extends Base
+                         */
+                        var DependencyInspector = Base.extend({
+                            /**
+                             * Inspects the component model for dependencies.
+                             * @method inspect
+                             * @param   {miruken.ioc.ComponentModel} componentModel  -  component model
+                             * @param   {Array}                      [...policies]   -  component policies
+                             */
+                            inspect: function (componentModel, policies) {
+                                // Dependencies will be merged from inject definitions
+                                // starting from most derived unitl no more remain or the
+                                // current definition is fully specified (no undefined).
+                                var dependencies = componentModel.getDependencies();
+                                if (dependencies &amp;&amp; !Array2.contains(dependencies, undefined)) {
+                                    return;
+                                }
+                                var clazz = componentModel.class;
+                                componentModel.manageDependencies(function (manager) {
+                                    while (clazz &amp;&amp; (clazz !== Base)) {
+                                        var injects = [clazz.prototype.$inject, clazz.prototype.inject,
+                                                       clazz.$inject, clazz.inject];
+                                        for (var i = 0; i &lt; injects.length; ++i) {
+                                            var inject = injects[i];
+                                            if (inject !== undefined) {
+                                                if ($isFunction(inject)) {
+                                                    inject = inject();
+                                                }
+                                                manager.merge(inject);
+                                                if (!Array2.contains(inject, undefined)) {
+                                                    return;
+                                                }
+                                            }
+                                        }
+                                        clazz = $ancestorOf(clazz);
+                                    }
+                                });
+                            }
+                        });
+                    
+                        /**
+                         * Describes a component to be managed by a {{#crossLink &quot;miruken.ioc.Container&quot;}}{{/crossLink}}.
+                         * @class ComponentModel
+                         * @constructor
+                         * @extends Base
+                         */
+                        var ComponentModel = Base.extend(
+                            $inferProperties, $validateThat, {
+                            constructor: function () {
+                                var _key, _class, _lifestyle, _factory,
+                                    _invariant = false, _burden = {};
+                                this.extend({
+                                    /**
+                                     * Gets/sets the component key.
+                                     * @property {Any} key
+                                     */
+                                    getKey: function () {
+                                        return _key || _class
+                                    },
+                                    setKey: function (value) { _key = value; },
+                                    /**
+                                     * Gets/sets the component class.
+                                     * @property {Functon} class
+                                     */
+                                    getClass: function () {
+                                        var clazz = _class;
+                                        if (!clazz &amp;&amp; $isClass(_key)) {
+                                            clazz = _key;
+                                        }
+                                        return clazz;
+                                    },
+                                    setClass: function (value) {
+                                        if ($isSomething(value) &amp;&amp; !$isClass(value)) {
+                                            throw new TypeError(format(&quot;%1 is not a class.&quot;, value));
+                                        }
+                                        _class = value;
+                                    },
+                                    /**
+                                     * true if component is invariant, false otherwise.
+                                     * @property {boolean} invariant
+                                     */                                                
+                                    isInvariant: function () {
+                                        return _invariant;
+                                    },
+                                    setInvariant: function (value) { _invariant = !!value; },
+                                    /**
+                                     * Gets/sets the component lifestyle.
+                                     * @property {miruken.ioc.Lifestyle} lifestyle
+                                     */
+                                    getLifestyle: function () { return _lifestyle; },
+                                    setLifestyle: function (value) {
+                                        if (!$isSomething(value) &amp;&amp; !(value instanceof Lifestyle)) {
+                                            throw new TypeError(format(&quot;%1 is not a Lifestyle.&quot;, value));
+                                        }
+                                        _lifestyle = value; 
+                                    },
+                                    /**
+                                     * Gets/sets the component factory.
+                                     * @property {Function} factory
+                                     */
+                                    getFactory: function () {
+                                        var factory = _factory,
+                                            clazz   = this.class;
+                                        if (!factory) {
+                                            var interceptors = _burden[Facet.Interceptors];
+                                            if (interceptors &amp;&amp; interceptors.length &gt; 0) {
+                                                var types = [];
+                                                if (clazz) {
+                                                    types.push(clazz);
+                                                }
+                                                if ($isProtocol(_key)) {
+                                                    types.push(_key);
+                                                }
+                                                return _makeProxyFactory(types);
+                                            } else if (clazz) {
+                                                return _makeClassFactory(clazz);
+                                            }
+                                        }
+                                        return factory;
+                                    },
+                                    setFactory: function (value) {
+                                        if ($isSomething(value) &amp;&amp; !$isFunction(value)) {
+                                            throw new TypeError(format(&quot;%1 is not a function.&quot;, value));
+                                        }
+                                        _factory = value;
+                                    },
+                                    /**
+                                     * Gets the component dependency group.
+                                     * @method getDependencies
+                                     * @param   {string} [key=Facet.Parameters]  -  dependency group  
+                                     * @returns {Array}  group dependencies.
+                                     */                
+                                    getDependencies: function (key) { 
+                                        return _burden[key || Facet.Parameters];
+                                    },
+                                    /**
+                                     * Sets the component dependency group.
+                                     * @method setDependencies
+                                     * @param {string} [key=Facet.Parameters]  -  dependency group  
+                                     * @param {Array}  value                   -  group dependenies.
+                                     */                
+                                    setDependencies: function (key, value) {
+                                        if (arguments.length === 1) {
+                                            value = key, key = Facet.Parameters;
+                                        }
+                                        if ($isSomething(value) &amp;&amp; !(value instanceof Array)) {
+                                            throw new TypeError(format(&quot;%1 is not an array.&quot;, value));
+                                        }
+                                        _burden[key] = Array2.map(value, DependencyModel);
+                                    },
+                                    /**
+                                     * Manages the component dependency group.
+                                     * @method manageDependencies
+                                     * @param  {string}   [key=Facet.Parameters]  -  dependency group  
+                                     * @param  {Function} actions  -  function accepting miruken.ioc.DependencyManager
+                                     * @return {Array} dependency group.
+                                     */                                
+                                    manageDependencies: function (key, actions) {
+                                        if (arguments.length === 1) {
+                                            actions = key, key = Facet.Parameters;
+                                        }
+                                        if ($isFunction(actions)) {
+                                            var dependencies = _burden[key],
+                                                manager      = new DependencyManager(dependencies);
+                                            actions(manager);
+                                            var dependencies = manager.getItems();
+                                            if (dependencies.length &gt; 0) {
+                                                _burden[key] = dependencies;
+                                            }
+                                        }
+                                        return dependencies;
+                                    },
+                                    /**
+                                     * Gets the component dependency burden.
+                                     * @property {Object} burden
+                                     */                                
+                                    getBurden: function () { return _burden; }
+                                });
+                            },
+                            $validateThat: {
+                                keyCanBeDetermined: function (validation) {
+                                    if (!this.key) {
+                                        validation.results.addKey(&#x27;key&#x27;).addError(&#x27;required&#x27;, { 
+                                            message: &#x27;Key could not be determined for component.&#x27; 
+                                        });
+                                    }
+                                },
+                                factoryCanBeDetermined: function (validation) {
+                                    if (!this.factory) {
+                                        validation.results.addKey(&#x27;factory&#x27;).addError(&#x27;required&#x27;, { 
+                                            message: &#x27;Factory could not be determined for component.&#x27; 
+                                        });
+                                    }
+                                }
+                            }
+                        });
+                    
+                        function _makeClassFactory(clazz) {
+                            return function (burden) {
+                                return clazz.new.apply(clazz, burden[Facet.Parameters]);
+                            }
+                        }
+                    
+                        function _makeProxyFactory(types) {
+                            var proxy = $proxyBuilder.buildProxy(types);
+                            return function (burden) {
+                                return proxy.new.call(proxy, burden);
+                            }
+                        }
+                    
+                        /**
+                         * Manages the creation and destruction of components.
+                         * @class Lifestyle
+                         * @extends Base
+                         * @uses miruken.ioc.ComponentPolicy
+                         * @uses miruken.DisposingMixin
+                         * @uses miruken.Disposing
+                         */
+                        var Lifestyle = Base.extend(ComponentPolicy, Disposing, DisposingMixin, {
+                            /**
+                             * Obtains the component instance.
+                             * @method resolve
+                             * @returns {Object} component instance.
+                             */
+                            resolve: function (factory) { return factory(); },
+                            /**
+                             * Tracks the component instance for disposal.
+                             * @method trackInstance
+                             * @param {Object} instance  -  component instance.
+                             */        
+                            trackInstance: function (instance) {
+                                if (instance &amp;&amp; $isFunction(instance.dispose)) {
+                                    var _this = this;
+                                    instance.extend({
+                                        dispose: function (disposing) {
+                                            if (disposing || _this.disposeInstance(instance, true)) {
+                                                this.base();
+                                                this.dispose = this.base;
+                                            }
+                                        }
+                                    });
+                                }
+                            },
+                            /**
+                             * Disposes the component instance.
+                             * @method disposeInstance
+                             * @param {Object}  instance   -  component instance.
+                             * @param {boolean} disposing  -  true if being disposed.  
+                             */                
+                            disposeInstance: function (instance, disposing) {
+                                if (!disposing &amp;&amp; instance &amp;&amp; $isFunction(instance.dispose)) {
+                                    instance.dispose(true);
+                                }
+                                return !disposing;
+                            },
+                            apply: function (componentModel) {
+                                componentModel.setLifestyle(this);
+                            }
+                        });
+                    
+                       /**
+                         * Lifestyle for creating new untracked component instances.
+                         * @class TransientLifestyle
+                         * @extends miruken.ioc.Lifestyle
+                         */
+                        var TransientLifestyle = Lifestyle.extend();
+                    
+                       /**
+                         * Lifestyle for managing a single instance of a component.
+                         * @class SingletonLifestyle
+                         * @constructor
+                         * @param {Object} [instance]  -  existing component instance
+                         * @extends miruken.ioc.Lifestyle
+                         */
+                        var SingletonLifestyle = Lifestyle.extend({
+                            constructor: function (instance) {
+                                this.extend({
+                                    resolve: function (factory) {
+                                        if (!instance) {
+                                            var object = factory();
+                                            if ($isPromise(object)) {
+                                                var _this = this;
+                                                return Promise.resolve(object).then(function (object) {
+                                                    // Only cache fulfilled instances
+                                                    if (!instance &amp;&amp; object) {
+                                                        instance = object;
+                                                        _this.trackInstance(instance);
+                                                    }
+                                                    return instance;
+                                                });
+                                            } else if (object) {
+                                                instance = object;
+                                                this.trackInstance(instance)
+                                            }
+                                        }
+                                        return instance;
+                                    },
+                                    disposeInstance: function (obj, disposing) {
+                                        // Singletons cannot be disposed directly
+                                        if (!disposing &amp;&amp; (obj === instance)) {
+                                            if (this.base(obj, disposing)) {
+                                               instance = undefined;
+                                               return true;
+                                            }
+                                        }
+                                        return false;
+                                    },
+                                    _dispose: function() {
+                                        this.disposeInstance(instance);
+                                    }
+                                });
+                            }
+                        });
+                    
+                       /**
+                         * Lifestyle for managing instances scoped to a {{#crossLink &quot;miruken.context.Context&quot;}}{{/crossLink}}.
+                         * @class ContextualLifestyle
+                         * @constructor
+                         * @extends miruken.ioc.Lifestyle
+                         */
+                        var ContextualLifestyle = Lifestyle.extend({
+                            constructor: function () {
+                                var _cache = {};
+                                this.extend({
+                                    resolve: function (factory, composer) {
+                                        var context = composer.resolve(Context);
+                                        if (context) {
+                                            var id       = assignID(context),
+                                                instance = _cache[id];
+                                            if (!instance) {
+                                                var object = factory();
+                                                if ($isPromise(object)) {
+                                                    var _this = this;
+                                                    return Promise.resolve(object).then(function (object) {
+                                                        // Only cache fulfilled instances
+                                                        if (object &amp;&amp; !(instance = _cache[id])) {
+                                                            instance = object;
+                                                            _this._recordInstance(id, instance, context);
+                                                        }
+                                                        return instance;
+                                                    });
+                                                } else if (object) {
+                                                    instance = object;
+                                                    this._recordInstance(id, instance, context);
+                                                }
+                                            }
+                                            return instance;
+                                        }
+                                    },
+                                    _recordInstance: function (id, instance, context) {
+                                        var _this  = this;
+                                        _cache[id] = instance;
+                                        if (Contextual.adoptedBy(instance) || $isFunction(instance.setContext)) {
+                                            ContextualHelper.bindContext(instance, context);
+                                        }
+                                        this.trackInstance(instance);
+                                        var cancel = context.observe({
+                                            contextEnded: function () {
+                                                if ($isFunction(instance.setContext)) {
+                                                    instance.setContext(null);
+                                                }
+                                                _this.disposeInstance(instance);
+                                                delete _cache[id];
+                                                cancel();
+                                            }
+                                        });
+                                    },
+                                    disposeInstance: function (instance, disposing) {
+                                        if (!disposing) {  // Cannot be disposed directly
+                                            for (contextId in _cache) {
+                                                if (_cache[contextId] === instance) {
+                                                    this.base(instance, disposing);
+                                                    delete _cache[contextId];
+                                                    return true;
+                                                } 
+                                            }
+                                        }
+                                        return false;
+                                    },
+                                    _dispose: function() {
+                                        for (contextId in _cache) {
+                                            this.disposeInstance(_cache[contextId]);
+                                        }
+                                        _cache = {};
+                                    }
+                                });
+                            }
+                        });
+                    
+                        /**
+                         * Builds {{#crossLink &quot;miruken.ioc.ComponentModel&quot;}}{{/crossLink}} using fluent api.
+                         * @class ComponentBuilder
+                         * @constructor
+                         * @extends Base
+                         * @uses miruken.ioc.Registration
+                         */
+                        var ComponentBuilder = Base.extend(Registration, {
+                            constructor: function (key) {
+                                var _componentModel = new ComponentModel,
+                                    _newInContext, _newInChildContext,
+                                    _policies = [];
+                                _componentModel.setKey(key);
+                                this.extend({
+                                    /**
+                                     * Marks the component as invariant.
+                                     * @method invariant
+                                     * @return {miruken.ioc.ComponentBuilder} builder
+                                     * @chainable
+                                     */
+                                    invariant: function () {
+                                        _componentModel.setInvariant();
+                                        return this;
+                                    },
+                                    /**
+                                     * Specifies the component class.
+                                     * @method boundTo
+                                     * @param {Function} value  - component class
+                                     * @return {miruken.ioc.ComponentBuilder} builder
+                                     * @chainable
+                                     */                
+                                    boundTo: function (clazz) {
+                                        _componentModel.setClass(clazz);
+                                        return this;
+                                    },
+                                    /**
+                                     * Specifies component dependencies.
+                                     * @method dependsOn
+                                     * @param  {Argument} arguments  -  dependencies
+                                     * @return {miruken.ioc.ComponentBuilder} builder
+                                     * @chainable
+                                     */                                
+                                    dependsOn: function (/* dependencies */) {
+                                        var dependencies;
+                                        if (arguments.length === 1 &amp;&amp; (arguments[0] instanceof Array)) {
+                                            dependencies = arguments[0];
+                                        } else if (arguments.length &gt; 0) {
+                                            dependencies = Array.prototype.slice.call(arguments);
+                                        }
+                                        _componentModel.setDependencies(dependencies);
+                                        return this;
+                                    },
+                                    /**
+                                     * Specifies the component factory.
+                                     * @method usingFactory
+                                     * @param {Function} value  - component factory
+                                     * @return {miruken.ioc.ComponentBuilder} builder
+                                     * @chainable
+                                     */                                
+                                    usingFactory: function (factory) {
+                                        _componentModel.setFactory(factory);
+                                        return this;
+                                    },
+                                    /**
+                                     * Uses the supplied component instance.
+                                     * @method instance
+                                     * @param {Object} instance  - component instance
+                                     * @return {miruken.ioc.ComponentBuilder} builder
+                                     * @chainable
+                                     */                                                
+                                    instance: function (instance) {
+                                        _componentModel.setLifestyle(new SingletonLifestyle(instance));
+                                        return this;
+                                    },
+                                    /**
+                                     * Chooses the {{#crossLink &quot;miruken.ioc.SingletonLifestyle&quot;}}{{/crossLink}}.
+                                     * @method singleon
+                                     * @return {miruken.ioc.ComponentBuilder} builder
+                                     * @chainable
+                                     */
+                                    singleton: function () {
+                                        _componentModel.setLifestyle(new SingletonLifestyle);
+                                        return this;
+                                    },
+                                    /**
+                                     * Chooses the {{#crossLink &quot;miruken.ioc.TransientLifestyle&quot;}}{{/crossLink}}.
+                                     * @method transient
+                                     * @return {miruken.ioc.ComponentBuilder} builder
+                                     * @chainable
+                                     */                
+                                    transient: function () {
+                                        _componentModel.setLifestyle(new TransientLifestyle);
+                                        return this;
+                                    },
+                                    /**
+                                     * Chooses the {{#crossLink &quot;miruken.ioc.ContextualLifestyle&quot;}}{{/crossLink}}.
+                                     * @method contextual
+                                     * @return {miruken.ioc.ComponentBuilder} builder
+                                     * @chainable
+                                     */                                
+                                    contextual: function () {
+                                        _componentModel.setLifestyle(new ContextualLifestyle);
+                                        return this;
+                                    },
+                                    /**
+                                     * Binds the component to the current 
+                                     * {{#crossLink &quot;miruken.context.Context&quot;}}{{/crossLink}}.
+                                     * @method newInContext
+                                     * @return {miruken.ioc.ComponentBuilder} builder
+                                     * @chainable
+                                     */                                                
+                                    newInContext: function () {
+                                        _newInContext = true;
+                                        return this;
+                                    },
+                                    /**
+                                     * Binds the component to a child of the current 
+                                     * {{#crossLink &quot;miruken.context.Context&quot;}}{{/crossLink}}.
+                                     * @method newInContext
+                                     * @return {miruken.ioc.ComponentBuilder} builder
+                                     * @chainable
+                                     */                                                                
+                                    newInChildContext: function () {
+                                        _newInChildContext = true;
+                                        return this;
+                                    },
+                                    /**
+                                     * Attaches component interceptors.
+                                     * @method interceptors
+                                     * @param  {Argument} arguments  -  interceptors
+                                     * @return {miruken.ioc.ComponentBuilder} builder
+                                     * @chainable
+                                     */                                                
+                                    interceptors: function (/* interceptors */) {
+                                        var interceptors = (arguments.length === 1 
+                                                        &amp;&amp; (arguments[0] instanceof Array))
+                                                         ? arguments[0]
+                                                         : Array.prototype.slice.call(arguments);
+                                        return new InterceptorBuilder(this, _componentModel, interceptors);
+                                    },
+                                    /**
+                                     * Gets the {{#crossLink &quot;miruken.ioc.ComponentPolicy&quot;}}{{/crossLink}} of type policyClass.
+                                     * @method getPolicy
+                                     * @param   {Function}  policyClass  -  type of policy to get
+                                     * @returns {miruken.ioc.ComponentPolicy} policy of type PolicyClass
+                                     */            
+                                    getPolicy: function (policyClass) {
+                                        for (var i = 0; i &lt; _policies.length; ++i) {
+                                            var policy = _policies[i];
+                                            if (policy instanceof policyClass) {
+                                                return policy;
+                                            }
+                                        }
+                                    },
+                                    /**
+                                     * Attaches a {{#crossLink &quot;miruken.ioc.ComponentPolicy&quot;}}{{/crossLink}} to the model.
+                                     * @method addPolicy
+                                     * @param   {miruken.ioc.ComponentPolicy}  policy  -  policy
+                                     * @returns {boolean} true if policy was added, false if policy type already attached.
+                                     */            
+                                    addPolicy: function (policy) {
+                                        if (this.getPolicy($classOf(policy))) {
+                                            return false;
+                                        }
+                                        _policies.push(policy);
+                                        return true;
+                                    },
+                                    register: function (container) {
+                                        if ( _newInContext || _newInChildContext) {
+                                            var factory = _componentModel.getFactory();
+                                            _componentModel.setFactory(function (dependencies) {
+                                                var object  = factory(dependencies),
+                                                    context = this.resolve(Context);
+                                                if (_newInContext) {
+                                                    ContextualHelper.bindContext(object, context);
+                                                } else {
+                                                    ContextualHelper.bindChildContext(context, object);
+                                                }
+                                                return object;
+                                            });
+                                        }
+                                        return container.addComponent(_componentModel, _policies);
+                                    }
+                                });
+                            }
+                        });
+                    
+                        /**
+                         * Builds {{#crossLink &quot;miruken.ioc.ComponentModel&quot;}}{{/crossLink}} interceptors using fluent api.
+                         * @class InterceptorBuilder
+                         * @constructor
+                         * @param {miruken.ioc.ComponentBuilder}  component       -  component builder
+                         * @param {miruken.ioc.ComponentModel}    componentModel  -  component model
+                         * @param {Array}                         interceptors    -  component interceptors
+                         * @extends Base
+                         * @uses miruken.ioc.Registration
+                         */
+                        var InterceptorBuilder = Base.extend(Registration, {
+                            constructor: function (component, componentModel, interceptors) {
+                                this.extend({
+                                    selectWith: function (selectors) {
+                                        componentModel.manageDependencies(Facet.InterceptorSelectors, function (manager) {
+                                            Array2.forEach(selectors, function (selector) {
+                                                if (selector instanceof InterceptorSelector) {
+                                                    selecter = $use(selector);
+                                                }
+                                                manager.append(selector);
+                                            });
+                                        });
+                                        return this;
+                                    },
+                                    /**
+                                     * Marks interceptors to be added to the front of the list.
+                                     * @method toFront
+                                     * @returns {miruken.ioc.InterceptorBuilder} builder
+                                     * @chainable
+                                     */            
+                                    toFront: function () {
+                                        return this.atIndex(0);
+                                    },
+                                    /**
+                                     * Marks interceptors to be added at the supplied index.
+                                     * @method atIndex
+                                     * @param {number}  index  -  index to add interceptors at
+                                     * @returns {miruken.ioc.InterceptorBuilder} builder
+                                     * @chainable
+                                     */            
+                                    atIndex: function (index) {
+                                        componentModel.manageDependencies(Facet.Interceptors, function (manager) {
+                                            Array2.forEach(interceptors, function (interceptor) {
+                                                manager.insertIndex(index, interceptor);
+                                            });
+                                        });
+                                        return componentModel;
+                                    },
+                                    register: function(container, composer) {
+                                        componentModel.manageDependencies(Facet.Interceptors, function (manager) {
+                                            manager.append(interceptors);
+                                        });
+                                        return component.register(container, composer);
+                                    }
+                                });
+                            }
+                        });
+                    
+                        /**
+                         * Shortcut for creating a {{#crossLink &quot;miruken.ioc.ComponentBuilder&quot;}}{{/crossLink}}.
+                         * @method $component
+                         * @param   {Any} key - component key
+                         * @return  {miruken.ioc.ComponentBuilder} component builder.
+                         * @for miruken.ioc.$
+                         */    
+                        function $component(key) {
+                            return new ComponentBuilder(key);
+                        }
+                    
+                        /**
+                         * Specialized {{#crossLink &quot;miruken.callback.Resolution&quot;}}{{/crossLink}}
+                         * that maintains a parent relationship for representing resolution chains.
+                         * @class DependencyResolution
+                         * @constructor
+                         * @param   {string}                             key     -  resolution key
+                         * @param   {miruken.ioc.DependencyResolution}   parent  -  parent resolution
+                         * @param   {boolean}                            many    -  resolution cardinality
+                         * @extends miruken.callback.Resolution
+                         */
+                        var DependencyResolution = Resolution.extend({
+                            constructor: function (key, parent, many) {
+                                var _class, _handler;
+                                this.base(key, many);
+                                this.extend({
+                                    claim: function (handler, clazz) { 
+                                        if (this.isResolvingDependency(handler)) {
+                                            return false;
+                                        }
+                                        _handler = handler;
+                                        _class   = clazz;
+                                        return true;
+                                    },
+                                    /**
+                                     * Determines if the handler is in the process of resolving a dependency.
+                                     * @method isResolvingDependency
+                                     * @param   {Function}  handler  -  dependency handler
+                                     * @returns {boolean} true if resolving a dependency, false otherwise.
+                                     */                
+                                    isResolvingDependency: function (handler) {
+                                        return (handler === _handler)
+                                            || (parent &amp;&amp; parent.isResolvingDependency(handler))
+                                    },
+                                    /**
+                                     * Formats the dependency resolution chain for display.
+                                     * @method formattedDependencyChain
+                                     * @returns {string} formatted dependency resolution chain.
+                                     */                
+                                    formattedDependencyChain: function () {
+                                        var invariant  = $eq.test(key),
+                                            rawKey     = Modifier.unwrap(key),
+                                            keyDisplay = invariant ? (&#x27;&#x60;&#x27; + rawKey + &#x27;&#x60;&#x27;) : rawKey,
+                                            display    = _class ? (&quot;(&quot; + keyDisplay + &quot; &lt;- &quot; + _class + &quot;)&quot;) : keyDisplay;
+                                        return parent 
+                                             ? (display + &quot; &lt;= &quot; + parent.formattedDependencyChain())
+                                             : display;
+                                    }
+                                });
+                            }
+                        });
+                    
+                        /**
+                         * Records a dependency resolution failure.
+                         * @class DependencyResolutionError
+                         * @constructor
+                         * @param {miruken.ioc.DependencyResolution} dependency  -  failing dependency
+                         * @param {string}                           message     -  error message
+                         * @extends Error
+                         */
+                        function DependencyResolutionError(dependency, message) {
+                            this.message    = message;
+                            this.dependency = dependency;
+                            this.stack      = (new Error).stack;
+                        }
+                        /**
+                         * Failing dependency resolution.
+                         * @property {miruken.ioc.DependencyResolution} dependency
+                         */
+                        DependencyResolutionError.prototype             = new Error;
+                        DependencyResolutionError.prototype.constructor = DependencyResolutionError;
+                    
+                        /**
+                         * Identifies an invalid {{#crossLink &quot;miruken.ioc.ComponentModel&quot;}}{{/crossLink}}.
+                         * @class ComponentModelError
+                         * @param {miruken.ioc.ComponentModel}        componentModel  -  invalid component model
+                         * @param {miruken.validate.ValidationResult} validation      -  validation failures
+                         * @param {string}                            message         -  error message
+                         * @extends Error
+                         */
+                        function ComponentModelError(componentModel, validation, message) {
+                            this.message        = message || &quot;The component model contains one or more errors&quot;;
+                            this.componentModel = componentModel;
+                            this.validation     = validation;
+                            this.stack          = (new Error).stack;
+                        }
+                        /**
+                         * Invalid component model.
+                         * @property {miruken.ioc.ComponentModel} componentModel
+                         */    
+                        ComponentModelError.prototype             = new Error;
+                        ComponentModelError.prototype.constructor = ComponentModelError;
+                    
+                        /**
+                         * Default Inversion of Control {{#crossLink &quot;miruken.ioc.Container&quot;}}{{/crossLink}}.
+                         * @class IoContainer
+                         * @constructor
+                         * @extends CallbackHandler
+                         * @uses miruken.ioc.Container
+                         */
+                        var IoContainer = CallbackHandler.extend(Container, {
+                            constructor: function () {
+                                var _inspectors = [new DependencyInspector];
+                                this.extend({
+                                    addComponent: function (componentModel, policies) {
+                                        policies  = policies || [];
+                                        for (var i = 0; i &lt; _inspectors.length; ++i) {
+                                            _inspectors[i].inspect(componentModel, policies);
+                                        }
+                                        for (var i = 0; i &lt; policies.length; ++i) {
+                                            var policy = policies[i];
+                                            if ($isFunction(policy.apply)) {
+                                                policy.apply(componentModel);
+                                            }
+                                        }
+                                        var validation = Validator($composer).validate(componentModel);
+                                        if (!validation.isValid()) {
+                                            throw new ComponentModelError(componentModel, validation);
+                                        }
+                                        return this.registerHandler(componentModel); 
+                                    },
+                                    /**
+                                     * Adds a component inspector to the container.
+                                     * @method addInspector
+                                     * @param  {Object}  inspector  -  any object with an &#x27;inspect&#x27; method that
+                                     * accepts a {{#crossLink &quot;miruken.ioc.ComponentModel&quot;}}{{/crossLink}} and
+                                     * array of {{#crossLink &quot;miruken.ioc.ComponentPolicy&quot;}}{{/crossLink}}
+                                     */
+                                    addInspector: function (inspector) {
+                                        if (!$isFunction(inspector.inspect)) {
+                                            throw new TypeError(&quot;Inspectors must have an inspect method.&quot;);
+                                        }
+                                        _inspectors.push(inspector);
+                                    },
+                                    /**
+                                     * Removes a previously added component inspector from the container.
+                                     * @method removeInspector
+                                     * @param  {Object}  inspector  -  component inspector
+                                     */                
+                                    removeInspector: function (inspector) {
+                                        Array2.remove(_inspectors, inspector);
+                                    }
+                                })
+                            },
+                            register: function (/*registrations*/) {
+                                return Array2.flatten(arguments).map(function (registration) {
+                                    return registration.register(this, $composer);
+                                }.bind(this));
+                            },
+                            registerHandler: function (componentModel) {
+                                var key       = componentModel.key,
+                                    clazz     = componentModel.class,
+                                    lifestyle = componentModel.lifestyle || new SingletonLifestyle,
+                                    factory   = componentModel.factory,
+                                    burden    = componentModel.burden;
+                                key = componentModel.isInvariant() ? $eq(key) : key;
+                                return _registerHandler(this, key, clazz, lifestyle, factory, burden); 
+                            },
+                            invoke: function (fn, dependencies, ctx) {
+                                var inject  = fn.$inject,
+                                    manager = new DependencyManager(dependencies);
+                                if (inject) {
+                                    if ($isFunction(inject)) {
+                                        inject = inject();
+                                    }
+                                    manager.merge(inject);
+                                }
+                                dependencies = manager.getItems();
+                                if (dependencies.length &gt; 0) {
+                                    var burden = { d:  dependencies };
+                                    deps = _resolveBurden(burden, true, null, $composer);
+                                    return fn.apply(ctx, deps.d);
+                                }
+                                return fn();
+                            },
+                            dispose: function () {
+                                $provide.removeAll(this);
+                            }
+                        });
+                    
+                        function _registerHandler(container, key, clazz, lifestyle, factory, burden) {
+                            return $provide(container, key, function handler(resolution, composer) {
+                                if (!(resolution instanceof DependencyResolution)) {
+                                    resolution = new DependencyResolution(resolution.key);
+                                }
+                                if (!resolution.claim(handler, clazz)) {  // cycle detected
+                                    return $NOT_HANDLED;
+                                }
+                                return lifestyle.resolve(function () {
+                                    var instant      = $instant.test(resolution.key),
+                                        dependencies = _resolveBurden(burden, instant, resolution, composer);
+                                    if ($isPromise(dependencies)) {
+                                        return dependencies.then(function (deps) {
+                                            return factory.call(composer, deps);
+                                        });
+                                    }
+                                    return factory.call(composer, dependencies);
+                                }, composer);
+                            }, lifestyle.dispose.bind(lifestyle));
+                        }
+                    
+                        function _resolveBurden(burden, instant, resolution, composer) {
+                            var promises     = [],
+                                dependencies = {},
+                                containerDep = Container(composer);
+                            for (var key in burden) {
+                                var group = burden[key];
+                                if ($isNothing(group)) {
+                                    continue;
+                                }
+                                var resolved = group.slice(0);
+                                for (var index = 0; index &lt; resolved.length; ++index) {
+                                    var dep = resolved[index];
+                                    if (dep === undefined) {
+                                        continue;
+                                    }
+                                    var use        = dep.test(DependencyModifiers.Use),
+                                        lazy       = dep.test(DependencyModifiers.Lazy),
+                                        promise    = dep.test(DependencyModifiers.Promise),
+                                        child      = dep.test(DependencyModifiers.Child),
+                                        dynamic    = dep.test(DependencyModifiers.Dynamic),
+                                        dependency = dep.dependency;
+                                    if (use || dynamic || $isNothing(dependency)) {
+                                        if (dynamic &amp;&amp; $isFunction(dependency)) {
+                                            dependency = dependency(containerDep);
+                                        }
+                                        if (child) {
+                                            dependency = _createChild(dependency);
+                                        }
+                                        if (promise) {
+                                            dependency = Promise.resolve(dependency);
+                                        }
+                                    } else if (dependency === $$composer) {
+                                        dependency = composer;
+                                    } else if (dependency === Container) {
+                                        dependency = containerDep;
+                                    } else {
+                                        var all           = dep.test(DependencyModifiers.Every),
+                                            optional      = dep.test(DependencyModifiers.Optional),
+                                            invariant     = dep.test(DependencyModifiers.Invariant),
+                                            fromContainer = dep.test(DependencyModifiers.Container);
+                                        if (invariant) {
+                                            dependency = $eq(dependency);
+                                        }
+                                        if (instant) {
+                                            dependency = $instant(dependency);
+                                        }
+                                        if (lazy) {
+                                            dependency = (function (paramDep, created, param) {
+                                                return function () {
+                                                    if (!created) {
+                                                        created = true;
+                                                        var container = fromContainer ? containerDep : composer;
+                                                        param = _resolveDependency(paramDep, false, promise, child, all, container);
+                                                    }
+                                                    return param;
+                                                };
+                                            })(dependency);
+                                        } else {
+                                            var paramDep  = new DependencyResolution(dependency, resolution, all),
+                                                container = fromContainer ? containerDep : composer;
+                                            dependency = _resolveDependency(paramDep, !optional, promise, child, all, container);
+                                            if (!promise &amp;&amp; $isPromise(dependency)) {
+                                                promises.push(dependency);
+                                                (function (paramPromise, paramSet, paramIndex) {
+                                                    paramPromise.then(function (param) {
+                                                        paramSet[paramIndex] = param;
+                                                    });
+                                                })(dependency, resolved, index);
+                                            }
+                                        }
+                                    }
+                                    resolved[index] = dependency;
+                                }
+                                dependencies[key] = resolved;
+                            }
+                            if (promises.length === 1) {
+                                return promises[0].return(dependencies);
+                            } else if (promises.length &gt; 1) {
+                                return Promise.all(promises).return(dependencies);
+                            }
+                            return dependencies;
+                        }
+                        
+                        function _resolveDependency(dependency, required, promise, child, all, composer) {
+                            var result = all ? composer.resolveAll(dependency) : composer.resolve(dependency);
+                            if (result === undefined) {
+                                if (required) {
+                                    var error = new DependencyResolutionError(dependency,
+                                           format(&quot;Dependency %1 could not be resolved.&quot;,
+                                                  dependency.formattedDependencyChain()));
+                                    if ($instant.test(dependency.key)) {
+                                        throw error;
+                                    }
+                                    return Promise.reject(error);
+                                }
+                                return result;
+                            } else if (child &amp;&amp; !all) {
+                                result = $isPromise(result) 
+                                     ? result.then(function (parent) { return _createChild(parent); })
+                                     : _createChild(result)
+                            }
+                            return promise ? Promise.resolve(result) : result;
+                        }
+                    
+                        function _createChild(parent) {
+                            if (!(parent &amp;&amp; $isFunction(parent.newChild))) {
+                                throw new Error(format(
+                                    &quot;Child dependency requested, but %1 is not a parent.&quot;, parent));
+                            }
+                            return parent.newChild();
+                        }
+                    
+                        if (typeof module !== &#x27;undefined&#x27; &amp;&amp; module.exports) {
+                            module.exports = exports = ioc;
+                        }
+                    
+                        eval(this.exports);
+                    
+                    }
+                    
+                        </pre>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>

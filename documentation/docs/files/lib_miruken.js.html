@@ -1,0 +1,2205 @@
+---
+layout: apidoc
+title:  "MirukenJS"
+date:   2015-06-01 00:00:00
+categories: apidocs
+yuiGridsUrl: http://yui.yahooapis.com/3.9.1/build/cssgrids/cssgrids-min.css
+yuiSeedUrl: http://yui.yahooapis.com/combo?3.9.1/build/yui/yui-min.js
+projectAssets: ../assets
+---
+<div id="hd" class="yui3-g header">
+    <div class="yui3-u-1-4 version">
+        <em>API Docs for: 0.1.0</em>
+    </div>
+</div>
+<div id="bd" class="yui3-g">
+
+    <div class="yui3-u-1-4">
+        <div id="docs-sidebar" class="sidebar apidocs">
+            <div id="api-list">
+                <h2 class="off-left">APIs</h2>
+                <div id="api-tabview" class="tabview">
+                    <ul class="tabs">
+                        <li><a href="#api-classes">Classes</a></li>
+                        <li><a href="#api-modules">Modules</a></li>
+                    </ul>
+            
+                    <div id="api-tabview-filter">
+                        <input type="search" id="api-filter" placeholder="Type to filter APIs">
+                    </div>
+            
+                    <div id="api-tabview-panel">
+                        <ul id="api-classes" class="apis classes">
+                            <li><a href="../classes/miruken.$.html">miruken.$</a></li>
+                            <li><a href="../classes/miruken.$inferProperties.html">miruken.$inferProperties</a></li>
+                            <li><a href="../classes/miruken.$inhertStatic.html">miruken.$inhertStatic</a></li>
+                            <li><a href="../classes/miruken.$properties.html">miruken.$properties</a></li>
+                            <li><a href="../classes/miruken.$proxyProtocol.html">miruken.$proxyProtocol</a></li>
+                            <li><a href="../classes/miruken.ArrayManager.html">miruken.ArrayManager</a></li>
+                            <li><a href="../classes/miruken.callback.$.html">miruken.callback.$</a></li>
+                            <li><a href="../classes/miruken.callback.$callbacks.html">miruken.callback.$callbacks</a></li>
+                            <li><a href="../classes/miruken.callback.AcceptingCallbackHandler.html">miruken.callback.AcceptingCallbackHandler</a></li>
+                            <li><a href="../classes/miruken.callback.CallbackHandler.html">miruken.callback.CallbackHandler</a></li>
+                            <li><a href="../classes/miruken.callback.CallbackHandlerAspect.html">miruken.callback.CallbackHandlerAspect</a></li>
+                            <li><a href="../classes/miruken.callback.CallbackHandlerDecorator.html">miruken.callback.CallbackHandlerDecorator</a></li>
+                            <li><a href="../classes/miruken.callback.CallbackHandlerFilter.html">miruken.callback.CallbackHandlerFilter</a></li>
+                            <li><a href="../classes/miruken.callback.CascadeCallbackHandler.html">miruken.callback.CascadeCallbackHandler</a></li>
+                            <li><a href="../classes/miruken.callback.CompositeCallbackHandler.html">miruken.callback.CompositeCallbackHandler</a></li>
+                            <li><a href="../classes/miruken.callback.ConditionalCallbackHandler.html">miruken.callback.ConditionalCallbackHandler</a></li>
+                            <li><a href="../classes/miruken.callback.Deferred.html">miruken.callback.Deferred</a></li>
+                            <li><a href="../classes/miruken.callback.HandleMethod.html">miruken.callback.HandleMethod</a></li>
+                            <li><a href="../classes/miruken.callback.InvocationDelegate.html">miruken.callback.InvocationDelegate</a></li>
+                            <li><a href="../classes/miruken.callback.InvocationOptions.html">miruken.callback.InvocationOptions</a></li>
+                            <li><a href="../classes/miruken.callback.InvocationOptionsHandler.html">miruken.callback.InvocationOptionsHandler</a></li>
+                            <li><a href="../classes/miruken.callback.InvocationSemantics.html">miruken.callback.InvocationSemantics</a></li>
+                            <li><a href="../classes/miruken.callback.Lookup.html">miruken.callback.Lookup</a></li>
+                            <li><a href="../classes/miruken.callback.MethodCallbackHandler.html">miruken.callback.MethodCallbackHandler</a></li>
+                            <li><a href="../classes/miruken.callback.ProvidingCallbackHandler.html">miruken.callback.ProvidingCallbackHandler</a></li>
+                            <li><a href="../classes/miruken.callback.Reentrant.html">miruken.callback.Reentrant</a></li>
+                            <li><a href="../classes/miruken.callback.ReentrantScope.html">miruken.callback.ReentrantScope</a></li>
+                            <li><a href="../classes/miruken.callback.RejectedError.html">miruken.callback.RejectedError</a></li>
+                            <li><a href="../classes/miruken.callback.Resolution.html">miruken.callback.Resolution</a></li>
+                            <li><a href="../classes/miruken.ClassMeta.html">miruken.ClassMeta</a></li>
+                            <li><a href="../classes/miruken.context.$contextual.html">miruken.context.$contextual</a></li>
+                            <li><a href="../classes/miruken.context.Context.html">miruken.context.Context</a></li>
+                            <li><a href="../classes/miruken.context.ContextObserver.html">miruken.context.ContextObserver</a></li>
+                            <li><a href="../classes/miruken.context.ContextState.html">miruken.context.ContextState</a></li>
+                            <li><a href="../classes/miruken.context.Contextual.html">miruken.context.Contextual</a></li>
+                            <li><a href="../classes/miruken.context.ContextualHelper.html">miruken.context.ContextualHelper</a></li>
+                            <li><a href="../classes/miruken.context.ContextualMixin.html">miruken.context.ContextualMixin</a></li>
+                            <li><a href="../classes/miruken.context.Function.html">miruken.context.Function</a></li>
+                            <li><a href="../classes/miruken.Delegate.html">miruken.Delegate</a></li>
+                            <li><a href="../classes/miruken.Disposing.html">miruken.Disposing</a></li>
+                            <li><a href="../classes/miruken.DisposingMixin.html">miruken.DisposingMixin</a></li>
+                            <li><a href="../classes/miruken.Enum.html">miruken.Enum</a></li>
+                            <li><a href="../classes/miruken.error.ErrorCallbackHandler.html">miruken.error.ErrorCallbackHandler</a></li>
+                            <li><a href="../classes/miruken.error.Errors.html">miruken.error.Errors</a></li>
+                            <li><a href="../classes/miruken.Facet.html">miruken.Facet</a></li>
+                            <li><a href="../classes/miruken.graph.Traversal.html">miruken.graph.Traversal</a></li>
+                            <li><a href="../classes/miruken.graph.Traversing.html">miruken.graph.Traversing</a></li>
+                            <li><a href="../classes/miruken.graph.TraversingAxis.html">miruken.graph.TraversingAxis</a></li>
+                            <li><a href="../classes/miruken.graph.TraversingMixin.html">miruken.graph.TraversingMixin</a></li>
+                            <li><a href="../classes/miruken.IndexedList.html">miruken.IndexedList</a></li>
+                            <li><a href="../classes/miruken.InstanceMeta.html">miruken.InstanceMeta</a></li>
+                            <li><a href="../classes/miruken.Interceptor.html">miruken.Interceptor</a></li>
+                            <li><a href="../classes/miruken.InterceptorSelector.html">miruken.InterceptorSelector</a></li>
+                            <li><a href="../classes/miruken.Invoking.html">miruken.Invoking</a></li>
+                            <li><a href="../classes/miruken.ioc.$.html">miruken.ioc.$</a></li>
+                            <li><a href="../classes/miruken.ioc.$container.html">miruken.ioc.$container</a></li>
+                            <li><a href="../classes/miruken.ioc.BasedOnBuilder.html">miruken.ioc.BasedOnBuilder</a></li>
+                            <li><a href="../classes/miruken.ioc.ComponentBuilder.html">miruken.ioc.ComponentBuilder</a></li>
+                            <li><a href="../classes/miruken.ioc.ComponentModel.html">miruken.ioc.ComponentModel</a></li>
+                            <li><a href="../classes/miruken.ioc.ComponentModelError.html">miruken.ioc.ComponentModelError</a></li>
+                            <li><a href="../classes/miruken.ioc.ComponentPolicy.html">miruken.ioc.ComponentPolicy</a></li>
+                            <li><a href="../classes/miruken.ioc.Container.html">miruken.ioc.Container</a></li>
+                            <li><a href="../classes/miruken.ioc.ContextualLifestyle.html">miruken.ioc.ContextualLifestyle</a></li>
+                            <li><a href="../classes/miruken.ioc.DependencyInspector.html">miruken.ioc.DependencyInspector</a></li>
+                            <li><a href="../classes/miruken.ioc.DependencyManager.html">miruken.ioc.DependencyManager</a></li>
+                            <li><a href="../classes/miruken.ioc.DependencyModel.html">miruken.ioc.DependencyModel</a></li>
+                            <li><a href="../classes/miruken.ioc.DependencyModifiers.html">miruken.ioc.DependencyModifiers</a></li>
+                            <li><a href="../classes/miruken.ioc.DependencyResolution.html">miruken.ioc.DependencyResolution</a></li>
+                            <li><a href="../classes/miruken.ioc.DependencyResolutionError.html">miruken.ioc.DependencyResolutionError</a></li>
+                            <li><a href="../classes/miruken.ioc.FromBuilder.html">miruken.ioc.FromBuilder</a></li>
+                            <li><a href="../classes/miruken.ioc.FromPackageBuilder.html">miruken.ioc.FromPackageBuilder</a></li>
+                            <li><a href="../classes/miruken.ioc.Installer.html">miruken.ioc.Installer</a></li>
+                            <li><a href="../classes/miruken.ioc.InterceptorBuilder.html">miruken.ioc.InterceptorBuilder</a></li>
+                            <li><a href="../classes/miruken.ioc.IoContainer.html">miruken.ioc.IoContainer</a></li>
+                            <li><a href="../classes/miruken.ioc.KeyBuilder.html">miruken.ioc.KeyBuilder</a></li>
+                            <li><a href="../classes/miruken.ioc.Lifestyle.html">miruken.ioc.Lifestyle</a></li>
+                            <li><a href="../classes/miruken.ioc.Registration.html">miruken.ioc.Registration</a></li>
+                            <li><a href="../classes/miruken.ioc.SingletonLifestyle.html">miruken.ioc.SingletonLifestyle</a></li>
+                            <li><a href="../classes/miruken.ioc.TransientLifestyle.html">miruken.ioc.TransientLifestyle</a></li>
+                            <li><a href="../classes/miruken.MetaBase.html">miruken.MetaBase</a></li>
+                            <li><a href="../classes/miruken.MetaMacro.html">miruken.MetaMacro</a></li>
+                            <li><a href="../classes/miruken.MetaStep.html">miruken.MetaStep</a></li>
+                            <li><a href="../classes/miruken.Miruken.html">miruken.Miruken</a></li>
+                            <li><a href="../classes/miruken.Modifier.html">miruken.Modifier</a></li>
+                            <li><a href="../classes/miruken.mvc.Controller.html">miruken.mvc.Controller</a></li>
+                            <li><a href="../classes/miruken.mvc.MasterDetail.html">miruken.mvc.MasterDetail</a></li>
+                            <li><a href="../classes/miruken.mvc.MasterDetailAware.html">miruken.mvc.MasterDetailAware</a></li>
+                            <li><a href="../classes/miruken.mvc.Model.html">miruken.mvc.Model</a></li>
+                            <li><a href="../classes/miruken.ng.Directive.html">miruken.ng.Directive</a></li>
+                            <li><a href="../classes/miruken.ng.Runner.html">miruken.ng.Runner</a></li>
+                            <li><a href="../classes/miruken.ng.UseModelValidation.html">miruken.ng.UseModelValidation</a></li>
+                            <li><a href="../classes/miruken.ObjectDelegate.html">miruken.ObjectDelegate</a></li>
+                            <li><a href="../classes/miruken.Parenting.html">miruken.Parenting</a></li>
+                            <li><a href="../classes/miruken.Protocol.html">miruken.Protocol</a></li>
+                            <li><a href="../classes/miruken.ProxyBuilder.html">miruken.ProxyBuilder</a></li>
+                            <li><a href="../classes/miruken.Starting.html">miruken.Starting</a></li>
+                            <li><a href="../classes/miruken.Startup.html">miruken.Startup</a></li>
+                            <li><a href="../classes/miruken.StrictProtocol.html">miruken.StrictProtocol</a></li>
+                            <li><a href="../classes/miruken.validate.$.html">miruken.validate.$</a></li>
+                            <li><a href="../classes/miruken.validate.$registerValidators.html">miruken.validate.$registerValidators</a></li>
+                            <li><a href="../classes/miruken.validate.$validateThat.html">miruken.validate.$validateThat</a></li>
+                            <li><a href="../classes/miruken.validate.ValidateJsCallbackHandler.html">miruken.validate.ValidateJsCallbackHandler</a></li>
+                            <li><a href="../classes/miruken.validate.Validating.html">miruken.validate.Validating</a></li>
+                            <li><a href="../classes/miruken.validate.Validation.html">miruken.validate.Validation</a></li>
+                            <li><a href="../classes/miruken.validate.ValidationCallbackHandler.html">miruken.validate.ValidationCallbackHandler</a></li>
+                            <li><a href="../classes/miruken.validate.ValidationRegistry.html">miruken.validate.ValidationRegistry</a></li>
+                            <li><a href="../classes/miruken.validate.ValidationResult.html">miruken.validate.ValidationResult</a></li>
+                            <li><a href="../classes/miruken.validate.Validator.html">miruken.validate.Validator</a></li>
+                            <li><a href="../classes/miruken.Variance.html">miruken.Variance</a></li>
+                        </ul>
+            
+                        <ul id="api-modules" class="apis modules">
+                            <li><a href="../modules/callback.html">callback</a></li>
+                            <li><a href="../modules/context.html">context</a></li>
+                            <li><a href="../modules/error.html">error</a></li>
+                            <li><a href="../modules/graph.html">graph</a></li>
+                            <li><a href="../modules/ioc.html">ioc</a></li>
+                            <li><a href="../modules/miruken.html">miruken</a></li>
+                            <li><a href="../modules/mvc.html">mvc</a></li>
+                            <li><a href="../modules/validate.html">validate</a></li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="yui3-u-3-4">
+            <div id="api-options">
+                Show:
+                <label for="api-show-inherited">
+                    <input type="checkbox" id="api-show-inherited" checked>
+                    Inherited
+                </label>
+        
+                <label for="api-show-protected">
+                    <input type="checkbox" id="api-show-protected">
+                    Protected
+                </label>
+        
+                <label for="api-show-private">
+                    <input type="checkbox" id="api-show-private">
+                    Private
+                </label>
+                <label for="api-show-deprecated">
+                    <input type="checkbox" id="api-show-deprecated">
+                    Deprecated
+                </label>
+        
+            </div>
+        
+        <div class="apidocs">
+            <div id="docs-main">
+                <div class="content">
+                    <h1 class="file-heading">File: lib\miruken.js</h1>
+                    
+                    <div class="file">
+                        <pre class="code prettyprint linenums">
+                    require(&#x27;./base2.js&#x27;);
+                    
+                    new function () { // closure
+                    
+                        /**
+                         * Package containing enhancements to the javascript language.
+                         * @module miruken
+                         * @namespace miruken
+                         * @main miruken
+                         * @class $
+                         */
+                        var miruken = new base2.Package(this, {
+                            name:    &quot;miruken&quot;,
+                            version: &quot;1.0&quot;,
+                            exports: &quot;Enum,Variance,Protocol,StrictProtocol,Delegate,Miruken,MetaStep,MetaMacro,Disposing,DisposingMixin,Invoking,Parenting,Starting,Startup,Facet,Interceptor,InterceptorSelector,ProxyBuilder,Modifier,ArrayManager,IndexedList,$isProtocol,$isClass,$classOf,$ancestorOf,$isString,$isFunction,$isObject,$isPromise,$isNothing,$isSomething,$using,$lift,$debounce,$eq,$use,$copy,$lazy,$eval,$every,$child,$optional,$promise,$instant,$createModifier,$properties,$inferProperties,$inheritStatic&quot;
+                        });
+                    
+                        eval(this.imports);
+                    
+                        var META = &#x27;$meta&#x27;;
+                    
+                        /**
+                         * Annotates invariance.
+                         * @attribute $eq
+                         * @for miruken.Modifier
+                         */
+                        var $eq = $createModifier();
+                        /**
+                         * Annotates use value as is.
+                         * @attribute $use
+                         * @for miruken.Modifier
+                         */    
+                        var $use = $createModifier();
+                        /**
+                         * Annotates copy semantics.
+                         * @attribute $copy
+                         * @for miruken.Modifier
+                         */        
+                        var $copy = $createModifier();
+                        /**
+                         * Annotates lazy semantics.
+                         * @attribute $lazy
+                         * @for miruken.Modifier
+                         */            
+                        var $lazy = $createModifier();
+                        /**
+                         * Annotates function to be evaluated.
+                         * @attribute $eval
+                         * @for miruken.Modifier
+                         */                
+                        var $eval = $createModifier();
+                        /**
+                         * Annotates zero or more semantics.
+                         * @attribute $every
+                         * @for miruken.Modifier
+                         */                    
+                        var $every = $createModifier();
+                        /**
+                         * Annotates 
+                         * @attribute use {{#crossLink &quot;miruken.Parenting&quot;}}{{/crossLink}} protocol.
+                         * @attribute $child
+                         * @for miruken.Modifier
+                         */                        
+                        var $child  = $createModifier();
+                        /**
+                         * Annotates optional semantics.
+                         * @attribute $optional
+                         * @for miruken.Modifier
+                         */                        
+                        var $optional = $createModifier();
+                        /**
+                         * Annotates Promise expectation.
+                         * @attribute $promise
+                         * @for miruken.Modifier
+                         */                            
+                        var $promise = $createModifier();
+                        /**
+                         * Annotates synchronous.
+                         * @attribute $instant
+                         * @for miruken.Modifier
+                         */                                
+                        var $instant = $createModifier();
+                        
+                        /**
+                         * Defines an enumeration.
+                         * &lt;pre&gt;
+                         *    var Color = Enum({
+                         *        red:   1,
+                         *        green: 2,
+                         *        blue:  3
+                         *    })
+                         * &lt;/pre&gt;
+                         * @class Enum
+                         * @constructor
+                         * @param  {Object}  choices  -  enum choices
+                         */
+                        var Enum = Base.extend({
+                            constructor: function () {
+                                throw new TypeError(&quot;Enums cannot be instantiated.&quot;);
+                            }
+                        }, {
+                            coerce: function (choices) {
+                                var en     = this.extend(null, choices),
+                                    names  = Object.freeze(Object.keys(choices)),
+                                    values = Object.freeze(Array2.map(names, function (name) {
+                                            return choices[name];
+                                    }));
+                                Object.defineProperties(en, {
+                                    names:  { value: names },
+                                    values: { value: values }
+                                });
+                                return Object.freeze(en);
+                            }
+                        });
+                    
+                        /**
+                         * Variance enum
+                         * @class Variance
+                         * @extends miruken.Enum
+                         */
+                        var Variance = Enum({
+                            /**
+                             * Matches a more specific type than originally specified.
+                             * @property {number} Covariant
+                             */
+                            Covariant: 1,
+                            /**
+                             * Matches a more generic (less derived) type than originally specified.
+                             * @property {number} Contravariant
+                             */        
+                            Contravariant: 2,
+                            /**
+                             * Matches only the type originally specified.
+                             * @property {number} Invariant
+                             */        
+                            Invariant: 3
+                            });
+                    
+                        /**
+                         * Delegates properties and methods to another object.&lt;br/&gt;
+                         * See {{#crossLink &quot;miruken.Protocol&quot;}}{{/crossLink}}
+                         * @class Delegate
+                         * @extends Base
+                         */
+                        var Delegate = Base.extend({
+                            /**
+                             * Delegates the property get on the protocol.
+                             * @method get
+                             * @param   {miruken.Protocol} protocol      - receiving protocol
+                             * @param   {string}           propertyName  - name of the property
+                             * @param   {boolean}          strict        - true if target must adopt protocol
+                             * @returns {Any} result of the proxied get.
+                             */
+                            get: function (protocol, propertyName, strict) {},
+                            /**
+                             * Delegates the property set on the protocol.
+                             * @method set
+                             * @param   {miruken.Protocol} protocol      - receiving protocol
+                             * @param   {string}           propertyName  - name of the property
+                             * @param   {Object}           propertyValue - value of the property
+                             * @param   {boolean}          strict        - true if target must adopt protocol
+                             */
+                            set: function (protocol, propertyName, propertyValue, strict) {},
+                            /**
+                             * Delegates the method invocation on the protocol.
+                             * @method invoke
+                             * @param   {miruken.Protocol} protocol      - receiving protocol
+                             * @param   {string}           methodName  - name of the method
+                             * @param   {Array}            args        - method arguments
+                             * @param   {boolean}          strict      - true if target must adopt protocol
+                             * @returns {Any} result of the proxied invocation.
+                             */
+                             invoke: function (protocol, methodName, args, strict) {}
+                        });
+                    
+                        /**
+                         * Delegates properties and methods to an obejct.
+                         * @class ObjectDelegate
+                         * @constructor
+                         * @param   {Object}  object  - receiving object
+                         * @extends miruken.Delegate
+                         */
+                        var ObjectDelegate = Delegate.extend({
+                            constructor: function (object) {
+                                if ($isNothing(object)) {
+                                    throw new TypeError(&quot;No object specified.&quot;);
+                                }
+                                Object.defineProperty(this, &#x27;object&#x27;, { value: object });
+                            },
+                            get: function (protocol, propertyName, strict) {
+                                var object = this.object;
+                                if (!strict || protocol.adoptedBy(object)) {
+                                    return object[propertyName];
+                                }
+                            },
+                            set: function (protocol, propertyName, propertyValue, strict) {
+                                var object = this.object;
+                                if (!strict || protocol.adoptedBy(object)) {
+                                    return object[propertyName] = propertyValue;
+                                }
+                            },
+                            invoke: function (protocol, methodName, args, strict) {
+                                var object = this.object,
+                                    method = object[methodName];
+                                if (method &amp;&amp; (!strict || protocol.adoptedBy(object))) {
+                                    return method.apply(object, args);
+                                }
+                            }
+                        });
+                        
+                        /**
+                         * Declares methods and properties independent of a class.
+                         * &lt;pre&gt;
+                         *    var Auditing = Protocol.extend({
+                         *        $properties: {
+                         *            level: undefined
+                         *        },
+                         *        record: function (activity) {}
+                         *    })
+                         * &lt;/pre&gt;
+                         * @class Protocol
+                         * @constructor
+                         * @param   {miruken.Delegate}  delegate        -  delegate
+                         * @param   {boolean}           [strict=false]  -  true ifstrict, false otherwise
+                         * @extends Base
+                         */
+                        var Protocol = Base.extend({
+                            constructor: function (delegate, strict) {
+                                if ($isNothing(delegate)) {
+                                    delegate = new Delegate;
+                                } else if ((delegate instanceof Delegate) === false) {
+                                    if ($isFunction(delegate.toDelegate)) {
+                                        delegate = delegate.toDelegate();
+                                        if ((delegate instanceof Delegate) === false) {
+                                            throw new TypeError(format(
+                                                &quot;Invalid delegate: %1 is not a Delegate nor does it have a &#x27;toDelegate&#x27; method that returned one.&quot;, delegate));
+                                        }
+                                    } else {
+                                        delegate = new ObjectDelegate(delegate);
+                                    }
+                                }
+                                Object.defineProperty(this, &#x27;delegate&#x27;, { value: delegate });
+                                Object.defineProperty(this, &#x27;strict&#x27;, { value: !!strict });
+                            },
+                            __get: function (propertyName) {
+                                return this.delegate.get(this.constructor, propertyName, this.strict);
+                            },
+                            __set: function (propertyName, propertyValue) {                
+                                return this.delegste.set(this.constructor, propertyName, propertyValue, this.strict);
+                            },
+                            __invoke: function (methodName, args) {
+                                return this.delegate.invoke(this.constructor, methodName, args, this.strict);
+                            }
+                        }, {
+                            /**
+                             * Determines if the target is a {{#crossLink &quot;miruken.Protocol&quot;}}{{/crossLink}}.
+                             * @static
+                             * @method isProtocol
+                             * @param   {Any}      target    -  target to test
+                             * @returns {boolean}  true if the target is a Protocol.
+                             */
+                            isProtocol: function (target) {
+                                return target &amp;&amp; (target.prototype instanceof Protocol);
+                            },
+                            conformsTo: False,
+                            /**
+                             * Determines if the target conforms to this protocol.
+                             * @static
+                             * @method conformsTo
+                             * @param   {Any}      target    -  target to test
+                             * @returns {boolean}  true if the target conforms to this protocol.
+                             */
+                            adoptedBy: function (target) {
+                                return target &amp;&amp; $isFunction(target.conformsTo)
+                                     ? target.conformsTo(this)
+                                     : false;
+                            },
+                            /**
+                             * Creates a protocol binding over the object.
+                             * @static
+                             * @method coerce
+                             * @param   {Object} object  -  object delegate
+                             * @returns {Object} protocol instance delegating to object. 
+                             */
+                            coerce: function (object, strict) { return new this(object, strict); }
+                        });
+                    
+                        /**
+                         * MetaStep enum
+                         * @class MetaStep
+                         * @extends Enum
+                         */
+                        var MetaStep = Enum({
+                            /**
+                             * Triggered when a new class is derived
+                             * @property {number} Subclass
+                             */
+                            Subclass: 1,
+                            /**
+                             * Triggered when an existing class is extended
+                             * @property {number} Implement
+                             */
+                            Implement: 2,
+                            /**
+                             * Triggered when an instance is extended
+                             * @property {number} Extend
+                             */
+                            Extend: 3
+                            });
+                    
+                        /**
+                         * Provides a method to modify a class definition at runtime.
+                         * @class MetaMacro
+                         * @extends Base
+                         */
+                        var MetaMacro = Base.extend({
+                            /**
+                             * Executes the macro for the given step.
+                             * @method apply
+                             * @param  {miruken.MetaStep}  step        - meta step
+                             * @param  {miruken.MetaBase}  metadata    - effective metadata
+                             * @param  {Object}            target      - target macro applied to 
+                             * @param  {Object}            definition  - literal containing changes
+                             */
+                            apply: function (step, metadata, target, definition) {},
+                            /**
+                             * Triggered when a protocol is added to metadata.
+                             * @method protocolAdded
+                             * @param {miruken.MetaBase}   metadata    - effective metadata
+                             * @param {miruken.Protocol}   protocol    - protocol added
+                             */
+                            protocolAdded: function (metadata, protocol) {},
+                            /**
+                             * Determines if the macro should be inherited
+                             * @method shouldInherit
+                             * @returns {boolean} false
+                             */
+                            shouldInherit: False,
+                            /**
+                             * Determines if the macro should be applied on extension.
+                             * @method isActive
+                             * @returns {boolean} false
+                             */
+                            isActive: False,
+                        }, {
+                            coerce: function () { return this.new.apply(this, arguments); }
+                        });
+                    
+                        /**
+                         * Base class for all metadata.
+                         * @class MetaBase
+                         * @constructor
+                         * @param  {miruken.MetaBase}  [parent]  - parent meta-data
+                         * @extends miruken.MetaMacro
+                         */
+                        var MetaBase = MetaMacro.extend({
+                            constructor: function (parent)  {
+                                var _protocols = [], _descriptors;
+                                this.extend({
+                                    /**
+                                     * Gets the parent metadata.
+                                     * @method getParent
+                                     * @returns {miruken.MetaBase} parent metadata if present.
+                                     */
+                                    getParent: function () { return parent; },
+                                    /**
+                                     * Gets the declared protocols.
+                                     * @method getProtocols
+                                     * @returns {Array} declared protocols.
+                                     */
+                                    getProtocols: function () { return _protocols.slice(0) },
+                                    /**
+                                     * Gets all conforming protocools.
+                                     * @method getAllProtocols
+                                     * @returns {Array} conforming protocols.
+                                     */
+                                    getAllProtocols: function () {
+                                        var protocols = this.getProtocols(),
+                                            inner     = protocols.slice(0);
+                                        for (var i = 0; i &lt; inner.length; ++i) {
+                                            var innerProtocols = inner[i].$meta.getAllProtocols();
+                                            for (var ii = 0; ii &lt; innerProtocols.length; ++ii) {
+                                                var protocol = innerProtocols[ii];
+                                                if (protocols.indexOf(protocol) &lt; 0) {
+                                                    protocols.push(protocol);
+                                                }
+                                            } 
+                                        }
+                                        return protocols;
+                                    },
+                                    /**
+                                     * Adds one or more protocols to the metadata.
+                                     * @method addProtocol
+                                     * @param  {Array}  protocols  -  protocols to add
+                                     */
+                                    addProtocol: function (protocols) {
+                                        if ($isNothing(protocols)) {
+                                            return;
+                                        }
+                                        if (!(protocols instanceof Array)) {
+                                            protocols = Array.prototype.slice.call(arguments);
+                                        }
+                                        for (var i = 0; i &lt; protocols.length; ++i) {
+                                            var protocol = protocols[i];
+                                            if ((protocol.prototype instanceof Protocol) 
+                                            &amp;&amp;  (_protocols.indexOf(protocol) === -1)) {
+                                                _protocols.push(protocol);
+                                                this.protocolAdded(this, protocol);
+                                            }
+                                        }
+                                    },
+                                    protocolAdded: function (metadata, protocol) {
+                                        if (parent) {
+                                            parent.protocolAdded(metadata, protocol);
+                                        }
+                                    },
+                                    /**
+                                     * Determines if the metadata conforms to the protocol.
+                                     * @method conformsTo
+                                     * @param  {miruken.Protocol}   protocol -  protocols to test
+                                     * @returns {boolean}  true if the metadata includes the protocol.
+                                     */
+                                    conformsTo: function (protocol) {
+                                        if (!(protocol &amp;&amp; (protocol.prototype instanceof Protocol))) {
+                                            return false;
+                                        }
+                                        for (var index = 0; index &lt; _protocols.length; ++index) {
+                                            var proto = _protocols[index];
+                                            if (protocol === proto || proto.conformsTo(protocol)) {
+                                                return true;
+                                            }
+                                        }
+                                        return false;
+                                    },
+                                    apply: function _(step, metadata, target, definition) {
+                                        if (parent) {
+                                            parent.apply(step, metadata, target, definition);
+                                        } else if ($properties) {
+                                            (_.p || (_.p = new $properties)).apply(step, metadata, target, definition);
+                                        }
+                                    },
+                                    /**
+                                     * Defines a property on the metadata.
+                                     * @method defineProperty
+                                     * @param  {Object}   target        -  target receiving property
+                                     * @param  {string}   name          -  name of the property
+                                     * @param  {Object}   spec          -  property specification
+                                     * @param  {Object}   [descriptor]  -  property descriptor
+                                     */
+                                    defineProperty: function(target, name, spec, descriptor) {
+                                        descriptor = extend({}, descriptor);
+                                        Object.defineProperty(target, name, spec);
+                                        this.addDescriptor(name, descriptor);
+                                    },
+                                    /**
+                                     * Gets the descriptor for one or more properties.
+                                     * @method getDescriptor
+                                     * @param    {Object|string}  filter  -  property selector
+                                     * @returns  {Object} aggregated property descriptor.
+                                     */
+                                    getDescriptor: function (filter) {
+                                        var descriptors;
+                                        if ($isNothing(filter)) {
+                                            if (parent) {
+                                                descriptors = parent.getDescriptor(filter);
+                                            }
+                                            if (_descriptors) {
+                                                descriptors = extend(descriptors || {}, _descriptors);
+                                            }
+                                        } else if ($isString(filter)) {
+                                            return _descriptors[filter] || (parent &amp;&amp; parent.getDescriptor(filter));
+                                        } else {
+                                            if (parent) {
+                                                descriptors = parent.getDescriptor(filter);
+                                            }
+                                            for (var key in _descriptors) {
+                                                var descriptor = _descriptors[key];
+                                                if (this.matchDescriptor(descriptor, filter)) {
+                                                    descriptors = extend(descriptors || {}, key, descriptor);
+                                                }
+                                            }
+                                        }
+                                        return descriptors;
+                                    },
+                                    /**
+                                     * Sets the descriptor for a property.
+                                     * @method addDescriptor
+                                     * @param    {string}   name        -  property name
+                                     * @param    {Object}   descriptor  -  property descriptor
+                                     * @returns  {miruken.MetaBase} current metadata.
+                                     * @chainable
+                                     */
+                                    addDescriptor: function (name, descriptor) {
+                                        _descriptors = extend(_descriptors || {}, name, descriptor);
+                                        return this;
+                                    },
+                                    /**
+                                     * Determines if the property descriptor matches the filter.
+                                     * @method matchDescriptor
+                                     * @param    {Object}   descriptor  -  property descriptor
+                                     * @param    {Object}   filter      -  matching filter
+                                     * @returns  {boolean} true if the descriptor matches, false otherwise.
+                                     */
+                                    matchDescriptor: function (descriptor, filter) {
+                                        if (typeOf(descriptor) !== &#x27;object&#x27; || typeOf(filter) !== &#x27;object&#x27;) {
+                                            return false;
+                                        }
+                                        for (var key in filter) {
+                                            var match = filter[key];
+                                            if (match === undefined) {
+                                                if (!(key in descriptor)) {
+                                                    return false;
+                                                }
+                                            } else {
+                                                var value = descriptor[key];
+                                                if (match instanceof Array) {
+                                                    if (!(value instanceof Array)) {
+                                                        return false;
+                                                    }
+                                                    for (var i = 0; i &lt; match.length; ++i) {
+                                                        if (value.indexOf(match[i]) &lt; 0) {
+                                                            return false;
+                                                        }
+                                                    }
+                                                } else if (!(value === match || this.matchDescriptor(value, match))) {
+                                                    return false;
+                                                }
+                                            }
+                                        }
+                                        return true;
+                                    },
+                                    /**
+                                     * Binds a method to the parent if not present.
+                                     * @method linkBase
+                                     * @param    {Function}  method  -  method name
+                                     * @returns  {miruken.MetaBase} current metadata.
+                                     * @chainable
+                                     */
+                                    linkBase: function (method) {
+                                        if (!this[method]) {
+                                            this.extend(method, function () {
+                                                var baseMethod = parent &amp;&amp; parent[method];
+                                                if (baseMethod) {
+                                                    return baseMethod.apply(parent, arguments);
+                                                }
+                                            });
+                                        }
+                                        return this;
+                                    }        
+                                });
+                            }
+                        });
+                    
+                        /**
+                         * Represents metadata describing a class.
+                         * @class ClassMeta
+                         * @constructor
+                         * @param   {Function}  baseClass  -  associated base class
+                         * @param   {Function}  subClass   -  associated class
+                         * @param   {Array}     protocols  -  conforming protocols
+                         * @param   {Array}     macros     -  class macros
+                         * @extends miruken.MetaBase
+                         */
+                        var ClassMeta = MetaBase.extend({
+                            constructor: function(baseClass, subClass, protocols, macros)  {
+                                var _isProtocol = (subClass === Protocol)
+                                               || (subClass.prototype instanceof Protocol),
+                                    _macros     = macros ? macros.slice(0) : undefined;
+                                this.base(baseClass.$meta, protocols);
+                                this.extend({
+                                    /**
+                                     * Gets the associated base class.
+                                     * @method getBase
+                                     * @returns  {Function} base class.
+                                     */                
+                                    getBase: function () { return baseClass; },
+                                    /**
+                                     * Gets the associated class
+                                     * @method getClass
+                                     * @returns  {Function} class.
+                                     */                                
+                                    getClass: function () { return subClass; },
+                                    /**
+                                     * Determines if the meta-data represents a protocol.
+                                     * @method isProtocol
+                                     * @returns  {boolean} true if a protocol, false otherwise.
+                                     */                                
+                                    isProtocol: function () { return _isProtocol; },
+                                    getAllProtocols: function () {
+                                        var protocols = this.base();
+                                        if (!_isProtocol &amp;&amp; baseClass.$meta) {
+                                            var baseProtocols = baseClass.$meta.getAllProtocols();
+                                            for (var i = 0; i &lt; baseProtocols.length; ++i) {
+                                                var protocol = baseProtocols[i];
+                                                if (protocols.indexOf(protocol) &lt; 0) {
+                                                    protocols.push(protocol);
+                                                }
+                                            }
+                                        }
+                                        return protocols;
+                                    },
+                                    protocolAdded: function (metadata, protocol) {
+                                        this.base(metadata, protocol);
+                                        if (!_macros || _macros.length == 0) {
+                                            return;
+                                        }
+                                        for (var i = 0; i &lt; _macros.length; ++i) {
+                                            macro = _macros[i];
+                                            if ($isFunction(macro.protocolAdded)) {
+                                                macro.protocolAdded(metadata, protocol);
+                                            }
+                                        }
+                                    },
+                                    conformsTo: function (protocol) {
+                                        if (!(protocol &amp;&amp; (protocol.prototype instanceof Protocol))) {
+                                            return false;
+                                        } else if ((protocol === subClass) || (subClass.prototype instanceof protocol)) {
+                                            return true;
+                                        }
+                                        if (this.base(protocol)) {
+                                            return true;
+                                        }
+                                        return baseClass &amp;&amp; (baseClass !== Protocol) &amp;&amp; baseClass.conformsTo
+                                             ? baseClass.conformsTo(protocol)
+                                             : false;
+                                    },
+                                    apply: function (step, metadata, target, definition) {
+                                        this.base(step, metadata, target, definition);
+                                        if (!_macros || _macros.length == 0) {
+                                            return;
+                                        }
+                                        var inherit = (this !== metadata),
+                                            active  = (step !== MetaStep.Subclass);
+                                        for (var i = 0; i &lt; _macros.length; ++i) {
+                                            var macro = _macros[i];
+                                            if ((!active  || macro.isActive()) &amp;&amp;
+                                                (!inherit || macro.shouldInherit())) {
+                                                macro.apply(step, metadata, target, definition);
+                                            }
+                                        }
+                                    }
+                                });
+                                this.addProtocol(protocols);
+                            }
+                        });
+                    
+                        /**
+                         * Represents metadata describing an instance.
+                         * @class InstanceMeta
+                         * @constructor
+                         * @param   {miruken.ClassMeta}  classMeta  -  class meta-data
+                         * @extends miruken.MetaBase
+                         */
+                        var InstanceMeta = MetaBase.extend({
+                            constructor: function (classMeta) {
+                                this.base(classMeta);
+                                this.extend({
+                                    /**
+                                     * Gets the associated base class.
+                                     * @method getBase
+                                     * @returns  {Function} base class.
+                                     */                                
+                                    getBase: function () { return classMeta.getBase(); }, 
+                                    /**
+                                     * Gets the associated class
+                                     * @method getClass
+                                     * @returns  {Function} class.
+                                     */                                              
+                                    getClass: function () { return classMeta.getClass(); },
+                                    /**
+                                     * Determines if the meta-data represents a protocol.
+                                     * @method isProtocol
+                                     * @returns  {boolean} true if a protocol, false otherwise.
+                                     */                                                
+                                    isProtocol: function () { return classMeta.isProtocol(); }
+                                });
+                            }
+                        });
+                    
+                        var baseExtend  = Base.extend;
+                        Base.extend = Abstract.extend = function () {
+                            return (function (base, args) {
+                                var protocols, mixins, macros, 
+                                    constraints = args;
+                                if (base.prototype instanceof Protocol) {
+                                    (protocols = []).push(base);
+                                }
+                                if (args.length &gt; 0 &amp;&amp; (args[0] instanceof Array)) {
+                                    constraints = args.shift();
+                                }
+                                while (constraints.length &gt; 0) {
+                                    var constraint = constraints[0];
+                                    if (!constraint) {
+                                        break;
+                                    } else if (constraint.prototype instanceof Protocol) {
+                                        (protocols || (protocols = [])).push(constraint);
+                                    } else if (constraint instanceof MetaMacro) {
+                                        (macros || (macros = [])).push(constraint);
+                                    } else if ($isFunction(constraint) 
+                                               &amp;&amp;  constraint.prototype instanceof MetaMacro) {
+                                        (macros || (macros = [])).push(new constraint);
+                                    } else if (constraint.prototype) {
+                                        (mixins || (mixins = [])).push(constraint);
+                                    } else {
+                                        break;
+                                    }
+                                    constraints.shift();
+                                }
+                                var instanceDef = args.shift(),
+                                    staticDef   = args.shift(),
+                                    subclass    = baseExtend.call(base, instanceDef, staticDef),
+                                    metadata    = new ClassMeta(base, subclass, protocols, macros);
+                                Object.defineProperty(subclass, META, {
+                                    enumerable:   false,
+                                    configurable: false,
+                                    writable:     false,
+                                    value:        metadata
+                                });
+                                Object.defineProperty(subclass.prototype, META, {
+                                    enumerable:   false,
+                                    configurable: false,
+                                    get:          _createInstanceMeta
+                                });
+                                subclass.conformsTo = metadata.conformsTo.bind(metadata);
+                                metadata.apply(MetaStep.Subclass, metadata, subclass.prototype, instanceDef);
+                                if (mixins) {
+                                    Array2.forEach(mixins, subclass.implement, subclass);
+                                }
+                                return subclass;
+                                })(this, Array.prototype.slice.call(arguments));
+                        };
+                    
+                        function _createInstanceMeta() {
+                            var spec = _createInstanceMeta.spec ||
+                                (_createInstanceMeta.spec = {
+                                    enumerable:   false,
+                                    configurable: false,
+                                    writable:     false
+                                }),
+                                metadata = new InstanceMeta(this.constructor.$meta);
+                            spec.value = metadata;
+                            Object.defineProperty(this, META, spec);
+                            delete spec.value;
+                            return metadata;
+                        }
+                    
+                        Base.prototype.conformsTo = function (protocol) {
+                            return this.constructor.$meta.conformsTo(protocol);
+                        };
+                        
+                        var implement = Base.implement;
+                        Base.implement = Abstract.implement = function (source) {
+                            if ($isFunction(source)) {
+                                source = source.prototype; 
+                            }
+                            var metadata = this.$meta;
+                            implement.call(this, source);
+                            if (metadata) {
+                                metadata.apply(MetaStep.Implement, metadata, this.prototype, source);
+                            }
+                            return this;
+                        }
+                    
+                        var extendInstance = Base.prototype.extend;
+                        Base.prototype.extend = function (key, value) {
+                            var definition = (arguments.length === 1) ? key : {};
+                            if (arguments.length &gt;= 2) {
+                                definition[key] = value;
+                            }
+                            var metadata = this.$meta;
+                            extendInstance.call(this, definition);
+                            if (metadata) {
+                                metadata.apply(MetaStep.Extend, metadata, this, definition);
+                            }
+                            return this;
+                        }
+                    
+                        /**
+                         * Metamacro to proxy protocol methods through a delegate.&lt;br/&gt;
+                         * See {{#crossLink &quot;miruken.Protocol&quot;}}{{/crossLink}}
+                         * @class $proxyProtocol
+                         * @extends miruken.MetaMacro
+                         */
+                        var $proxyProtocol = MetaMacro.extend({
+                            apply: function (step, metadata, target, definition) {
+                                var clazz = metadata.getClass();
+                                if (clazz === Protocol) {
+                                    return;
+                                }    
+                                var protocolProto = Protocol.prototype;
+                                for (var key in definition) {
+                                    if (key in protocolProto) {
+                                        continue;
+                                    }
+                                    var member = target[key];
+                                    if ($isFunction(member)) {
+                                        (function (methodName) {
+                                            target[methodName] = function () {
+                                                var args = Array.prototype.slice.call(arguments);
+                                                return this.__invoke(methodName, args);
+                                            }
+                                        })(key);
+                                    }
+                                }
+                                if (step === MetaStep.Subclass) {
+                                    clazz.adoptedBy = Protocol.adoptedBy;
+                                }
+                            },
+                            protocolAdded: function (metadata, protocol) {
+                                var source        = protocol.prototype,
+                                    target        = metadata.getClass().prototype,
+                                    protocolProto = Protocol.prototype;
+                                for (var key in source) {
+                                    if (!((key in protocolProto) &amp;&amp; (key in this))) {
+                                        var descriptor = _getPropertyDescriptor(source, key);
+                                        Object.defineProperty(target, key, descriptor);
+                                    }
+                                }
+                            },
+                            /**
+                             * Determines if the macro should be inherited
+                             * @method shouldInherit
+                             * @returns {boolean} true
+                             */        
+                            shouldInherit: True,
+                            /**
+                             * Determines if the macro should be applied on extension.
+                             * @method isActive
+                             * @returns {boolean} true
+                             */        
+                            isActive: True
+                        });
+                        Protocol.extend     = Base.extend
+                        Protocol.implement  = Base.implement;
+                        Protocol.$meta      = new ClassMeta(Base, Protocol, null, [new $proxyProtocol]);
+                        Protocol.$meta.apply(MetaStep.Subclass, Protocol.$meta, Protocol.prototype);
+                    
+                        /**
+                         * Protocol base requiring conformance to match methods.
+                         * @class StrictProtocol
+                         * @constructor
+                         * @param   {miruken.Delegate}  delegate       -  delegate
+                         * @param   {boolean}           [strict=true]  -  true ifstrict, false otherwise
+                         * @extends miruekn.Protocol     
+                         */
+                        var StrictProtocol = Protocol.extend({
+                            constructor: function (proxy, strict) {
+                                this.base(proxy, (strict === undefined) || strict);
+                            }
+                        });
+                    
+                        /**
+                         * Metamacro to define class properties.  This macro is automatically applied.
+                         * &lt;pre&gt;
+                         *    var Person = Base.extend({
+                         *        $properties: {
+                         *            firstName: &#x27;&#x27;,
+                         *            lastNane:  &#x27;&#x27;,
+                         *            fullName:  {
+                         *                get: function () {
+                         *                   return this.firstName + &#x27; &#x27; + this.lastName;
+                         *                },
+                         *                set: function (value) {
+                         *                    var parts = value.split(&#x27; &#x27;);
+                         *                    if (parts.length &gt; 0) {
+                         *                        this.firstName = parts[0];
+                         *                    }
+                         *                    if (parts.length &gt; 1) {
+                         *                        this.lastName = parts[1];
+                         *                    }
+                         *                }
+                         *            },
+                         *        }
+                         *    })
+                         * &lt;/pre&gt;
+                         * would give the Person class a firstName and lastName property and a computed fullName.
+                         * @class $properties
+                         * @constructor
+                         * @param   {string}  [tag=&#x27;$properties&#x27;]  - properties tag
+                         * @extends miruken.MetaMacro
+                         */
+                        var $properties = MetaMacro.extend({
+                            constructor: function _(tag) {
+                                var spec = _.spec || (_.spec = {});
+                                spec.value = tag || &#x27;$properties&#x27;;
+                                Object.defineProperty(this, &#x27;tag&#x27;, spec);
+                            },
+                            apply: function _(step, metadata, target, definition) {
+                                if ($isNothing(definition) || !definition.hasOwnProperty(this.tag)) {
+                                    return;
+                                }
+                                var properties = definition[this.tag];
+                                if ($isFunction(properties)) {
+                                    properties = properties();
+                                }
+                                for (var name in properties) {
+                                    var property = properties[name],
+                                        spec = _.spec || (_.spec = {
+                                            configurable: true,
+                                            enumerable:   true
+                                        });
+                                    if ($isNothing(property) || $isString(property) ||
+                                        typeOf(property.length) == &quot;number&quot; || typeOf(property) !== &#x27;object&#x27;) {
+                                        property = { value: property };
+                                    }
+                                    if (target instanceof Protocol) {
+                                        spec.get = function (get) {
+                                            return function () {
+                                                return this.__get(get);
+                                            };
+                                        }(name);
+                                        spec.set = function (set) {
+                                            return function (value) {
+                                                return this.__set(set, value);
+                                            };
+                                        }(name);
+                                    } else {
+                                        spec.writable = true;
+                                        if (property.get || property.set) {
+                                            var methods = {},
+                                                cname   = name.charAt(0).toUpperCase() + name.slice(1);
+                                            if (property.get) {
+                                                var get      = &#x27;get&#x27; + cname; 
+                                                methods[get] = property.get;
+                                                spec.get     = _makeGetter(get);
+                                            }
+                                            if (property.set) {
+                                                var set      = &#x27;set&#x27; + cname 
+                                                methods[set] = property.set;
+                                                spec.set     = _makeSetter(set); 
+                                            }
+                                            if (step == MetaStep.Extend) {
+                                                target.extend(methods);
+                                            } else {
+                                                metadata.getClass().implement(methods);
+                                            }
+                                            delete spec.writable;
+                                        } else {
+                                            spec.value = property.value;
+                                        }
+                                    }
+                                    _cleanDescriptor(property);
+                                    this.defineProperty(metadata, target, name, spec, property);
+                                    _cleanDescriptor(spec);
+                                }
+                                delete definition[this.tag];
+                                delete target[this.tag];
+                            },
+                            defineProperty: function(metadata, target, name, spec, descriptor) {
+                                metadata.defineProperty(target, name, spec, descriptor);
+                            },
+                            /**
+                             * Determines if the macro should be inherited
+                             * @method shouldInherit
+                             * @returns {boolean} true
+                             */                
+                            shouldInherit: True,
+                            /**
+                             * Determines if the macro should be applied on extension.
+                             * @method isActive
+                             * @returns {boolean} true
+                             */                
+                            isActive: True
+                        });
+                    
+                        function _makeGetter(getMethodName) {
+                            return function () {
+                                var getter = this[getMethodName];
+                                if ($isFunction(getter)) {
+                                    return getter.call(this);
+                                }
+                            };   
+                        }
+                    
+                        function _makeSetter(setMethodName) {
+                            return function (value) {
+                                var setter = this[setMethodName];
+                                if ($isFunction(setter)) {
+                                    setter.call(this, value);
+                                    return value;
+                                }
+                            };
+                        }
+                    
+                        function _cleanDescriptor(descriptor) {
+                            delete descriptor.writable;
+                            delete descriptor.value;
+                            delete descriptor.get;
+                            delete descriptor.set;
+                        }
+                    
+                        /**
+                         * Metamacro to derive class properties from existng methods.
+                         * &lt;p&gt;Currently getFoo, isFoo and setFoo conventions are recognized.&lt;/p&gt;
+                         * &lt;pre&gt;
+                         *    var Person = Base.extend(**$inferProperties**, {
+                         *        getName: function () { return this._name; },
+                         *        setName: function (value) { this._name = value; },
+                         *    })
+                         * &lt;/pre&gt;
+                         * would create a Person.name property bound to getName and setName 
+                         * @class $inferProperties
+                         * @constructor
+                         * @extends miruken.MetaMacro
+                         */
+                        var $inferProperties = MetaMacro.extend({
+                            apply: function _(step, metadata, target, definition) {
+                                for (var key in definition) {
+                                    var value = definition[key];
+                                    if (!$isFunction(value)) {
+                                        continue;
+                                    }
+                                    var spec = _.spec || (_.spec = {
+                                        configurable: true,
+                                        enumerable:   true
+                                    });
+                                    if (_inferProperty(key, value, definition, spec)) {
+                                        var name = spec.name;
+                                        if (name &amp;&amp; !(name in target)) {
+                                            spec.get = _makeGetter(spec.get);
+                                            spec.set = _makeSetter(spec.set);                        
+                                            this.defineProperty(metadata, target, name, spec);
+                                        }
+                                        delete spec.name;
+                                        delete spec.get;
+                                        delete spec.set;
+                                    }
+                                }
+                            },
+                            defineProperty: function(metadata, target, name, spec) {
+                                metadata.defineProperty(target, name, spec);
+                            },
+                            /**
+                             * Determines if the macro should be inherited
+                             * @method shouldInherit
+                             * @returns {boolean} true
+                             */                
+                            shouldInherit: True,
+                            /**
+                             * Determines if the macro should be applied on extension.
+                             * @method isActive
+                             * @returns {boolean} true
+                             */               
+                            isActive: True
+                        });
+                    
+                        var GETTER_CONVENTIONS = [&#x27;get&#x27;, &#x27;is&#x27;];
+                    
+                        function _inferProperty(key, value, definition, spec) {
+                            for (var i = 0; i &lt; GETTER_CONVENTIONS.length; ++i) {
+                                var prefix = GETTER_CONVENTIONS[i];
+                                if (key.lastIndexOf(prefix, 0) == 0) {
+                                    if (value.length === 0) {  // no arguments
+                                        var name  = key.substring(prefix.length);
+                                        spec.get  = key;
+                                        spec.set  = &#x27;set&#x27; + name;
+                                        spec.name = name.charAt(0).toLowerCase() + name.slice(1);
+                                        return true;
+                                    }
+                                }
+                            }
+                            if (key.lastIndexOf(&#x27;set&#x27;, 0) == 0) {
+                                if (value.length === 1) {  // 1 argument
+                                    var name  = key.substring(3);
+                                    spec.set  = key;
+                                    spec.get  = &#x27;get&#x27; + name;
+                                    spec.name = name.charAt(0).toLowerCase() + name.slice(1);
+                                    return true;
+                                }
+                            }
+                        }
+                    
+                        /**
+                         * Metamacro to inherit static members in subclasses.
+                         * &lt;pre&gt;
+                         * var Math = Base.extend(
+                         *     **$inheritStatic**, null, {
+                         *         PI:  3.14159265359,
+                         *         add: function (a, b) {
+                         *             return a + b;
+                         *          }
+                         *     }),
+                         *     Geometry = Math.extend(null, {
+                         *         area: function(length, width) {
+                         *             return length * width;
+                         *         }
+                         *     });
+                         * &lt;/pre&gt;
+                         * would make Math.PI and Math.add available on the Geometry class.
+                         * @class $inhertStatic
+                         * @constructor
+                         * @param  {string}  [...members]  -  members to inherit
+                         * @extends miruken.MetaMacro
+                         */
+                        var $inheritStatic = MetaMacro.extend({
+                            constructor: function _(/*members*/) {
+                                var spec = _.spec || (_.spec = {});
+                                spec.value = Array.prototype.slice.call(arguments);
+                                Object.defineProperty(this, &#x27;members&#x27;, spec);
+                                delete spec.value;
+                            },
+                            apply: function (step, metadata, target) {
+                                if (step === MetaStep.Subclass) {
+                                    var members  = this.members,
+                                        clazz    = metadata.getClass(),
+                                        ancestor = $ancestorOf(clazz);
+                                    if (members.length &gt; 0) {
+                                        for (var i = 0; i &lt; members.length; ++i) {
+                                            var member = members[i];
+                                            if (!(member in clazz)) {
+                                                clazz[member] = ancestor[member];
+                                            }
+                                        }
+                                    } else if (ancestor !== Base &amp;&amp; ancestor !== Object) {
+                                        for (var key in ancestor) {
+                                            if (ancestor.hasOwnProperty(key) &amp;&amp; !(key in clazz)) {
+                                                clazz[key] = ancestor[key];
+                                            }
+                                        }
+                                    }
+                                }
+                            },
+                            /**
+                             * Determines if the macro should be inherited
+                             * @method shouldInherit
+                             * @returns {boolean} true
+                             */                
+                            shouldInherit: True
+                        });
+                    
+                        /**
+                         * Base class to prefer coercion over casting.
+                         * By default, Type(target) will cast target to the type.
+                         * @class Miruken
+                         * @extends Base
+                         */
+                        var Miruken = Base.extend(null, {
+                            coerce: function () { return this.new.apply(this, arguments); }
+                        });
+                    
+                        /**
+                         * Protocol for targets that manage disposal lifecycle.
+                         * @class Disposing
+                         * @extends miruken.Protocol
+                         */
+                        var Disposing = Protocol.extend({
+                            /**
+                             * Releases any resources managed by the receiver.
+                             * @method dispose
+                             */
+                            dispose: function () {}
+                        });
+                    
+                        /**
+                         * Mixin for {{#crossLink &quot;miruken.Disposing&quot;}}{{/crossLink}} implementation.
+                         * @class DisposingMixin
+                         * @uses miruken.Disposing
+                         * @extends Module
+                         */
+                        var DisposingMixin = Module.extend({
+                            dispose: function (object) {
+                                if ($isFunction(object._dispose)) {
+                                    object._dispose();
+                                    object.dispose = Undefined;  // dispose once
+                                }
+                            }
+                        });
+                    
+                        /**
+                         * Protocol for targets that can execute functions.
+                         * @class Invoking
+                         * @extends miruken.StrictProtocol
+                         */
+                        var Invoking = StrictProtocol.extend({
+                            /**
+                             * Invokes the function with dependencies.
+                             * @method invoke
+                             * @param    {Function} fn           - function to invoke
+                             * @param    {Array}    dependencies - function dependencies
+                             * @param    {Object}   [ctx]        - function context
+                             * @returns  {Any}      result of the function.
+                             */
+                            invoke: function (fn, dependencies, ctx) {}
+                        });
+                    
+                        /**
+                         * Protocol for targets that have parent/child relationships.
+                         * @class Parenting
+                         * @extends miruken.Protocol
+                         */
+                        var Parenting = Protocol.extend({
+                            /**
+                             * Creates a new child of the parent.
+                             * @method newChild
+                             * @returns  {Object} the new child.
+                             */
+                            newChild: function () {}
+                        });
+                    
+                        /**
+                         * Protocol for targets that can be started.
+                         * @class Starting
+                         * @extends miruken.Protocol
+                         */
+                        var Starting = Protocol.extend({
+                            /**
+                             * Starts the reciever.
+                             * @method start
+                             */
+                            start: function () {}
+                        });
+                    
+                        /**
+                         * Base class for startable targets.
+                         * @class Startup
+                         * @uses miruken.Starting
+                         * @extends Base
+                         */
+                        var Startup = Base.extend(Starting, {
+                            start: function () {}
+                        });
+                    
+                        /**
+                         * Convenience function for disposing resources.
+                         * @for miruken.$
+                         * @method $using
+                         * @param    {miruken.Disposing}   disposing  - object to dispose
+                         * @param    {Function | Promise}  action     - block or Promise
+                         * @param    {Object}              [context]  - block context
+                         * @returns  {Any} result of executing the action in context.
+                         */
+                        function $using(disposing, action, context) {
+                            if (disposing &amp;&amp; $isFunction(disposing.dispose)) {
+                                if ($isFunction(action)) {
+                                    var result;
+                                    try {
+                                        result = action.call(context, disposing);
+                                        return result;
+                                    } finally {
+                                        if ($isPromise(result)) {
+                                            action = result;
+                                        } else {
+                                            disposing.dispose();
+                                        }
+                                    }
+                                } else if (!$isPromise(action)) {
+                                    return;
+                                }
+                                action.finally(function () { disposing.dispose(); });
+                                return action;
+                            }
+                        }
+                    
+                        /**
+                         * Class for annotating targets.
+                         * @class Modifier
+                         * @param  {Object}  source  -  source to annotate
+                         */
+                        function Modifier() {}
+                        Modifier.isModified = function (source) {
+                            return source instanceof Modifier;
+                        };
+                        Modifier.unwrap = function (source) {
+                            return (source instanceof Modifier) 
+                                 ? Modifier.unwrap(source.getSource())
+                                 : source;
+                        }
+                        function $createModifier() {
+                            var allowNew;
+                            function modifier(source) {
+                                if (this === global) {
+                                    if (modifier.test(source)) {
+                                        return source;
+                                    }
+                                    allowNew = true;
+                                    var wrapped = new modifier(source);
+                                    allowNew = false;
+                                    return wrapped;
+                                } else {
+                                    if (!allowNew) {
+                                        throw new Error(&quot;Modifiers should not be called with the new operator.&quot;);
+                                    }
+                                    this.getSource = function () {
+                                        return source;
+                                    }
+                                }
+                            }
+                            modifier.prototype = new Modifier();
+                            modifier.test      = function (source) {
+                                if (source instanceof modifier) {
+                                    return true;
+                                } else if (source instanceof Modifier) {
+                                    return modifier.test(source.getSource());
+                                }
+                                return false;
+                            }
+                            return modifier;
+                        }
+                    
+                        /**
+                         * Helper class to simplify array manipulation.
+                         * @class ArrayManager
+                         * @constructor
+                         * @param  {Array}  [...items]  -  initial items
+                         * @extends Base
+                         */
+                        var ArrayManager = Base.extend({
+                            constructor: function (items) {
+                                var _items = [];
+                                this.extend({
+                                    /** 
+                                     * Gets the array.
+                                     * @method getItems
+                                     * @returns  {Array} array.
+                                     */
+                                    getItems: function () { return _items; },
+                                    /** 
+                                     * Gets the item at array index.
+                                     * @method getIndex
+                                     * @param    {number}  index - index of item
+                                     * @returns  {Any} item at index.
+                                     */
+                                    getIndex: function (index) {
+                                        if (_items.length &gt; index) {
+                                            return _items[index];
+                                        }
+                                    },
+                                    /** 
+                                     * Sets the item at array index if empty.
+                                     * @method setIndex
+                                     * @param    {number}  index - index of item
+                                     * @param    {Any}     item  - item to set
+                                     * @returns  {ArrayManager} array manager.
+                                     * @chainable
+                                     */
+                                    setIndex: function (index, item) {
+                                        if ((_items.length &lt;= index) ||
+                                            (_items[index] === undefined)) {
+                                            _items[index] = this.mapItem(item);
+                                        }
+                                        return this;
+                                    },
+                                    /** 
+                                     * Inserts the item at array index.
+                                     * @method insertIndex
+                                     * @param    {number}   index - index of item
+                                     * @param    {Item}     item  - item to insert
+                                     * @returns  {ArrayManager} array manager.
+                                     * @chainable
+                                     */
+                                    insertIndex: function (index, item) {
+                                        _items.splice(index, 0, this.mapItem(item));
+                                        return this;
+                                    },
+                                    /** 
+                                     * Replaces the item at array index.
+                                     * @method replaceIndex
+                                     * @param    {number}   index - index of item
+                                     * @param    {Item}     item  - item to replace
+                                     * @returns  {ArrayManager} array manager.
+                                     * @chainable
+                                     */
+                                    replaceIndex: function (index, item) {
+                                        _items[index] = this.mapItem(item);
+                                        return this;
+                                    },
+                                    /** 
+                                     * Removes the item at array index.
+                                     * @method removeIndex
+                                     * @param    {number}   index - index of item
+                                     * @returns  {ArrayManager} array manager.
+                                     * @chainable
+                                     */
+                                    removeIndex: function (index) {
+                                        if (_items.length &gt; index) {
+                                            _items.splice(index, 1);
+                                        }
+                                        return this;
+                                    },
+                                    /** 
+                                     * Appends one or more items to the end of the array.
+                                     * @method append
+                                     * @returns  {ArrayManager} array manager.
+                                     * @chainable
+                                     */
+                                    append: function (/* items */) {
+                                        var newItems;
+                                        if (arguments.length === 1 &amp;&amp; (arguments[0] instanceof Array)) {
+                                            newItems = arguments[0];
+                                        } else if (arguments.length &gt; 0) {
+                                            newItems = arguments;
+                                        }
+                                        if (newItems) {
+                                            for (var i = 0; i &lt; newItems.length; ++i) {
+                                                _items.push(this.mapItem(newItems[i]));
+                                            }
+                                        }
+                                        return this;
+                                    },
+                                    /** 
+                                     * Merges the items into the array.
+                                     * @method merge
+                                     * @param    {Array}  items - items to merge from
+                                     * @returns  {ArrayManager} array manager.
+                                     * @chainable
+                                     */
+                                    merge: function (items) {
+                                        for (var index = 0; index &lt; items.length; ++index) {
+                                            var item = items[index];
+                                            if (item !== undefined) {
+                                                this.setIndex(index, item);
+                                            }
+                                        }
+                                        return this;
+                                    }
+                                });
+                                if (items) {
+                                    this.append(items);
+                                }
+                            },
+                            /** 
+                             * Optional mapping for items before adding to the array.
+                             * @method mapItem
+                             * @param    {Any}  item  -  item to map
+                             * @returns  {Any}  mapped item.
+                             */
+                            mapItem: function (item) { return item; }
+                        });
+                    
+                        /**
+                         * Maintains a simple doublely-linked list with indexing.
+                         * Indexes are partially ordered according to the order comparator.
+                         * @class IndexedList
+                         * @constructor
+                         * @param  {Function}  order  -  orders items
+                         * @extends Base
+                         */
+                        var IndexedList = Base.extend({
+                            constructor: function (order) {
+                                var _index = {};
+                                this.extend({
+                                    /** 
+                                     * Determines if list is empty.
+                                     * @method isEmpty
+                                     * @returns  {boolean}  true if list is empty, false otherwise.
+                                     */
+                                    isEmpty: function () {
+                                        return !this.head;
+                                    },
+                                    /** 
+                                     * Gets the node at an index.
+                                     * @method getIndex
+                                     * @param    {number} index - index of node
+                                     * @returns  {Any}  the node at index.
+                                     */
+                                    getIndex: function (index) {
+                                        return index &amp;&amp; _index[index];
+                                    },
+                                    /** 
+                                     * Inserts the node at an index.
+                                     * @method insert
+                                     * @param  {Any}     node   - node to insert
+                                     * @param  {number}  index  - index to insert at
+                                     */
+                                    insert: function (node, index) {
+                                        var indexedNode = this.getIndex(index),
+                                            insert      = indexedNode;
+                                        if (index) {
+                                            insert = insert || this.head;
+                                            while (insert &amp;&amp; order(node, insert) &gt;= 0) {
+                                                insert = insert.next;
+                                            }
+                                        }
+                                        if (insert) {
+                                            var prev    = insert.prev;
+                                            node.next   = insert;
+                                            node.prev   = prev;
+                                            insert.prev = node;
+                                            if (prev) {
+                                                prev.next = node;
+                                            }
+                                            if (this.head === insert) {
+                                                this.head = node;
+                                            }
+                                        } else {
+                                            delete node.next;
+                                            var tail = this.tail;
+                                            if (tail) {
+                                                node.prev = tail;
+                                                tail.next = node;
+                                            } else {
+                                                this.head = node;
+                                                delete node.prev;
+                                            }
+                                            this.tail = node;
+                                        }
+                                        if (index) {
+                                            node.index = index;
+                                            if (!indexedNode) {
+                                                _index[index] = node;
+                                            }
+                                        }
+                                    },
+                                    /** 
+                                     * Removes the node from the list.
+                                     * @method remove
+                                     * @param  {Any}  node  - node to remove
+                                     */
+                                    remove: function (node) {
+                                        var prev = node.prev,
+                                            next = node.next;
+                                        if (prev) {
+                                            if (next) {
+                                                prev.next = next;
+                                                next.prev = prev;
+                                            } else {
+                                                this.tail = prev;
+                                                delete prev.next;
+                                            }
+                                        } else if (next) {
+                                            this.head = next;
+                                            delete next.prev;
+                                        } else {
+                                            delete this.head;
+                                            delete this.tail;
+                                        }
+                                        var index = node.index;
+                                        if (this.getIndex(index) === node) {
+                                            if (next &amp;&amp; next.index === index) {
+                                                _index[index] = next;
+                                            } else {
+                                                delete _index[index];
+                                            }
+                                        }
+                                    }
+                                });
+                            }
+                        });
+                    
+                        /**
+                         * Facet choices for proxies.
+                         * @class Facet
+                         * @extends miruken.Enum
+                         */
+                        var Facet = Enum({
+                            /**
+                             * @property {string} Parameters
+                             */
+                            Parameters: &#x27;parameters&#x27;,
+                            /**
+                             * @property {string} Interceptors
+                             */        
+                            Interceptors: &#x27;interceptors&#x27;,
+                            /**
+                             * @property {string} InterceptorSelectors
+                             */                
+                            InterceptorSelectors: &#x27;interceptorSelectors&#x27;,
+                            /**
+                             * @property {string} Delegate
+                             */                        
+                            Delegate: &#x27;delegate&#x27;
+                            });
+                    
+                    
+                        /**
+                         * Base class for method interception.
+                         * @class Interceptor
+                         * @extends Base
+                         */
+                        var Interceptor = Base.extend({
+                            /**
+                             * @method intercept
+                             * @param    {Object} invocation  - invocation
+                             * @returns  {Any} invocation result
+                             */
+                            intercept: function (invocation) {
+                                return invocation.proceed();
+                            }
+                        });
+                    
+                        /**
+                         * Responsible for selecting which interceptors to apply to a method.
+                         * @class InterceptorSelector
+                         * @extends Base
+                         */
+                        var InterceptorSelector = Base.extend({
+                            /**
+                             * Description goes here
+                             * @method selectInterceptors
+                             * @param    {Type}    type         - type being intercepted
+                             * @param    {string}  method       - method name
+                             * @param    {Array}   interceptors - available interceptors
+                             * @returns  {Array} effective interceptors
+                             */
+                            selectInterceptors: function (type, method, interceptors) {
+                                return interceptors;
+                            }
+                        });
+                    
+                        /**
+                         * Builds proxy classes for interception.
+                         * @class ProxyBuilder
+                         * @extends Base
+                         */
+                        var ProxyBuilder = Base.extend({
+                            /**
+                             * Builds a proxy class for the supplied types.
+                             * @method buildProxy
+                             * @param    {Array}     ...types    - classes and protocols
+                             * @param    {Object}    options     - literal options
+                             * @returns  {Function}  proxy class.
+                             */
+                            buildProxy: function(types, options) {
+                                if (!(types instanceof Array)) {
+                                    throw new TypeError(&quot;ProxyBuilder requires an array of types to proxy.&quot;);
+                                }
+                                var classes   = Array2.filter(types, $isClass),
+                                    protocols = Array2.filter(types, $isProtocol);
+                                return _buildProxy(classes, protocols, options || {});
+                            }
+                        });
+                    
+                        function _buildProxy(classes, protocols, options) {
+                            var base  = options.baseType || classes.shift() || Base,
+                                proxy = base.extend(protocols.concat(classes), {
+                                constructor: function _(facets) {
+                                    var spec = _.spec || (_.spec = {});
+                                    spec.value = facets[Facet.InterceptorSelectors]
+                                    if (spec.value &amp;&amp; spec.value.length &gt; 0) {
+                                        Object.defineProperty(this, &#x27;selectors&#x27;, spec);
+                                    }
+                                    spec.value = facets[Facet.Interceptors];
+                                    if (spec.value &amp;&amp; spec.value.length &gt; 0) {
+                                        Object.defineProperty(this, &#x27;interceptors&#x27;, spec);
+                                    }
+                                    spec.value = facets[Facet.Delegate];
+                                    if (spec.value) {
+                                        spec.writable = true;
+                                        Object.defineProperty(this, &#x27;delegate&#x27;, spec);
+                                    }
+                                    ctor = _proxyMethod(&#x27;constructor&#x27;, this.base, base);
+                                    ctor.apply(this, facets[Facet.Parameters]);
+                                    delete spec.writable;
+                                    delete spec.value;
+                                },
+                                getInterceptors: function (source, method) {
+                                    var selectors = this.selectors;
+                                    return selectors 
+                                         ? Array2.reduce(selectors, function (interceptors, selector) {
+                                               return selector.selectInterceptors(source, method, interceptors);
+                                           }, this.interceptors)
+                                         : this.interceptors;
+                                },
+                                extend: _extendProxy
+                            }, {
+                                shouldProxy: options.shouldProxy
+                            });
+                            _proxyClass(proxy, protocols);
+                            proxy.extend = proxy.implement = _throwProxiesSealedExeception;
+                            return proxy;
+                        }
+                    
+                        function _throwProxiesSealedExeception()
+                        {
+                            throw new TypeError(&quot;Proxy classes are sealed and cannot be extended from.&quot;);
+                        }
+                    
+                        function _proxyClass(proxy, protocols) {
+                            var sources    = [proxy].concat(protocols),
+                                proxyProto = proxy.prototype,
+                                proxied    = {};
+                            for (var i = 0; i &lt; sources.length; ++i) {
+                                var source      = sources[i],
+                                    sourceProto = source.prototype,
+                                    isProtocol  = $isProtocol(source);
+                                for (key in sourceProto) {
+                                    if (!((key in proxied) || (key in _noProxyMethods))
+                                    &amp;&amp; (!proxy.shouldProxy || proxy.shouldProxy(key, source))) {
+                                        var descriptor = _getPropertyDescriptor(sourceProto, key);
+                                        if (&#x27;value&#x27; in descriptor) {
+                                            var member = isProtocol ? undefined : descriptor.value;
+                                            if ($isNothing(member) || $isFunction(member)) {
+                                                proxyProto[key] = _proxyMethod(key, member, proxy);
+                                            }
+                                            proxied[key] = true;
+                                        } else if (isProtocol) {
+                                            var cname = key.charAt(0).toUpperCase() + key.slice(1),
+                                                get   = &#x27;get&#x27; + cname,
+                                                set   = &#x27;set&#x27; + cname,
+                                                spec  = _proxyClass.spec || (_proxyClass.spec = {
+                                                    enumerable: true
+                                                });
+                                            spec.get = function (get) {
+                                                var proxyGet;
+                                                return function () {
+                                                    if (get in this) {
+                                                        return (this[get]).call(this);
+                                                    }
+                                                    if (!proxyGet) {
+                                                        proxyGet = _proxyMethod(get, undefined, proxy);
+                                                    }
+                                                    return proxyGet.call(this);
+                                                }
+                                            }(get);
+                                            spec.set = function (set) {
+                                                var proxySet;
+                                                return function (value) {
+                                                    if (set in this) {
+                                                        return (this[set]).call(this, value);
+                                                    }
+                                                    if (!proxySet) {
+                                                        proxySet = _proxyMethod(set, undefined, proxy);
+                                                    }
+                                                    return proxySet.call(this, value);
+                                                }
+                                            }(set);
+                                            Object.defineProperty(proxy.prototype, key, spec);
+                                            proxied[key] = true;
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                        
+                        function _proxyMethod(key, method, source) {
+                            var spec = _proxyMethod.spec || (_proxyMethod.spec = {}),
+                                interceptors;
+                            function methodProxy() {
+                                var _this    = this,
+                                    delegate = this.delegate,
+                                    idx      = -1;
+                                if (!interceptors) {
+                                    interceptors = this.getInterceptors(source, key);
+                                }
+                                var invocation = {
+                                    args: Array.prototype.slice.call(arguments),
+                                    useDelegate: function (value) {
+                                        delegate = value; 
+                                    },
+                                    replaceDelegate: function (value) {
+                                        _this.delegate = delegate = value;
+                                    },
+                                    proceed: function () {
+                                        ++idx;
+                                        if (interceptors &amp;&amp; idx &lt; interceptors.length) {
+                                            var interceptor = interceptors[idx];
+                                            return interceptor.intercept(invocation);
+                                        }
+                                        if (delegate) {
+                                            var delegateMethod = delegate[key];
+                                            if ($isFunction(delegateMethod)) {
+                                                return delegateMethod.apply(delegate, this.args);
+                                            }
+                                        } else if (method) {
+                                            return method.apply(_this, this.args);
+                                        }
+                                        throw new Error(format(
+                                            &quot;Interceptor cannot proceed without a class or delegate method &#x27;%1&#x27;.&quot;, key));
+                                    }
+                                };
+                                spec.value = key;
+                                Object.defineProperty(invocation, &#x27;method&#x27;, spec);
+                                spec.value = source;
+                                Object.defineProperty(invocation, &#x27;source&#x27;, spec);
+                                delete spec.value;
+                                spec.get = function () {
+                                    if (interceptors &amp;&amp; (idx + 1 &lt; interceptors.length)) {
+                                        return true;
+                                    }
+                                    if (delegate) {
+                                        return $isFunction(delegate(key));
+                                    }
+                                    return !!method;
+                                };
+                                Object.defineProperty(invocation, &#x27;canProceed&#x27;, spec);
+                                delete spec.get;
+                                return invocation.proceed();
+                            }
+                            methodProxy.baseMethod = method;
+                            return methodProxy;
+                        }
+                        
+                        function _extendProxy() {
+                            var proxy     = this.constructor,
+                                clazz     = proxy.prototype,
+                                overrides = (arguments.length === 1) ? arguments[0] : {};
+                            if (arguments.length &gt;= 2) {
+                                overrides[arguments[0]] = arguments[1];
+                            }
+                            for (methodName in overrides) {
+                                if (!(methodName in _noProxyMethods) &amp;&amp; 
+                                    (!proxy.shouldProxy || proxy.shouldProxy(methodName, clazz))) {
+                                    var method = this[methodName];
+                                    if (method &amp;&amp; method.baseMethod) {
+                                        this[methodName] = method.baseMethod;
+                                    }
+                                    this.base(methodName, overrides[methodName]);
+                                    this[methodName] = _proxyMethod(methodName, this[methodName], clazz);
+                                }
+                            }
+                            return this;
+                        }
+                    
+                        var _noProxyMethods = {
+                            base: true, extend: true, constructor: true, conformsTo: true,
+                            getInterceptors: true, getDelegate: true, setDelegate: true
+                        };
+                    
+                        Package.implement({
+                            export: function (name, member) {
+                                this.addName(name, member);
+                            },
+                            getProtocols: function (cb) {
+                                _listContents(this, cb, $isProtocol);
+                            },
+                            getClasses: function (cb) {
+                                _listContents(this, cb, function (member, memberName) {
+                                    return $isClass(member) &amp;&amp; (memberName != &quot;constructor&quot;);
+                                });
+                            },
+                            getPackages: function (cb) {
+                                _listContents(this, cb, function (member, memberName) {
+                                    return (member instanceof Package) &amp;&amp; (memberName != &quot;parent&quot;);
+                                });
+                            }
+                        });
+                    
+                        function _listContents(package, cb, filter) {
+                            if ($isFunction(cb)) {
+                                for (memberName in package) {
+                                    var member = package[memberName];
+                                    if (!filter || filter(member, memberName)) {
+                                        cb({ member: member, name: memberName});
+                                    }
+                                }
+                            }
+                        }
+                    
+                        /**
+                         * Determines if target is a protocol.
+                         * @method $isProtocol
+                         * @param    {Any}     protocol  - target to test
+                         * @returns  {boolean} true if a protocol.
+                         * @for miruken.$
+                         */
+                        var $isProtocol = Protocol.isProtocol;
+                    
+                        /**
+                         * Determines if target is a class.
+                         * @method $isClass
+                         * @param    {Any}     clazz  - class to test
+                         * @returns  {boolean} true if a class (and not a protocol).
+                         */
+                        function $isClass(clazz) {
+                            return clazz &amp;&amp; (clazz.prototype instanceof Base) &amp;&amp; !$isProtocol(clazz);
+                        }
+                    
+                        /**
+                         * Gets the class the instance belongs to.
+                         * @method $classOf
+                         * @param    {Object}  instance  - object
+                         * @returns  {Function} class of instance. 
+                         */
+                        function $classOf(instance) {
+                            return instance &amp;&amp; instance.constructor;
+                        }
+                    
+                        /**
+                         * Gets the classes superclass.
+                         * @method $ancestorOf
+                         * @param    {Function} clazz  - class
+                         * @returns  {Function} ancestor of class. 
+                         */
+                        function $ancestorOf(clazz) {
+                            return clazz &amp;&amp; clazz.ancestor;
+                        }
+                    
+                        /**
+                         * Determines if target is a string.
+                         * @method $isString
+                         * @param    {Any}     str  - string to test
+                         * @returns  {boolean} true if a string.
+                         */
+                        function $isString(str) {
+                            return typeOf(str)  === &#x27;string&#x27;;
+                        }
+                    
+                        /**
+                         * Determines if the target is a function.
+                         * @method $isFunction
+                         * @param    {Any}     fn  - function to test
+                         * @returns  {boolean} true if a function.
+                         */
+                        function $isFunction(fn) {
+                            return fn instanceof Function;
+                        }
+                    
+                        /**
+                         * Determines if target is an object.
+                         * @method $isObject
+                         * @param    {Any}     obj  - object to test
+                         * @returns  {boolean} true if an object.
+                         */
+                        function $isObject(obj) {
+                            return obj === Object(obj);
+                        }
+                    
+                        /**
+                         * Determines if target is a promise.
+                         * @method $isPromise
+                         * @param    {Any}     promise  - promise to test
+                         * @returns  {boolean} true if a promise. 
+                         */
+                        function $isPromise(promise) {
+                            return promise &amp;&amp; $isFunction(promise.then);
+                        }
+                    
+                        /**
+                         * Determines if value is null or undefined.
+                         * @method $isNothing
+                         * @param    {Any}     value  - value to test
+                         * @returns  {boolean} true if value null or undefined.
+                         */
+                        function $isNothing(value) {
+                            return (value === undefined || value === null);
+                        }
+                    
+                        /**
+                         * Description goes here
+                         * @method $isSomething
+                         * @param    {Any}     value  - value to test
+                         * @returns  {boolean} true if value not null or undefined.
+                         */
+                        function $isSomething(value) {
+                            return !$isNothing(value);
+                        }
+                    
+                        /**
+                         * Returns a function that returns value.
+                         * @method $lift
+                         * @param    {Any}      value  - any value
+                         * @returns  {Function} function that returns value.
+                         */
+                        function $lift(value) {
+                            return function() { return value; };
+                        }
+                    
+                        /**
+                         * Throttles a function over a time period.
+                         * @method $debounce
+                         * @param    {Function} func                - function to throttle
+                         * @param    {int}      wait                - time (ms) to throttle func
+                         * @param    {boolean}  immediate           - if true, trigger func early
+                         * @param    {Any}      defaultReturnValue  - value to return when throttled
+                         * @returns  {Function} throttled function
+                         */
+                        function $debounce(func, wait, immediate, defaultReturnValue) {
+                            var timeout;
+                            return function () {
+                                var context = this, args = arguments;
+                                var later = function () {
+                                    timeout = null;
+                                    if (!immediate) {
+                                        return func.apply(context, args);
+                                    }
+                                };
+                                var callNow = immediate &amp;&amp; !timeout;
+                                clearTimeout(timeout);
+                                timeout = setTimeout(later, wait);
+                                if (callNow) {
+                                    return func.apply(context, args);
+                                }
+                                return defaultReturnValue;
+                            };
+                        };
+                        
+                        function _getPropertyDescriptor(object, key) {
+                            var source = object, descriptor;
+                            while (source &amp;&amp; !(
+                                descriptor = Object.getOwnPropertyDescriptor(source, key))
+                                  ) source = Object.getPrototypeOf(source);
+                            return descriptor;
+                        }
+                    
+                        /**
+                         * Enhances Functions to create instances.
+                         * @method new
+                         * @for Function
+                         */
+                        if (Function.prototype.new === undefined)
+                            Function.prototype.new = function () {
+                                var args        = arguments,
+                                    constructor = this;
+                                function Wrapper () { constructor.apply(this, args); }
+                                Wrapper.prototype  = constructor.prototype;
+                                return new Wrapper;
+                            };
+                    
+                        if (typeof module !== &#x27;undefined&#x27; &amp;&amp; module.exports) {
+                            module.exports = exports = miruken;
+                        }
+                    
+                        global.miruken = miruken;
+                        global.Miruken = Miruken;
+                    
+                        eval(this.exports);
+                    
+                    }
+                    
+                        </pre>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
