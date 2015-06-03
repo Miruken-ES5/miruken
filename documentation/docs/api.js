@@ -97,6 +97,7 @@ YUI.add("yuidoc-meta", function(Y) {
         "miruken.mvc.MasterDetail",
         "miruken.mvc.MasterDetailAware",
         "miruken.mvc.Model",
+        "miruken.mvc.ViewRegion",
         "miruken.ng.Directive",
         "miruken.ng.Runner",
         "miruken.ng.UseModelValidation",
@@ -119,6 +120,7 @@ YUI.add("yuidoc-meta", function(Y) {
         "ioc",
         "miruken",
         "mvc",
+        "ng",
         "validate"
     ],
     "allModules": [
@@ -156,6 +158,11 @@ YUI.add("yuidoc-meta", function(Y) {
             "displayName": "mvc",
             "name": "mvc",
             "description": "Package providing Model-View-Controller abstractions.<br/>\nRequires the {{#crossLinkModule \"miruken\"}}{{/crossLinkModule}},\n{{#crossLinkModule \"callback\"}}{{/crossLinkModule}},\n{{#crossLinkModule \"context\"}}{{/crossLinkModule}} and \n{{#crossLinkModule \"validate\"}}{{/crossLinkModule}} modules."
+        },
+        {
+            "displayName": "ng",
+            "name": "ng",
+            "description": "Package providing [AngularJS](https://angularjs.org) integration.<br/>\nRequires the {{#crossLinkModule \"miruken\"}}{{/crossLinkModule}},\n{{#crossLinkModule \"callback\"}}{{/crossLinkModule}},\n{{#crossLinkModule \"context\"}}{{/crossLinkModule}},\n{{#crossLinkModule \"validate\"}}{{/crossLinkModule}},\n{{#crossLinkModule \"error\"}}{{/crossLinkModule}} and\n{{#crossLinkModule \"ioc\"}}{{/crossLinkModule}} modules."
         },
         {
             "displayName": "validate",

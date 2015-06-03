@@ -118,6 +118,7 @@ projectAssets: ../assets
                             <li><a href="../classes/miruken.mvc.MasterDetail.html">miruken.mvc.MasterDetail</a></li>
                             <li><a href="../classes/miruken.mvc.MasterDetailAware.html">miruken.mvc.MasterDetailAware</a></li>
                             <li><a href="../classes/miruken.mvc.Model.html">miruken.mvc.Model</a></li>
+                            <li><a href="../classes/miruken.mvc.ViewRegion.html">miruken.mvc.ViewRegion</a></li>
                             <li><a href="../classes/miruken.ng.Directive.html">miruken.ng.Directive</a></li>
                             <li><a href="../classes/miruken.ng.Runner.html">miruken.ng.Runner</a></li>
                             <li><a href="../classes/miruken.ng.UseModelValidation.html">miruken.ng.UseModelValidation</a></li>
@@ -149,6 +150,7 @@ projectAssets: ../assets
                             <li><a href="../modules/ioc.html">ioc</a></li>
                             <li><a href="../modules/miruken.html">miruken</a></li>
                             <li><a href="../modules/mvc.html">mvc</a></li>
+                            <li><a href="../modules/ng.html">ng</a></li>
                             <li><a href="../modules/validate.html">validate</a></li>
                         </ul>
                     </div>
@@ -183,11 +185,12 @@ projectAssets: ../assets
         <div class="apidocs">
             <div id="docs-main">
                 <div class="content">
-                    <h1 class="file-heading">File: lib\angular\ng.js</h1>
+                    <h1 class="file-heading">File: lib/angular/ng.js</h1>
                     
                     <div class="file">
                         <pre class="code prettyprint linenums">
                     var miruken = require(&#x27;../miruken&#x27;);
+                                  require(&#x27;../ioc&#x27;);
                                   require(&#x27;../mvc&#x27;);
                     
                     new function () { // closure
@@ -197,6 +200,15 @@ projectAssets: ../assets
                         }
                     
                         /**
+                         * Package providing [AngularJS](https://angularjs.org) integration.&lt;br/&gt;
+                         * Requires the {{#crossLinkModule &quot;miruken&quot;}}{{/crossLinkModule}},
+                         * {{#crossLinkModule &quot;callback&quot;}}{{/crossLinkModule}},
+                         * {{#crossLinkModule &quot;context&quot;}}{{/crossLinkModule}},
+                         * {{#crossLinkModule &quot;validate&quot;}}{{/crossLinkModule}},
+                         * {{#crossLinkModule &quot;error&quot;}}{{/crossLinkModule}} and
+                         * {{#crossLinkModule &quot;ioc&quot;}}{{/crossLinkModule}} modules.
+                         * @module miruken
+                         * @submodule ng
                          * @namespace miruken.ng
                          */
                         var ng = new base2.Package(this, {
@@ -220,17 +232,22 @@ projectAssets: ../assets
                         angular.module(&#x27;ng&#x27;).run([&#x27;$rootScope&#x27;, &#x27;$injector&#x27;, _instrumentScopes]);
                     
                         /**
-                         * Description goes here
+                         * Marks a class to be called during the run phase of an Angular module setup.&lt;br/&gt;
+                         * See [Angular Module Loading &amp; Dependencies](https://docs.angularjs.org/guide/module)
                          * @class Runner
                          * @constructor
                          * @extends Base     
                          */
                         var Runner = Base.extend({
+                            /**
+                             * Executed during the run phase of an Angular module.
+                             * @method run
+                             */            
                             run: function () {}
                         });
                     
                         /**
-                         * Description goes here
+                         * Marks a class 
                          * @class Directive
                          * @constructor
                          * @extends Base     

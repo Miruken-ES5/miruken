@@ -118,6 +118,7 @@ projectAssets: ../assets
                             <li><a href="../classes/miruken.mvc.MasterDetail.html">miruken.mvc.MasterDetail</a></li>
                             <li><a href="../classes/miruken.mvc.MasterDetailAware.html">miruken.mvc.MasterDetailAware</a></li>
                             <li><a href="../classes/miruken.mvc.Model.html">miruken.mvc.Model</a></li>
+                            <li><a href="../classes/miruken.mvc.ViewRegion.html">miruken.mvc.ViewRegion</a></li>
                             <li><a href="../classes/miruken.ng.Directive.html">miruken.ng.Directive</a></li>
                             <li><a href="../classes/miruken.ng.Runner.html">miruken.ng.Runner</a></li>
                             <li><a href="../classes/miruken.ng.UseModelValidation.html">miruken.ng.UseModelValidation</a></li>
@@ -149,6 +150,7 @@ projectAssets: ../assets
                             <li><a href="../modules/ioc.html">ioc</a></li>
                             <li><a href="../modules/miruken.html">miruken</a></li>
                             <li><a href="../modules/mvc.html">mvc</a></li>
+                            <li><a href="../modules/ng.html">ng</a></li>
                             <li><a href="../modules/validate.html">validate</a></li>
                         </ul>
                     </div>
@@ -183,7 +185,7 @@ projectAssets: ../assets
         <div class="apidocs">
             <div id="docs-main">
                 <div class="content">
-                    <h1 class="file-heading">File: lib\mvc\mvc.js</h1>
+                    <h1 class="file-heading">File: lib/mvc/mvc.js</h1>
                     
                     <div class="file">
                         <pre class="code prettyprint linenums">
@@ -209,12 +211,10 @@ projectAssets: ../assets
                             version: miruken.version,
                             parent:  miruken,
                             imports: &quot;miruken,miruken.callback,miruken.context,miruken.validate&quot;,
-                            exports: &quot;Model,Controller,MasterDetail,MasterDetailAware,$root&quot;
+                            exports: &quot;Model,ViewRegion,Controller,MasterDetail,MasterDetailAware&quot;
                         });
                     
                         eval(this.imports);
-                    
-                        var $root = $createModifier();
                     
                         /**
                          * Base class for modelling concepts using one or more 
@@ -343,13 +343,28 @@ projectAssets: ../assets
                         });
                     
                         /**
+                         * Protocol representing a region on the screen where a controller can be rendered.
+                         * @class ViewRegion
+                         * @extends StrictProtocol
+                         */
+                        var ViewRegion = StrictProtocol.extend({
+                            /**
+                             * Renders the controller in the view region.
+                             * @method presentController
+                             * @param   {miruken.mvc.Controller} controller  -  controller
+                             * @returns {Promise} promise when rendering complete.
+                             */                                        
+                            presentController: function (controller) {}
+                        });
+                        
+                        /**
                          * Base class for controllers.
                          * @class Controller
                          * @constructor
                          * @extends miruken.callback.CallbackHandler
                          * @uses miruken.context.Contextual
                          * @uses miruken.validate.Validating
-                         */    
+                         */
                         var Controller = CallbackHandler.extend(
                             $inferProperties, $contextual, $validateThat, Validating, {
                             validate: function (target, scope) {
