@@ -1,4 +1,4 @@
-<div id="api-list">
+<div id="api-list" class="panel">
     <h2 class="off-left">APIs</h2>
     <div id="api-tabview" class="tabview">
         <ul class="tabs">
@@ -11,9 +11,9 @@
         </div>
 
         <div id="api-tabview-panel">
-            <ul id="api-classes" class="apis classes">
+            <ul id="api-classes" class="apis classes no-bullet">
             {{#classes}}
-                <li><a href="{{../projectRoot}}classes/{{name}}.html">{{displayName}}</a></li>
+                <li><a class="subheader" href="{{../projectRoot}}classes/{{name}}.html">{{displayName}}</a></li>
             {{/classes}}
             </ul>
 
