@@ -3812,12 +3812,17 @@ new function () { // closure
      */
     var axisControl = {
         axis: function (axis) {
-            var context   = this,
-                traversal = pcopy(context);
-            traversal.handle = function (callback, greedy, composer) {
-                return context.handleAxis(axis, callback, greedy, composer);
-            };
-            return traversal;
+            var context = this;
+            return pcopy(this).extend({
+                handle: function (callback, greedy, composer) {
+                    return (callback instanceof Composition)
+                         ? base.handle(callback, greedy, composer)
+                         : this.handleAxis(axis, callback, greedy, composer);
+                },
+                equals: function (other) {
+                    return (this === other) || (other === context);
+                }
+            });
         }},
         applyAxis   = axisControl.axis,
         axisChoices = Array2.combine(TraversingAxis.names, TraversingAxis.values);
@@ -4351,7 +4356,7 @@ new function () { // closure
         } else {
             var self = this;
             Traversal.levelOrder(this, function (node) {
-                if (node != self) {
+                if (!$equals(self, node)) {
                     return visitor.call(context, node);
                 }
             }, context);
@@ -4364,7 +4369,7 @@ new function () { // closure
         } else {
             var self = this;
             Traversal.reverseLevelOrder(this, function (node) {
-                if (node != self) {
+                if (!$equals(self, node)) {
                     return visitor.call(context, node);
                 }
             }, context);
@@ -4381,7 +4386,7 @@ new function () { // closure
                 var children = parent.getChildren();
                 for (var i = 0; i < children.length; ++i) {
                     var sibling = children[i];
-                    if (sibling != self && visitor.call(context, sibling)) {
+                    if (!$equals(self, sibling) && visitor.call(context, sibling)) {
                         return;
                     }
                 }
@@ -4391,7 +4396,7 @@ new function () { // closure
             }
         }
     }
-
+    
     /**
      * Helper class for traversing a graph.
      * @static
@@ -6217,7 +6222,7 @@ new function () { // closure
     var miruken = new base2.Package(this, {
         name:    "miruken",
         version: "1.0",
-        exports: "Enum,Variance,Protocol,StrictProtocol,Delegate,Miruken,MetaStep,MetaMacro,Disposing,DisposingMixin,Invoking,Parenting,Starting,Startup,Facet,Interceptor,InterceptorSelector,ProxyBuilder,Modifier,ArrayManager,IndexedList,$isProtocol,$isClass,$classOf,$ancestorOf,$isString,$isFunction,$isObject,$isPromise,$isNothing,$isSomething,$using,$lift,$debounce,$eq,$use,$copy,$lazy,$eval,$every,$child,$optional,$promise,$instant,$createModifier,$properties,$inferProperties,$inheritStatic"
+        exports: "Enum,Variance,Protocol,StrictProtocol,Delegate,Miruken,MetaStep,MetaMacro,Disposing,DisposingMixin,Invoking,Parenting,Starting,Startup,Facet,Interceptor,InterceptorSelector,ProxyBuilder,Modifier,ArrayManager,IndexedList,$isProtocol,$isClass,$classOf,$ancestorOf,$isString,$isFunction,$isObject,$isPromise,$isNothing,$isSomething,$using,$lift,$equals,$debounce,$eq,$use,$copy,$lazy,$eval,$every,$child,$optional,$promise,$instant,$createModifier,$properties,$inferProperties,$inheritStatic"
     });
 
     eval(this.imports);
@@ -8127,7 +8132,7 @@ new function () { // closure
      * @returns  {boolean} true if value null or undefined.
      */
     function $isNothing(value) {
-        return (value === undefined || value === null);
+        return (value === undefined) || (value === null);
     }
 
     /**
@@ -8148,6 +8153,32 @@ new function () { // closure
      */
     function $lift(value) {
         return function() { return value; };
+    }
+
+    /**
+     * Determines whether the objects are considered equal.
+     * <p>
+     * Objects are considered equal if the objects are strictly equals (===) or
+     * either object has an equals method accepting another object that returns true.
+     * </p>
+     * @method $equals
+     * @param    {Any}     obj1  - first object
+     * @param    {Any}     obj2  - second object
+     * @returns  {boolean} true if the obejcts are considered equal, false otherwise.
+     */
+    function $equals(obj1, obj2) {
+        if (obj1 === obj2) {
+            return true;
+        }
+        if ($isNothing(obj1) || $isNothing(obj2)) {
+            return false;
+        }
+        if ($isFunction(obj1.equals)) {
+            return obj1.equals(obj2);
+        } else if ($isFunction(obj2.equals)) {
+            return obj2.equals(obj1);
+        }
+        return false;
     }
 
     /**
