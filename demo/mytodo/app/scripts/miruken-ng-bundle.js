@@ -16,7 +16,7 @@ new function () { // closure
     }
 
     /**
-     * Package providing [AngularJS](https://angularjs.org) integration.<br/>
+     * Package providing [Angular](https://angularjs.org) integration.<br/>
      * Requires the {{#crossLinkModule "miruken"}}{{/crossLinkModule}},
      * {{#crossLinkModule "callback"}}{{/crossLinkModule}},
      * {{#crossLinkModule "context"}}{{/crossLinkModule}},
@@ -8482,8 +8482,8 @@ new function () { // closure
     /**
      * Determines whether the objects are considered equal.
      * <p>
-     * Objects are considered equal if the objects are strictly equals (===) or
-     * either object has an equals method accepting another object that returns true.
+     * Objects are considered equal if the objects are strictly equal (===) or
+     * either object has an equals method accepting other object that returns true.
      * </p>
      * @method $equals
      * @param    {Any}     obj1  - first object
@@ -8493,9 +8493,6 @@ new function () { // closure
     function $equals(obj1, obj2) {
         if (obj1 === obj2) {
             return true;
-        }
-        if ($isNothing(obj1) || $isNothing(obj2)) {
-            return false;
         }
         if ($isFunction(obj1.equals)) {
             return obj1.equals(obj2);
