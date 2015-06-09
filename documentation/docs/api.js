@@ -162,7 +162,7 @@ YUI.add("yuidoc-meta", function(Y) {
         {
             "displayName": "ng",
             "name": "ng",
-            "description": "Package providing [AngularJS](https://angularjs.org) integration.<br/>\nRequires the {{#crossLinkModule \"miruken\"}}{{/crossLinkModule}},\n{{#crossLinkModule \"callback\"}}{{/crossLinkModule}},\n{{#crossLinkModule \"context\"}}{{/crossLinkModule}},\n{{#crossLinkModule \"validate\"}}{{/crossLinkModule}},\n{{#crossLinkModule \"error\"}}{{/crossLinkModule}} and\n{{#crossLinkModule \"ioc\"}}{{/crossLinkModule}} modules."
+            "description": "Package providing [Angular](https://angularjs.org) integration.<br/>\nRequires the {{#crossLinkModule \"miruken\"}}{{/crossLinkModule}},\n{{#crossLinkModule \"callback\"}}{{/crossLinkModule}},\n{{#crossLinkModule \"context\"}}{{/crossLinkModule}},\n{{#crossLinkModule \"validate\"}}{{/crossLinkModule}},\n{{#crossLinkModule \"error\"}}{{/crossLinkModule}} and\n{{#crossLinkModule \"ioc\"}}{{/crossLinkModule}} modules."
         },
         {
             "displayName": "validate",

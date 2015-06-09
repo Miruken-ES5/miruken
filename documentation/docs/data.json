@@ -6,8 +6,8 @@
         "url": ""
     },
     "files": {
-        "lib/angular/ng.js": {
-            "name": "lib/angular/ng.js",
+        "lib\\angular\\ng.js": {
+            "name": "lib\\angular\\ng.js",
             "modules": {
                 "ng": 1
             },
@@ -21,8 +21,8 @@
                 "miruken.ng": 1
             }
         },
-        "lib/ioc/config.js": {
-            "name": "lib/ioc/config.js",
+        "lib\\ioc\\config.js": {
+            "name": "lib\\ioc\\config.js",
             "modules": {
                 "ioc": 1
             },
@@ -40,8 +40,8 @@
                 "miruken.ioc": 1
             }
         },
-        "lib/ioc/ioc.js": {
-            "name": "lib/ioc/ioc.js",
+        "lib\\ioc\\ioc.js": {
+            "name": "lib\\ioc\\ioc.js",
             "modules": {},
             "classes": {
                 "miruken.ioc.$": 1,
@@ -72,8 +72,8 @@
                 "miruken.ioc": 1
             }
         },
-        "lib/mvc/mvc.js": {
-            "name": "lib/mvc/mvc.js",
+        "lib\\mvc\\mvc.js": {
+            "name": "lib\\mvc\\mvc.js",
             "modules": {
                 "mvc": 1
             },
@@ -89,8 +89,8 @@
                 "miruken.mvc": 1
             }
         },
-        "lib/validate/validate.js": {
-            "name": "lib/validate/validate.js",
+        "lib\\validate\\validate.js": {
+            "name": "lib\\validate\\validate.js",
             "modules": {
                 "validate": 1
             },
@@ -109,8 +109,8 @@
                 "miruken.validate": 1
             }
         },
-        "lib/validate/validatejs.js": {
-            "name": "lib/validate/validatejs.js",
+        "lib\\validate\\validatejs.js": {
+            "name": "lib\\validate\\validatejs.js",
             "modules": {},
             "classes": {
                 "miruken.validate.$": 1,
@@ -125,8 +125,8 @@
                 "miruken.validate": 1
             }
         },
-        "lib/callback.js": {
-            "name": "lib/callback.js",
+        "lib\\callback.js": {
+            "name": "lib\\callback.js",
             "modules": {
                 "callback": 1
             },
@@ -163,8 +163,8 @@
                 "miruken.callback": 1
             }
         },
-        "lib/context.js": {
-            "name": "lib/context.js",
+        "lib\\context.js": {
+            "name": "lib\\context.js",
             "modules": {
                 "context": 1
             },
@@ -186,8 +186,8 @@
                 "miruken.context": 1
             }
         },
-        "lib/error.js": {
-            "name": "lib/error.js",
+        "lib\\error.js": {
+            "name": "lib\\error.js",
             "modules": {
                 "error": 1
             },
@@ -202,8 +202,8 @@
                 "miruken.error": 1
             }
         },
-        "lib/graph.js": {
-            "name": "lib/graph.js",
+        "lib\\graph.js": {
+            "name": "lib\\graph.js",
             "modules": {
                 "graph": 1
             },
@@ -218,8 +218,8 @@
                 "miruken.graph": 1
             }
         },
-        "lib/miruken.js": {
-            "name": "lib/miruken.js",
+        "lib\\miruken.js": {
+            "name": "lib\\miruken.js",
             "modules": {
                 "miruken": 1
             },
@@ -414,7 +414,7 @@
                 "miruken": 1
             },
             "tag": "main",
-            "file": "lib/miruken.js",
+            "file": "lib\\miruken.js",
             "line": 1600,
             "description": "Package containing enhancements to the javascript language.",
             "itemtype": "main"
@@ -434,9 +434,9 @@
             },
             "module": "miruken",
             "namespace": "",
-            "file": "lib/angular/ng.js",
+            "file": "lib\\angular\\ng.js",
             "line": 66,
-            "description": "Package providing [AngularJS](https://angularjs.org) integration.<br/>\nRequires the {{#crossLinkModule \"miruken\"}}{{/crossLinkModule}},\n{{#crossLinkModule \"callback\"}}{{/crossLinkModule}},\n{{#crossLinkModule \"context\"}}{{/crossLinkModule}},\n{{#crossLinkModule \"validate\"}}{{/crossLinkModule}},\n{{#crossLinkModule \"error\"}}{{/crossLinkModule}} and\n{{#crossLinkModule \"ioc\"}}{{/crossLinkModule}} modules."
+            "description": "Package providing [Angular](https://angularjs.org) integration.<br/>\nRequires the {{#crossLinkModule \"miruken\"}}{{/crossLinkModule}},\n{{#crossLinkModule \"callback\"}}{{/crossLinkModule}},\n{{#crossLinkModule \"context\"}}{{/crossLinkModule}},\n{{#crossLinkModule \"validate\"}}{{/crossLinkModule}},\n{{#crossLinkModule \"error\"}}{{/crossLinkModule}} and\n{{#crossLinkModule \"ioc\"}}{{/crossLinkModule}} modules."
         },
         "ioc": {
             "name": "ioc",
@@ -477,7 +477,7 @@
             },
             "module": "miruken",
             "namespace": "",
-            "file": "lib/ioc/ioc.js",
+            "file": "lib\\ioc\\ioc.js",
             "line": 1013,
             "description": "Package providing Inversion-of-Control capabilities.<br/>\nRequires the {{#crossLinkModule \"miruken\"}}{{/crossLinkModule}},\n{{#crossLinkModule \"callback\"}}{{/crossLinkModule}},\n{{#crossLinkModule \"context\"}}{{/crossLinkModule}} and \n{{#crossLinkModule \"validate\"}}{{/crossLinkModule}} modules."
         },
@@ -498,7 +498,7 @@
             },
             "module": "miruken",
             "namespace": "",
-            "file": "lib/mvc/mvc.js",
+            "file": "lib\\mvc\\mvc.js",
             "line": 277,
             "description": "Package providing Model-View-Controller abstractions.<br/>\nRequires the {{#crossLinkModule \"miruken\"}}{{/crossLinkModule}},\n{{#crossLinkModule \"callback\"}}{{/crossLinkModule}},\n{{#crossLinkModule \"context\"}}{{/crossLinkModule}} and \n{{#crossLinkModule \"validate\"}}{{/crossLinkModule}} modules."
         },
@@ -526,7 +526,7 @@
             },
             "module": "miruken",
             "namespace": "",
-            "file": "lib/validate/validatejs.js",
+            "file": "lib\\validate\\validatejs.js",
             "line": 121,
             "description": "Package providing validation support.<br/>\nRequires the {{#crossLinkModule \"miruken\"}}{{/crossLinkModule}} and\n{{#crossLinkModule \"callback\"}}{{/crossLinkModule}} modules."
         },
@@ -569,7 +569,7 @@
             },
             "module": "miruken",
             "namespace": "",
-            "file": "lib/callback.js",
+            "file": "lib\\callback.js",
             "line": 1067,
             "description": "Package providing message handling support.<br/>\nRequires the {{#crossLinkModule \"miruken\"}}{{/crossLinkModule}} module."
         },
@@ -597,7 +597,7 @@
             },
             "module": "miruken",
             "namespace": "",
-            "file": "lib/context.js",
+            "file": "lib\\context.js",
             "line": 373,
             "description": "Package providing contextual support.<br />\nRequires the {{#crossLinkModule \"miruken\"}}{{/crossLinkModule}},\n{{#crossLinkModule \"graph\"}}{{/crossLinkModule}} and \n{{#crossLinkModule \"callback\"}}{{/crossLinkModule}} modules."
         },
@@ -617,7 +617,7 @@
             },
             "module": "miruken",
             "namespace": "",
-            "file": "lib/error.js",
+            "file": "lib\\error.js",
             "line": 65,
             "description": "Package providing generalized error support.<br/>\nRequires the {{#crossLinkModule \"miruken\"}}{{/crossLinkModule}} and\n{{#crossLinkModule \"callback\"}}{{/crossLinkModule}} modules."
         },
@@ -637,7 +637,7 @@
             },
             "module": "miruken",
             "namespace": "",
-            "file": "lib/graph.js",
+            "file": "lib\\graph.js",
             "line": 274,
             "description": "Package containing graph traversal support."
         }
@@ -654,7 +654,7 @@
             "module": "miruken",
             "submodule": "ng",
             "namespace": "miruken.ng",
-            "file": "lib/angular/ng.js",
+            "file": "lib\\angular\\ng.js",
             "line": 43,
             "description": "Marks a class to be called during the run phase of an Angular module setup.<br/>\nSee [Angular Module Loading & Dependencies](https://docs.angularjs.org/guide/module)",
             "is_constructor": 1,
@@ -671,7 +671,7 @@
             "module": "miruken",
             "submodule": "ng",
             "namespace": "miruken.ng",
-            "file": "lib/angular/ng.js",
+            "file": "lib\\angular\\ng.js",
             "line": 58,
             "description": "Marks a class",
             "is_constructor": 1,
@@ -688,7 +688,7 @@
             "module": "miruken",
             "submodule": "ng",
             "namespace": "miruken.ng",
-            "file": "lib/angular/ng.js",
+            "file": "lib\\angular\\ng.js",
             "line": 66,
             "description": "Description goes here",
             "is_constructor": 1,
@@ -705,7 +705,7 @@
             "module": "miruken",
             "submodule": "ioc",
             "namespace": "miruken.ioc",
-            "file": "lib/ioc/ioc.js",
+            "file": "lib\\ioc\\ioc.js",
             "line": 9,
             "description": "Package providing Inversion-of-Control capabilities.<br/>\nRequires the {{#crossLinkModule \"miruken\"}}{{/crossLinkModule}},\n{{#crossLinkModule \"callback\"}}{{/crossLinkModule}},\n{{#crossLinkModule \"context\"}}{{/crossLinkModule}} and \n{{#crossLinkModule \"validate\"}}{{/crossLinkModule}} modules."
         },
@@ -720,7 +720,7 @@
             "module": "miruken",
             "submodule": "ioc",
             "namespace": "miruken.ioc",
-            "file": "lib/ioc/config.js",
+            "file": "lib\\ioc\\config.js",
             "line": 23,
             "description": "Base class for installing one or more components into a \n{{#crossLink \"miruken.ioc.Container\"}}{{/crossLink}}.",
             "extends": "Base",
@@ -739,7 +739,7 @@
             "module": "miruken",
             "submodule": "ioc",
             "namespace": "miruken.ioc",
-            "file": "lib/ioc/config.js",
+            "file": "lib\\ioc\\config.js",
             "line": 34,
             "description": "Fluent builder for specifying source of components.",
             "is_constructor": 1,
@@ -759,7 +759,7 @@
             "module": "miruken",
             "submodule": "ioc",
             "namespace": "miruken.ioc",
-            "file": "lib/ioc/config.js",
+            "file": "lib\\ioc\\config.js",
             "line": 89,
             "description": "Fluent builder for specifying a Package as a source of components.",
             "is_constructor": 1,
@@ -783,7 +783,7 @@
             "module": "miruken",
             "submodule": "ioc",
             "namespace": "miruken.ioc",
-            "file": "lib/ioc/config.js",
+            "file": "lib\\ioc\\config.js",
             "line": 111,
             "description": "Fluent builder for filtering a source of components.",
             "is_constructor": 1,
@@ -816,7 +816,7 @@
             "module": "miruken",
             "submodule": "ioc",
             "namespace": "miruken.ioc",
-            "file": "lib/ioc/config.js",
+            "file": "lib\\ioc\\config.js",
             "line": 219,
             "description": "Fluent builder for identifying component key(s).",
             "is_constructor": 1,
@@ -840,7 +840,7 @@
             "module": "miruken",
             "submodule": "ioc",
             "namespace": "miruken.ioc",
-            "file": "lib/ioc/ioc.js",
+            "file": "lib\\ioc\\ioc.js",
             "line": 38,
             "description": "Modifier to request container dependency.<br/>\nSee {{#crossLink \"miruken.ioc.Container\"}}{{/crossLink}}",
             "extends": "miruken.Modifier"
@@ -858,7 +858,7 @@
             "module": "miruken",
             "submodule": "ioc",
             "namespace": "miruken.ioc",
-            "file": "lib/ioc/ioc.js",
+            "file": "lib\\ioc\\ioc.js",
             "line": 53,
             "description": "Protocol for exposing container capabilities.",
             "extends": "miruken.StrictProtocol",
@@ -884,7 +884,7 @@
             "module": "miruken",
             "submodule": "ioc",
             "namespace": "miruken.ioc",
-            "file": "lib/ioc/ioc.js",
+            "file": "lib\\ioc\\ioc.js",
             "line": 94,
             "description": "Protocol for registering components in a {{#crossLink \"miruken.ioc.Container\"}}{{/crossLink}}.",
             "extends": "miruken.Protocol"
@@ -902,7 +902,7 @@
             "module": "miruken",
             "submodule": "ioc",
             "namespace": "miruken.ioc",
-            "file": "lib/ioc/ioc.js",
+            "file": "lib\\ioc\\ioc.js",
             "line": 110,
             "description": "Protocol for applying policies to a {{#crossLink \"miruken.ioc.ComponentModel\"}}{{/crossLink}}",
             "extends": "miruken.Protocol"
@@ -918,7 +918,7 @@
             "module": "miruken",
             "submodule": "ioc",
             "namespace": "miruken.ioc",
-            "file": "lib/ioc/ioc.js",
+            "file": "lib\\ioc\\ioc.js",
             "line": 124,
             "description": "DependencyModifiers flags enum",
             "extends": "miruken.Enum"
@@ -934,7 +934,7 @@
             "module": "miruken",
             "submodule": "ioc",
             "namespace": "miruken.ioc",
-            "file": "lib/ioc/ioc.js",
+            "file": "lib\\ioc\\ioc.js",
             "line": 182,
             "description": "Describes a component dependency.",
             "is_constructor": 1,
@@ -963,7 +963,7 @@
             "module": "miruken",
             "submodule": "ioc",
             "namespace": "miruken.ioc",
-            "file": "lib/ioc/ioc.js",
+            "file": "lib\\ioc\\ioc.js",
             "line": 255,
             "description": "Manages an array of dependencies.",
             "is_constructor": 1,
@@ -987,7 +987,7 @@
             "module": "miruken",
             "submodule": "ioc",
             "namespace": "miruken.ioc",
-            "file": "lib/ioc/ioc.js",
+            "file": "lib\\ioc\\ioc.js",
             "line": 273,
             "description": "Extracts dependencies from a component model.",
             "extends": "Base"
@@ -1003,7 +1003,7 @@
             "module": "miruken",
             "submodule": "ioc",
             "namespace": "miruken.ioc",
-            "file": "lib/ioc/ioc.js",
+            "file": "lib\\ioc\\ioc.js",
             "line": 316,
             "description": "Describes a component to be managed by a {{#crossLink \"miruken.ioc.Container\"}}{{/crossLink}}.",
             "is_constructor": 1,
@@ -1020,7 +1020,7 @@
             "module": "miruken",
             "submodule": "ioc",
             "namespace": "miruken.ioc",
-            "file": "lib/ioc/ioc.js",
+            "file": "lib\\ioc\\ioc.js",
             "line": 486,
             "description": "Manages the creation and destruction of components.",
             "extends": "Base",
@@ -1041,7 +1041,7 @@
             "module": "miruken",
             "submodule": "ioc",
             "namespace": "miruken.ioc",
-            "file": "lib/ioc/ioc.js",
+            "file": "lib\\ioc\\ioc.js",
             "line": 536,
             "description": "Lifestyle for creating new untracked component instances.",
             "extends": "miruken.ioc.Lifestyle"
@@ -1057,7 +1057,7 @@
             "module": "miruken",
             "submodule": "ioc",
             "namespace": "miruken.ioc",
-            "file": "lib/ioc/ioc.js",
+            "file": "lib\\ioc\\ioc.js",
             "line": 543,
             "description": "Lifestyle for managing a single instance of a component.",
             "is_constructor": 1,
@@ -1082,7 +1082,7 @@
             "module": "miruken",
             "submodule": "ioc",
             "namespace": "miruken.ioc",
-            "file": "lib/ioc/ioc.js",
+            "file": "lib\\ioc\\ioc.js",
             "line": 590,
             "description": "Lifestyle for managing instances scoped to a {{#crossLink \"miruken.context.Context\"}}{{/crossLink}}.",
             "is_constructor": 1,
@@ -1099,7 +1099,7 @@
             "module": "miruken",
             "submodule": "ioc",
             "namespace": "miruken.ioc",
-            "file": "lib/ioc/ioc.js",
+            "file": "lib\\ioc\\ioc.js",
             "line": 665,
             "description": "Builds {{#crossLink \"miruken.ioc.ComponentModel\"}}{{/crossLink}} using fluent api.",
             "is_constructor": 1,
@@ -1119,7 +1119,7 @@
             "module": "miruken",
             "submodule": "ioc",
             "namespace": "miruken.ioc",
-            "file": "lib/ioc/ioc.js",
+            "file": "lib\\ioc\\ioc.js",
             "line": 852,
             "description": "Builds {{#crossLink \"miruken.ioc.ComponentModel\"}}{{/crossLink}} interceptors using fluent api.",
             "is_constructor": 1,
@@ -1156,7 +1156,7 @@
             "module": "miruken",
             "submodule": "ioc",
             "namespace": "miruken.ioc",
-            "file": "lib/ioc/ioc.js",
+            "file": "lib\\ioc\\ioc.js",
             "line": 921,
             "description": "Specialized {{#crossLink \"miruken.callback.Resolution\"}}{{/crossLink}}\nthat maintains a parent relationship for representing resolution chains.",
             "is_constructor": 1,
@@ -1190,7 +1190,7 @@
             "module": "miruken",
             "submodule": "ioc",
             "namespace": "miruken.ioc",
-            "file": "lib/ioc/ioc.js",
+            "file": "lib\\ioc\\ioc.js",
             "line": 972,
             "description": "Records a dependency resolution failure.",
             "is_constructor": 1,
@@ -1219,7 +1219,7 @@
             "module": "miruken",
             "submodule": "ioc",
             "namespace": "miruken.ioc",
-            "file": "lib/ioc/ioc.js",
+            "file": "lib\\ioc\\ioc.js",
             "line": 992,
             "description": "Identifies an invalid {{#crossLink \"miruken.ioc.ComponentModel\"}}{{/crossLink}}.",
             "params": [
@@ -1252,7 +1252,7 @@
             "module": "miruken",
             "submodule": "ioc",
             "namespace": "miruken.ioc",
-            "file": "lib/ioc/ioc.js",
+            "file": "lib\\ioc\\ioc.js",
             "line": 1013,
             "description": "Default Inversion of Control {{#crossLink \"miruken.ioc.Container\"}}{{/crossLink}}.",
             "is_constructor": 1,
@@ -1272,7 +1272,7 @@
             "module": "miruken",
             "submodule": "mvc",
             "namespace": "miruken.mvc",
-            "file": "lib/mvc/mvc.js",
+            "file": "lib\\mvc\\mvc.js",
             "line": 28,
             "description": "Base class for modelling concepts using one or more \n{{#crossLink \"miruken.$properties\"}}{{/crossLink}}\n<pre>\n   var Child = Model.extend({\n      $properties: {\n          firstName: { validate: { presence: true } },\n          lastNane:  { validate: { presence: true } },\n          sibling:   { map: Child },\n          age:       { validate {\n                           numericality: {\n                               onlyInteger:       true,\n                               lessThanOrEqualTo: 12\n                           }\n                     }}\n      }\n   })\n</pre>",
             "is_constructor": 1,
@@ -1297,7 +1297,7 @@
             "module": "miruken",
             "submodule": "mvc",
             "namespace": "miruken.mvc",
-            "file": "lib/mvc/mvc.js",
+            "file": "lib\\mvc\\mvc.js",
             "line": 154,
             "description": "Protocol representing a region on the screen where a controller can be rendered.",
             "extends": "StrictProtocol"
@@ -1313,7 +1313,7 @@
             "module": "miruken",
             "submodule": "mvc",
             "namespace": "miruken.mvc",
-            "file": "lib/mvc/mvc.js",
+            "file": "lib\\mvc\\mvc.js",
             "line": 169,
             "description": "Base class for controllers.",
             "is_constructor": 1,
@@ -1334,7 +1334,7 @@
             "module": "miruken",
             "submodule": "mvc",
             "namespace": "miruken.mvc",
-            "file": "lib/mvc/mvc.js",
+            "file": "lib\\mvc\\mvc.js",
             "line": 196,
             "description": "Protocol for managing master-detail relationships.",
             "extends": "miruken.Protocol"
@@ -1350,7 +1350,7 @@
             "module": "miruken",
             "submodule": "mvc",
             "namespace": "miruken.mvc",
-            "file": "lib/mvc/mvc.js",
+            "file": "lib\\mvc\\mvc.js",
             "line": 277,
             "description": "Protocol for receiving master-detail notifications.",
             "extends": "miruken.Protocol"
@@ -1366,7 +1366,7 @@
             "module": "miruken",
             "submodule": "validate",
             "namespace": "miruken.validate",
-            "file": "lib/validate/validatejs.js",
+            "file": "lib\\validate\\validatejs.js",
             "line": 9,
             "description": "Package providing validation support.<br/>\nRequires the {{#crossLinkModule \"miruken\"}}{{/crossLinkModule}} and\n{{#crossLinkModule \"callback\"}}{{/crossLinkModule}} modules."
         },
@@ -1385,7 +1385,7 @@
             "module": "miruken",
             "submodule": "validate",
             "namespace": "miruken.validate",
-            "file": "lib/validate/validate.js",
+            "file": "lib\\validate\\validate.js",
             "line": 33,
             "description": "Protocol for validating objects.",
             "extends": "miruken.Protocol"
@@ -1403,7 +1403,7 @@
             "module": "miruken",
             "submodule": "validate",
             "namespace": "miruken.validate",
-            "file": "lib/validate/validate.js",
+            "file": "lib\\validate\\validate.js",
             "line": 60,
             "description": "Protocol for validating objects strictly.",
             "extends": "miruken.StrictProtocol",
@@ -1422,7 +1422,7 @@
             "module": "miruken",
             "submodule": "validate",
             "namespace": "miruken.validate",
-            "file": "lib/validate/validate.js",
+            "file": "lib\\validate\\validate.js",
             "line": 68,
             "description": "Callback representing the validation of an object.",
             "is_constructor": 1,
@@ -1461,7 +1461,7 @@
             "module": "miruken",
             "submodule": "validate",
             "namespace": "miruken.validate",
-            "file": "lib/validate/validate.js",
+            "file": "lib\\validate\\validate.js",
             "line": 117,
             "description": "Captures structured validation errors.",
             "is_constructor": 1,
@@ -1478,7 +1478,7 @@
             "module": "miruken",
             "submodule": "validate",
             "namespace": "miruken.validate",
-            "file": "lib/validate/validate.js",
+            "file": "lib\\validate\\validate.js",
             "line": 246,
             "description": "CallbackHandler for performing validation.\n<p>\nOnce an object is validated, it will receive a **$validation** property containing the validation results.\n</p>",
             "extends": "miruken.callback.CallbackHandler",
@@ -1498,7 +1498,7 @@
             "module": "miruken",
             "submodule": "validate",
             "namespace": "miruken.validate",
-            "file": "lib/validate/validate.js",
+            "file": "lib\\validate\\validate.js",
             "line": 292,
             "description": "Metamacro for class-based validation.",
             "extends": "miruken.MetaMacro"
@@ -1514,7 +1514,7 @@
             "module": "miruken",
             "submodule": "validate",
             "namespace": "miruken.validate",
-            "file": "lib/validate/validatejs.js",
+            "file": "lib\\validate\\validatejs.js",
             "line": 46,
             "description": "Metamacro to register custom validators with [validate.js](http://validatejs.org).\n<pre>\n   var CustomValidators = Base.extend($registerValidators, {\n       uniqueUserName: [Database, function (db, userName) {\n           if (db.hasUserName(userName)) {\n              return \"UserName \" + userName + \" is already taken\";\n           }\n       }]\n   })\n</pre>\nwould register a uniqueUserName validator with a Database dependency.",
             "extends": "miruken.MetaMacro"
@@ -1530,7 +1530,7 @@
             "module": "miruken",
             "submodule": "validate",
             "namespace": "miruken.validate",
-            "file": "lib/validate/validatejs.js",
+            "file": "lib\\validate\\validatejs.js",
             "line": 104,
             "description": "Base class to define custom validators using\n{{#crossLink \"miruken.validate.$registerValidators\"}}{{/crossLink}}.\n<pre>\n   var CustomValidators = ValidationRegistry.extend({\n       creditCardNumber: function (cardNumber, options, key, attributes) {\n          // do the check...\n       }\n   })\n</pre>\nwould register a creditCardNumber validator function.",
             "is_constructor": 1,
@@ -1547,7 +1547,7 @@
             "module": "miruken",
             "submodule": "validate",
             "namespace": "miruken.validate",
-            "file": "lib/validate/validatejs.js",
+            "file": "lib\\validate\\validatejs.js",
             "line": 121,
             "description": "CallbackHandler for performing validation using [validate.js](http://validatejs.org)\n<p>\nClasses participate in validation by declaring **validate** constraints on properties.\n</p>\n<pre>\nvar Address = Base.extend({\n    $properties: {\n        line:    { <b>validate</b>: { presence: true } },\n        city:    { <b>validate</b>: { presence: true } },\n        state:   { \n            <b>validate</b>: {\n                presence: true,\n                length: { is: 2 }\n            }\n        },\n        zipcode: { \n            <b>validate</b>: {\n                presence: true,\n                length: { is: 5 }\n        }\n    }\n})\n</pre>",
             "extends": "miruken.callback.CallbackHandler"
@@ -1575,7 +1575,7 @@
             "module": "miruken",
             "submodule": "callback",
             "namespace": "miruken.callback",
-            "file": "lib/callback.js",
+            "file": "lib\\callback.js",
             "line": 50,
             "description": "Metamacro to process callback handler definitions.\n<pre>\n   var Bank = Base.extend(**$callbacks**, {\n       $handle: [\n           Deposit, function (deposit, composer) {\n               // perform the deposit\n           }\n       ]\n   })\n</pre>\nwould register a handler in the Bank class for Deposit callbacks.",
             "extends": "miruken.MetaMacro"
@@ -1591,7 +1591,7 @@
             "module": "miruken",
             "submodule": "callback",
             "namespace": "miruken.callback",
-            "file": "lib/callback.js",
+            "file": "lib\\callback.js",
             "line": 114,
             "description": "Captures the invocation of a method.",
             "is_constructor": 1,
@@ -1637,7 +1637,7 @@
             "module": "miruken",
             "submodule": "callback",
             "namespace": "miruken.callback",
-            "file": "lib/callback.js",
+            "file": "lib\\callback.js",
             "line": 252,
             "description": "Callback representing the invariant lookup of a key.",
             "is_constructor": 1,
@@ -1666,7 +1666,7 @@
             "module": "miruken",
             "submodule": "callback",
             "namespace": "miruken.callback",
-            "file": "lib/callback.js",
+            "file": "lib\\callback.js",
             "line": 298,
             "description": "Callback representing the deferred handling of another callback.",
             "is_constructor": 1,
@@ -1695,7 +1695,7 @@
             "module": "miruken",
             "submodule": "callback",
             "namespace": "miruken.callback",
-            "file": "lib/callback.js",
+            "file": "lib\\callback.js",
             "line": 343,
             "description": "Callback representing the covariant resolution of a key.",
             "is_constructor": 1,
@@ -1724,7 +1724,7 @@
             "module": "miruken",
             "submodule": "callback",
             "namespace": "miruken.callback",
-            "file": "lib/callback.js",
+            "file": "lib\\callback.js",
             "line": 389,
             "description": "Marks a callback as composable.",
             "is_constructor": 1,
@@ -1748,7 +1748,7 @@
             "module": "miruken",
             "submodule": "callback",
             "namespace": "miruken.callback",
-            "file": "lib/callback.js",
+            "file": "lib\\callback.js",
             "line": 411,
             "description": "Base class for handling arbitrary callbacks.<br/>\nSee {{#crossLink \"miruken.callback.$callbacks\"}}{{/crossLink}}",
             "is_constructor": 1,
@@ -1773,7 +1773,7 @@
             "module": "miruken",
             "submodule": "callback",
             "namespace": "miruken.callback",
-            "file": "lib/callback.js",
+            "file": "lib\\callback.js",
             "line": 509,
             "description": "Wraps all callbacks for composition and continues processing.",
             "is_constructor": 1,
@@ -1796,7 +1796,7 @@
             "module": "miruken",
             "submodule": "callback",
             "namespace": "miruken.callback",
-            "file": "lib/callback.js",
+            "file": "lib\\callback.js",
             "line": 536,
             "description": "Base class for all CallbackHandler decorators.<br/>\nSee [Decorator Pattern](http://en.wikipedia.org/wiki/Decorator_pattern)",
             "is_constructor": 1,
@@ -1820,7 +1820,7 @@
             "module": "miruken",
             "submodule": "callback",
             "namespace": "miruken.callback",
-            "file": "lib/callback.js",
+            "file": "lib\\callback.js",
             "line": 565,
             "description": "Represents a {{#crossLink \"miruken.callback.CallbackHandler\"}}{{/crossLink}} that can filter callbacks.",
             "is_constructor": 1,
@@ -1849,7 +1849,7 @@
             "module": "miruken",
             "submodule": "callback",
             "namespace": "miruken.callback",
-            "file": "lib/callback.js",
+            "file": "lib\\callback.js",
             "line": 605,
             "description": "Identifies a rejected callback.  This usually occurs from aspect processing.<br/>\nSee {{#crossLink \"miruken.callback.CallbackHandlerAspect\"}}{{/crossLink}}",
             "extends": "Error"
@@ -1865,7 +1865,7 @@
             "module": "miruken",
             "submodule": "callback",
             "namespace": "miruken.callback",
-            "file": "lib/callback.js",
+            "file": "lib\\callback.js",
             "line": 621,
             "description": "Represents a {{#crossLink \"miruken.callback.CallbackHandler\"}}{{/crossLink}}\nthat can apply pre/post actions.",
             "is_constructor": 1,
@@ -1899,7 +1899,7 @@
             "module": "miruken",
             "submodule": "callback",
             "namespace": "miruken.callback",
-            "file": "lib/callback.js",
+            "file": "lib\\callback.js",
             "line": 683,
             "description": "Represents a two-way {{#crossLink \"miruken.callback.CallbackHandler\"}}{{/crossLink}} path.",
             "is_constructor": 1,
@@ -1928,7 +1928,7 @@
             "module": "miruken",
             "submodule": "callback",
             "namespace": "miruken.callback",
-            "file": "lib/callback.js",
+            "file": "lib\\callback.js",
             "line": 728,
             "description": "Encapsulates zero or more {{#crossLink \"miruken.callback.CallbackHandler\"}}{{/crossLink}}.<br/>\nSee [Composite Pattern](http://en.wikipedia.org/wiki/Composite_pattern)",
             "is_constructor": 1,
@@ -1952,7 +1952,7 @@
             "module": "miruken",
             "submodule": "callback",
             "namespace": "miruken.callback",
-            "file": "lib/callback.js",
+            "file": "lib\\callback.js",
             "line": 804,
             "description": "{{#crossLink \"miruken.callback.CallbackHandler\"}}{{/crossLink}}\nthat tests a condition before handling callbacks.",
             "is_constructor": 1,
@@ -1981,7 +1981,7 @@
             "module": "miruken",
             "submodule": "callback",
             "namespace": "miruken.callback",
-            "file": "lib/callback.js",
+            "file": "lib\\callback.js",
             "line": 839,
             "description": "Shortcut for handling a callback.",
             "is_constructor": 1,
@@ -2010,7 +2010,7 @@
             "module": "miruken",
             "submodule": "callback",
             "namespace": "miruken.callback",
-            "file": "lib/callback.js",
+            "file": "lib\\callback.js",
             "line": 862,
             "description": "Shortcut for providing a callback.",
             "is_constructor": 1,
@@ -2039,7 +2039,7 @@
             "module": "miruken",
             "submodule": "callback",
             "namespace": "miruken.callback",
-            "file": "lib/callback.js",
+            "file": "lib\\callback.js",
             "line": 885,
             "description": "Shortcut for exposing a method as a\n{{#crossLink \"miruken.callback.CallbackHandler\"}}{{/crossLink}}.",
             "is_constructor": 1,
@@ -2068,7 +2068,7 @@
             "module": "miruken",
             "submodule": "callback",
             "namespace": "miruken.callback",
-            "file": "lib/callback.js",
+            "file": "lib\\callback.js",
             "line": 937,
             "description": "InvocationOptions flags enum",
             "extends": "miruken.Enum"
@@ -2084,7 +2084,7 @@
             "module": "miruken",
             "submodule": "callback",
             "namespace": "miruken.callback",
-            "file": "lib/callback.js",
+            "file": "lib\\callback.js",
             "line": 970,
             "description": "Captures invocation semantics.",
             "is_constructor": 1,
@@ -2108,7 +2108,7 @@
             "module": "miruken",
             "submodule": "callback",
             "namespace": "miruken.callback",
-            "file": "lib/callback.js",
+            "file": "lib\\callback.js",
             "line": 1031,
             "description": "Handles invocation semantics.",
             "is_constructor": 1,
@@ -2137,7 +2137,7 @@
             "module": "miruken",
             "submodule": "callback",
             "namespace": "miruken.callback",
-            "file": "lib/callback.js",
+            "file": "lib\\callback.js",
             "line": 1067,
             "description": "Delegates properties and methods to a callback handler using \n{{#crossLink \"miruken.callback.HandleMethod\"}}{{/crossLink}}.",
             "is_constructor": 1,
@@ -2161,7 +2161,7 @@
             "module": "miruken",
             "submodule": "context",
             "namespace": "miruken.context",
-            "file": "lib/context.js",
+            "file": "lib\\context.js",
             "line": 26,
             "description": "Represents the state of a {{#crossLink \"miruken.context.Context\"}}{{/crossLink}}.",
             "extends": "miruken.Enum"
@@ -2177,7 +2177,7 @@
             "module": "miruken",
             "submodule": "context",
             "namespace": "miruken.context",
-            "file": "lib/context.js",
+            "file": "lib\\context.js",
             "line": 49,
             "description": "Protocol for observing the lifecycle of\n{{#crossLink \"miruken.context.Context\"}}{{/crossLink}}.",
             "extends": "miruken.Protocol"
@@ -2193,7 +2193,7 @@
             "module": "miruken",
             "submodule": "context",
             "namespace": "miruken.context",
-            "file": "lib/context.js",
+            "file": "lib\\context.js",
             "line": 82,
             "description": "A Context represents the scope at a give point in time.<br/>\nIt has a beginning and an end and can handle callbacks as well as notify observers of lifecycle changes.<br/>\nIn addition, it maintains parent-child relationships and thus can participate in a hierarchy.",
             "is_constructor": 1,
@@ -2227,7 +2227,7 @@
             "module": "miruken",
             "submodule": "context",
             "namespace": "miruken.context",
-            "file": "lib/context.js",
+            "file": "lib\\context.js",
             "line": 286,
             "description": "Protocol to provide the minimal functionality to support contextual based operations.<br/>\nThis is an alternatve to the delegate model of communication, but with less coupling \nand ceremony.",
             "extends": "miruken.Protocol"
@@ -2243,7 +2243,7 @@
             "module": "miruken",
             "submodule": "context",
             "namespace": "miruken.context",
-            "file": "lib/context.js",
+            "file": "lib\\context.js",
             "line": 308,
             "description": "Mixin for {{#crossLink \"miruken.context.Contextual\"}}{{/crossLink}} implementation.",
             "uses": [
@@ -2262,7 +2262,7 @@
             "module": "miruken",
             "submodule": "context",
             "namespace": "miruken.context",
-            "file": "lib/context.js",
+            "file": "lib\\context.js",
             "line": 350,
             "description": "Metamacro to make classes contextual.<br/>\nSee {{#crossLink \"miruken.context.ContextualMixin\"}}{{/crossLink}}\n<pre>\n   var Controller = Base.extend($contextual, {\n      action: function () {}\n   })\n</pre>\nwould give the Controller class contextual support.",
             "is_constructor": 1,
@@ -2279,7 +2279,7 @@
             "module": "miruken",
             "submodule": "context",
             "namespace": "miruken.context",
-            "file": "lib/context.js",
+            "file": "lib\\context.js",
             "line": 373,
             "description": "Mixin for {{#crossLink \"miruken.context.Contextual\"}}{{/crossLink}} helper support.",
             "extends": "Module"
@@ -2309,7 +2309,7 @@
             "module": "miruken",
             "submodule": "error",
             "namespace": "miruken.error",
-            "file": "lib/error.js",
+            "file": "lib\\error.js",
             "line": 25,
             "description": "Protocol for handling and reporting errors.",
             "extends": "miruken.Protocol"
@@ -2325,7 +2325,7 @@
             "module": "miruken",
             "submodule": "error",
             "namespace": "miruken.error",
-            "file": "lib/error.js",
+            "file": "lib\\error.js",
             "line": 65,
             "description": "CallbackHandler for handling errors.",
             "extends": "miruken.callback.CallbackHandler",
@@ -2344,7 +2344,7 @@
             "module": "miruken",
             "submodule": "graph",
             "namespace": "miruken.graph",
-            "file": "lib/graph.js",
+            "file": "lib\\graph.js",
             "line": 21,
             "description": "TraversingAxis enum",
             "extends": "miruken.Enum"
@@ -2363,7 +2363,7 @@
             "module": "miruken",
             "submodule": "graph",
             "namespace": "miruken.graph",
-            "file": "lib/graph.js",
+            "file": "lib\\graph.js",
             "line": 94,
             "description": "Protocol for traversing an abitrary graph of objects.",
             "extends": "miruken.Protocol"
@@ -2381,7 +2381,7 @@
             "module": "miruken",
             "submodule": "graph",
             "namespace": "miruken.graph",
-            "file": "lib/graph.js",
+            "file": "lib\\graph.js",
             "line": 110,
             "description": "Mixin for Traversing functionality.",
             "uses": [
@@ -2400,7 +2400,7 @@
             "module": "miruken",
             "submodule": "graph",
             "namespace": "miruken.graph",
-            "file": "lib/graph.js",
+            "file": "lib\\graph.js",
             "line": 274,
             "description": "Helper class for traversing a graph.",
             "static": 1,
@@ -2416,7 +2416,7 @@
             "extension_for": [],
             "module": "miruken",
             "namespace": "miruken",
-            "file": "lib/miruken.js",
+            "file": "lib\\miruken.js",
             "line": 5,
             "description": "Package containing enhancements to the javascript language.",
             "mainName": "miruken",
@@ -2434,7 +2434,7 @@
             "extension_for": [],
             "module": "miruken",
             "namespace": "miruken",
-            "file": "lib/miruken.js",
+            "file": "lib\\miruken.js",
             "line": 1254,
             "description": "Class for annotating targets.",
             "params": [
@@ -2455,7 +2455,7 @@
             "extension_for": [],
             "module": "miruken",
             "namespace": "miruken",
-            "file": "lib/miruken.js",
+            "file": "lib\\miruken.js",
             "line": 84,
             "description": "Defines an enumeration.\n<pre>\n   var Color = Enum({\n       red:   1,\n       green: 2,\n       blue:  3\n   })\n</pre>",
             "is_constructor": 1,
@@ -2477,7 +2477,7 @@
             "extension_for": [],
             "module": "miruken",
             "namespace": "miruken",
-            "file": "lib/miruken.js",
+            "file": "lib\\miruken.js",
             "line": 116,
             "description": "Variance enum",
             "extends": "miruken.Enum"
@@ -2492,7 +2492,7 @@
             "extension_for": [],
             "module": "miruken",
             "namespace": "miruken",
-            "file": "lib/miruken.js",
+            "file": "lib\\miruken.js",
             "line": 139,
             "description": "Delegates properties and methods to another object.<br/>\nSee {{#crossLink \"miruken.Protocol\"}}{{/crossLink}}",
             "extends": "Base"
@@ -2507,7 +2507,7 @@
             "extension_for": [],
             "module": "miruken",
             "namespace": "miruken",
-            "file": "lib/miruken.js",
+            "file": "lib\\miruken.js",
             "line": 176,
             "description": "Delegates properties and methods to an obejct.",
             "is_constructor": 1,
@@ -2530,7 +2530,7 @@
             "extension_for": [],
             "module": "miruken",
             "namespace": "miruken",
-            "file": "lib/miruken.js",
+            "file": "lib\\miruken.js",
             "line": 211,
             "description": "Declares methods and properties independent of a class.\n<pre>\n   var Auditing = Protocol.extend({\n       $properties: {\n           level: undefined\n       },\n       record: function (activity) {}\n   })\n</pre>",
             "is_constructor": 1,
@@ -2560,7 +2560,7 @@
             "extension_for": [],
             "module": "miruken",
             "namespace": "miruken",
-            "file": "lib/miruken.js",
+            "file": "lib\\miruken.js",
             "line": 288,
             "description": "MetaStep enum",
             "extends": "Enum"
@@ -2575,7 +2575,7 @@
             "extension_for": [],
             "module": "miruken",
             "namespace": "miruken",
-            "file": "lib/miruken.js",
+            "file": "lib\\miruken.js",
             "line": 311,
             "description": "Provides a method to modify a class definition at runtime.",
             "extends": "Base"
@@ -2590,7 +2590,7 @@
             "extension_for": [],
             "module": "miruken",
             "namespace": "miruken",
-            "file": "lib/miruken.js",
+            "file": "lib\\miruken.js",
             "line": 349,
             "description": "Base class for all metadata.",
             "is_constructor": 1,
@@ -2614,7 +2614,7 @@
             "extension_for": [],
             "module": "miruken",
             "namespace": "miruken",
-            "file": "lib/miruken.js",
+            "file": "lib\\miruken.js",
             "line": 554,
             "description": "Represents metadata describing a class.",
             "is_constructor": 1,
@@ -2652,7 +2652,7 @@
             "extension_for": [],
             "module": "miruken",
             "namespace": "miruken",
-            "file": "lib/miruken.js",
+            "file": "lib\\miruken.js",
             "line": 647,
             "description": "Represents metadata describing an instance.",
             "is_constructor": 1,
@@ -2675,7 +2675,7 @@
             "extension_for": [],
             "module": "miruken",
             "namespace": "miruken",
-            "file": "lib/miruken.js",
+            "file": "lib\\miruken.js",
             "line": 778,
             "description": "Metamacro to proxy protocol methods through a delegate.<br/>\nSee {{#crossLink \"miruken.Protocol\"}}{{/crossLink}}",
             "extends": "miruken.MetaMacro"
@@ -2690,7 +2690,7 @@
             "extension_for": [],
             "module": "miruken",
             "namespace": "miruken",
-            "file": "lib/miruken.js",
+            "file": "lib\\miruken.js",
             "line": 838,
             "description": "Protocol base requiring conformance to match methods.",
             "is_constructor": 1,
@@ -2720,7 +2720,7 @@
             "extension_for": [],
             "module": "miruken",
             "namespace": "miruken",
-            "file": "lib/miruken.js",
+            "file": "lib\\miruken.js",
             "line": 852,
             "description": "Metamacro to define class properties.  This macro is automatically applied.\n<pre>\n   var Person = Base.extend({\n       $properties: {\n           firstName: '',\n           lastNane:  '',\n           fullName:  {\n               get: function () {\n                  return this.firstName + ' ' + this.lastName;\n               },\n               set: function (value) {\n                   var parts = value.split(' ');\n                   if (parts.length > 0) {\n                       this.firstName = parts[0];\n                   }\n                   if (parts.length > 1) {\n                       this.lastName = parts[1];\n                   }\n               }\n           },\n       }\n   })\n</pre>\nwould give the Person class a firstName and lastName property and a computed fullName.",
             "is_constructor": 1,
@@ -2745,7 +2745,7 @@
             "extension_for": [],
             "module": "miruken",
             "namespace": "miruken",
-            "file": "lib/miruken.js",
+            "file": "lib\\miruken.js",
             "line": 992,
             "description": "Metamacro to derive class properties from existng methods.\n<p>Currently getFoo, isFoo and setFoo conventions are recognized.</p>\n<pre>\n   var Person = Base.extend(**$inferProperties**, {\n       getName: function () { return this._name; },\n       setName: function (value) { this._name = value; },\n   })\n</pre>\nwould create a Person.name property bound to getName and setName",
             "is_constructor": 1,
@@ -2761,7 +2761,7 @@
             "extension_for": [],
             "module": "miruken",
             "namespace": "miruken",
-            "file": "lib/miruken.js",
+            "file": "lib\\miruken.js",
             "line": 1073,
             "description": "Metamacro to inherit static members in subclasses.\n<pre>\nvar Math = Base.extend(\n    **$inheritStatic**, null, {\n        PI:  3.14159265359,\n        add: function (a, b) {\n            return a + b;\n         }\n    }),\n    Geometry = Math.extend(null, {\n        area: function(length, width) {\n            return length * width;\n        }\n    });\n</pre>\nwould make Math.PI and Math.add available on the Geometry class.",
             "is_constructor": 1,
@@ -2786,7 +2786,7 @@
             "extension_for": [],
             "module": "miruken",
             "namespace": "miruken",
-            "file": "lib/miruken.js",
+            "file": "lib\\miruken.js",
             "line": 1131,
             "description": "Base class to prefer coercion over casting.\nBy default, Type(target) will cast target to the type.",
             "extends": "Base"
@@ -2806,7 +2806,7 @@
             ],
             "module": "miruken",
             "namespace": "miruken",
-            "file": "lib/miruken.js",
+            "file": "lib\\miruken.js",
             "line": 1141,
             "description": "Protocol for targets that manage disposal lifecycle.",
             "extends": "miruken.Protocol"
@@ -2823,7 +2823,7 @@
             ],
             "module": "miruken",
             "namespace": "miruken",
-            "file": "lib/miruken.js",
+            "file": "lib\\miruken.js",
             "line": 1154,
             "description": "Mixin for {{#crossLink \"miruken.Disposing\"}}{{/crossLink}} implementation.",
             "uses": [
@@ -2843,7 +2843,7 @@
             ],
             "module": "miruken",
             "namespace": "miruken",
-            "file": "lib/miruken.js",
+            "file": "lib\\miruken.js",
             "line": 1169,
             "description": "Protocol for targets that can execute functions.",
             "extends": "miruken.StrictProtocol"
@@ -2860,7 +2860,7 @@
             ],
             "module": "miruken",
             "namespace": "miruken",
-            "file": "lib/miruken.js",
+            "file": "lib\\miruken.js",
             "line": 1186,
             "description": "Protocol for targets that have parent/child relationships.",
             "extends": "miruken.Protocol"
@@ -2877,7 +2877,7 @@
             ],
             "module": "miruken",
             "namespace": "miruken",
-            "file": "lib/miruken.js",
+            "file": "lib\\miruken.js",
             "line": 1200,
             "description": "Protocol for targets that can be started.",
             "extends": "miruken.Protocol"
@@ -2892,7 +2892,7 @@
             "extension_for": [],
             "module": "miruken",
             "namespace": "miruken",
-            "file": "lib/miruken.js",
+            "file": "lib\\miruken.js",
             "line": 1213,
             "description": "Base class for startable targets.",
             "uses": [
@@ -2910,7 +2910,7 @@
             "extension_for": [],
             "module": "miruken",
             "namespace": "miruken",
-            "file": "lib/miruken.js",
+            "file": "lib\\miruken.js",
             "line": 1300,
             "description": "Helper class to simplify array manipulation.",
             "is_constructor": 1,
@@ -2935,7 +2935,7 @@
             "extension_for": [],
             "module": "miruken",
             "namespace": "miruken",
-            "file": "lib/miruken.js",
+            "file": "lib\\miruken.js",
             "line": 1430,
             "description": "Maintains a simple doublely-linked list with indexing.\nIndexes are partially ordered according to the order comparator.",
             "is_constructor": 1,
@@ -2958,7 +2958,7 @@
             "extension_for": [],
             "module": "miruken",
             "namespace": "miruken",
-            "file": "lib/miruken.js",
+            "file": "lib\\miruken.js",
             "line": 1540,
             "description": "Facet choices for proxies.",
             "extends": "miruken.Enum"
@@ -2973,7 +2973,7 @@
             "extension_for": [],
             "module": "miruken",
             "namespace": "miruken",
-            "file": "lib/miruken.js",
+            "file": "lib\\miruken.js",
             "line": 1565,
             "description": "Base class for method interception.",
             "extends": "Base"
@@ -2988,7 +2988,7 @@
             "extension_for": [],
             "module": "miruken",
             "namespace": "miruken",
-            "file": "lib/miruken.js",
+            "file": "lib\\miruken.js",
             "line": 1581,
             "description": "Responsible for selecting which interceptors to apply to a method.",
             "extends": "Base"
@@ -3003,7 +3003,7 @@
             "extension_for": [],
             "module": "miruken",
             "namespace": "miruken",
-            "file": "lib/miruken.js",
+            "file": "lib\\miruken.js",
             "line": 1600,
             "description": "Builds proxy classes for interception.",
             "extends": "Base"
@@ -3011,7 +3011,7 @@
     },
     "classitems": [
         {
-            "file": "lib/angular/ng.js",
+            "file": "lib\\angular\\ng.js",
             "line": 51,
             "description": "Executed during the run phase of an Angular module.",
             "itemtype": "method",
@@ -3022,7 +3022,7 @@
             "namespace": "miruken.ng"
         },
         {
-            "file": "lib/angular/ng.js",
+            "file": "lib\\angular\\ng.js",
             "line": 133,
             "itemtype": "method",
             "name": "_instrumentScopes\nInstruments angular scopes with miruken contexts.",
@@ -3044,7 +3044,7 @@
             "namespace": "miruken.ng"
         },
         {
-            "file": "lib/angular/ng.js",
+            "file": "lib\\angular\\ng.js",
             "line": 164,
             "itemtype": "method",
             "name": "_registerControllersAndDirectives\nRegisters the package controllers and directives.",
@@ -3071,7 +3071,7 @@
             "namespace": "miruken.ng"
         },
         {
-            "file": "lib/angular/ng.js",
+            "file": "lib\\angular\\ng.js",
             "line": 200,
             "itemtype": "method",
             "name": "_installPackage\nRegisters the package Installers, Runners and Starters.",
@@ -3113,7 +3113,7 @@
             "namespace": "miruken.ng"
         },
         {
-            "file": "lib/angular/ng.js",
+            "file": "lib\\angular\\ng.js",
             "line": 246,
             "itemtype": "method",
             "name": "Shim\nResolves the component from the container.",
@@ -3139,7 +3139,7 @@
             "namespace": "miruken.ng"
         },
         {
-            "file": "lib/angular/ng.js",
+            "file": "lib\\angular\\ng.js",
             "line": 272,
             "itemtype": "method",
             "name": "_provideLiteral\nProvides all keys from the object literal.",
@@ -3161,7 +3161,7 @@
             "namespace": "miruken.ng"
         },
         {
-            "file": "lib/angular/ng.js",
+            "file": "lib\\angular\\ng.js",
             "line": 285,
             "itemtype": "method",
             "name": "_provideInjector\nAttaches the supplied injector to owners $providers.",
@@ -3183,7 +3183,7 @@
             "namespace": "miruken.ng"
         },
         {
-            "file": "lib/angular/ng.js",
+            "file": "lib\\angular\\ng.js",
             "line": 300,
             "itemtype": "method",
             "name": "_ngDependencies\nExtracts the string dependencies for the component.",
@@ -3204,7 +3204,7 @@
             "namespace": "miruken.ng"
         },
         {
-            "file": "lib/ioc/config.js",
+            "file": "lib\\ioc\\config.js",
             "line": 45,
             "description": "Gets the classes represented by this source.",
             "itemtype": "method",
@@ -3219,7 +3219,7 @@
             "namespace": "miruken.ioc"
         },
         {
-            "file": "lib/ioc/config.js",
+            "file": "lib\\ioc\\config.js",
             "line": 51,
             "description": "Gets the builder for filtering classes from this source.",
             "itemtype": "method",
@@ -3234,7 +3234,7 @@
             "namespace": "miruken.ioc"
         },
         {
-            "file": "lib/ioc/config.js",
+            "file": "lib\\ioc\\config.js",
             "line": 125,
             "description": "Adds a predicate for including a component.",
             "itemtype": "method",
@@ -3257,7 +3257,7 @@
             "namespace": "miruken.ioc"
         },
         {
-            "file": "lib/ioc/config.js",
+            "file": "lib\\ioc\\config.js",
             "line": 143,
             "description": "Adds a predicate for excluding a component.",
             "itemtype": "method",
@@ -3280,7 +3280,7 @@
             "namespace": "miruken.ioc"
         },
         {
-            "file": "lib/ioc/config.js",
+            "file": "lib\\ioc\\config.js",
             "line": 161,
             "description": "Adds a custom component configuration.",
             "itemtype": "method",
@@ -3303,7 +3303,7 @@
             "namespace": "miruken.ioc"
         },
         {
-            "file": "lib/ioc/config.js",
+            "file": "lib\\ioc\\config.js",
             "line": 230,
             "description": "Uses the component class as the key.",
             "itemtype": "method",
@@ -3318,7 +3318,7 @@
             "namespace": "miruken.ioc"
         },
         {
-            "file": "lib/ioc/config.js",
+            "file": "lib\\ioc\\config.js",
             "line": 240,
             "description": "Uses the based on contraints as the keys.",
             "itemtype": "method",
@@ -3333,7 +3333,7 @@
             "namespace": "miruken.ioc"
         },
         {
-            "file": "lib/ioc/config.js",
+            "file": "lib\\ioc\\config.js",
             "line": 250,
             "description": "Uses any class {{#crossLink \"miruken.Protocol\"}}{{/crossLink}} as the key.",
             "itemtype": "method",
@@ -3348,7 +3348,7 @@
             "namespace": "miruken.ioc"
         },
         {
-            "file": "lib/ioc/config.js",
+            "file": "lib\\ioc\\config.js",
             "line": 263,
             "description": "Uses all class {{#crossLink \"miruken.Protocol\"}}{{/crossLink}} as the keys.",
             "itemtype": "method",
@@ -3363,7 +3363,7 @@
             "namespace": "miruken.ioc"
         },
         {
-            "file": "lib/ioc/config.js",
+            "file": "lib\\ioc\\config.js",
             "line": 273,
             "description": "Uses the most specific {{#crossLink \"miruken.Protocol\"}}{{/crossLink}} \nin the class hierarchy as the key.",
             "itemtype": "method",
@@ -3378,7 +3378,7 @@
             "namespace": "miruken.ioc"
         },
         {
-            "file": "lib/ioc/config.js",
+            "file": "lib\\ioc\\config.js",
             "line": 310,
             "description": "Uses a string as the component name.  \nIf no name is provided, the default name will be used.",
             "itemtype": "method",
@@ -3401,7 +3401,7 @@
             "namespace": "miruken.ioc"
         },
         {
-            "file": "lib/ioc/config.js",
+            "file": "lib\\ioc\\config.js",
             "line": 332,
             "description": "Gets the component keys to be registered as.",
             "itemtype": "method",
@@ -3434,7 +3434,7 @@
             "namespace": "miruken.ioc"
         },
         {
-            "file": "lib/ioc/config.js",
+            "file": "lib\\ioc\\config.js",
             "line": 366,
             "description": "Shortcut for creating a {{#crossLink \"miruken.ioc.FromBuilder\"}}{{/crossLink}}.",
             "itemtype": "method",
@@ -3456,7 +3456,7 @@
             "namespace": "miruken.ioc"
         },
         {
-            "file": "lib/ioc/config.js",
+            "file": "lib\\ioc\\config.js",
             "line": 380,
             "description": "Creates a {{#crossLink \"miruken.ioc.FromBuilder\"}}{{/crossLink}} using a Package source.",
             "itemtype": "method",
@@ -3474,7 +3474,7 @@
             "namespace": "miruken.ioc"
         },
         {
-            "file": "lib/ioc/ioc.js",
+            "file": "lib\\ioc\\ioc.js",
             "line": 30,
             "description": "Symbol for injecting composer dependency.<br/>\nSee {{#crossLink \"miruken.callback.CallbackHandler\"}}{{/crossLink}}",
             "itemtype": "property",
@@ -3486,7 +3486,7 @@
             "namespace": "miruken.ioc"
         },
         {
-            "file": "lib/ioc/ioc.js",
+            "file": "lib\\ioc\\ioc.js",
             "line": 46,
             "description": "Shared proxy builder",
             "itemtype": "property",
@@ -3498,7 +3498,7 @@
             "namespace": "miruken.ioc"
         },
         {
-            "file": "lib/ioc/ioc.js",
+            "file": "lib\\ioc\\ioc.js",
             "line": 61,
             "description": "Registers on or more components in the container.",
             "itemtype": "method",
@@ -3522,7 +3522,7 @@
             "namespace": "miruken.ioc"
         },
         {
-            "file": "lib/ioc/ioc.js",
+            "file": "lib\\ioc\\ioc.js",
             "line": 68,
             "description": "Adds a configured component to the container with policies.",
             "itemtype": "method",
@@ -3551,7 +3551,7 @@
             "namespace": "miruken.ioc"
         },
         {
-            "file": "lib/ioc/ioc.js",
+            "file": "lib\\ioc\\ioc.js",
             "line": 76,
             "description": "Resolves the component for the key.",
             "itemtype": "method",
@@ -3574,7 +3574,7 @@
             "namespace": "miruken.ioc"
         },
         {
-            "file": "lib/ioc/ioc.js",
+            "file": "lib\\ioc\\ioc.js",
             "line": 84,
             "description": "Resolves all the components for the key.",
             "itemtype": "method",
@@ -3597,7 +3597,7 @@
             "namespace": "miruken.ioc"
         },
         {
-            "file": "lib/ioc/ioc.js",
+            "file": "lib\\ioc\\ioc.js",
             "line": 100,
             "description": "Encapsulates the regisration of one or more components in a container.",
             "itemtype": "method",
@@ -3624,7 +3624,7 @@
             "namespace": "miruken.ioc"
         },
         {
-            "file": "lib/ioc/ioc.js",
+            "file": "lib\\ioc\\ioc.js",
             "line": 116,
             "description": "Applies the policy to the component model.",
             "itemtype": "method",
@@ -3642,7 +3642,7 @@
             "namespace": "miruken.ioc"
         },
         {
-            "file": "lib/ioc/ioc.js",
+            "file": "lib\\ioc\\ioc.js",
             "line": 130,
             "description": "No dependency modifiers.",
             "itemtype": "property",
@@ -3654,7 +3654,7 @@
             "namespace": "miruken.ioc"
         },
         {
-            "file": "lib/ioc/ioc.js",
+            "file": "lib\\ioc\\ioc.js",
             "line": 135,
             "description": "See {{#crossLink \"miruken.Modifier/$use:attribute\"}}{{/crossLink}}",
             "itemtype": "property",
@@ -3666,7 +3666,7 @@
             "namespace": "miruken.ioc"
         },
         {
-            "file": "lib/ioc/ioc.js",
+            "file": "lib\\ioc\\ioc.js",
             "line": 140,
             "description": "See {{#crossLink \"miruken.Modifier/$lazy:attribute\"}}{{/crossLink}}",
             "itemtype": "property",
@@ -3678,7 +3678,7 @@
             "namespace": "miruken.ioc"
         },
         {
-            "file": "lib/ioc/ioc.js",
+            "file": "lib\\ioc\\ioc.js",
             "line": 145,
             "description": "See {{#crossLink \"miruken.Modifier/$every:attribute\"}}{{/crossLink}}",
             "itemtype": "property",
@@ -3690,7 +3690,7 @@
             "namespace": "miruken.ioc"
         },
         {
-            "file": "lib/ioc/ioc.js",
+            "file": "lib\\ioc\\ioc.js",
             "line": 150,
             "description": "See {{#crossLink \"miruken.Modifier/$eval:attribute\"}}{{/crossLink}}",
             "itemtype": "property",
@@ -3702,7 +3702,7 @@
             "namespace": "miruken.ioc"
         },
         {
-            "file": "lib/ioc/ioc.js",
+            "file": "lib\\ioc\\ioc.js",
             "line": 155,
             "description": "See {{#crossLink \"miruken.Modifier/$optional:attribute\"}}{{/crossLink}}",
             "itemtype": "property",
@@ -3714,7 +3714,7 @@
             "namespace": "miruken.ioc"
         },
         {
-            "file": "lib/ioc/ioc.js",
+            "file": "lib\\ioc\\ioc.js",
             "line": 160,
             "description": "See {{#crossLink \"miruken.Modifier/$promise:attribute\"}}{{/crossLink}}",
             "itemtype": "property",
@@ -3726,7 +3726,7 @@
             "namespace": "miruken.ioc"
         },
         {
-            "file": "lib/ioc/ioc.js",
+            "file": "lib\\ioc\\ioc.js",
             "line": 165,
             "description": "See {{#crossLink \"miruken.Modifier/$eq:attribute\"}}{{/crossLink}}",
             "itemtype": "property",
@@ -3738,7 +3738,7 @@
             "namespace": "miruken.ioc"
         },
         {
-            "file": "lib/ioc/ioc.js",
+            "file": "lib\\ioc\\ioc.js",
             "line": 170,
             "description": "See {{#crossLink \"miruken.ioc.$container\"}}{{/crossLink}}",
             "itemtype": "property",
@@ -3750,7 +3750,7 @@
             "namespace": "miruken.ioc"
         },
         {
-            "file": "lib/ioc/ioc.js",
+            "file": "lib\\ioc\\ioc.js",
             "line": 175,
             "description": "See {{#crossLink \"miruken.Modifier/$child:attribute\"}}{{/crossLink}}",
             "itemtype": "property",
@@ -3762,7 +3762,7 @@
             "namespace": "miruken.ioc"
         },
         {
-            "file": "lib/ioc/ioc.js",
+            "file": "lib\\ioc\\ioc.js",
             "line": 225,
             "description": "Gets the dependency.",
             "itemtype": "property",
@@ -3775,7 +3775,7 @@
             "namespace": "miruken.ioc"
         },
         {
-            "file": "lib/ioc/ioc.js",
+            "file": "lib\\ioc\\ioc.js",
             "line": 232,
             "description": "Gets the dependency flags.",
             "itemtype": "property",
@@ -3788,7 +3788,7 @@
             "namespace": "miruken.ioc"
         },
         {
-            "file": "lib/ioc/ioc.js",
+            "file": "lib\\ioc\\ioc.js",
             "line": 240,
             "description": "Tests if the receiving dependency is annotated with the modifier.",
             "itemtype": "method",
@@ -3810,7 +3810,7 @@
             "namespace": "miruken.ioc"
         },
         {
-            "file": "lib/ioc/ioc.js",
+            "file": "lib\\ioc\\ioc.js",
             "line": 279,
             "description": "Inspects the component model for dependencies.",
             "itemtype": "method",
@@ -3835,7 +3835,7 @@
             "namespace": "miruken.ioc"
         },
         {
-            "file": "lib/ioc/ioc.js",
+            "file": "lib\\ioc\\ioc.js",
             "line": 328,
             "description": "Gets/sets the component key.",
             "itemtype": "property",
@@ -3847,7 +3847,7 @@
             "namespace": "miruken.ioc"
         },
         {
-            "file": "lib/ioc/ioc.js",
+            "file": "lib\\ioc\\ioc.js",
             "line": 336,
             "description": "Gets/sets the component class.",
             "itemtype": "property",
@@ -3859,7 +3859,7 @@
             "namespace": "miruken.ioc"
         },
         {
-            "file": "lib/ioc/ioc.js",
+            "file": "lib\\ioc\\ioc.js",
             "line": 353,
             "description": "true if component is invariant, false otherwise.",
             "itemtype": "property",
@@ -3871,7 +3871,7 @@
             "namespace": "miruken.ioc"
         },
         {
-            "file": "lib/ioc/ioc.js",
+            "file": "lib\\ioc\\ioc.js",
             "line": 361,
             "description": "Gets/sets the component lifestyle.",
             "itemtype": "property",
@@ -3883,7 +3883,7 @@
             "namespace": "miruken.ioc"
         },
         {
-            "file": "lib/ioc/ioc.js",
+            "file": "lib\\ioc\\ioc.js",
             "line": 372,
             "description": "Gets/sets the component factory.",
             "itemtype": "property",
@@ -3895,7 +3895,7 @@
             "namespace": "miruken.ioc"
         },
         {
-            "file": "lib/ioc/ioc.js",
+            "file": "lib\\ioc\\ioc.js",
             "line": 402,
             "description": "Gets the component dependency group.",
             "itemtype": "method",
@@ -3919,7 +3919,7 @@
             "namespace": "miruken.ioc"
         },
         {
-            "file": "lib/ioc/ioc.js",
+            "file": "lib\\ioc\\ioc.js",
             "line": 411,
             "description": "Sets the component dependency group.",
             "itemtype": "method",
@@ -3944,7 +3944,7 @@
             "namespace": "miruken.ioc"
         },
         {
-            "file": "lib/ioc/ioc.js",
+            "file": "lib\\ioc\\ioc.js",
             "line": 426,
             "description": "Manages the component dependency group.",
             "itemtype": "method",
@@ -3973,7 +3973,7 @@
             "namespace": "miruken.ioc"
         },
         {
-            "file": "lib/ioc/ioc.js",
+            "file": "lib\\ioc\\ioc.js",
             "line": 448,
             "description": "Gets the component dependency burden.",
             "itemtype": "property",
@@ -3985,7 +3985,7 @@
             "namespace": "miruken.ioc"
         },
         {
-            "file": "lib/ioc/ioc.js",
+            "file": "lib\\ioc\\ioc.js",
             "line": 495,
             "description": "Obtains the component instance.",
             "itemtype": "method",
@@ -4000,7 +4000,7 @@
             "namespace": "miruken.ioc"
         },
         {
-            "file": "lib/ioc/ioc.js",
+            "file": "lib\\ioc\\ioc.js",
             "line": 501,
             "description": "Tracks the component instance for disposal.",
             "itemtype": "method",
@@ -4018,7 +4018,7 @@
             "namespace": "miruken.ioc"
         },
         {
-            "file": "lib/ioc/ioc.js",
+            "file": "lib\\ioc\\ioc.js",
             "line": 519,
             "description": "Disposes the component instance.",
             "itemtype": "method",
@@ -4041,7 +4041,7 @@
             "namespace": "miruken.ioc"
         },
         {
-            "file": "lib/ioc/ioc.js",
+            "file": "lib\\ioc\\ioc.js",
             "line": 679,
             "description": "Marks the component as invariant.",
             "itemtype": "method",
@@ -4057,7 +4057,7 @@
             "namespace": "miruken.ioc"
         },
         {
-            "file": "lib/ioc/ioc.js",
+            "file": "lib\\ioc\\ioc.js",
             "line": 689,
             "description": "Specifies the component class.",
             "itemtype": "method",
@@ -4080,7 +4080,7 @@
             "namespace": "miruken.ioc"
         },
         {
-            "file": "lib/ioc/ioc.js",
+            "file": "lib\\ioc\\ioc.js",
             "line": 700,
             "description": "Specifies component dependencies.",
             "itemtype": "method",
@@ -4103,7 +4103,7 @@
             "namespace": "miruken.ioc"
         },
         {
-            "file": "lib/ioc/ioc.js",
+            "file": "lib\\ioc\\ioc.js",
             "line": 717,
             "description": "Specifies the component factory.",
             "itemtype": "method",
@@ -4126,7 +4126,7 @@
             "namespace": "miruken.ioc"
         },
         {
-            "file": "lib/ioc/ioc.js",
+            "file": "lib\\ioc\\ioc.js",
             "line": 728,
             "description": "Uses the supplied component instance.",
             "itemtype": "method",
@@ -4149,7 +4149,7 @@
             "namespace": "miruken.ioc"
         },
         {
-            "file": "lib/ioc/ioc.js",
+            "file": "lib\\ioc\\ioc.js",
             "line": 739,
             "description": "Chooses the {{#crossLink \"miruken.ioc.SingletonLifestyle\"}}{{/crossLink}}.",
             "itemtype": "method",
@@ -4165,7 +4165,7 @@
             "namespace": "miruken.ioc"
         },
         {
-            "file": "lib/ioc/ioc.js",
+            "file": "lib\\ioc\\ioc.js",
             "line": 749,
             "description": "Chooses the {{#crossLink \"miruken.ioc.TransientLifestyle\"}}{{/crossLink}}.",
             "itemtype": "method",
@@ -4181,7 +4181,7 @@
             "namespace": "miruken.ioc"
         },
         {
-            "file": "lib/ioc/ioc.js",
+            "file": "lib\\ioc\\ioc.js",
             "line": 759,
             "description": "Chooses the {{#crossLink \"miruken.ioc.ContextualLifestyle\"}}{{/crossLink}}.",
             "itemtype": "method",
@@ -4197,7 +4197,7 @@
             "namespace": "miruken.ioc"
         },
         {
-            "file": "lib/ioc/ioc.js",
+            "file": "lib\\ioc\\ioc.js",
             "line": 769,
             "description": "Binds the component to the current \n{{#crossLink \"miruken.context.Context\"}}{{/crossLink}}.",
             "itemtype": "method",
@@ -4213,7 +4213,7 @@
             "namespace": "miruken.ioc"
         },
         {
-            "file": "lib/ioc/ioc.js",
+            "file": "lib\\ioc\\ioc.js",
             "line": 780,
             "description": "Binds the component to a child of the current \n{{#crossLink \"miruken.context.Context\"}}{{/crossLink}}.",
             "itemtype": "method",
@@ -4229,7 +4229,7 @@
             "namespace": "miruken.ioc"
         },
         {
-            "file": "lib/ioc/ioc.js",
+            "file": "lib\\ioc\\ioc.js",
             "line": 791,
             "description": "Attaches component interceptors.",
             "itemtype": "method",
@@ -4252,7 +4252,7 @@
             "namespace": "miruken.ioc"
         },
         {
-            "file": "lib/ioc/ioc.js",
+            "file": "lib\\ioc\\ioc.js",
             "line": 805,
             "description": "Gets the {{#crossLink \"miruken.ioc.ComponentPolicy\"}}{{/crossLink}} of type policyClass.",
             "itemtype": "method",
@@ -4274,7 +4274,7 @@
             "namespace": "miruken.ioc"
         },
         {
-            "file": "lib/ioc/ioc.js",
+            "file": "lib\\ioc\\ioc.js",
             "line": 819,
             "description": "Attaches a {{#crossLink \"miruken.ioc.ComponentPolicy\"}}{{/crossLink}} to the model.",
             "itemtype": "method",
@@ -4296,7 +4296,7 @@
             "namespace": "miruken.ioc"
         },
         {
-            "file": "lib/ioc/ioc.js",
+            "file": "lib\\ioc\\ioc.js",
             "line": 876,
             "description": "Marks interceptors to be added to the front of the list.",
             "itemtype": "method",
@@ -4312,7 +4312,7 @@
             "namespace": "miruken.ioc"
         },
         {
-            "file": "lib/ioc/ioc.js",
+            "file": "lib\\ioc\\ioc.js",
             "line": 885,
             "description": "Marks interceptors to be added at the supplied index.",
             "itemtype": "method",
@@ -4335,7 +4335,7 @@
             "namespace": "miruken.ioc"
         },
         {
-            "file": "lib/ioc/ioc.js",
+            "file": "lib\\ioc\\ioc.js",
             "line": 910,
             "description": "Shortcut for creating a {{#crossLink \"miruken.ioc.ComponentBuilder\"}}{{/crossLink}}.",
             "itemtype": "method",
@@ -4357,7 +4357,7 @@
             "namespace": "miruken.ioc"
         },
         {
-            "file": "lib/ioc/ioc.js",
+            "file": "lib\\ioc\\ioc.js",
             "line": 944,
             "description": "Determines if the handler is in the process of resolving a dependency.",
             "itemtype": "method",
@@ -4379,7 +4379,7 @@
             "namespace": "miruken.ioc"
         },
         {
-            "file": "lib/ioc/ioc.js",
+            "file": "lib\\ioc\\ioc.js",
             "line": 954,
             "description": "Formats the dependency resolution chain for display.",
             "itemtype": "method",
@@ -4394,7 +4394,7 @@
             "namespace": "miruken.ioc"
         },
         {
-            "file": "lib/ioc/ioc.js",
+            "file": "lib\\ioc\\ioc.js",
             "line": 985,
             "description": "Failing dependency resolution.",
             "itemtype": "property",
@@ -4406,7 +4406,7 @@
             "namespace": "miruken.ioc"
         },
         {
-            "file": "lib/ioc/ioc.js",
+            "file": "lib\\ioc\\ioc.js",
             "line": 1006,
             "description": "Invalid component model.",
             "itemtype": "property",
@@ -4418,7 +4418,7 @@
             "namespace": "miruken.ioc"
         },
         {
-            "file": "lib/ioc/ioc.js",
+            "file": "lib\\ioc\\ioc.js",
             "line": 1041,
             "description": "Adds a component inspector to the container.",
             "itemtype": "method",
@@ -4436,7 +4436,7 @@
             "namespace": "miruken.ioc"
         },
         {
-            "file": "lib/ioc/ioc.js",
+            "file": "lib\\ioc\\ioc.js",
             "line": 1054,
             "description": "Removes a previously added component inspector from the container.",
             "itemtype": "method",
@@ -4454,7 +4454,7 @@
             "namespace": "miruken.ioc"
         },
         {
-            "file": "lib/mvc/mvc.js",
+            "file": "lib\\mvc\\mvc.js",
             "line": 56,
             "description": "Maps json structured data into the model.",
             "itemtype": "method",
@@ -4472,7 +4472,7 @@
             "namespace": "miruken.mvc"
         },
         {
-            "file": "lib/mvc/mvc.js",
+            "file": "lib\\mvc\\mvc.js",
             "line": 95,
             "description": "Maps the model into json structured data.",
             "itemtype": "method",
@@ -4500,7 +4500,7 @@
             "namespace": "miruken.mvc"
         },
         {
-            "file": "lib/mvc/mvc.js",
+            "file": "lib\\mvc\\mvc.js",
             "line": 131,
             "description": "Maps the model value into json using a mapper function.",
             "itemtype": "method",
@@ -4534,7 +4534,7 @@
             "namespace": "miruken.mvc"
         },
         {
-            "file": "lib/mvc/mvc.js",
+            "file": "lib\\mvc\\mvc.js",
             "line": 160,
             "description": "Renders the controller in the view region.",
             "itemtype": "method",
@@ -4556,7 +4556,7 @@
             "namespace": "miruken.mvc"
         },
         {
-            "file": "lib/mvc/mvc.js",
+            "file": "lib\\mvc\\mvc.js",
             "line": 202,
             "description": "Gets the selected detail.",
             "itemtype": "method",
@@ -4578,7 +4578,7 @@
             "namespace": "miruken.mvc"
         },
         {
-            "file": "lib/mvc/mvc.js",
+            "file": "lib\\mvc\\mvc.js",
             "line": 209,
             "description": "Gets the selected details.",
             "itemtype": "method",
@@ -4600,7 +4600,7 @@
             "namespace": "miruken.mvc"
         },
         {
-            "file": "lib/mvc/mvc.js",
+            "file": "lib\\mvc\\mvc.js",
             "line": 216,
             "description": "Selects the detail",
             "itemtype": "method",
@@ -4618,7 +4618,7 @@
             "namespace": "miruken.mvc"
         },
         {
-            "file": "lib/mvc/mvc.js",
+            "file": "lib\\mvc\\mvc.js",
             "line": 222,
             "description": "Unselects the detail",
             "itemtype": "method",
@@ -4636,7 +4636,7 @@
             "namespace": "miruken.mvc"
         },
         {
-            "file": "lib/mvc/mvc.js",
+            "file": "lib\\mvc\\mvc.js",
             "line": 228,
             "description": "Determines if a previous detail exists.",
             "itemtype": "method",
@@ -4658,7 +4658,7 @@
             "namespace": "miruken.mvc"
         },
         {
-            "file": "lib/mvc/mvc.js",
+            "file": "lib\\mvc\\mvc.js",
             "line": 235,
             "description": "Determines if a next detail exists.",
             "itemtype": "method",
@@ -4680,7 +4680,7 @@
             "namespace": "miruken.mvc"
         },
         {
-            "file": "lib/mvc/mvc.js",
+            "file": "lib\\mvc\\mvc.js",
             "line": 242,
             "description": "Gets the previous detail.",
             "itemtype": "method",
@@ -4702,7 +4702,7 @@
             "namespace": "miruken.mvc"
         },
         {
-            "file": "lib/mvc/mvc.js",
+            "file": "lib\\mvc\\mvc.js",
             "line": 249,
             "description": "Gets the next detail.",
             "itemtype": "method",
@@ -4724,7 +4724,7 @@
             "namespace": "miruken.mvc"
         },
         {
-            "file": "lib/mvc/mvc.js",
+            "file": "lib\\mvc\\mvc.js",
             "line": 256,
             "description": "Adds the detail to the master.",
             "itemtype": "method",
@@ -4742,7 +4742,7 @@
             "namespace": "miruken.mvc"
         },
         {
-            "file": "lib/mvc/mvc.js",
+            "file": "lib\\mvc\\mvc.js",
             "line": 262,
             "description": "Updates the detail in the master.",
             "itemtype": "method",
@@ -4760,7 +4760,7 @@
             "namespace": "miruken.mvc"
         },
         {
-            "file": "lib/mvc/mvc.js",
+            "file": "lib\\mvc\\mvc.js",
             "line": 268,
             "description": "Removes the detail from the master.",
             "itemtype": "method",
@@ -4783,7 +4783,7 @@
             "namespace": "miruken.mvc"
         },
         {
-            "file": "lib/mvc/mvc.js",
+            "file": "lib\\mvc\\mvc.js",
             "line": 283,
             "description": "Informs the master has changed.",
             "itemtype": "method",
@@ -4801,7 +4801,7 @@
             "namespace": "miruken.mvc"
         },
         {
-            "file": "lib/mvc/mvc.js",
+            "file": "lib\\mvc\\mvc.js",
             "line": 289,
             "description": "Informs a detail was selected.",
             "itemtype": "method",
@@ -4824,7 +4824,7 @@
             "namespace": "miruken.mvc"
         },
         {
-            "file": "lib/mvc/mvc.js",
+            "file": "lib\\mvc\\mvc.js",
             "line": 296,
             "description": "Informs a detail was unselected.",
             "itemtype": "method",
@@ -4847,7 +4847,7 @@
             "namespace": "miruken.mvc"
         },
         {
-            "file": "lib/mvc/mvc.js",
+            "file": "lib\\mvc\\mvc.js",
             "line": 303,
             "description": "Informs a detail was added to the master.",
             "itemtype": "method",
@@ -4870,7 +4870,7 @@
             "namespace": "miruken.mvc"
         },
         {
-            "file": "lib/mvc/mvc.js",
+            "file": "lib\\mvc\\mvc.js",
             "line": 310,
             "description": "Informs a detail was updated in the master.",
             "itemtype": "method",
@@ -4893,7 +4893,7 @@
             "namespace": "miruken.mvc"
         },
         {
-            "file": "lib/mvc/mvc.js",
+            "file": "lib\\mvc\\mvc.js",
             "line": 317,
             "description": "Informs a detail was removed from the master.",
             "itemtype": "method",
@@ -4916,7 +4916,7 @@
             "namespace": "miruken.mvc"
         },
         {
-            "file": "lib/validate/validate.js",
+            "file": "lib\\validate\\validate.js",
             "line": 26,
             "description": "Validation definition group.",
             "itemtype": "property",
@@ -4928,7 +4928,7 @@
             "namespace": "miruken.validate"
         },
         {
-            "file": "lib/validate/validate.js",
+            "file": "lib\\validate\\validate.js",
             "line": 39,
             "description": "Validates the object in the scope.",
             "itemtype": "method",
@@ -4961,7 +4961,7 @@
             "namespace": "miruken.validate"
         },
         {
-            "file": "lib/validate/validate.js",
+            "file": "lib\\validate\\validate.js",
             "line": 48,
             "description": "Validates the object asynchronously in the scope.",
             "itemtype": "method",
@@ -4995,7 +4995,7 @@
             "namespace": "miruken.validate"
         },
         {
-            "file": "lib/validate/validate.js",
+            "file": "lib\\validate\\validate.js",
             "line": 85,
             "description": "true if asynchronous, false if synchronous.",
             "itemtype": "property",
@@ -5007,7 +5007,7 @@
             "namespace": "miruken.validate"
         },
         {
-            "file": "lib/validate/validate.js",
+            "file": "lib\\validate\\validate.js",
             "line": 90,
             "description": "Gets the target object to validate.",
             "itemtype": "property",
@@ -5019,7 +5019,7 @@
             "namespace": "miruken.validate"
         },
         {
-            "file": "lib/validate/validate.js",
+            "file": "lib\\validate\\validate.js",
             "line": 95,
             "description": "Gets the scope of validation.",
             "itemtype": "property",
@@ -5031,7 +5031,7 @@
             "namespace": "miruken.validate"
         },
         {
-            "file": "lib/validate/validate.js",
+            "file": "lib\\validate\\validate.js",
             "line": 100,
             "description": "Gets the validation results.",
             "itemtype": "property",
@@ -5043,7 +5043,7 @@
             "namespace": "miruken.validate"
         },
         {
-            "file": "lib/validate/validate.js",
+            "file": "lib\\validate\\validate.js",
             "line": 128,
             "description": "true if object is valid, false otherwisw.",
             "itemtype": "property",
@@ -5055,7 +5055,7 @@
             "namespace": "miruken.validate"
         },
         {
-            "file": "lib/validate/validate.js",
+            "file": "lib\\validate\\validate.js",
             "line": 149,
             "description": "Gets aggregated validation errors.",
             "itemtype": "property",
@@ -5067,7 +5067,7 @@
             "namespace": "miruken.validate"
         },
         {
-            "file": "lib/validate/validate.js",
+            "file": "lib\\validate\\validate.js",
             "line": 190,
             "description": "Gets or adds validation results for the key.",
             "itemtype": "method",
@@ -5086,7 +5086,7 @@
             "namespace": "miruken.validate"
         },
         {
-            "file": "lib/validate/validate.js",
+            "file": "lib\\validate\\validate.js",
             "line": 199,
             "description": "Adds a named validation error.",
             "itemtype": "method",
@@ -5112,7 +5112,7 @@
             "namespace": "miruken.validate"
         },
         {
-            "file": "lib/validate/validate.js",
+            "file": "lib\\validate\\validate.js",
             "line": 221,
             "description": "Clears all validation results.",
             "itemtype": "method",
@@ -5128,7 +5128,7 @@
             "namespace": "miruken.validate"
         },
         {
-            "file": "lib/validate/validate.js",
+            "file": "lib\\validate\\validate.js",
             "line": 335,
             "description": "Determines if the macro should be inherited",
             "itemtype": "method",
@@ -5143,7 +5143,7 @@
             "namespace": "miruken.validate"
         },
         {
-            "file": "lib/validate/validate.js",
+            "file": "lib\\validate\\validate.js",
             "line": 341,
             "description": "Determines if the macro should be applied on extension.",
             "itemtype": "method",
@@ -5158,7 +5158,7 @@
             "namespace": "miruken.validate"
         },
         {
-            "file": "lib/validate/validatejs.js",
+            "file": "lib\\validate\\validatejs.js",
             "line": 29,
             "description": "Shortcut to indicate required property.",
             "itemtype": "property",
@@ -5171,7 +5171,7 @@
             "namespace": "miruken.validate"
         },
         {
-            "file": "lib/validate/validatejs.js",
+            "file": "lib\\validate\\validatejs.js",
             "line": 36,
             "description": "Shortcut to indicate nested validation.",
             "itemtype": "property",
@@ -5184,7 +5184,7 @@
             "namespace": "miruken.validate"
         },
         {
-            "file": "lib/validate/validatejs.js",
+            "file": "lib\\validate\\validatejs.js",
             "line": 90,
             "description": "Determines if the macro should be inherited",
             "itemtype": "method",
@@ -5199,7 +5199,7 @@
             "namespace": "miruken.validate"
         },
         {
-            "file": "lib/validate/validatejs.js",
+            "file": "lib\\validate\\validatejs.js",
             "line": 96,
             "description": "Determines if the macro should be applied on extension.",
             "itemtype": "method",
@@ -5214,7 +5214,7 @@
             "namespace": "miruken.validate"
         },
         {
-            "file": "lib/callback.js",
+            "file": "lib\\callback.js",
             "line": 25,
             "description": "Definition for handling callbacks contravariantly.",
             "itemtype": "method",
@@ -5225,7 +5225,7 @@
             "namespace": "miruken.callback"
         },
         {
-            "file": "lib/callback.js",
+            "file": "lib\\callback.js",
             "line": 31,
             "description": "Definition for providing callbacks covariantly.",
             "itemtype": "method",
@@ -5236,7 +5236,7 @@
             "namespace": "miruken.callback"
         },
         {
-            "file": "lib/callback.js",
+            "file": "lib\\callback.js",
             "line": 37,
             "description": "Definition for matching callbacks invariantly.",
             "itemtype": "method",
@@ -5247,7 +5247,7 @@
             "namespace": "miruken.callback"
         },
         {
-            "file": "lib/callback.js",
+            "file": "lib\\callback.js",
             "line": 43,
             "description": "return value to indicate a callback was not handled.",
             "itemtype": "property",
@@ -5259,7 +5259,7 @@
             "namespace": "miruken.callback"
         },
         {
-            "file": "lib/callback.js",
+            "file": "lib\\callback.js",
             "line": 100,
             "description": "Determines if the macro should be inherited",
             "itemtype": "method",
@@ -5274,7 +5274,7 @@
             "namespace": "miruken.callback"
         },
         {
-            "file": "lib/callback.js",
+            "file": "lib\\callback.js",
             "line": 106,
             "description": "Determines if the macro should be applied on extension.",
             "itemtype": "method",
@@ -5289,7 +5289,7 @@
             "namespace": "miruken.callback"
         },
         {
-            "file": "lib/callback.js",
+            "file": "lib\\callback.js",
             "line": 132,
             "description": "Gets the type of method.",
             "itemtype": "method",
@@ -5304,7 +5304,7 @@
             "namespace": "miruken.callback"
         },
         {
-            "file": "lib/callback.js",
+            "file": "lib\\callback.js",
             "line": 138,
             "description": "Gets the protocol the method belongs to.",
             "itemtype": "method",
@@ -5319,7 +5319,7 @@
             "namespace": "miruken.callback"
         },
         {
-            "file": "lib/callback.js",
+            "file": "lib\\callback.js",
             "line": 144,
             "description": "Gets the method name.",
             "itemtype": "method",
@@ -5334,7 +5334,7 @@
             "namespace": "miruken.callback"
         },
         {
-            "file": "lib/callback.js",
+            "file": "lib\\callback.js",
             "line": 150,
             "description": "Gets the method arguments.",
             "itemtype": "method",
@@ -5349,7 +5349,7 @@
             "namespace": "miruken.callback"
         },
         {
-            "file": "lib/callback.js",
+            "file": "lib\\callback.js",
             "line": 156,
             "description": "Gets the method return value.",
             "itemtype": "method",
@@ -5364,7 +5364,7 @@
             "namespace": "miruken.callback"
         },
         {
-            "file": "lib/callback.js",
+            "file": "lib\\callback.js",
             "line": 162,
             "description": "Sets the method return value.",
             "itemtype": "method",
@@ -5382,7 +5382,7 @@
             "namespace": "miruken.callback"
         },
         {
-            "file": "lib/callback.js",
+            "file": "lib\\callback.js",
             "line": 168,
             "description": "Gets the method execption.",
             "itemtype": "method",
@@ -5397,7 +5397,7 @@
             "namespace": "miruken.callback"
         },
         {
-            "file": "lib/callback.js",
+            "file": "lib\\callback.js",
             "line": 174,
             "description": "Sets the method exception.",
             "itemtype": "method",
@@ -5415,7 +5415,7 @@
             "namespace": "miruken.callback"
         },
         {
-            "file": "lib/callback.js",
+            "file": "lib\\callback.js",
             "line": 180,
             "description": "Attempts to invoke the method on the target.<br/>\nDuring invocation, the receiver will have access to a global **$composer** property\nrepresenting the initiating {{#crossLink \"miruken.callback.CallbackHandler\"}}{{/crossLink}}.",
             "itemtype": "method",
@@ -5437,7 +5437,7 @@
             "namespace": "miruken.callback"
         },
         {
-            "file": "lib/callback.js",
+            "file": "lib\\callback.js",
             "line": 232,
             "description": "Identifies a property get.",
             "itemtype": "property",
@@ -5450,7 +5450,7 @@
             "namespace": "miruken.callback"
         },
         {
-            "file": "lib/callback.js",
+            "file": "lib\\callback.js",
             "line": 238,
             "description": "Identifies a property set.",
             "itemtype": "property",
@@ -5463,7 +5463,7 @@
             "namespace": "miruken.callback"
         },
         {
-            "file": "lib/callback.js",
+            "file": "lib\\callback.js",
             "line": 244,
             "description": "Identifies a method invocation.",
             "itemtype": "property",
@@ -5476,7 +5476,7 @@
             "namespace": "miruken.callback"
         },
         {
-            "file": "lib/callback.js",
+            "file": "lib\\callback.js",
             "line": 270,
             "description": "Gets the lookup key.",
             "itemtype": "property",
@@ -5488,7 +5488,7 @@
             "namespace": "miruken.callback"
         },
         {
-            "file": "lib/callback.js",
+            "file": "lib\\callback.js",
             "line": 275,
             "description": "true if lookup all, false otherwise.",
             "itemtype": "property",
@@ -5500,7 +5500,7 @@
             "namespace": "miruken.callback"
         },
         {
-            "file": "lib/callback.js",
+            "file": "lib\\callback.js",
             "line": 280,
             "description": "Gets the matching results.",
             "itemtype": "property",
@@ -5512,7 +5512,7 @@
             "namespace": "miruken.callback"
         },
         {
-            "file": "lib/callback.js",
+            "file": "lib\\callback.js",
             "line": 285,
             "description": "Adds a lookup result.",
             "params": [
@@ -5528,7 +5528,7 @@
             "namespace": "miruken.callback"
         },
         {
-            "file": "lib/callback.js",
+            "file": "lib\\callback.js",
             "line": 315,
             "description": "true if handle all, false otherwise.",
             "itemtype": "property",
@@ -5540,7 +5540,7 @@
             "namespace": "miruken.callback"
         },
         {
-            "file": "lib/callback.js",
+            "file": "lib\\callback.js",
             "line": 320,
             "description": "Gets the callback.",
             "itemtype": "property",
@@ -5552,7 +5552,7 @@
             "namespace": "miruken.callback"
         },
         {
-            "file": "lib/callback.js",
+            "file": "lib\\callback.js",
             "line": 325,
             "description": "Gets the pending promises.",
             "itemtype": "property",
@@ -5564,7 +5564,7 @@
             "namespace": "miruken.callback"
         },
         {
-            "file": "lib/callback.js",
+            "file": "lib\\callback.js",
             "line": 330,
             "description": "Tracks a pending promise.",
             "params": [
@@ -5580,7 +5580,7 @@
             "namespace": "miruken.callback"
         },
         {
-            "file": "lib/callback.js",
+            "file": "lib\\callback.js",
             "line": 361,
             "description": "Gets the key.",
             "itemtype": "property",
@@ -5592,7 +5592,7 @@
             "namespace": "miruken.callback"
         },
         {
-            "file": "lib/callback.js",
+            "file": "lib\\callback.js",
             "line": 366,
             "description": "true if resolve all, false otherwise.",
             "itemtype": "property",
@@ -5604,7 +5604,7 @@
             "namespace": "miruken.callback"
         },
         {
-            "file": "lib/callback.js",
+            "file": "lib\\callback.js",
             "line": 371,
             "description": "Gets the resolutions.",
             "itemtype": "property",
@@ -5616,7 +5616,7 @@
             "namespace": "miruken.callback"
         },
         {
-            "file": "lib/callback.js",
+            "file": "lib\\callback.js",
             "line": 376,
             "description": "Adds a resolution.",
             "params": [
@@ -5632,7 +5632,7 @@
             "namespace": "miruken.callback"
         },
         {
-            "file": "lib/callback.js",
+            "file": "lib\\callback.js",
             "line": 400,
             "description": "Gets the callback.",
             "itemtype": "method",
@@ -5647,7 +5647,7 @@
             "namespace": "miruken.callback"
         },
         {
-            "file": "lib/callback.js",
+            "file": "lib\\callback.js",
             "line": 424,
             "description": "Gets the delegate.",
             "itemtype": "property",
@@ -5660,7 +5660,7 @@
             "namespace": "miruken.callback"
         },
         {
-            "file": "lib/callback.js",
+            "file": "lib\\callback.js",
             "line": 432,
             "description": "Handles the callback.",
             "itemtype": "method",
@@ -5695,7 +5695,7 @@
             "namespace": "miruken.callback"
         },
         {
-            "file": "lib/callback.js",
+            "file": "lib\\callback.js",
             "line": 449,
             "description": "Handles the callback with all arguments populated.",
             "itemtype": "method",
@@ -5728,7 +5728,7 @@
             "namespace": "miruken.callback"
         },
         {
-            "file": "lib/callback.js",
+            "file": "lib\\callback.js",
             "line": 495,
             "description": "Converts the callback handler to a {{#crossLink \"miruken.Delegate\"}}{{/crossLink}}.",
             "itemtype": "method",
@@ -5743,7 +5743,7 @@
             "namespace": "miruken.callback"
         },
         {
-            "file": "lib/callback.js",
+            "file": "lib\\callback.js",
             "line": 520,
             "description": "Gets the composition handler.",
             "itemtype": "property",
@@ -5756,7 +5756,7 @@
             "namespace": "miruken.callback"
         },
         {
-            "file": "lib/callback.js",
+            "file": "lib\\callback.js",
             "line": 549,
             "description": "Gets/Sets the decoratee.",
             "itemtype": "property",
@@ -5768,7 +5768,7 @@
             "namespace": "miruken.callback"
         },
         {
-            "file": "lib/callback.js",
+            "file": "lib\\callback.js",
             "line": 581,
             "description": "Gets the callback filter.",
             "itemtype": "property",
@@ -5781,7 +5781,7 @@
             "namespace": "miruken.callback"
         },
         {
-            "file": "lib/callback.js",
+            "file": "lib\\callback.js",
             "line": 589,
             "description": "Gets the filter reentrancy.  Reentrant filters will be applied during composition.",
             "itemtype": "property",
@@ -5793,7 +5793,7 @@
             "namespace": "miruken.callback"
         },
         {
-            "file": "lib/callback.js",
+            "file": "lib\\callback.js",
             "line": 700,
             "description": "Gets the primary handler.",
             "itemtype": "property",
@@ -5806,7 +5806,7 @@
             "namespace": "miruken.callback"
         },
         {
-            "file": "lib/callback.js",
+            "file": "lib\\callback.js",
             "line": 707,
             "description": "Gets the secondary handler.",
             "itemtype": "property",
@@ -5819,7 +5819,7 @@
             "namespace": "miruken.callback"
         },
         {
-            "file": "lib/callback.js",
+            "file": "lib\\callback.js",
             "line": 740,
             "description": "Gets all participating callback handlers.",
             "itemtype": "method",
@@ -5834,7 +5834,7 @@
             "namespace": "miruken.callback"
         },
         {
-            "file": "lib/callback.js",
+            "file": "lib\\callback.js",
             "line": 746,
             "description": "Adds the callback handlers to the composite.",
             "itemtype": "method",
@@ -5850,7 +5850,7 @@
             "namespace": "miruken.callback"
         },
         {
-            "file": "lib/callback.js",
+            "file": "lib\\callback.js",
             "line": 760,
             "description": "Removes callback handlers from the composite.",
             "itemtype": "method",
@@ -5866,7 +5866,7 @@
             "namespace": "miruken.callback"
         },
         {
-            "file": "lib/callback.js",
+            "file": "lib\\callback.js",
             "line": 824,
             "description": "Gets the callback condiition.",
             "itemtype": "property",
@@ -5879,7 +5879,7 @@
             "namespace": "miruken.callback"
         },
         {
-            "file": "lib/callback.js",
+            "file": "lib\\callback.js",
             "line": 903,
             "description": "Gets the method name.",
             "itemtype": "property",
@@ -5892,7 +5892,7 @@
             "namespace": "miruken.callback"
         },
         {
-            "file": "lib/callback.js",
+            "file": "lib\\callback.js",
             "line": 910,
             "description": "Gets the method function.",
             "itemtype": "property",
@@ -5905,7 +5905,7 @@
             "namespace": "miruken.callback"
         },
         {
-            "file": "lib/callback.js",
+            "file": "lib\\callback.js",
             "line": 943,
             "itemtype": "property",
             "name": "None",
@@ -5916,7 +5916,7 @@
             "namespace": "miruken.callback"
         },
         {
-            "file": "lib/callback.js",
+            "file": "lib\\callback.js",
             "line": 947,
             "description": "Delivers invocation to all handlers.  At least one must recognize it.",
             "itemtype": "property",
@@ -5928,7 +5928,7 @@
             "namespace": "miruken.callback"
         },
         {
-            "file": "lib/callback.js",
+            "file": "lib\\callback.js",
             "line": 952,
             "description": "Marks invocation as optional.",
             "itemtype": "property",
@@ -5940,7 +5940,7 @@
             "namespace": "miruken.callback"
         },
         {
-            "file": "lib/callback.js",
+            "file": "lib\\callback.js",
             "line": 957,
             "description": "Requires invocation to match conforming protocol.",
             "itemtype": "property",
@@ -5952,7 +5952,7 @@
             "namespace": "miruken.callback"
         },
         {
-            "file": "lib/callback.js",
+            "file": "lib\\callback.js",
             "line": 963,
             "description": "Publishes invocation to all handlers.",
             "itemtype": "property",
@@ -5964,7 +5964,7 @@
             "namespace": "miruken.callback"
         },
         {
-            "file": "lib/callback.js",
+            "file": "lib\\callback.js",
             "line": 982,
             "description": "Gets the invocation option.",
             "itemtype": "method",
@@ -5986,7 +5986,7 @@
             "namespace": "miruken.callback"
         },
         {
-            "file": "lib/callback.js",
+            "file": "lib\\callback.js",
             "line": 991,
             "description": "Sets the invocation option.",
             "itemtype": "method",
@@ -6009,7 +6009,7 @@
             "namespace": "miruken.callback"
         },
         {
-            "file": "lib/callback.js",
+            "file": "lib\\callback.js",
             "line": 1005,
             "description": "Determines if the invocation option was specified.",
             "itemtype": "method",
@@ -6031,7 +6031,7 @@
             "namespace": "miruken.callback"
         },
         {
-            "file": "lib/callback.js",
+            "file": "lib\\callback.js",
             "line": 1016,
             "description": "Merges invocation options into the supplied constraints.",
             "itemtype": "method",
@@ -6049,7 +6049,7 @@
             "namespace": "miruken.callback"
         },
         {
-            "file": "lib/callback.js",
+            "file": "lib\\callback.js",
             "line": 1043,
             "description": "Gets the forwarding handler.",
             "itemtype": "property",
@@ -6062,7 +6062,7 @@
             "namespace": "miruken.callback"
         },
         {
-            "file": "lib/callback.js",
+            "file": "lib\\callback.js",
             "line": 1050,
             "description": "Gets the invocation semantics.",
             "itemtype": "property",
@@ -6075,7 +6075,7 @@
             "namespace": "miruken.callback"
         },
         {
-            "file": "lib/callback.js",
+            "file": "lib\\callback.js",
             "line": 1079,
             "description": "Gets the handler that handles the \n{{#crossLink \"miruken.callback.HandleMethod\"}}{{/crossLink}}.",
             "itemtype": "property",
@@ -6088,7 +6088,7 @@
             "namespace": "miruken.callback"
         },
         {
-            "file": "lib/callback.js",
+            "file": "lib\\callback.js",
             "line": 1114,
             "description": "Establishes strict invocation semantics.",
             "itemtype": "method",
@@ -6103,7 +6103,7 @@
             "namespace": "miruken.callback"
         },
         {
-            "file": "lib/callback.js",
+            "file": "lib\\callback.js",
             "line": 1121,
             "description": "Establishes broadcast invocation semantics.",
             "itemtype": "method",
@@ -6118,7 +6118,7 @@
             "namespace": "miruken.callback"
         },
         {
-            "file": "lib/callback.js",
+            "file": "lib\\callback.js",
             "line": 1128,
             "description": "Establishes best-effort invocation semantics.",
             "itemtype": "method",
@@ -6133,7 +6133,7 @@
             "namespace": "miruken.callback"
         },
         {
-            "file": "lib/callback.js",
+            "file": "lib\\callback.js",
             "line": 1135,
             "description": "Establishes notification invocation semantics.",
             "itemtype": "method",
@@ -6148,7 +6148,7 @@
             "namespace": "miruken.callback"
         },
         {
-            "file": "lib/callback.js",
+            "file": "lib\\callback.js",
             "line": 1142,
             "description": "Establishes custom invocation semantics.",
             "itemtype": "method",
@@ -6170,7 +6170,7 @@
             "namespace": "miruken.callback"
         },
         {
-            "file": "lib/callback.js",
+            "file": "lib\\callback.js",
             "line": 1153,
             "description": "Asynchronusly handles the callback.",
             "itemtype": "method",
@@ -6193,7 +6193,7 @@
             "namespace": "miruken.callback"
         },
         {
-            "file": "lib/callback.js",
+            "file": "lib\\callback.js",
             "line": 1167,
             "description": "Asynchronusly handles the callback greedily.",
             "itemtype": "method",
@@ -6216,7 +6216,7 @@
             "namespace": "miruken.callback"
         },
         {
-            "file": "lib/callback.js",
+            "file": "lib\\callback.js",
             "line": 1181,
             "description": "Resolves the key.",
             "itemtype": "method",
@@ -6239,7 +6239,7 @@
             "namespace": "miruken.callback"
         },
         {
-            "file": "lib/callback.js",
+            "file": "lib\\callback.js",
             "line": 1198,
             "description": "Resolves the key greedily.",
             "itemtype": "method",
@@ -6262,7 +6262,7 @@
             "namespace": "miruken.callback"
         },
         {
-            "file": "lib/callback.js",
+            "file": "lib\\callback.js",
             "line": 1218,
             "description": "Looks up the key.",
             "itemtype": "method",
@@ -6284,7 +6284,7 @@
             "namespace": "miruken.callback"
         },
         {
-            "file": "lib/callback.js",
+            "file": "lib\\callback.js",
             "line": 1234,
             "description": "Looks up the key greedily.",
             "itemtype": "method",
@@ -6306,7 +6306,7 @@
             "namespace": "miruken.callback"
         },
         {
-            "file": "lib/callback.js",
+            "file": "lib\\callback.js",
             "line": 1253,
             "description": "Creates a handler for the filtering callbacks.",
             "itemtype": "method",
@@ -6328,7 +6328,7 @@
             "namespace": "miruken.callback"
         },
         {
-            "file": "lib/callback.js",
+            "file": "lib\\callback.js",
             "line": 1263,
             "description": "Creates a handler for applying aspects to callbacks.",
             "itemtype": "method",
@@ -6355,7 +6355,7 @@
             "namespace": "miruken.callback"
         },
         {
-            "file": "lib/callback.js",
+            "file": "lib\\callback.js",
             "line": 1274,
             "description": "Creates a handler for conditionally handling callbacks.",
             "itemtype": "method",
@@ -6377,7 +6377,7 @@
             "namespace": "miruken.callback"
         },
         {
-            "file": "lib/callback.js",
+            "file": "lib\\callback.js",
             "line": 1294,
             "description": "Builds a handler chain.",
             "itemtype": "method",
@@ -6399,7 +6399,7 @@
             "namespace": "miruken.callback"
         },
         {
-            "file": "lib/callback.js",
+            "file": "lib\\callback.js",
             "line": 1310,
             "description": "Defines a new handler grouping.  This is the main extensibility point for handling callbacks.",
             "itemtype": "method",
@@ -6429,7 +6429,7 @@
             "submodule": "callback"
         },
         {
-            "file": "lib/callback.js",
+            "file": "lib\\callback.js",
             "line": 1589,
             "description": "Gets the effective promise.  This could be the result of a method call.<br/>\nSee {{#crossLink \"miruken.callback.HandleMethod\"}}{{/crossLink}}",
             "itemtype": "method",
@@ -6451,7 +6451,7 @@
             "namespace": "miruken.callback"
         },
         {
-            "file": "lib/callback.js",
+            "file": "lib\\callback.js",
             "line": 1604,
             "description": "Marks the callback handler for validation.",
             "itemtype": "method",
@@ -6478,7 +6478,7 @@
             "namespace": "miruken.callback"
         },
         {
-            "file": "lib/callback.js",
+            "file": "lib\\callback.js",
             "line": 1613,
             "description": "Marks the callback handler for asynchronous validation.",
             "itemtype": "method",
@@ -6505,7 +6505,7 @@
             "namespace": "miruken.callback"
         },
         {
-            "file": "lib/context.js",
+            "file": "lib\\context.js",
             "line": 32,
             "description": "Context is active.",
             "itemtype": "property",
@@ -6517,7 +6517,7 @@
             "namespace": "miruken.context"
         },
         {
-            "file": "lib/context.js",
+            "file": "lib\\context.js",
             "line": 37,
             "description": "Context is in the process of ending.",
             "itemtype": "property",
@@ -6529,7 +6529,7 @@
             "namespace": "miruken.context"
         },
         {
-            "file": "lib/context.js",
+            "file": "lib\\context.js",
             "line": 42,
             "description": "Context has ended.",
             "itemtype": "property",
@@ -6541,7 +6541,7 @@
             "namespace": "miruken.context"
         },
         {
-            "file": "lib/context.js",
+            "file": "lib\\context.js",
             "line": 56,
             "description": "Called when a context is in the process of ending.",
             "itemtype": "method",
@@ -6559,7 +6559,7 @@
             "namespace": "miruken.context"
         },
         {
-            "file": "lib/context.js",
+            "file": "lib\\context.js",
             "line": 62,
             "description": "Called when a context has ended.",
             "itemtype": "method",
@@ -6577,7 +6577,7 @@
             "namespace": "miruken.context"
         },
         {
-            "file": "lib/context.js",
+            "file": "lib\\context.js",
             "line": 68,
             "description": "Called when a child context is in the process of ending.",
             "itemtype": "method",
@@ -6595,7 +6595,7 @@
             "namespace": "miruken.context"
         },
         {
-            "file": "lib/context.js",
+            "file": "lib\\context.js",
             "line": 74,
             "description": "Called when a child context has ended.",
             "itemtype": "method",
@@ -6613,7 +6613,7 @@
             "namespace": "miruken.context"
         },
         {
-            "file": "lib/context.js",
+            "file": "lib\\context.js",
             "line": 108,
             "description": "Gets the context state.",
             "itemtype": "property",
@@ -6625,7 +6625,7 @@
             "namespace": "miruken.context"
         },
         {
-            "file": "lib/context.js",
+            "file": "lib\\context.js",
             "line": 115,
             "description": "Gets the parent context.",
             "itemtype": "property",
@@ -6637,7 +6637,7 @@
             "namespace": "miruken.context"
         },
         {
-            "file": "lib/context.js",
+            "file": "lib\\context.js",
             "line": 122,
             "description": "Gets the context children.",
             "itemtype": "property",
@@ -6649,7 +6649,7 @@
             "namespace": "miruken.context"
         },
         {
-            "file": "lib/context.js",
+            "file": "lib\\context.js",
             "line": 129,
             "description": "Determines if the context has children.",
             "itemtype": "method",
@@ -6664,7 +6664,7 @@
             "namespace": "miruken.context"
         },
         {
-            "file": "lib/context.js",
+            "file": "lib\\context.js",
             "line": 137,
             "description": "Gets the root context.",
             "itemtype": "property",
@@ -6676,7 +6676,7 @@
             "namespace": "miruken.context"
         },
         {
-            "file": "lib/context.js",
+            "file": "lib\\context.js",
             "line": 165,
             "description": "Stores the object in the context.",
             "itemtype": "method",
@@ -6699,7 +6699,7 @@
             "namespace": "miruken.context"
         },
         {
-            "file": "lib/context.js",
+            "file": "lib\\context.js",
             "line": 188,
             "description": "Handles the callback using the traversing axis.",
             "itemtype": "method",
@@ -6739,7 +6739,7 @@
             "namespace": "miruken.context"
         },
         {
-            "file": "lib/context.js",
+            "file": "lib\\context.js",
             "line": 214,
             "description": "Subscribes to the context notifications.",
             "itemtype": "method",
@@ -6761,7 +6761,7 @@
             "namespace": "miruken.context"
         },
         {
-            "file": "lib/context.js",
+            "file": "lib\\context.js",
             "line": 229,
             "description": "Unwinds to the root context.",
             "itemtype": "method",
@@ -6784,7 +6784,7 @@
             "namespace": "miruken.context"
         },
         {
-            "file": "lib/context.js",
+            "file": "lib\\context.js",
             "line": 247,
             "description": "Unwinds to the context by ending all children.",
             "itemtype": "method",
@@ -6800,7 +6800,7 @@
             "namespace": "miruken.context"
         },
         {
-            "file": "lib/context.js",
+            "file": "lib\\context.js",
             "line": 257,
             "description": "Ends the context.",
             "itemtype": "method",
@@ -6811,7 +6811,7 @@
             "namespace": "miruken.context"
         },
         {
-            "file": "lib/context.js",
+            "file": "lib\\context.js",
             "line": 294,
             "description": "Gets the context associated with the receiver.",
             "itemtype": "method",
@@ -6826,7 +6826,7 @@
             "namespace": "miruken.context"
         },
         {
-            "file": "lib/context.js",
+            "file": "lib\\context.js",
             "line": 300,
             "description": "Sets the context associated with the receiver.",
             "itemtype": "method",
@@ -6844,7 +6844,7 @@
             "namespace": "miruken.context"
         },
         {
-            "file": "lib/context.js",
+            "file": "lib\\context.js",
             "line": 331,
             "description": "Determines if the receivers context is active.",
             "itemtype": "method",
@@ -6859,7 +6859,7 @@
             "namespace": "miruken.context"
         },
         {
-            "file": "lib/context.js",
+            "file": "lib\\context.js",
             "line": 339,
             "description": "Ends the receivers context.",
             "itemtype": "method",
@@ -6870,7 +6870,7 @@
             "namespace": "miruken.context"
         },
         {
-            "file": "lib/context.js",
+            "file": "lib\\context.js",
             "line": 379,
             "description": "Resolves the receivers context.",
             "itemtype": "method",
@@ -6885,7 +6885,7 @@
             "namespace": "miruken.context"
         },
         {
-            "file": "lib/context.js",
+            "file": "lib\\context.js",
             "line": 390,
             "description": "Ensure the receiver is associated with a context.",
             "itemtype": "method",
@@ -6900,7 +6900,7 @@
             "namespace": "miruken.context"
         },
         {
-            "file": "lib/context.js",
+            "file": "lib\\context.js",
             "line": 401,
             "description": "Clears and ends the receivers associated context.",
             "itemtype": "method",
@@ -6911,7 +6911,7 @@
             "namespace": "miruken.context"
         },
         {
-            "file": "lib/context.js",
+            "file": "lib\\context.js",
             "line": 421,
             "description": "Attaches the context to the receiver.",
             "itemtype": "method",
@@ -6942,7 +6942,7 @@
             "namespace": "miruken.context"
         },
         {
-            "file": "lib/context.js",
+            "file": "lib\\context.js",
             "line": 443,
             "description": "Attaches a child context of the receiver to the contextual child.",
             "itemtype": "method",
@@ -6973,7 +6973,7 @@
             "namespace": "miruken.context"
         },
         {
-            "file": "lib/context.js",
+            "file": "lib\\context.js",
             "line": 473,
             "description": "Context traversal",
             "class": "miruken.context.ContextualHelper",
@@ -6982,8 +6982,8 @@
             "namespace": "miruken.context"
         },
         {
-            "file": "lib/context.js",
-            "line": 494,
+            "file": "lib\\context.js",
+            "line": 499,
             "description": "Sets the default callback handler axis to\n{{#crossLink \"miruken.graph.TraversingAxis/Self:property\"}}{{/crossLink}}.",
             "itemtype": "method",
             "name": "$self",
@@ -6997,8 +6997,8 @@
             "namespace": "miruken.context"
         },
         {
-            "file": "lib/context.js",
-            "line": 502,
+            "file": "lib\\context.js",
+            "line": 507,
             "description": "Sets the default callback handler axis to\n{{#crossLink \"miruken.graph.TraversingAxis/Root:property\"}}{{/crossLink}}.",
             "itemtype": "method",
             "name": "$root",
@@ -7012,8 +7012,8 @@
             "namespace": "miruken.context"
         },
         {
-            "file": "lib/context.js",
-            "line": 510,
+            "file": "lib\\context.js",
+            "line": 515,
             "description": "Sets the default callback handler axis to\n{{#crossLink \"miruken.graph.TraversingAxis/Child:property\"}}{{/crossLink}}.",
             "itemtype": "method",
             "name": "$child",
@@ -7027,8 +7027,8 @@
             "namespace": "miruken.context"
         },
         {
-            "file": "lib/context.js",
-            "line": 518,
+            "file": "lib\\context.js",
+            "line": 523,
             "description": "Sets the default callback handler axis to\n{{#crossLink \"miruken.graph.TraversingAxis/Sibling:property\"}}{{/crossLink}}.",
             "itemtype": "method",
             "name": "$sibling",
@@ -7042,8 +7042,8 @@
             "namespace": "miruken.context"
         },
         {
-            "file": "lib/context.js",
-            "line": 526,
+            "file": "lib\\context.js",
+            "line": 531,
             "description": "Sets the default callback handler axis to\n{{#crossLink \"miruken.graph.TraversingAxis/Ancestor:property\"}}{{/crossLink}}.",
             "itemtype": "method",
             "name": "$ancestor",
@@ -7057,8 +7057,8 @@
             "namespace": "miruken.context"
         },
         {
-            "file": "lib/context.js",
-            "line": 534,
+            "file": "lib\\context.js",
+            "line": 539,
             "description": "Sets the default callback handler axis to\n{{#crossLink \"miruken.graph.TraversingAxis/Descendant:property\"}}{{/crossLink}}.",
             "itemtype": "method",
             "name": "$descendant",
@@ -7072,8 +7072,8 @@
             "namespace": "miruken.context"
         },
         {
-            "file": "lib/context.js",
-            "line": 542,
+            "file": "lib\\context.js",
+            "line": 547,
             "description": "Sets the default callback handler axis to\n{{#crossLink \"miruken.graph.TraversingAxis/DescendantReverse:property\"}}{{/crossLink}}.",
             "itemtype": "method",
             "name": "$descendantReverse",
@@ -7087,8 +7087,8 @@
             "namespace": "miruken.context"
         },
         {
-            "file": "lib/context.js",
-            "line": 550,
+            "file": "lib\\context.js",
+            "line": 555,
             "description": "Sets the default callback handler axis to\n{{#crossLink \"miruken.graph.TraversingAxis/ChildOrSelf:property\"}}{{/crossLink}}.",
             "itemtype": "method",
             "name": "$childOrSelf",
@@ -7102,8 +7102,8 @@
             "namespace": "miruken.context"
         },
         {
-            "file": "lib/context.js",
-            "line": 558,
+            "file": "lib\\context.js",
+            "line": 563,
             "description": "Sets the default callback handler axis to\n{{#crossLink \"miruken.graph.TraversingAxis/SiblingOrSelf:property\"}}{{/crossLink}}.",
             "itemtype": "method",
             "name": "$siblingOrSelf",
@@ -7117,8 +7117,8 @@
             "namespace": "miruken.context"
         },
         {
-            "file": "lib/context.js",
-            "line": 566,
+            "file": "lib\\context.js",
+            "line": 571,
             "description": "Sets the default callback handler axis to\n{{#crossLink \"miruken.graph.TraversingAxis/AncestorOrSelf:property\"}}{{/crossLink}}.",
             "itemtype": "method",
             "name": "$ancestorOrSelf",
@@ -7132,8 +7132,8 @@
             "namespace": "miruken.context"
         },
         {
-            "file": "lib/context.js",
-            "line": 574,
+            "file": "lib\\context.js",
+            "line": 579,
             "description": "Sets the default callback handler axis to\n{{#crossLink \"miruken.graph.TraversingAxis/DescendantOrSelf:property\"}}{{/crossLink}}.",
             "itemtype": "method",
             "name": "$descendantOrSelf",
@@ -7147,8 +7147,8 @@
             "namespace": "miruken.context"
         },
         {
-            "file": "lib/context.js",
-            "line": 582,
+            "file": "lib\\context.js",
+            "line": 587,
             "description": "Sets the default callback handler axis to\n{{#crossLink \"miruken.graph.TraversingAxis/DescendantOrSelfReverse:property\"}}{{/crossLink}}.",
             "itemtype": "method",
             "name": "$descendantOrSelfReverse",
@@ -7162,8 +7162,8 @@
             "namespace": "miruken.context"
         },
         {
-            "file": "lib/context.js",
-            "line": 590,
+            "file": "lib\\context.js",
+            "line": 595,
             "description": "Sets the default callback handler axis to\n{{#crossLink \"miruken.graph.TraversingAxis/AncestorSiblingOrSelf:property\"}}{{/crossLink}}.",
             "itemtype": "method",
             "name": "$ancestorSiblingOrSelf",
@@ -7177,8 +7177,8 @@
             "namespace": "miruken.context"
         },
         {
-            "file": "lib/context.js",
-            "line": 600,
+            "file": "lib\\context.js",
+            "line": 605,
             "description": "Enhances Functions to create instances in a context.",
             "itemtype": "method",
             "name": "newInContext",
@@ -7187,8 +7187,8 @@
             "submodule": "context"
         },
         {
-            "file": "lib/context.js",
-            "line": 617,
+            "file": "lib\\context.js",
+            "line": 622,
             "description": "Enhances Functions to create instances in a child context.",
             "itemtype": "method",
             "name": "newInChildContext",
@@ -7198,7 +7198,7 @@
             "namespace": "miruken.context"
         },
         {
-            "file": "lib/error.js",
+            "file": "lib\\error.js",
             "line": 31,
             "description": "Handles an error.",
             "itemtype": "method",
@@ -7226,7 +7226,7 @@
             "namespace": "miruken.error"
         },
         {
-            "file": "lib/error.js",
+            "file": "lib\\error.js",
             "line": 39,
             "description": "Handles an exception.",
             "itemtype": "method",
@@ -7254,7 +7254,7 @@
             "namespace": "miruken.error"
         },
         {
-            "file": "lib/error.js",
+            "file": "lib\\error.js",
             "line": 47,
             "description": "Reports an error.",
             "itemtype": "method",
@@ -7282,7 +7282,7 @@
             "namespace": "miruken.error"
         },
         {
-            "file": "lib/error.js",
+            "file": "lib\\error.js",
             "line": 55,
             "description": "Reports an excepion.",
             "itemtype": "method",
@@ -7310,7 +7310,7 @@
             "namespace": "miruken.error"
         },
         {
-            "file": "lib/error.js",
+            "file": "lib\\error.js",
             "line": 95,
             "description": "Marks the callback handler for recovery.",
             "itemtype": "method",
@@ -7325,7 +7325,7 @@
             "namespace": "miruken.callback"
         },
         {
-            "file": "lib/error.js",
+            "file": "lib\\error.js",
             "line": 121,
             "description": "Creates a function to pass error promises to Errors feature.",
             "itemtype": "method",
@@ -7340,7 +7340,7 @@
             "namespace": "miruken.callback"
         },
         {
-            "file": "lib/graph.js",
+            "file": "lib\\graph.js",
             "line": 27,
             "description": "Traverse only current node.",
             "itemtype": "property",
@@ -7352,7 +7352,7 @@
             "namespace": "miruken.graph"
         },
         {
-            "file": "lib/graph.js",
+            "file": "lib\\graph.js",
             "line": 32,
             "description": "Traverse only current node root.",
             "itemtype": "property",
@@ -7364,7 +7364,7 @@
             "namespace": "miruken.graph"
         },
         {
-            "file": "lib/graph.js",
+            "file": "lib\\graph.js",
             "line": 37,
             "description": "Traverse current node children.",
             "itemtype": "property",
@@ -7376,7 +7376,7 @@
             "namespace": "miruken.graph"
         },
         {
-            "file": "lib/graph.js",
+            "file": "lib\\graph.js",
             "line": 42,
             "description": "Traverse current node siblings.",
             "itemtype": "property",
@@ -7388,7 +7388,7 @@
             "namespace": "miruken.graph"
         },
         {
-            "file": "lib/graph.js",
+            "file": "lib\\graph.js",
             "line": 47,
             "description": "Traverse current node ancestors.",
             "itemtype": "property",
@@ -7400,7 +7400,7 @@
             "namespace": "miruken.graph"
         },
         {
-            "file": "lib/graph.js",
+            "file": "lib\\graph.js",
             "line": 52,
             "description": "Traverse current node descendants.",
             "itemtype": "property",
@@ -7412,7 +7412,7 @@
             "namespace": "miruken.graph"
         },
         {
-            "file": "lib/graph.js",
+            "file": "lib\\graph.js",
             "line": 57,
             "description": "Traverse current node descendants in reverse.",
             "itemtype": "property",
@@ -7424,7 +7424,7 @@
             "namespace": "miruken.graph"
         },
         {
-            "file": "lib/graph.js",
+            "file": "lib\\graph.js",
             "line": 62,
             "description": "Traverse current node and children.",
             "itemtype": "property",
@@ -7436,7 +7436,7 @@
             "namespace": "miruken.graph"
         },
         {
-            "file": "lib/graph.js",
+            "file": "lib\\graph.js",
             "line": 67,
             "description": "Traverse current node and siblings.",
             "itemtype": "property",
@@ -7448,7 +7448,7 @@
             "namespace": "miruken.graph"
         },
         {
-            "file": "lib/graph.js",
+            "file": "lib\\graph.js",
             "line": 72,
             "description": "Traverse current node and ancestors.",
             "itemtype": "property",
@@ -7460,7 +7460,7 @@
             "namespace": "miruken.graph"
         },
         {
-            "file": "lib/graph.js",
+            "file": "lib\\graph.js",
             "line": 77,
             "description": "Traverse current node and descendents.",
             "itemtype": "property",
@@ -7472,7 +7472,7 @@
             "namespace": "miruken.graph"
         },
         {
-            "file": "lib/graph.js",
+            "file": "lib\\graph.js",
             "line": 82,
             "description": "Traverse current node and descendents in reverse.",
             "itemtype": "property",
@@ -7484,7 +7484,7 @@
             "namespace": "miruken.graph"
         },
         {
-            "file": "lib/graph.js",
+            "file": "lib\\graph.js",
             "line": 87,
             "description": "Traverse current node, ancestors and siblings.",
             "itemtype": "property",
@@ -7496,7 +7496,7 @@
             "namespace": "miruken.graph"
         },
         {
-            "file": "lib/graph.js",
+            "file": "lib\\graph.js",
             "line": 100,
             "description": "Traverse a graph of objects.",
             "itemtype": "method",
@@ -7525,7 +7525,7 @@
             "namespace": "miruken.graph"
         },
         {
-            "file": "lib/graph.js",
+            "file": "lib\\graph.js",
             "line": 281,
             "description": "Performs a pre-order graph traversal.",
             "static": 1,
@@ -7555,7 +7555,7 @@
             "namespace": "miruken.graph"
         },
         {
-            "file": "lib/graph.js",
+            "file": "lib\\graph.js",
             "line": 292,
             "description": "Performs a post-order graph traversal.",
             "static": 1,
@@ -7585,7 +7585,7 @@
             "namespace": "miruken.graph"
         },
         {
-            "file": "lib/graph.js",
+            "file": "lib\\graph.js",
             "line": 303,
             "description": "Performs a level-order graph traversal.",
             "static": 1,
@@ -7615,7 +7615,7 @@
             "namespace": "miruken.graph"
         },
         {
-            "file": "lib/graph.js",
+            "file": "lib\\graph.js",
             "line": 314,
             "description": "Performs a reverse level-order graph traversal.",
             "static": 1,
@@ -7645,7 +7645,7 @@
             "namespace": "miruken.graph"
         },
         {
-            "file": "lib/miruken.js",
+            "file": "lib\\miruken.js",
             "line": 22,
             "description": "Annotates invariance.",
             "itemtype": "attribute",
@@ -7655,7 +7655,7 @@
             "namespace": "miruken"
         },
         {
-            "file": "lib/miruken.js",
+            "file": "lib\\miruken.js",
             "line": 28,
             "description": "Annotates use value as is.",
             "itemtype": "attribute",
@@ -7665,7 +7665,7 @@
             "namespace": "miruken"
         },
         {
-            "file": "lib/miruken.js",
+            "file": "lib\\miruken.js",
             "line": 34,
             "description": "Annotates copy semantics.",
             "itemtype": "attribute",
@@ -7675,7 +7675,7 @@
             "namespace": "miruken"
         },
         {
-            "file": "lib/miruken.js",
+            "file": "lib\\miruken.js",
             "line": 40,
             "description": "Annotates lazy semantics.",
             "itemtype": "attribute",
@@ -7685,7 +7685,7 @@
             "namespace": "miruken"
         },
         {
-            "file": "lib/miruken.js",
+            "file": "lib\\miruken.js",
             "line": 46,
             "description": "Annotates function to be evaluated.",
             "itemtype": "attribute",
@@ -7695,7 +7695,7 @@
             "namespace": "miruken"
         },
         {
-            "file": "lib/miruken.js",
+            "file": "lib\\miruken.js",
             "line": 52,
             "description": "Annotates zero or more semantics.",
             "itemtype": "attribute",
@@ -7705,7 +7705,7 @@
             "namespace": "miruken"
         },
         {
-            "file": "lib/miruken.js",
+            "file": "lib\\miruken.js",
             "line": 58,
             "description": "Annotates",
             "itemtype": "attribute",
@@ -7716,7 +7716,7 @@
             "namespace": "miruken"
         },
         {
-            "file": "lib/miruken.js",
+            "file": "lib\\miruken.js",
             "line": 65,
             "description": "Annotates optional semantics.",
             "itemtype": "attribute",
@@ -7726,7 +7726,7 @@
             "namespace": "miruken"
         },
         {
-            "file": "lib/miruken.js",
+            "file": "lib\\miruken.js",
             "line": 71,
             "description": "Annotates Promise expectation.",
             "itemtype": "attribute",
@@ -7736,7 +7736,7 @@
             "namespace": "miruken"
         },
         {
-            "file": "lib/miruken.js",
+            "file": "lib\\miruken.js",
             "line": 77,
             "description": "Annotates synchronous.",
             "itemtype": "attribute",
@@ -7746,7 +7746,7 @@
             "namespace": "miruken"
         },
         {
-            "file": "lib/miruken.js",
+            "file": "lib\\miruken.js",
             "line": 122,
             "description": "Matches a more specific type than originally specified.",
             "itemtype": "property",
@@ -7757,7 +7757,7 @@
             "namespace": "miruken"
         },
         {
-            "file": "lib/miruken.js",
+            "file": "lib\\miruken.js",
             "line": 127,
             "description": "Matches a more generic (less derived) type than originally specified.",
             "itemtype": "property",
@@ -7768,7 +7768,7 @@
             "namespace": "miruken"
         },
         {
-            "file": "lib/miruken.js",
+            "file": "lib\\miruken.js",
             "line": 132,
             "description": "Matches only the type originally specified.",
             "itemtype": "property",
@@ -7779,7 +7779,7 @@
             "namespace": "miruken"
         },
         {
-            "file": "lib/miruken.js",
+            "file": "lib\\miruken.js",
             "line": 146,
             "description": "Delegates the property get on the protocol.",
             "itemtype": "method",
@@ -7810,7 +7810,7 @@
             "namespace": "miruken"
         },
         {
-            "file": "lib/miruken.js",
+            "file": "lib\\miruken.js",
             "line": 155,
             "description": "Delegates the property set on the protocol.",
             "itemtype": "method",
@@ -7842,7 +7842,7 @@
             "namespace": "miruken"
         },
         {
-            "file": "lib/miruken.js",
+            "file": "lib\\miruken.js",
             "line": 164,
             "description": "Delegates the method invocation on the protocol.",
             "itemtype": "method",
@@ -7878,7 +7878,7 @@
             "namespace": "miruken"
         },
         {
-            "file": "lib/miruken.js",
+            "file": "lib\\miruken.js",
             "line": 255,
             "description": "Determines if the target is a {{#crossLink \"miruken.Protocol\"}}{{/crossLink}}.",
             "static": 1,
@@ -7900,7 +7900,7 @@
             "namespace": "miruken"
         },
         {
-            "file": "lib/miruken.js",
+            "file": "lib\\miruken.js",
             "line": 266,
             "description": "Determines if the target conforms to this protocol.",
             "static": 1,
@@ -7922,7 +7922,7 @@
             "namespace": "miruken"
         },
         {
-            "file": "lib/miruken.js",
+            "file": "lib\\miruken.js",
             "line": 278,
             "description": "Creates a protocol binding over the object.",
             "static": 1,
@@ -7944,7 +7944,7 @@
             "namespace": "miruken"
         },
         {
-            "file": "lib/miruken.js",
+            "file": "lib\\miruken.js",
             "line": 294,
             "description": "Triggered when a new class is derived",
             "itemtype": "property",
@@ -7955,7 +7955,7 @@
             "namespace": "miruken"
         },
         {
-            "file": "lib/miruken.js",
+            "file": "lib\\miruken.js",
             "line": 299,
             "description": "Triggered when an existing class is extended",
             "itemtype": "property",
@@ -7966,7 +7966,7 @@
             "namespace": "miruken"
         },
         {
-            "file": "lib/miruken.js",
+            "file": "lib\\miruken.js",
             "line": 304,
             "description": "Triggered when an instance is extended",
             "itemtype": "property",
@@ -7977,7 +7977,7 @@
             "namespace": "miruken"
         },
         {
-            "file": "lib/miruken.js",
+            "file": "lib\\miruken.js",
             "line": 317,
             "description": "Executes the macro for the given step.",
             "itemtype": "method",
@@ -8009,7 +8009,7 @@
             "namespace": "miruken"
         },
         {
-            "file": "lib/miruken.js",
+            "file": "lib\\miruken.js",
             "line": 326,
             "description": "Triggered when a protocol is added to metadata.",
             "itemtype": "method",
@@ -8031,7 +8031,7 @@
             "namespace": "miruken"
         },
         {
-            "file": "lib/miruken.js",
+            "file": "lib\\miruken.js",
             "line": 333,
             "description": "Determines if the macro should be inherited",
             "itemtype": "method",
@@ -8045,7 +8045,7 @@
             "namespace": "miruken"
         },
         {
-            "file": "lib/miruken.js",
+            "file": "lib\\miruken.js",
             "line": 339,
             "description": "Determines if the macro should be applied on extension.",
             "itemtype": "method",
@@ -8059,7 +8059,7 @@
             "namespace": "miruken"
         },
         {
-            "file": "lib/miruken.js",
+            "file": "lib\\miruken.js",
             "line": 360,
             "description": "Gets the parent metadata.",
             "itemtype": "method",
@@ -8073,7 +8073,7 @@
             "namespace": "miruken"
         },
         {
-            "file": "lib/miruken.js",
+            "file": "lib\\miruken.js",
             "line": 366,
             "description": "Gets the declared protocols.",
             "itemtype": "method",
@@ -8087,7 +8087,7 @@
             "namespace": "miruken"
         },
         {
-            "file": "lib/miruken.js",
+            "file": "lib\\miruken.js",
             "line": 372,
             "description": "Gets all conforming protocools.",
             "itemtype": "method",
@@ -8101,7 +8101,7 @@
             "namespace": "miruken"
         },
         {
-            "file": "lib/miruken.js",
+            "file": "lib\\miruken.js",
             "line": 391,
             "description": "Adds one or more protocols to the metadata.",
             "itemtype": "method",
@@ -8118,7 +8118,7 @@
             "namespace": "miruken"
         },
         {
-            "file": "lib/miruken.js",
+            "file": "lib\\miruken.js",
             "line": 417,
             "description": "Determines if the metadata conforms to the protocol.",
             "itemtype": "method",
@@ -8139,7 +8139,7 @@
             "namespace": "miruken"
         },
         {
-            "file": "lib/miruken.js",
+            "file": "lib\\miruken.js",
             "line": 442,
             "description": "Defines a property on the metadata.",
             "itemtype": "method",
@@ -8172,7 +8172,7 @@
             "namespace": "miruken"
         },
         {
-            "file": "lib/miruken.js",
+            "file": "lib\\miruken.js",
             "line": 455,
             "description": "Gets the descriptor for one or more properties.",
             "itemtype": "method",
@@ -8193,7 +8193,7 @@
             "namespace": "miruken"
         },
         {
-            "file": "lib/miruken.js",
+            "file": "lib\\miruken.js",
             "line": 485,
             "description": "Sets the descriptor for a property.",
             "itemtype": "method",
@@ -8220,7 +8220,7 @@
             "namespace": "miruken"
         },
         {
-            "file": "lib/miruken.js",
+            "file": "lib\\miruken.js",
             "line": 497,
             "description": "Determines if the property descriptor matches the filter.",
             "itemtype": "method",
@@ -8246,7 +8246,7 @@
             "namespace": "miruken"
         },
         {
-            "file": "lib/miruken.js",
+            "file": "lib\\miruken.js",
             "line": 532,
             "description": "Binds a method to the parent if not present.",
             "itemtype": "method",
@@ -8268,7 +8268,7 @@
             "namespace": "miruken"
         },
         {
-            "file": "lib/miruken.js",
+            "file": "lib\\miruken.js",
             "line": 571,
             "description": "Gets the associated base class.",
             "itemtype": "method",
@@ -8282,7 +8282,7 @@
             "namespace": "miruken"
         },
         {
-            "file": "lib/miruken.js",
+            "file": "lib\\miruken.js",
             "line": 577,
             "description": "Gets the associated class",
             "itemtype": "method",
@@ -8296,7 +8296,7 @@
             "namespace": "miruken"
         },
         {
-            "file": "lib/miruken.js",
+            "file": "lib\\miruken.js",
             "line": 583,
             "description": "Determines if the meta-data represents a protocol.",
             "itemtype": "method",
@@ -8310,7 +8310,7 @@
             "namespace": "miruken"
         },
         {
-            "file": "lib/miruken.js",
+            "file": "lib\\miruken.js",
             "line": 658,
             "description": "Gets the associated base class.",
             "itemtype": "method",
@@ -8324,7 +8324,7 @@
             "namespace": "miruken"
         },
         {
-            "file": "lib/miruken.js",
+            "file": "lib\\miruken.js",
             "line": 664,
             "description": "Gets the associated class",
             "itemtype": "method",
@@ -8338,7 +8338,7 @@
             "namespace": "miruken"
         },
         {
-            "file": "lib/miruken.js",
+            "file": "lib\\miruken.js",
             "line": 670,
             "description": "Determines if the meta-data represents a protocol.",
             "itemtype": "method",
@@ -8352,7 +8352,7 @@
             "namespace": "miruken"
         },
         {
-            "file": "lib/miruken.js",
+            "file": "lib\\miruken.js",
             "line": 820,
             "description": "Determines if the macro should be inherited",
             "itemtype": "method",
@@ -8366,7 +8366,7 @@
             "namespace": "miruken"
         },
         {
-            "file": "lib/miruken.js",
+            "file": "lib\\miruken.js",
             "line": 826,
             "description": "Determines if the macro should be applied on extension.",
             "itemtype": "method",
@@ -8380,7 +8380,7 @@
             "namespace": "miruken"
         },
         {
-            "file": "lib/miruken.js",
+            "file": "lib\\miruken.js",
             "line": 952,
             "description": "Determines if the macro should be inherited",
             "itemtype": "method",
@@ -8394,7 +8394,7 @@
             "namespace": "miruken"
         },
         {
-            "file": "lib/miruken.js",
+            "file": "lib\\miruken.js",
             "line": 958,
             "description": "Determines if the macro should be applied on extension.",
             "itemtype": "method",
@@ -8408,7 +8408,7 @@
             "namespace": "miruken"
         },
         {
-            "file": "lib/miruken.js",
+            "file": "lib\\miruken.js",
             "line": 1033,
             "description": "Determines if the macro should be inherited",
             "itemtype": "method",
@@ -8422,7 +8422,7 @@
             "namespace": "miruken"
         },
         {
-            "file": "lib/miruken.js",
+            "file": "lib\\miruken.js",
             "line": 1039,
             "description": "Determines if the macro should be applied on extension.",
             "itemtype": "method",
@@ -8436,7 +8436,7 @@
             "namespace": "miruken"
         },
         {
-            "file": "lib/miruken.js",
+            "file": "lib\\miruken.js",
             "line": 1123,
             "description": "Determines if the macro should be inherited",
             "itemtype": "method",
@@ -8450,7 +8450,7 @@
             "namespace": "miruken"
         },
         {
-            "file": "lib/miruken.js",
+            "file": "lib\\miruken.js",
             "line": 1147,
             "description": "Releases any resources managed by the receiver.",
             "itemtype": "method",
@@ -8460,7 +8460,7 @@
             "namespace": "miruken"
         },
         {
-            "file": "lib/miruken.js",
+            "file": "lib\\miruken.js",
             "line": 1175,
             "description": "Invokes the function with dependencies.",
             "itemtype": "method",
@@ -8492,7 +8492,7 @@
             "namespace": "miruken"
         },
         {
-            "file": "lib/miruken.js",
+            "file": "lib\\miruken.js",
             "line": 1192,
             "description": "Creates a new child of the parent.",
             "itemtype": "method",
@@ -8506,7 +8506,7 @@
             "namespace": "miruken"
         },
         {
-            "file": "lib/miruken.js",
+            "file": "lib\\miruken.js",
             "line": 1206,
             "description": "Starts the reciever.",
             "itemtype": "method",
@@ -8516,7 +8516,7 @@
             "namespace": "miruken"
         },
         {
-            "file": "lib/miruken.js",
+            "file": "lib\\miruken.js",
             "line": 1223,
             "description": "Convenience function for disposing resources.",
             "itemtype": "method",
@@ -8548,7 +8548,7 @@
             "namespace": "miruken"
         },
         {
-            "file": "lib/miruken.js",
+            "file": "lib\\miruken.js",
             "line": 1311,
             "description": "Gets the array.",
             "itemtype": "method",
@@ -8562,7 +8562,7 @@
             "namespace": "miruken"
         },
         {
-            "file": "lib/miruken.js",
+            "file": "lib\\miruken.js",
             "line": 1317,
             "description": "Gets the item at array index.",
             "itemtype": "method",
@@ -8583,7 +8583,7 @@
             "namespace": "miruken"
         },
         {
-            "file": "lib/miruken.js",
+            "file": "lib\\miruken.js",
             "line": 1328,
             "description": "Sets the item at array index if empty.",
             "itemtype": "method",
@@ -8610,7 +8610,7 @@
             "namespace": "miruken"
         },
         {
-            "file": "lib/miruken.js",
+            "file": "lib\\miruken.js",
             "line": 1343,
             "description": "Inserts the item at array index.",
             "itemtype": "method",
@@ -8637,7 +8637,7 @@
             "namespace": "miruken"
         },
         {
-            "file": "lib/miruken.js",
+            "file": "lib\\miruken.js",
             "line": 1355,
             "description": "Replaces the item at array index.",
             "itemtype": "method",
@@ -8664,7 +8664,7 @@
             "namespace": "miruken"
         },
         {
-            "file": "lib/miruken.js",
+            "file": "lib\\miruken.js",
             "line": 1367,
             "description": "Removes the item at array index.",
             "itemtype": "method",
@@ -8686,7 +8686,7 @@
             "namespace": "miruken"
         },
         {
-            "file": "lib/miruken.js",
+            "file": "lib\\miruken.js",
             "line": 1380,
             "description": "Appends one or more items to the end of the array.",
             "itemtype": "method",
@@ -8701,7 +8701,7 @@
             "namespace": "miruken"
         },
         {
-            "file": "lib/miruken.js",
+            "file": "lib\\miruken.js",
             "line": 1400,
             "description": "Merges the items into the array.",
             "itemtype": "method",
@@ -8723,7 +8723,7 @@
             "namespace": "miruken"
         },
         {
-            "file": "lib/miruken.js",
+            "file": "lib\\miruken.js",
             "line": 1421,
             "description": "Optional mapping for items before adding to the array.",
             "itemtype": "method",
@@ -8744,7 +8744,7 @@
             "namespace": "miruken"
         },
         {
-            "file": "lib/miruken.js",
+            "file": "lib\\miruken.js",
             "line": 1442,
             "description": "Determines if list is empty.",
             "itemtype": "method",
@@ -8758,7 +8758,7 @@
             "namespace": "miruken"
         },
         {
-            "file": "lib/miruken.js",
+            "file": "lib\\miruken.js",
             "line": 1450,
             "description": "Gets the node at an index.",
             "itemtype": "method",
@@ -8779,7 +8779,7 @@
             "namespace": "miruken"
         },
         {
-            "file": "lib/miruken.js",
+            "file": "lib\\miruken.js",
             "line": 1459,
             "description": "Inserts the node at an index.",
             "itemtype": "method",
@@ -8801,7 +8801,7 @@
             "namespace": "miruken"
         },
         {
-            "file": "lib/miruken.js",
+            "file": "lib\\miruken.js",
             "line": 1504,
             "description": "Removes the node from the list.",
             "itemtype": "method",
@@ -8818,7 +8818,7 @@
             "namespace": "miruken"
         },
         {
-            "file": "lib/miruken.js",
+            "file": "lib\\miruken.js",
             "line": 1546,
             "itemtype": "property",
             "name": "Parameters",
@@ -8828,7 +8828,7 @@
             "namespace": "miruken"
         },
         {
-            "file": "lib/miruken.js",
+            "file": "lib\\miruken.js",
             "line": 1550,
             "itemtype": "property",
             "name": "Interceptors",
@@ -8838,7 +8838,7 @@
             "namespace": "miruken"
         },
         {
-            "file": "lib/miruken.js",
+            "file": "lib\\miruken.js",
             "line": 1554,
             "itemtype": "property",
             "name": "InterceptorSelectors",
@@ -8848,7 +8848,7 @@
             "namespace": "miruken"
         },
         {
-            "file": "lib/miruken.js",
+            "file": "lib\\miruken.js",
             "line": 1558,
             "itemtype": "property",
             "name": "Delegate",
@@ -8858,7 +8858,7 @@
             "namespace": "miruken"
         },
         {
-            "file": "lib/miruken.js",
+            "file": "lib\\miruken.js",
             "line": 1571,
             "itemtype": "method",
             "name": "intercept",
@@ -8878,7 +8878,7 @@
             "namespace": "miruken"
         },
         {
-            "file": "lib/miruken.js",
+            "file": "lib\\miruken.js",
             "line": 1587,
             "description": "Description goes here",
             "itemtype": "method",
@@ -8909,7 +8909,7 @@
             "namespace": "miruken"
         },
         {
-            "file": "lib/miruken.js",
+            "file": "lib\\miruken.js",
             "line": 1606,
             "description": "Builds a proxy class for the supplied types.",
             "itemtype": "method",
@@ -8936,7 +8936,7 @@
             "namespace": "miruken"
         },
         {
-            "file": "lib/miruken.js",
+            "file": "lib\\miruken.js",
             "line": 1839,
             "description": "Determines if target is a protocol.",
             "itemtype": "method",
@@ -8957,7 +8957,7 @@
             "namespace": "miruken"
         },
         {
-            "file": "lib/miruken.js",
+            "file": "lib\\miruken.js",
             "line": 1848,
             "description": "Determines if target is a class.",
             "itemtype": "method",
@@ -8978,7 +8978,7 @@
             "namespace": "miruken"
         },
         {
-            "file": "lib/miruken.js",
+            "file": "lib\\miruken.js",
             "line": 1858,
             "description": "Gets the class the instance belongs to.",
             "itemtype": "method",
@@ -8999,7 +8999,7 @@
             "namespace": "miruken"
         },
         {
-            "file": "lib/miruken.js",
+            "file": "lib\\miruken.js",
             "line": 1868,
             "description": "Gets the classes superclass.",
             "itemtype": "method",
@@ -9020,7 +9020,7 @@
             "namespace": "miruken"
         },
         {
-            "file": "lib/miruken.js",
+            "file": "lib\\miruken.js",
             "line": 1878,
             "description": "Determines if target is a string.",
             "itemtype": "method",
@@ -9041,7 +9041,7 @@
             "namespace": "miruken"
         },
         {
-            "file": "lib/miruken.js",
+            "file": "lib\\miruken.js",
             "line": 1888,
             "description": "Determines if the target is a function.",
             "itemtype": "method",
@@ -9062,7 +9062,7 @@
             "namespace": "miruken"
         },
         {
-            "file": "lib/miruken.js",
+            "file": "lib\\miruken.js",
             "line": 1898,
             "description": "Determines if target is an object.",
             "itemtype": "method",
@@ -9083,7 +9083,7 @@
             "namespace": "miruken"
         },
         {
-            "file": "lib/miruken.js",
+            "file": "lib\\miruken.js",
             "line": 1908,
             "description": "Determines if target is a promise.",
             "itemtype": "method",
@@ -9104,7 +9104,7 @@
             "namespace": "miruken"
         },
         {
-            "file": "lib/miruken.js",
+            "file": "lib\\miruken.js",
             "line": 1918,
             "description": "Determines if value is null or undefined.",
             "itemtype": "method",
@@ -9125,7 +9125,7 @@
             "namespace": "miruken"
         },
         {
-            "file": "lib/miruken.js",
+            "file": "lib\\miruken.js",
             "line": 1928,
             "description": "Description goes here",
             "itemtype": "method",
@@ -9146,7 +9146,7 @@
             "namespace": "miruken"
         },
         {
-            "file": "lib/miruken.js",
+            "file": "lib\\miruken.js",
             "line": 1938,
             "description": "Returns a function that returns value.",
             "itemtype": "method",
@@ -9167,8 +9167,34 @@
             "namespace": "miruken"
         },
         {
-            "file": "lib/miruken.js",
+            "file": "lib\\miruken.js",
             "line": 1948,
+            "description": "Determines whether the objects are considered equal.\n<p>\nObjects are considered equal if the objects are strictly equal (===) or\neither object has an equals method accepting other object that returns true.\n</p>",
+            "itemtype": "method",
+            "name": "$equals",
+            "params": [
+                {
+                    "name": "obj1",
+                    "description": "- first object",
+                    "type": "Any"
+                },
+                {
+                    "name": "obj2",
+                    "description": "- second object",
+                    "type": "Any"
+                }
+            ],
+            "return": {
+                "description": "true if the obejcts are considered equal, false otherwise.",
+                "type": "Boolean"
+            },
+            "class": "miruken.$",
+            "module": "miruken",
+            "namespace": "miruken"
+        },
+        {
+            "file": "lib\\miruken.js",
+            "line": 1971,
             "description": "Throttles a function over a time period.",
             "itemtype": "method",
             "name": "$debounce",
@@ -9203,8 +9229,8 @@
             "namespace": "miruken"
         },
         {
-            "file": "lib/miruken.js",
-            "line": 1985,
+            "file": "lib\\miruken.js",
+            "line": 2008,
             "description": "Enhances Functions to create instances.",
             "itemtype": "method",
             "name": "new",
@@ -9216,711 +9242,715 @@
     "warnings": [
         {
             "message": "replacing incorrect tag: function with method",
-            "line": " lib/angular/ng.js:133"
+            "line": " lib\\angular\\ng.js:133"
         },
         {
             "message": "replacing incorrect tag: function with method",
-            "line": " lib/angular/ng.js:164"
+            "line": " lib\\angular\\ng.js:164"
         },
         {
             "message": "replacing incorrect tag: function with method",
-            "line": " lib/angular/ng.js:200"
+            "line": " lib\\angular\\ng.js:200"
         },
         {
             "message": "replacing incorrect tag: function with method",
-            "line": " lib/angular/ng.js:246"
+            "line": " lib\\angular\\ng.js:246"
         },
         {
             "message": "replacing incorrect tag: returns with return",
-            "line": " lib/angular/ng.js:246"
+            "line": " lib\\angular\\ng.js:246"
         },
         {
             "message": "replacing incorrect tag: function with method",
-            "line": " lib/angular/ng.js:272"
+            "line": " lib\\angular\\ng.js:272"
         },
         {
             "message": "replacing incorrect tag: function with method",
-            "line": " lib/angular/ng.js:285"
+            "line": " lib\\angular\\ng.js:285"
         },
         {
             "message": "replacing incorrect tag: function with method",
-            "line": " lib/angular/ng.js:300"
+            "line": " lib\\angular\\ng.js:300"
         },
         {
             "message": "replacing incorrect tag: returns with return",
-            "line": " lib/angular/ng.js:300"
+            "line": " lib\\angular\\ng.js:300"
         },
         {
             "message": "replacing incorrect tag: returns with return",
-            "line": " lib/ioc/config.js:45"
+            "line": " lib\\ioc\\config.js:45"
         },
         {
             "message": "replacing incorrect tag: returns with return",
-            "line": " lib/ioc/config.js:51"
+            "line": " lib\\ioc\\config.js:51"
         },
         {
             "message": "replacing incorrect tag: returns with return",
-            "line": " lib/ioc/config.js:125"
+            "line": " lib\\ioc\\config.js:125"
         },
         {
             "message": "replacing incorrect tag: returns with return",
-            "line": " lib/ioc/config.js:143"
+            "line": " lib\\ioc\\config.js:143"
         },
         {
             "message": "replacing incorrect tag: returns with return",
-            "line": " lib/ioc/config.js:161"
+            "line": " lib\\ioc\\config.js:161"
         },
         {
             "message": "replacing incorrect tag: returns with return",
-            "line": " lib/ioc/config.js:230"
+            "line": " lib\\ioc\\config.js:230"
         },
         {
             "message": "replacing incorrect tag: returns with return",
-            "line": " lib/ioc/config.js:240"
+            "line": " lib\\ioc\\config.js:240"
         },
         {
             "message": "replacing incorrect tag: returns with return",
-            "line": " lib/ioc/config.js:250"
+            "line": " lib\\ioc\\config.js:250"
         },
         {
             "message": "replacing incorrect tag: returns with return",
-            "line": " lib/ioc/config.js:263"
+            "line": " lib\\ioc\\config.js:263"
         },
         {
             "message": "replacing incorrect tag: returns with return",
-            "line": " lib/ioc/config.js:273"
+            "line": " lib\\ioc\\config.js:273"
         },
         {
             "message": "replacing incorrect tag: returns with return",
-            "line": " lib/ioc/config.js:310"
+            "line": " lib\\ioc\\config.js:310"
         },
         {
             "message": "replacing incorrect tag: returns with return",
-            "line": " lib/ioc/config.js:332"
+            "line": " lib\\ioc\\config.js:332"
         },
         {
             "message": "replacing incorrect tag: extend with extends",
-            "line": " lib/ioc/ioc.js:38"
+            "line": " lib\\ioc\\ioc.js:38"
         },
         {
             "message": "replacing incorrect tag: returns with return",
-            "line": " lib/ioc/ioc.js:76"
+            "line": " lib\\ioc\\ioc.js:76"
         },
         {
             "message": "replacing incorrect tag: returns with return",
-            "line": " lib/ioc/ioc.js:84"
+            "line": " lib\\ioc\\ioc.js:84"
         },
         {
             "message": "replacing incorrect tag: returns with return",
-            "line": " lib/ioc/ioc.js:240"
+            "line": " lib\\ioc\\ioc.js:240"
         },
         {
             "message": "replacing incorrect tag: returns with return",
-            "line": " lib/ioc/ioc.js:402"
+            "line": " lib\\ioc\\ioc.js:402"
         },
         {
             "message": "replacing incorrect tag: returns with return",
-            "line": " lib/ioc/ioc.js:495"
+            "line": " lib\\ioc\\ioc.js:495"
         },
         {
             "message": "replacing incorrect tag: returns with return",
-            "line": " lib/ioc/ioc.js:805"
+            "line": " lib\\ioc\\ioc.js:805"
         },
         {
             "message": "replacing incorrect tag: returns with return",
-            "line": " lib/ioc/ioc.js:819"
+            "line": " lib\\ioc\\ioc.js:819"
         },
         {
             "message": "replacing incorrect tag: returns with return",
-            "line": " lib/ioc/ioc.js:876"
+            "line": " lib\\ioc\\ioc.js:876"
         },
         {
             "message": "replacing incorrect tag: returns with return",
-            "line": " lib/ioc/ioc.js:885"
+            "line": " lib\\ioc\\ioc.js:885"
         },
         {
             "message": "replacing incorrect tag: returns with return",
-            "line": " lib/ioc/ioc.js:944"
+            "line": " lib\\ioc\\ioc.js:944"
         },
         {
             "message": "replacing incorrect tag: returns with return",
-            "line": " lib/ioc/ioc.js:954"
+            "line": " lib\\ioc\\ioc.js:954"
         },
         {
             "message": "replacing incorrect tag: returns with return",
-            "line": " lib/mvc/mvc.js:95"
+            "line": " lib\\mvc\\mvc.js:95"
         },
         {
             "message": "replacing incorrect tag: returns with return",
-            "line": " lib/mvc/mvc.js:131"
+            "line": " lib\\mvc\\mvc.js:131"
         },
         {
             "message": "replacing incorrect tag: returns with return",
-            "line": " lib/mvc/mvc.js:160"
+            "line": " lib\\mvc\\mvc.js:160"
         },
         {
             "message": "replacing incorrect tag: returns with return",
-            "line": " lib/mvc/mvc.js:202"
+            "line": " lib\\mvc\\mvc.js:202"
         },
         {
             "message": "replacing incorrect tag: returns with return",
-            "line": " lib/mvc/mvc.js:209"
+            "line": " lib\\mvc\\mvc.js:209"
         },
         {
             "message": "replacing incorrect tag: returns with return",
-            "line": " lib/mvc/mvc.js:228"
+            "line": " lib\\mvc\\mvc.js:228"
         },
         {
             "message": "replacing incorrect tag: returns with return",
-            "line": " lib/mvc/mvc.js:235"
+            "line": " lib\\mvc\\mvc.js:235"
         },
         {
             "message": "replacing incorrect tag: returns with return",
-            "line": " lib/mvc/mvc.js:242"
+            "line": " lib\\mvc\\mvc.js:242"
         },
         {
             "message": "replacing incorrect tag: returns with return",
-            "line": " lib/mvc/mvc.js:249"
+            "line": " lib\\mvc\\mvc.js:249"
         },
         {
             "message": "replacing incorrect tag: returns with return",
-            "line": " lib/validate/validate.js:39"
+            "line": " lib\\validate\\validate.js:39"
         },
         {
             "message": "replacing incorrect tag: returns with return",
-            "line": " lib/validate/validate.js:48"
+            "line": " lib\\validate\\validate.js:48"
         },
         {
             "message": "unknown tag: results",
-            "line": " lib/validate/validate.js:190"
+            "line": " lib\\validate\\validate.js:190"
         },
         {
             "message": "replacing incorrect tag: returns with return",
-            "line": " lib/validate/validate.js:221"
+            "line": " lib\\validate\\validate.js:221"
         },
         {
             "message": "replacing incorrect tag: returns with return",
-            "line": " lib/validate/validate.js:335"
+            "line": " lib\\validate\\validate.js:335"
         },
         {
             "message": "replacing incorrect tag: returns with return",
-            "line": " lib/validate/validate.js:341"
+            "line": " lib\\validate\\validate.js:341"
         },
         {
             "message": "replacing incorrect tag: returns with return",
-            "line": " lib/validate/validatejs.js:90"
+            "line": " lib\\validate\\validatejs.js:90"
         },
         {
             "message": "replacing incorrect tag: returns with return",
-            "line": " lib/validate/validatejs.js:96"
+            "line": " lib\\validate\\validatejs.js:96"
         },
         {
             "message": "replacing incorrect tag: returns with return",
-            "line": " lib/callback.js:100"
+            "line": " lib\\callback.js:100"
         },
         {
             "message": "replacing incorrect tag: returns with return",
-            "line": " lib/callback.js:106"
+            "line": " lib\\callback.js:106"
         },
         {
             "message": "replacing incorrect tag: returns with return",
-            "line": " lib/callback.js:132"
+            "line": " lib\\callback.js:132"
         },
         {
             "message": "replacing incorrect tag: returns with return",
-            "line": " lib/callback.js:138"
+            "line": " lib\\callback.js:138"
         },
         {
             "message": "replacing incorrect tag: returns with return",
-            "line": " lib/callback.js:144"
+            "line": " lib\\callback.js:144"
         },
         {
             "message": "replacing incorrect tag: returns with return",
-            "line": " lib/callback.js:150"
+            "line": " lib\\callback.js:150"
         },
         {
             "message": "replacing incorrect tag: returns with return",
-            "line": " lib/callback.js:156"
+            "line": " lib\\callback.js:156"
         },
         {
             "message": "replacing incorrect tag: returns with return",
-            "line": " lib/callback.js:168"
+            "line": " lib\\callback.js:168"
         },
         {
             "message": "replacing incorrect tag: returns with return",
-            "line": " lib/callback.js:180"
+            "line": " lib\\callback.js:180"
         },
         {
             "message": "replacing incorrect tag: returns with return",
-            "line": " lib/callback.js:400"
+            "line": " lib\\callback.js:400"
         },
         {
             "message": "replacing incorrect tag: returns with return",
-            "line": " lib/callback.js:432"
+            "line": " lib\\callback.js:432"
         },
         {
             "message": "replacing incorrect tag: returns with return",
-            "line": " lib/callback.js:449"
+            "line": " lib\\callback.js:449"
         },
         {
             "message": "replacing incorrect tag: returns with return",
-            "line": " lib/callback.js:495"
+            "line": " lib\\callback.js:495"
         },
         {
             "message": "replacing incorrect tag: returns with return",
-            "line": " lib/callback.js:740"
+            "line": " lib\\callback.js:740"
         },
         {
             "message": "replacing incorrect tag: returns with return",
-            "line": " lib/callback.js:746"
+            "line": " lib\\callback.js:746"
         },
         {
             "message": "replacing incorrect tag: returns with return",
-            "line": " lib/callback.js:760"
+            "line": " lib\\callback.js:760"
         },
         {
             "message": "replacing incorrect tag: returns with return",
-            "line": " lib/callback.js:982"
+            "line": " lib\\callback.js:982"
         },
         {
             "message": "replacing incorrect tag: returns with return",
-            "line": " lib/callback.js:1005"
+            "line": " lib\\callback.js:1005"
         },
         {
             "message": "replacing incorrect tag: returns with return",
-            "line": " lib/callback.js:1114"
+            "line": " lib\\callback.js:1114"
         },
         {
             "message": "replacing incorrect tag: returns with return",
-            "line": " lib/callback.js:1121"
+            "line": " lib\\callback.js:1121"
         },
         {
             "message": "replacing incorrect tag: returns with return",
-            "line": " lib/callback.js:1128"
+            "line": " lib\\callback.js:1128"
         },
         {
             "message": "replacing incorrect tag: returns with return",
-            "line": " lib/callback.js:1135"
+            "line": " lib\\callback.js:1135"
         },
         {
             "message": "replacing incorrect tag: returns with return",
-            "line": " lib/callback.js:1142"
+            "line": " lib\\callback.js:1142"
         },
         {
             "message": "replacing incorrect tag: returns with return",
-            "line": " lib/callback.js:1153"
+            "line": " lib\\callback.js:1153"
         },
         {
             "message": "replacing incorrect tag: returns with return",
-            "line": " lib/callback.js:1167"
+            "line": " lib\\callback.js:1167"
         },
         {
             "message": "replacing incorrect tag: returns with return",
-            "line": " lib/callback.js:1181"
+            "line": " lib\\callback.js:1181"
         },
         {
             "message": "replacing incorrect tag: returns with return",
-            "line": " lib/callback.js:1198"
+            "line": " lib\\callback.js:1198"
         },
         {
             "message": "replacing incorrect tag: returns with return",
-            "line": " lib/callback.js:1218"
+            "line": " lib\\callback.js:1218"
         },
         {
             "message": "replacing incorrect tag: returns with return",
-            "line": " lib/callback.js:1234"
+            "line": " lib\\callback.js:1234"
         },
         {
             "message": "replacing incorrect tag: returns with return",
-            "line": " lib/callback.js:1253"
+            "line": " lib\\callback.js:1253"
         },
         {
             "message": "replacing incorrect tag: returns with return",
-            "line": " lib/callback.js:1263"
+            "line": " lib\\callback.js:1263"
         },
         {
             "message": "replacing incorrect tag: returns with return",
-            "line": " lib/callback.js:1274"
+            "line": " lib\\callback.js:1274"
         },
         {
             "message": "replacing incorrect tag: returns with return",
-            "line": " lib/callback.js:1294"
+            "line": " lib\\callback.js:1294"
         },
         {
             "message": "replacing incorrect tag: returns with return",
-            "line": " lib/callback.js:1589"
+            "line": " lib\\callback.js:1589"
         },
         {
             "message": "replacing incorrect tag: returns with return",
-            "line": " lib/callback.js:1604"
+            "line": " lib\\callback.js:1604"
         },
         {
             "message": "replacing incorrect tag: returns with return",
-            "line": " lib/callback.js:1613"
+            "line": " lib\\callback.js:1613"
         },
         {
             "message": "replacing incorrect tag: returns with return",
-            "line": " lib/context.js:129"
+            "line": " lib\\context.js:129"
         },
         {
             "message": "replacing incorrect tag: returns with return",
-            "line": " lib/context.js:165"
+            "line": " lib\\context.js:165"
         },
         {
             "message": "replacing incorrect tag: returns with return",
-            "line": " lib/context.js:188"
+            "line": " lib\\context.js:188"
         },
         {
             "message": "replacing incorrect tag: returns with return",
-            "line": " lib/context.js:214"
+            "line": " lib\\context.js:214"
         },
         {
             "message": "replacing incorrect tag: returns with return",
-            "line": " lib/context.js:229"
+            "line": " lib\\context.js:229"
         },
         {
             "message": "replacing incorrect tag: returns with return",
-            "line": " lib/context.js:247"
+            "line": " lib\\context.js:247"
         },
         {
             "message": "replacing incorrect tag: returns with return",
-            "line": " lib/context.js:294"
+            "line": " lib\\context.js:294"
         },
         {
             "message": "replacing incorrect tag: returns with return",
-            "line": " lib/context.js:331"
+            "line": " lib\\context.js:331"
         },
         {
             "message": "replacing incorrect tag: returns with return",
-            "line": " lib/context.js:379"
+            "line": " lib\\context.js:379"
         },
         {
             "message": "replacing incorrect tag: returns with return",
-            "line": " lib/context.js:421"
+            "line": " lib\\context.js:421"
         },
         {
             "message": "replacing incorrect tag: returns with return",
-            "line": " lib/context.js:443"
+            "line": " lib\\context.js:443"
         },
         {
             "message": "replacing incorrect tag: returns with return",
-            "line": " lib/context.js:494"
+            "line": " lib\\context.js:499"
         },
         {
             "message": "replacing incorrect tag: returns with return",
-            "line": " lib/context.js:502"
+            "line": " lib\\context.js:507"
         },
         {
             "message": "replacing incorrect tag: returns with return",
-            "line": " lib/context.js:510"
+            "line": " lib\\context.js:515"
         },
         {
             "message": "replacing incorrect tag: returns with return",
-            "line": " lib/context.js:518"
+            "line": " lib\\context.js:523"
         },
         {
             "message": "replacing incorrect tag: returns with return",
-            "line": " lib/context.js:526"
+            "line": " lib\\context.js:531"
         },
         {
             "message": "replacing incorrect tag: returns with return",
-            "line": " lib/context.js:534"
+            "line": " lib\\context.js:539"
         },
         {
             "message": "replacing incorrect tag: returns with return",
-            "line": " lib/context.js:542"
+            "line": " lib\\context.js:547"
         },
         {
             "message": "replacing incorrect tag: returns with return",
-            "line": " lib/context.js:550"
+            "line": " lib\\context.js:555"
         },
         {
             "message": "replacing incorrect tag: returns with return",
-            "line": " lib/context.js:558"
+            "line": " lib\\context.js:563"
         },
         {
             "message": "replacing incorrect tag: returns with return",
-            "line": " lib/context.js:566"
+            "line": " lib\\context.js:571"
         },
         {
             "message": "replacing incorrect tag: returns with return",
-            "line": " lib/context.js:574"
+            "line": " lib\\context.js:579"
         },
         {
             "message": "replacing incorrect tag: returns with return",
-            "line": " lib/context.js:582"
+            "line": " lib\\context.js:587"
         },
         {
             "message": "replacing incorrect tag: returns with return",
-            "line": " lib/context.js:590"
+            "line": " lib\\context.js:595"
         },
         {
             "message": "replacing incorrect tag: returns with return",
-            "line": " lib/error.js:31"
+            "line": " lib\\error.js:31"
         },
         {
             "message": "replacing incorrect tag: returns with return",
-            "line": " lib/error.js:39"
+            "line": " lib\\error.js:39"
         },
         {
             "message": "replacing incorrect tag: returns with return",
-            "line": " lib/error.js:47"
+            "line": " lib\\error.js:47"
         },
         {
             "message": "replacing incorrect tag: returns with return",
-            "line": " lib/error.js:55"
+            "line": " lib\\error.js:55"
         },
         {
             "message": "replacing incorrect tag: returns with return",
-            "line": " lib/error.js:95"
+            "line": " lib\\error.js:95"
         },
         {
             "message": "replacing incorrect tag: returns with return",
-            "line": " lib/error.js:121"
+            "line": " lib\\error.js:121"
         },
         {
             "message": "replacing incorrect tag: returns with return",
-            "line": " lib/miruken.js:146"
+            "line": " lib\\miruken.js:146"
         },
         {
             "message": "replacing incorrect tag: returns with return",
-            "line": " lib/miruken.js:164"
+            "line": " lib\\miruken.js:164"
         },
         {
             "message": "replacing incorrect tag: returns with return",
-            "line": " lib/miruken.js:255"
+            "line": " lib\\miruken.js:255"
         },
         {
             "message": "replacing incorrect tag: returns with return",
-            "line": " lib/miruken.js:266"
+            "line": " lib\\miruken.js:266"
         },
         {
             "message": "replacing incorrect tag: returns with return",
-            "line": " lib/miruken.js:278"
+            "line": " lib\\miruken.js:278"
         },
         {
             "message": "replacing incorrect tag: returns with return",
-            "line": " lib/miruken.js:333"
+            "line": " lib\\miruken.js:333"
         },
         {
             "message": "replacing incorrect tag: returns with return",
-            "line": " lib/miruken.js:339"
+            "line": " lib\\miruken.js:339"
         },
         {
             "message": "replacing incorrect tag: returns with return",
-            "line": " lib/miruken.js:360"
+            "line": " lib\\miruken.js:360"
         },
         {
             "message": "replacing incorrect tag: returns with return",
-            "line": " lib/miruken.js:366"
+            "line": " lib\\miruken.js:366"
         },
         {
             "message": "replacing incorrect tag: returns with return",
-            "line": " lib/miruken.js:372"
+            "line": " lib\\miruken.js:372"
         },
         {
             "message": "replacing incorrect tag: returns with return",
-            "line": " lib/miruken.js:417"
+            "line": " lib\\miruken.js:417"
         },
         {
             "message": "replacing incorrect tag: returns with return",
-            "line": " lib/miruken.js:455"
+            "line": " lib\\miruken.js:455"
         },
         {
             "message": "replacing incorrect tag: returns with return",
-            "line": " lib/miruken.js:485"
+            "line": " lib\\miruken.js:485"
         },
         {
             "message": "replacing incorrect tag: returns with return",
-            "line": " lib/miruken.js:497"
+            "line": " lib\\miruken.js:497"
         },
         {
             "message": "replacing incorrect tag: returns with return",
-            "line": " lib/miruken.js:532"
+            "line": " lib\\miruken.js:532"
         },
         {
             "message": "replacing incorrect tag: returns with return",
-            "line": " lib/miruken.js:571"
+            "line": " lib\\miruken.js:571"
         },
         {
             "message": "replacing incorrect tag: returns with return",
-            "line": " lib/miruken.js:577"
+            "line": " lib\\miruken.js:577"
         },
         {
             "message": "replacing incorrect tag: returns with return",
-            "line": " lib/miruken.js:583"
+            "line": " lib\\miruken.js:583"
         },
         {
             "message": "replacing incorrect tag: returns with return",
-            "line": " lib/miruken.js:658"
+            "line": " lib\\miruken.js:658"
         },
         {
             "message": "replacing incorrect tag: returns with return",
-            "line": " lib/miruken.js:664"
+            "line": " lib\\miruken.js:664"
         },
         {
             "message": "replacing incorrect tag: returns with return",
-            "line": " lib/miruken.js:670"
+            "line": " lib\\miruken.js:670"
         },
         {
             "message": "replacing incorrect tag: returns with return",
-            "line": " lib/miruken.js:820"
+            "line": " lib\\miruken.js:820"
         },
         {
             "message": "replacing incorrect tag: returns with return",
-            "line": " lib/miruken.js:826"
+            "line": " lib\\miruken.js:826"
         },
         {
             "message": "replacing incorrect tag: returns with return",
-            "line": " lib/miruken.js:952"
+            "line": " lib\\miruken.js:952"
         },
         {
             "message": "replacing incorrect tag: returns with return",
-            "line": " lib/miruken.js:958"
+            "line": " lib\\miruken.js:958"
         },
         {
             "message": "replacing incorrect tag: returns with return",
-            "line": " lib/miruken.js:1033"
+            "line": " lib\\miruken.js:1033"
         },
         {
             "message": "replacing incorrect tag: returns with return",
-            "line": " lib/miruken.js:1039"
+            "line": " lib\\miruken.js:1039"
         },
         {
             "message": "replacing incorrect tag: returns with return",
-            "line": " lib/miruken.js:1123"
+            "line": " lib\\miruken.js:1123"
         },
         {
             "message": "replacing incorrect tag: returns with return",
-            "line": " lib/miruken.js:1175"
+            "line": " lib\\miruken.js:1175"
         },
         {
             "message": "replacing incorrect tag: returns with return",
-            "line": " lib/miruken.js:1192"
+            "line": " lib\\miruken.js:1192"
         },
         {
             "message": "replacing incorrect tag: returns with return",
-            "line": " lib/miruken.js:1223"
+            "line": " lib\\miruken.js:1223"
         },
         {
             "message": "replacing incorrect tag: returns with return",
-            "line": " lib/miruken.js:1311"
+            "line": " lib\\miruken.js:1311"
         },
         {
             "message": "replacing incorrect tag: returns with return",
-            "line": " lib/miruken.js:1317"
+            "line": " lib\\miruken.js:1317"
         },
         {
             "message": "replacing incorrect tag: returns with return",
-            "line": " lib/miruken.js:1328"
+            "line": " lib\\miruken.js:1328"
         },
         {
             "message": "replacing incorrect tag: returns with return",
-            "line": " lib/miruken.js:1343"
+            "line": " lib\\miruken.js:1343"
         },
         {
             "message": "replacing incorrect tag: returns with return",
-            "line": " lib/miruken.js:1355"
+            "line": " lib\\miruken.js:1355"
         },
         {
             "message": "replacing incorrect tag: returns with return",
-            "line": " lib/miruken.js:1367"
+            "line": " lib\\miruken.js:1367"
         },
         {
             "message": "replacing incorrect tag: returns with return",
-            "line": " lib/miruken.js:1380"
+            "line": " lib\\miruken.js:1380"
         },
         {
             "message": "replacing incorrect tag: returns with return",
-            "line": " lib/miruken.js:1400"
+            "line": " lib\\miruken.js:1400"
         },
         {
             "message": "replacing incorrect tag: returns with return",
-            "line": " lib/miruken.js:1421"
+            "line": " lib\\miruken.js:1421"
         },
         {
             "message": "replacing incorrect tag: returns with return",
-            "line": " lib/miruken.js:1442"
+            "line": " lib\\miruken.js:1442"
         },
         {
             "message": "replacing incorrect tag: returns with return",
-            "line": " lib/miruken.js:1450"
+            "line": " lib\\miruken.js:1450"
         },
         {
             "message": "replacing incorrect tag: returns with return",
-            "line": " lib/miruken.js:1571"
+            "line": " lib\\miruken.js:1571"
         },
         {
             "message": "replacing incorrect tag: returns with return",
-            "line": " lib/miruken.js:1587"
+            "line": " lib\\miruken.js:1587"
         },
         {
             "message": "replacing incorrect tag: returns with return",
-            "line": " lib/miruken.js:1606"
+            "line": " lib\\miruken.js:1606"
         },
         {
             "message": "replacing incorrect tag: returns with return",
-            "line": " lib/miruken.js:1839"
+            "line": " lib\\miruken.js:1839"
         },
         {
             "message": "replacing incorrect tag: returns with return",
-            "line": " lib/miruken.js:1848"
+            "line": " lib\\miruken.js:1848"
         },
         {
             "message": "replacing incorrect tag: returns with return",
-            "line": " lib/miruken.js:1858"
+            "line": " lib\\miruken.js:1858"
         },
         {
             "message": "replacing incorrect tag: returns with return",
-            "line": " lib/miruken.js:1868"
+            "line": " lib\\miruken.js:1868"
         },
         {
             "message": "replacing incorrect tag: returns with return",
-            "line": " lib/miruken.js:1878"
+            "line": " lib\\miruken.js:1878"
         },
         {
             "message": "replacing incorrect tag: returns with return",
-            "line": " lib/miruken.js:1888"
+            "line": " lib\\miruken.js:1888"
         },
         {
             "message": "replacing incorrect tag: returns with return",
-            "line": " lib/miruken.js:1898"
+            "line": " lib\\miruken.js:1898"
         },
         {
             "message": "replacing incorrect tag: returns with return",
-            "line": " lib/miruken.js:1908"
+            "line": " lib\\miruken.js:1908"
         },
         {
             "message": "replacing incorrect tag: returns with return",
-            "line": " lib/miruken.js:1918"
+            "line": " lib\\miruken.js:1918"
         },
         {
             "message": "replacing incorrect tag: returns with return",
-            "line": " lib/miruken.js:1928"
+            "line": " lib\\miruken.js:1928"
         },
         {
             "message": "replacing incorrect tag: returns with return",
-            "line": " lib/miruken.js:1938"
+            "line": " lib\\miruken.js:1938"
         },
         {
             "message": "replacing incorrect tag: returns with return",
-            "line": " lib/miruken.js:1948"
+            "line": " lib\\miruken.js:1948"
+        },
+        {
+            "message": "replacing incorrect tag: returns with return",
+            "line": " lib\\miruken.js:1971"
         },
         {
             "message": "Missing item type\nAdds a lookup result.",
-            "line": " lib/callback.js:285"
+            "line": " lib\\callback.js:285"
         },
         {
             "message": "Missing item type\nTracks a pending promise.",
-            "line": " lib/callback.js:330"
+            "line": " lib\\callback.js:330"
         },
         {
             "message": "Missing item type\nAdds a resolution.",
-            "line": " lib/callback.js:376"
+            "line": " lib\\callback.js:376"
         },
         {
             "message": "Missing item type\nContext traversal",
-            "line": " lib/context.js:473"
+            "line": " lib\\context.js:473"
         }
     ]
 }
