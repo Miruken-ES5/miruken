@@ -181,7 +181,7 @@ describe("Context", function() {
             var dog       = new Dog,
                 context   = new Context,
                 wrapped   = context.$self(),
-                decorated = wrapped.when(function(cb) { return true; });
+                decorated = wrapped.when(function (cb) { return true; });
             context.store(dog);
             expect(wrapped).to.not.equal(context);
             expect(wrapped.constructor).to.equal(Context);

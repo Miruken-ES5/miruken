@@ -1722,7 +1722,7 @@ new function () { // closure
         version: miruken.version,
         parent:  miruken,
         imports: "miruken",
-        exports: "CallbackHandler,CallbackHandlerDecorator,CallbackHandlerFilter,CallbackHandlerAspect,CascadeCallbackHandler,CompositeCallbackHandler,ConditionalCallbackHandler,AcceptingCallbackHandler,ProvidingCallbackHandler,MethodCallbackHandler,InvocationOptions,Resolution,HandleMethod,RejectedError,getEffectivePromise,$handle,$callbacks,$define,$provide,$lookup,$NOT_HANDLED"
+        exports: "CallbackHandler,CallbackHandlerDecorator,CallbackHandlerFilter,CallbackHandlerAspect,CascadeCallbackHandler,CompositeCallbackHandler,ConditionalCallbackHandler,AcceptingCallbackHandler,ProvidingCallbackHandler,MethodCallbackHandler,InvocationOptions,Resolution,Composition,HandleMethod,RejectedError,getEffectivePromise,$handle,$callbacks,$define,$provide,$lookup,$NOT_HANDLED"
     });
 
     eval(this.imports);
@@ -2093,13 +2093,13 @@ new function () { // closure
     });
 
     /**
-     * Marks a callback as reentrant.
-     * @class Reentrant
+     * Marks a callback as composable.
+     * @class Composition
      * @constructor
-     * @param   {Object}  callback  -  callback to mark
+     * @param   {Object}  callback  -  callback to compose
      * @extends Base
      */
-    var Reentrant = Base.extend({
+    var Composition = Base.extend({
         constructor: function (callback) {
             if (callback) {
                 this.extend({
@@ -2144,8 +2144,13 @@ new function () { // closure
          * @returns {boolean} true if the callback was handled, false otherwise.
          */
         handle: function (callback, greedy, composer) {
-            return !$isNothing(callback) &&
-                   !!this.handleCallback(callback, !!greedy, composer || this);
+            if ($isNothing(callback)) {
+                return false;
+            }
+            if ($isNothing(composer)) {
+                composer = new CompositionScope(this);
+            }
+            return !!this.handleCallback(callback, !!greedy, composer);
         },
         /**
          * Handles the callback with all arguments populated.
@@ -2188,9 +2193,9 @@ new function () { // closure
             HandleMethod, function (method, composer) {
                 return method.invokeOn(this.delegate, composer) || method.invokeOn(this, composer);
             },
-            Reentrant, function (reentrant, composer) {
-                return $isFunction(reentrant.getCallback) &&
-                                   $handle.dispatch(this, reentrant.getCallback(), null, composer);
+            Composition, function (composable, composer) {
+                return $isFunction(composable.getCallback) &&
+                                   $handle.dispatch(this, composable.getCallback(), null, composer);
             }
         ],
         /**
@@ -2205,6 +2210,33 @@ new function () { // closure
 
     Base.implement({
         toCallbackHandler: function () { return CallbackHandler(this); }
+    });
+
+    /**
+     * Wraps all callbacks for composition and continues processing.
+     * @class CompositionScope
+     * @constructor
+     * @param  {miruken.callback.CallbackHandler)  handler  -  forwarding handler
+     * @extends miruken.callback.CallbackHandler
+     */
+    var CompositionScope = CallbackHandler.extend({
+        constructor: function _(handler) {
+            var spec = _.spec || (_.spec = {});
+            spec.value = handler;
+            /**
+             * Gets the composition handler.
+             * @property {miruken.callback.CallbackHandler} handler
+             * @readOnly
+             */                                    
+            Object.defineProperty(this, 'handler', spec);
+            delete spec.value;
+        },
+        handleCallback: function (callback, greedy, composer) {
+            if (!(callback instanceof Composition)) {
+                callback = new Composition(callback);
+            }
+            return this.handler.handleCallback(callback, greedy, composer);
+        }
     });
 
     /**
@@ -2237,26 +2269,6 @@ new function () { // closure
     });
 
     /**
-     * Marks all handled callbacks as reentrant and continues processing.
-     * @class ReentrantScope
-     * @constructor
-     * @param  {miruken.callback.CallbackHandler)  handler  -  forwarding handler
-     * @extends miruken.callback.CallbackHandler
-     */
-    var ReentrantScope = CallbackHandler.extend({
-        constructor: function _(handler) {
-            this.extend({
-                handleCallback: function (callback, greedy, composer) {
-                    if (!(callback instanceof Reentrant)) {
-                        callback = new Reentrant(callback);
-                    }
-                    return handler.handleCallback(callback, greedy, composer);
-                }
-            });                        
-        }
-    });
-
-    /**
      * Represents a {{#crossLink "miruken.callback.CallbackHandler"}}{{/crossLink}} that can filter callbacks.
      * @class CallbackHandlerFilter
      * @constructor
@@ -2280,13 +2292,15 @@ new function () { // closure
             Object.defineProperty(this, '_filter', spec);
             delete spec.value;
         },
+        /**
+         * Gets the filter reentrancy.  Reentrant filters will be applied during composition.
+         * @property {boolean} true if reentrant, false otherwise.
+         */
+        isReentrant: function () { return false; },
         handleCallback: function (callback, greedy, composer) {
             var decoratee = this.decoratee;
-            if (callback instanceof Reentrant) {
+            if (!this.isReentrant() && (callback instanceof Composition)) {
                 return decoratee.handleCallback(callback, greedy, composer);
-            }
-            if (composer == this) {
-                composer = new ReentrantScope(composer);
             }
             return this._filter(callback, composer, function () {
                 return decoratee.handleCallback(callback, greedy, composer);
@@ -2666,7 +2680,7 @@ new function () { // closure
      * @param  {miruken.callback.InvocationOptions}  options  -  invocation options.
      * @extends Base
      */
-    var InvocationSemantics = Reentrant.extend({
+    var InvocationSemantics = Composition.extend({
         constructor: function (options) {
             var _options   = options || InvocationOptions.None,
                 _specified = _options;
@@ -3798,12 +3812,17 @@ new function () { // closure
      */
     var axisControl = {
         axis: function (axis) {
-            var context   = this,
-                traversal = pcopy(context);
-            traversal.handle = function (callback, greedy, composer) {
-                return context.handleAxis(axis, callback, greedy, composer);
-            };
-            return traversal;
+            var context = this;
+            return pcopy(this).extend({
+                handle: function (callback, greedy, composer) {
+                    return (callback instanceof Composition)
+                         ? base.handle(callback, greedy, composer)
+                         : this.handleAxis(axis, callback, greedy, composer);
+                },
+                equals: function (other) {
+                    return (this === other) || (other === context);
+                }
+            });
         }},
         applyAxis   = axisControl.axis,
         axisChoices = Array2.combine(TraversingAxis.names, TraversingAxis.values);
@@ -4337,7 +4356,7 @@ new function () { // closure
         } else {
             var self = this;
             Traversal.levelOrder(this, function (node) {
-                if (node != self) {
+                if (!$equals(self, node)) {
                     return visitor.call(context, node);
                 }
             }, context);
@@ -4350,7 +4369,7 @@ new function () { // closure
         } else {
             var self = this;
             Traversal.reverseLevelOrder(this, function (node) {
-                if (node != self) {
+                if (!$equals(self, node)) {
                     return visitor.call(context, node);
                 }
             }, context);
@@ -4367,7 +4386,7 @@ new function () { // closure
                 var children = parent.getChildren();
                 for (var i = 0; i < children.length; ++i) {
                     var sibling = children[i];
-                    if (sibling != self && visitor.call(context, sibling)) {
+                    if (!$equals(self, sibling) && visitor.call(context, sibling)) {
                         return;
                     }
                 }
@@ -4377,7 +4396,7 @@ new function () { // closure
             }
         }
     }
-
+    
     /**
      * Helper class for traversing a graph.
      * @static
@@ -6203,7 +6222,7 @@ new function () { // closure
     var miruken = new base2.Package(this, {
         name:    "miruken",
         version: "1.0",
-        exports: "Enum,Variance,Protocol,StrictProtocol,Delegate,Miruken,MetaStep,MetaMacro,Disposing,DisposingMixin,Invoking,Parenting,Starting,Startup,Facet,Interceptor,InterceptorSelector,ProxyBuilder,Modifier,ArrayManager,IndexedList,$isProtocol,$isClass,$classOf,$ancestorOf,$isString,$isFunction,$isObject,$isPromise,$isNothing,$isSomething,$using,$lift,$debounce,$eq,$use,$copy,$lazy,$eval,$every,$child,$optional,$promise,$instant,$createModifier,$properties,$inferProperties,$inheritStatic"
+        exports: "Enum,Variance,Protocol,StrictProtocol,Delegate,Miruken,MetaStep,MetaMacro,Disposing,DisposingMixin,Invoking,Parenting,Starting,Startup,Facet,Interceptor,InterceptorSelector,ProxyBuilder,Modifier,ArrayManager,IndexedList,$isProtocol,$isClass,$classOf,$ancestorOf,$isString,$isFunction,$isObject,$isPromise,$isNothing,$isSomething,$using,$lift,$equals,$debounce,$eq,$use,$copy,$lazy,$eval,$every,$child,$optional,$promise,$instant,$createModifier,$properties,$inferProperties,$inheritStatic"
     });
 
     eval(this.imports);
@@ -8113,7 +8132,7 @@ new function () { // closure
      * @returns  {boolean} true if value null or undefined.
      */
     function $isNothing(value) {
-        return (value === undefined || value === null);
+        return (value === undefined) || (value === null);
     }
 
     /**
@@ -8134,6 +8153,29 @@ new function () { // closure
      */
     function $lift(value) {
         return function() { return value; };
+    }
+
+    /**
+     * Determines whether the objects are considered equal.
+     * <p>
+     * Objects are considered equal if the objects are strictly equal (===) or
+     * either object has an equals method accepting other object that returns true.
+     * </p>
+     * @method $equals
+     * @param    {Any}     obj1  - first object
+     * @param    {Any}     obj2  - second object
+     * @returns  {boolean} true if the obejcts are considered equal, false otherwise.
+     */
+    function $equals(obj1, obj2) {
+        if (obj1 === obj2) {
+            return true;
+        }
+        if ($isFunction(obj1.equals)) {
+            return obj1.equals(obj2);
+        } else if ($isFunction(obj2.equals)) {
+            return obj2.equals(obj1);
+        }
+        return false;
     }
 
     /**
@@ -25327,7 +25369,7 @@ describe("IoContainer", function () {
                 });
             container.register($component(Registry));
             Promise.resolve(container.resolve(Registry)).then(function (registry) {
-                expect(registry.getComposer()).to.equal(context);
+                expect(registry.getComposer().handler).to.equal(context);
                 Promise.resolve(Validator(registry.getComposer()).validate(registry))
                     .then(function (validation) {
                         expect(validation.isValid()).to.be.true;
