@@ -10,14 +10,14 @@
             <input type="search" id="api-filter" placeholder="Type to filter APIs">
         </div>
 
-        <div id="api-tabview-panel">
+        <div id="api-tabview-panel" class="panel-overflow-hidden">
             <ul id="api-classes" class="apis classes no-bullet">
             {{#classes}}
-                <li><a class="subheader" href="{{../projectRoot}}classes/{{name}}.html">{{displayName}}</a></li>
+                <li><a href="{{../projectRoot}}classes/{{name}}.html">{{displayName}}</a></li>
             {{/classes}}
             </ul>
 
-            <ul id="api-modules" class="apis modules">
+            <ul id="api-modules" class="apis modules no-bullet">
             {{#allModules}}
                 <li><a href="{{../projectRoot}}modules/{{name}}.html">{{displayName}}</a></li>
             {{/allModules}}
