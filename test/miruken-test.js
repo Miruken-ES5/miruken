@@ -44,7 +44,7 @@ new function () { // closure
         talk: function () { return 'Ruff Ruff'; },
         fetch: function (item) { return 'Fetched ' + item; }
     });
-
+    
     var Elephant = Base.extend(CircusAnimal, {
     });
     
@@ -530,6 +530,41 @@ describe("$using", function () {
             expect(shoppingCart.getItems()).to.eql([]);
             done();
         });
+    });
+});
+
+describe("$decorator", function () {
+    it("should create a decorator", function () {
+        var dog  = new Dog("Snuffy"),
+            echo = $decorator({
+                getName: function () {
+                    return this.base() + ' ' + this.base();
+                }
+            }),
+            dogEcho = echo(dog);
+        expect(dogEcho.name).to.equal("Snuffy Snuffy");
+    });
+});
+
+describe("$decorate", function () {
+    it("should decorate an instance", function () {
+        var dog     = new Dog("Sparky"),
+            reverse = $decorate(dog, {
+                getName: function () {
+                    return this.base().split('').reverse().join('');
+                }
+            });
+        expect(reverse.name).to.equal("ykrapS");
+    });
+
+    it("should treat decorator and decoratee as equal", function () {
+        var dog   = new Dog("Pluto"),
+            upper = $decorate(dog, {
+                getName: function () {
+                    return this.base().toUpperCase();
+                }
+            });
+        expect(upper.equals(dog)).to.be.true;
     });
 });
 

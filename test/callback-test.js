@@ -1203,248 +1203,7 @@ describe("CallbackHandler", function () {
         });
     });
 
-    describe("#next", function () {
-        it("should cascade handlers using short syntax", function () {
-            var guest    = new Guest(17),
-                baccarat = new Activity('Baccarat'),
-                level1   = new Level1Security,
-                level2   = new Level2Security,
-                security = CallbackHandler(level1).next(level2);
-            expect(Security(security).admit(guest)).to.be.false;
-            Security(security).trackActivity(baccarat);
-        });
-
-        it("should compose handlers using short syntax", function () {
-            var baccarat = new Activity('Baccarat'),
-                level1   = new Level1Security,
-                level2   = new Level2Security,
-                compose  = CallbackHandler(level1).next(level2, baccarat),
-            countMoney = new CountMoney();
-            expect(compose.handle(countMoney)).to.be.true;
-        });
-    });
-
-    describe("#when", function () {
-        it("should restrict handlers using short syntax", function () {
-            var blackjack  = new CardTable("BlackJack", 1, 5),
-                cardGames  = (new (CallbackHandler.extend({
-                    $handle:[
-                        True, function (cardTable) {
-                            cardTable.closed = true;
-                        }]
-                }))).when(CardTable);
-            expect(cardGames.handle(blackjack)).to.be.true;
-            expect(blackjack.closed).to.be.true;
-            expect(cardGames.handle(new Cashier)).to.be.false;
-        });
-
-        it("should restrict handlers invariantly using short syntax", function () {
-            var Blackjack  = CardTable.extend({
-                    constructor: function () {
-                        this.base("BlackJack", 1, 5);
-                    }
-                }),
-                blackjack  = new Blackjack,
-                cardGames  = (new (CallbackHandler.extend({
-                    $handle:[
-                        True, function (cardTable) {
-                            cardTable.closed = true;
-                        }]
-                }))).when($eq(CardTable));
-            expect(cardGames.handle(blackjack)).to.be.false;
-            expect(blackjack.closed).to.be.undefined;
-            expect(cardGames.handle(new Cashier)).to.be.false;
-        });
-
-        it("should restrict providers using short syntax", function () {
-            var blackjack  = new CardTable("BlackJack", 1, 5),
-                cardGames  = (new (CallbackHandler.extend({
-                    $provide:[
-                        True, function (resolution) {
-                            return blackjack;
-                        }]
-                }))).when(CardTable);
-            expect(cardGames.resolve(CardTable)).to.equal(blackjack);
-            expect(cardGames.resolve(Cashier)).to.be.undefined;
-        });
-
-        it("should restrict providers invariantly using short syntax", function () {
-            var blackjack  = new CardTable("BlackJack", 1, 5),
-                cardGames  = (new (CallbackHandler.extend({
-                    $provide:[
-                        True, function (resolution) {
-                            return blackjack;
-                        }]
-                }))).when($eq(Activity));
-            expect(cardGames.resolve(Activity)).to.equal(blackjack);
-            expect(cardGames.resolve(CardTable)).to.be.undefined;
-            expect(cardGames.resolve(Cashier)).to.be.undefined;
-        });
-    });
-});
-
-describe("MethodCallbackHandler", function () {
-    var Calculator = Protocol.extend({
-        add:    function (op1, op2) {},
-        divide: function (dividend, divisor) {},
-        clear:  function () {}
-    });
-
-    describe("#handle", function () {
-        it("should call function", function () {
-            var add = new MethodCallbackHandler("add", function (op1, op2) {
-                return op1 + op2;
-            });
-            expect(Calculator(add).add(5, 10)).to.equal(15);
-        });
-
-        it("should call function using short syntax", function () {
-            var add = function (op1, op2) { return op1 + op2; }.implementing("add");
-            expect(Calculator(add).add(22, 19)).to.equal(41);
-        });
-
-        it("should propgate exception in function", function () {
-            var divide = new MethodCallbackHandler("divide", function (dividend, divisor) {
-                if (divisor === 0)
-                    throw new Error("Division by zero");
-                return dividend / divisor;
-            });
-            expect(function () {
-                Calculator(divide).divide(10,0);
-            }).to.throw(Error, /Division by zero/);
-        });
-
-        it("should bind function", function () {
-            var context = new Object,
-                clear   = new MethodCallbackHandler("clear", (function () {
-                return context;
-            }).bind(context));
-            expect(Calculator(clear).clear()).to.equal(context);
-        });
-
-        it("should require non-empty method name", function () {
-            expect(function () {
-                new MethodCallbackHandler(null, function () {});
-            }).to.throw(Error, /No methodName specified/);
-
-            expect(function () {
-                new MethodCallbackHandler(void 0, function () {});
-            }).to.throw(Error, /No methodName specified/);
-
-            expect(function () {
-                new MethodCallbackHandler(10, function () {});
-            }).to.throw(Error, /No methodName specified/);
-
-            expect(function () {
-                new MethodCallbackHandler("", function () {});
-            }).to.throw(Error, /No methodName specified/);
-
-            expect(function () {
-                new MethodCallbackHandler("   ", function () {});
-            }).to.throw(Error, /No methodName specified/);
-        });
-    });
-});
-
-describe("CascadeCallbackHandler", function () {
-    describe("#handle", function () {
-        it("should cascade handlers", function () {
-            var guest    = new Guest(17),
-                baccarat = new Activity('Baccarat'),
-                level1   = new Level1Security,
-                level2   = new Level2Security,
-                security = new CascadeCallbackHandler(level1, level2);
-            expect(Security(security).admit(guest)).to.be.false;
-            Security(security).trackActivity(baccarat);
-        });
-    });
-});
-
-describe("InvocationCallbackHandler", function () {
-    describe("#handle", function () {
-        it("should handle invocations", function () {
-            var guest1 = new Guest(17),
-                guest2 = new Guest(21),
-                level1 = CallbackHandler(new Level1Security);
-            expect(Security(level1).admit(guest1)).to.be.false;
-            expect(Security(level1).admit(guest2)).to.be.true;
-        });
-        
-        it("should handle async invocations", function (done) {
-            var level2 = CallbackHandler(new Level2Security);
-            Security(level2).scan().then(function () {
-                done();
-            });
-        });
-
-        it("should ignore explicitly unhandled invocations", function () {
-            var texasHoldEm = new CardTable("Texas Hold'em", 2, 7),
-            casino    = new Casino('Caesars Palace')
-                .addHandlers(texasHoldEm);
-            expect(function () {
-                Game(casino).open(5);
-            }).to.not.throw(Error);
-            expect(function () {
-                Game(casino).open(9);
-            }).to.throw(Error, /has no method 'open'/);
-        });
-
-        it("should fail missing methods", function () {
-            var letItRide = new Activity('Let It Ride'),
-                level1    = new Level1Security,
-                casino    = new Casino('Treasure Island')
-                .addHandlers(level1, letItRide);
-
-            expect(function () {
-                Security(casino).trackActivity(letItRide)
-            }).to.throw(Error, /has no method 'trackActivity'/);
-        });
-
-        it("can ignore missing methods", function () {
-            var letItRide = new Activity('Let It Ride'),
-                level1    = new Level1Security,
-                casino    = new Casino('Treasure Island')
-                .addHandlers(level1, letItRide);
-            expect(Security(casino.$bestEffort()).trackActivity(letItRide)).to.be.undefined;
-        });
-
-        it("should require protocol conformance", function () {
-            var gate  = new (CallbackHandler.extend(Security, {
-                    admit: function (guest) { return true; }
-                }));
-            expect(Security(gate.$strict()).admit(new Guest('Me'))).to.be.true;
-        });
-
-        it("should reject if no protocol conformance", function () {
-            var gate  = new (CallbackHandler.extend({
-                    admit: function (guest) { return true; }
-                }));
-            expect(function () {
-                Security(gate.$strict()).admit(new Guest('Me'))
-            }).to.throw(Error, /has no method 'admit'/);
-        });
-
-        it("can broadcast invocations", function () {
-            var letItRide = new Activity('Let It Ride'),
-                level1    = new Level1Security,
-                level2    = new Level2Security,
-                casino    = new Casino('Treasure Island')
-                .addHandlers(level1, level2, letItRide);
-            Security(casino.$broadcast()).trackActivity(letItRide);
-        });
-
-        it("can notify invocations", function () {
-            var letItRide = new Activity('Let It Ride'),
-                level1    = new Level1Security,
-                casino    = new Casino('Treasure Island')
-                .addHandlers(level1, letItRide);
-            Security(casino.$notify()).trackActivity(letItRide);
-        });
-    })
-});
-
-describe("CallbackHandlerFilter", function () {
-    describe("#handle", function () {
+    describe("#filter", function () {
         it("should accept callback", function () {
             var cashier    = new Cashier(1000000.00),
                 casino     = new Casino('Belagio').addHandlers(cashier),
@@ -1474,10 +1233,8 @@ describe("CallbackHandlerFilter", function () {
             expect(filterCalled).to.equal(1);
         });
     });
-});
 
-describe("CallbackHandlerAspect", function () {
-    describe("#handle", function () {
+    describe("#aspect", function () {
         it("should ignore callback", function () {
             var cashier    = new Cashier(1000000.00),
                 casino     = new Casino('Belagio').addHandlers(cashier),
@@ -1592,4 +1349,236 @@ describe("CallbackHandlerAspect", function () {
             });
         });
     });
+    
+    describe("#next", function () {
+        it("should cascade handlers using short syntax", function () {
+            var guest    = new Guest(17),
+                baccarat = new Activity('Baccarat'),
+                level1   = new Level1Security,
+                level2   = new Level2Security,
+                security = CallbackHandler(level1).next(level2);
+            expect(Security(security).admit(guest)).to.be.false;
+            Security(security).trackActivity(baccarat);
+        });
+
+        it("should compose handlers using short syntax", function () {
+            var baccarat = new Activity('Baccarat'),
+                level1   = new Level1Security,
+                level2   = new Level2Security,
+                compose  = CallbackHandler(level1).next(level2, baccarat),
+            countMoney = new CountMoney();
+            expect(compose.handle(countMoney)).to.be.true;
+        });
+    });
+
+    describe("#when", function () {
+        it("should restrict handlers using short syntax", function () {
+            var blackjack  = new CardTable("BlackJack", 1, 5),
+                cardGames  = (new (CallbackHandler.extend({
+                    $handle:[
+                        True, function (cardTable) {
+                            cardTable.closed = true;
+                        }]
+                }))).when(CardTable);
+            expect(cardGames.handle(blackjack)).to.be.true;
+            expect(blackjack.closed).to.be.true;
+            expect(cardGames.handle(new Cashier)).to.be.false;
+        });
+
+        it("should restrict handlers invariantly using short syntax", function () {
+            var Blackjack  = CardTable.extend({
+                    constructor: function () {
+                        this.base("BlackJack", 1, 5);
+                    }
+                }),
+                blackjack  = new Blackjack,
+                cardGames  = (new (CallbackHandler.extend({
+                    $handle:[
+                        True, function (cardTable) {
+                            cardTable.closed = true;
+                        }]
+                }))).when($eq(CardTable));
+            expect(cardGames.handle(blackjack)).to.be.false;
+            expect(blackjack.closed).to.be.undefined;
+            expect(cardGames.handle(new Cashier)).to.be.false;
+        });
+
+        it("should restrict providers using short syntax", function () {
+            var blackjack  = new CardTable("BlackJack", 1, 5),
+                cardGames  = (new (CallbackHandler.extend({
+                    $provide:[
+                        True, function (resolution) {
+                            return blackjack;
+                        }]
+                }))).when(CardTable);
+            expect(cardGames.resolve(CardTable)).to.equal(blackjack);
+            expect(cardGames.resolve(Cashier)).to.be.undefined;
+        });
+
+        it("should restrict providers invariantly using short syntax", function () {
+            var blackjack  = new CardTable("BlackJack", 1, 5),
+                cardGames  = (new (CallbackHandler.extend({
+                    $provide:[
+                        True, function (resolution) {
+                            return blackjack;
+                        }]
+                }))).when($eq(Activity));
+            expect(cardGames.resolve(Activity)).to.equal(blackjack);
+            expect(cardGames.resolve(CardTable)).to.be.undefined;
+            expect(cardGames.resolve(Cashier)).to.be.undefined;
+        });
+    });
+
+    describe("#implementing", function () {
+        var Calculator = Protocol.extend({
+            add:    function (op1, op2) {},
+            divide: function (dividend, divisor) {},
+            clear:  function () {}
+        });
+        
+        it("should call function", function () {
+            var add = CallbackHandler.implementing("add", function (op1, op2) {
+                return op1 + op2;
+            });
+            expect(Calculator(add).add(5, 10)).to.equal(15);
+        });
+
+        it("should propgate exception in function", function () {
+            var divide = CallbackHandler.implementing("divide", function (dividend, divisor) {
+                if (divisor === 0)
+                    throw new Error("Division by zero");
+                return dividend / divisor;
+            });
+            expect(function () {
+                Calculator(divide).divide(10,0);
+            }).to.throw(Error, /Division by zero/);
+        });
+
+        it("should bind function", function () {
+            var context = new Object,
+                clear   = CallbackHandler.implementing("clear", (function () {
+                return context;
+            }).bind(context));
+            expect(Calculator(clear).clear()).to.equal(context);
+        });
+
+        it("should require non-empty method name", function () {
+            expect(function () {
+                CallbackHandler.implementing(null, function () {});
+            }).to.throw(Error, /No methodName specified/);
+
+            expect(function () {
+                 CallbackHandler.implementing(void 0, function () {});
+            }).to.throw(Error, /No methodName specified/);
+
+            expect(function () {
+                CallbackHandler.implementing(10, function () {});
+            }).to.throw(Error, /No methodName specified/);
+
+            expect(function () {
+                CallbackHandler.implementing("", function () {});
+            }).to.throw(Error, /No methodName specified/);
+
+            expect(function () {
+                CallbackHandler.implementing("   ", function () {});
+            }).to.throw(Error, /No methodName specified/);
+        });
+    });
+});
+
+describe("CascadeCallbackHandler", function () {
+    describe("#handle", function () {
+        it("should cascade handlers", function () {
+            var guest    = new Guest(17),
+                baccarat = new Activity('Baccarat'),
+                level1   = new Level1Security,
+                level2   = new Level2Security,
+                security = new CascadeCallbackHandler(level1, level2);
+            expect(Security(security).admit(guest)).to.be.false;
+            Security(security).trackActivity(baccarat);
+        });
+    });
+});
+
+describe("InvocationCallbackHandler", function () {
+    describe("#handle", function () {
+        it("should handle invocations", function () {
+            var guest1 = new Guest(17),
+                guest2 = new Guest(21),
+                level1 = CallbackHandler(new Level1Security);
+            expect(Security(level1).admit(guest1)).to.be.false;
+            expect(Security(level1).admit(guest2)).to.be.true;
+        });
+        
+        it("should handle async invocations", function (done) {
+            var level2 = CallbackHandler(new Level2Security);
+            Security(level2).scan().then(function () {
+                done();
+            });
+        });
+
+        it("should ignore explicitly unhandled invocations", function () {
+            var texasHoldEm = new CardTable("Texas Hold'em", 2, 7),
+            casino    = new Casino('Caesars Palace')
+                .addHandlers(texasHoldEm);
+            expect(function () {
+                Game(casino).open(5);
+            }).to.not.throw(Error);
+            expect(function () {
+                Game(casino).open(9);
+            }).to.throw(Error, /has no method 'open'/);
+        });
+
+        it("should fail missing methods", function () {
+            var letItRide = new Activity('Let It Ride'),
+                level1    = new Level1Security,
+                casino    = new Casino('Treasure Island')
+                .addHandlers(level1, letItRide);
+
+            expect(function () {
+                Security(casino).trackActivity(letItRide)
+            }).to.throw(Error, /has no method 'trackActivity'/);
+        });
+
+        it("can ignore missing methods", function () {
+            var letItRide = new Activity('Let It Ride'),
+                level1    = new Level1Security,
+                casino    = new Casino('Treasure Island')
+                .addHandlers(level1, letItRide);
+            expect(Security(casino.$bestEffort()).trackActivity(letItRide)).to.be.undefined;
+        });
+
+        it("should require protocol conformance", function () {
+            var gate  = new (CallbackHandler.extend(Security, {
+                    admit: function (guest) { return true; }
+                }));
+            expect(Security(gate.$strict()).admit(new Guest('Me'))).to.be.true;
+        });
+
+        it("should reject if no protocol conformance", function () {
+            var gate  = new (CallbackHandler.extend({
+                    admit: function (guest) { return true; }
+                }));
+            expect(function () {
+                Security(gate.$strict()).admit(new Guest('Me'))
+            }).to.throw(Error, /has no method 'admit'/);
+        });
+
+        it("can broadcast invocations", function () {
+            var letItRide = new Activity('Let It Ride'),
+                level1    = new Level1Security,
+                level2    = new Level2Security,
+                casino    = new Casino('Treasure Island')
+                .addHandlers(level1, level2, letItRide);
+            Security(casino.$broadcast()).trackActivity(letItRide);
+        });
+
+        it("can notify invocations", function () {
+            var letItRide = new Activity('Let It Ride'),
+                level1    = new Level1Security,
+                casino    = new Casino('Treasure Island')
+                .addHandlers(level1, letItRide);
+            Security(casino.$notify()).trackActivity(letItRide);
+        });
+    })
 });
