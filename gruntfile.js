@@ -83,7 +83,7 @@ module.exports = function(grunt) {
             options: {
                 paths:       ['./lib'],
                 ignorePaths: ['./lib/base2.js'],
-                outdir:       './documentation/docs/',
+                outdir:       './documentation/api/',
                 themedir:     './documentation/theme'
             }
         }
@@ -110,5 +110,5 @@ module.exports = function(grunt) {
   grunt.registerTask('build',  ['minify','copy:main', 'karma:dist', 'yuidoc']);
   grunt.registerTask('debug',  ['browserify:debug','karma:debug']);
   grunt.registerTask("minify", ['browserify:dist', 'uglify']);
-  grunt.registerTask("docs",   ['yuidoc']);
+  grunt.registerTask("api",   ['yuidoc']);
 };
