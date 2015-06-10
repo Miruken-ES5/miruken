@@ -1005,7 +1005,7 @@ describe("IoContainer", function () {
                 });
             container.register($component(Registry));
             Promise.resolve(container.resolve(Registry)).then(function (registry) {
-                expect(registry.getComposer()).to.equal(context);
+                expect(registry.getComposer().handler).to.equal(context);
                 Promise.resolve(Validator(registry.getComposer()).validate(registry))
                     .then(function (validation) {
                         expect(validation.isValid()).to.be.true;

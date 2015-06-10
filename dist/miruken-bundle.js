@@ -1722,7 +1722,7 @@ new function () { // closure
         version: miruken.version,
         parent:  miruken,
         imports: "miruken",
-        exports: "CallbackHandler,CallbackHandlerDecorator,CallbackHandlerFilter,CallbackHandlerAspect,CascadeCallbackHandler,CompositeCallbackHandler,ConditionalCallbackHandler,AcceptingCallbackHandler,ProvidingCallbackHandler,MethodCallbackHandler,InvocationOptions,Resolution,HandleMethod,RejectedError,getEffectivePromise,$handle,$callbacks,$define,$provide,$lookup,$NOT_HANDLED"
+        exports: "CallbackHandler,CallbackHandlerDecorator,CallbackHandlerFilter,CallbackHandlerAspect,CascadeCallbackHandler,CompositeCallbackHandler,ConditionalCallbackHandler,AcceptingCallbackHandler,ProvidingCallbackHandler,MethodCallbackHandler,InvocationOptions,Resolution,Composition,HandleMethod,RejectedError,getEffectivePromise,$handle,$callbacks,$define,$provide,$lookup,$NOT_HANDLED"
     });
 
     eval(this.imports);
@@ -2093,13 +2093,13 @@ new function () { // closure
     });
 
     /**
-     * Marks a callback as reentrant.
-     * @class Reentrant
+     * Marks a callback as composable.
+     * @class Composition
      * @constructor
-     * @param   {Object}  callback  -  callback to mark
+     * @param   {Object}  callback  -  callback to compose
      * @extends Base
      */
-    var Reentrant = Base.extend({
+    var Composition = Base.extend({
         constructor: function (callback) {
             if (callback) {
                 this.extend({
@@ -2144,8 +2144,13 @@ new function () { // closure
          * @returns {boolean} true if the callback was handled, false otherwise.
          */
         handle: function (callback, greedy, composer) {
-            return !$isNothing(callback) &&
-                   !!this.handleCallback(callback, !!greedy, composer || this);
+            if ($isNothing(callback)) {
+                return false;
+            }
+            if ($isNothing(composer)) {
+                composer = new CompositionScope(this);
+            }
+            return !!this.handleCallback(callback, !!greedy, composer);
         },
         /**
          * Handles the callback with all arguments populated.
@@ -2188,9 +2193,9 @@ new function () { // closure
             HandleMethod, function (method, composer) {
                 return method.invokeOn(this.delegate, composer) || method.invokeOn(this, composer);
             },
-            Reentrant, function (reentrant, composer) {
-                return $isFunction(reentrant.getCallback) &&
-                                   $handle.dispatch(this, reentrant.getCallback(), null, composer);
+            Composition, function (composable, composer) {
+                return $isFunction(composable.getCallback) &&
+                                   $handle.dispatch(this, composable.getCallback(), null, composer);
             }
         ],
         /**
@@ -2205,6 +2210,33 @@ new function () { // closure
 
     Base.implement({
         toCallbackHandler: function () { return CallbackHandler(this); }
+    });
+
+    /**
+     * Wraps all callbacks for composition and continues processing.
+     * @class CompositionScope
+     * @constructor
+     * @param  {miruken.callback.CallbackHandler)  handler  -  forwarding handler
+     * @extends miruken.callback.CallbackHandler
+     */
+    var CompositionScope = CallbackHandler.extend({
+        constructor: function _(handler) {
+            var spec = _.spec || (_.spec = {});
+            spec.value = handler;
+            /**
+             * Gets the composition handler.
+             * @property {miruken.callback.CallbackHandler} handler
+             * @readOnly
+             */                                    
+            Object.defineProperty(this, 'handler', spec);
+            delete spec.value;
+        },
+        handleCallback: function (callback, greedy, composer) {
+            if (!(callback instanceof Composition)) {
+                callback = new Composition(callback);
+            }
+            return this.handler.handleCallback(callback, greedy, composer);
+        }
     });
 
     /**
@@ -2237,26 +2269,6 @@ new function () { // closure
     });
 
     /**
-     * Marks all handled callbacks as reentrant and continues processing.
-     * @class ReentrantScope
-     * @constructor
-     * @param  {miruken.callback.CallbackHandler)  handler  -  forwarding handler
-     * @extends miruken.callback.CallbackHandler
-     */
-    var ReentrantScope = CallbackHandler.extend({
-        constructor: function _(handler) {
-            this.extend({
-                handleCallback: function (callback, greedy, composer) {
-                    if (!(callback instanceof Reentrant)) {
-                        callback = new Reentrant(callback);
-                    }
-                    return handler.handleCallback(callback, greedy, composer);
-                }
-            });                        
-        }
-    });
-
-    /**
      * Represents a {{#crossLink "miruken.callback.CallbackHandler"}}{{/crossLink}} that can filter callbacks.
      * @class CallbackHandlerFilter
      * @constructor
@@ -2280,13 +2292,15 @@ new function () { // closure
             Object.defineProperty(this, '_filter', spec);
             delete spec.value;
         },
+        /**
+         * Gets the filter reentrancy.  Reentrant filters will be applied during composition.
+         * @property {boolean} true if reentrant, false otherwise.
+         */
+        isReentrant: function () { return false; },
         handleCallback: function (callback, greedy, composer) {
             var decoratee = this.decoratee;
-            if (callback instanceof Reentrant) {
+            if (!this.isReentrant() && (callback instanceof Composition)) {
                 return decoratee.handleCallback(callback, greedy, composer);
-            }
-            if (composer == this) {
-                composer = new ReentrantScope(composer);
             }
             return this._filter(callback, composer, function () {
                 return decoratee.handleCallback(callback, greedy, composer);
@@ -2666,7 +2680,7 @@ new function () { // closure
      * @param  {miruken.callback.InvocationOptions}  options  -  invocation options.
      * @extends Base
      */
-    var InvocationSemantics = Reentrant.extend({
+    var InvocationSemantics = Composition.extend({
         constructor: function (options) {
             var _options   = options || InvocationOptions.None,
                 _specified = _options;
@@ -3798,12 +3812,17 @@ new function () { // closure
      */
     var axisControl = {
         axis: function (axis) {
-            var context   = this,
-                traversal = pcopy(context);
-            traversal.handle = function (callback, greedy, composer) {
-                return context.handleAxis(axis, callback, greedy, composer);
-            };
-            return traversal;
+            var context = this;
+            return pcopy(this).extend({
+                handle: function (callback, greedy, composer) {
+                    return (callback instanceof Composition)
+                         ? base.handle(callback, greedy, composer)
+                         : this.handleAxis(axis, callback, greedy, composer);
+                },
+                equals: function (other) {
+                    return (this === other) || (other === context);
+                }
+            });
         }},
         applyAxis   = axisControl.axis,
         axisChoices = Array2.combine(TraversingAxis.names, TraversingAxis.values);
@@ -4337,7 +4356,7 @@ new function () { // closure
         } else {
             var self = this;
             Traversal.levelOrder(this, function (node) {
-                if (node != self) {
+                if (!$equals(self, node)) {
                     return visitor.call(context, node);
                 }
             }, context);
@@ -4350,7 +4369,7 @@ new function () { // closure
         } else {
             var self = this;
             Traversal.reverseLevelOrder(this, function (node) {
-                if (node != self) {
+                if (!$equals(self, node)) {
                     return visitor.call(context, node);
                 }
             }, context);
@@ -4367,7 +4386,7 @@ new function () { // closure
                 var children = parent.getChildren();
                 for (var i = 0; i < children.length; ++i) {
                     var sibling = children[i];
-                    if (sibling != self && visitor.call(context, sibling)) {
+                    if (!$equals(self, sibling) && visitor.call(context, sibling)) {
                         return;
                     }
                 }
@@ -4377,7 +4396,7 @@ new function () { // closure
             }
         }
     }
-
+    
     /**
      * Helper class for traversing a graph.
      * @static
@@ -6203,7 +6222,7 @@ new function () { // closure
     var miruken = new base2.Package(this, {
         name:    "miruken",
         version: "1.0",
-        exports: "Enum,Variance,Protocol,StrictProtocol,Delegate,Miruken,MetaStep,MetaMacro,Disposing,DisposingMixin,Invoking,Parenting,Starting,Startup,Facet,Interceptor,InterceptorSelector,ProxyBuilder,Modifier,ArrayManager,IndexedList,$isProtocol,$isClass,$classOf,$ancestorOf,$isString,$isFunction,$isObject,$isPromise,$isNothing,$isSomething,$using,$lift,$debounce,$eq,$use,$copy,$lazy,$eval,$every,$child,$optional,$promise,$instant,$createModifier,$properties,$inferProperties,$inheritStatic"
+        exports: "Enum,Variance,Protocol,StrictProtocol,Delegate,Miruken,MetaStep,MetaMacro,Disposing,DisposingMixin,Invoking,Parenting,Starting,Startup,Facet,Interceptor,InterceptorSelector,ProxyBuilder,Modifier,ArrayManager,IndexedList,$isProtocol,$isClass,$classOf,$ancestorOf,$isString,$isFunction,$isObject,$isPromise,$isNothing,$isSomething,$using,$lift,$equals,$debounce,$eq,$use,$copy,$lazy,$eval,$every,$child,$optional,$promise,$instant,$createModifier,$properties,$inferProperties,$inheritStatic"
     });
 
     eval(this.imports);
@@ -8113,7 +8132,7 @@ new function () { // closure
      * @returns  {boolean} true if value null or undefined.
      */
     function $isNothing(value) {
-        return (value === undefined || value === null);
+        return (value === undefined) || (value === null);
     }
 
     /**
@@ -8134,6 +8153,29 @@ new function () { // closure
      */
     function $lift(value) {
         return function() { return value; };
+    }
+
+    /**
+     * Determines whether the objects are considered equal.
+     * <p>
+     * Objects are considered equal if the objects are strictly equal (===) or
+     * either object has an equals method accepting other object that returns true.
+     * </p>
+     * @method $equals
+     * @param    {Any}     obj1  - first object
+     * @param    {Any}     obj2  - second object
+     * @returns  {boolean} true if the obejcts are considered equal, false otherwise.
+     */
+    function $equals(obj1, obj2) {
+        if (obj1 === obj2) {
+            return true;
+        }
+        if ($isFunction(obj1.equals)) {
+            return obj1.equals(obj2);
+        } else if ($isFunction(obj2.equals)) {
+            return obj2.equals(obj1);
+        }
+        return false;
     }
 
     /**
@@ -8881,7 +8923,7 @@ new function () { // closure
  * 
  */
 /**
- * bluebird build version 2.9.24
+ * bluebird build version 2.9.27
  * Features enabled: core, race, call_get, generators, map, nodeify, promisify, props, reduce, settle, some, cancel, using, filter, any, each, timers
 */
 !function(e){if("object"==typeof exports&&"undefined"!=typeof module)module.exports=e();else if("function"==typeof define&&define.amd)define([],e);else{var f;"undefined"!=typeof window?f=window:"undefined"!=typeof global?f=global:"undefined"!=typeof self&&(f=self),f.Promise=e()}}(function(){var define,module,exports;return (function e(t,n,r){function s(o,u){if(!n[o]){if(!t[o]){var a=typeof _dereq_=="function"&&_dereq_;if(!u&&a)return a(o,!0);if(i)return i(o,!0);var f=new Error("Cannot find module '"+o+"'");throw f.code="MODULE_NOT_FOUND",f}var l=n[o]={exports:{}};t[o][0].call(l.exports,function(e){var n=t[o][1][e];return s(n?n:e)},l,l.exports,e,t,n,r)}return n[o].exports}var i=typeof _dereq_=="function"&&_dereq_;for(var o=0;o<r.length;o++)s(r[o]);return s})({1:[function(_dereq_,module,exports){
@@ -8969,6 +9011,7 @@ Async.prototype.throwLater = function(fn, arg) {
 
 Async.prototype._getDomain = function() {};
 
+if (!true) {
 if (util.isNode) {
     var EventsModule = _dereq_("events");
 
@@ -8984,30 +9027,31 @@ if (util.isNode) {
         var descriptor =
             Object.getOwnPropertyDescriptor(EventsModule, "usingDomains");
 
-        if (!descriptor.configurable) {
-            process.on("domainsActivated", function() {
-                Async.prototype._getDomain = domainGetter;
-            });
-        } else {
-            var usingDomains = false;
-            Object.defineProperty(EventsModule, "usingDomains", {
-                configurable: false,
-                enumerable: true,
-                get: function() {
-                    return usingDomains;
-                },
-                set: function(value) {
-                    if (usingDomains || !value) return;
-                    usingDomains = true;
+        if (descriptor) {
+            if (!descriptor.configurable) {
+                process.on("domainsActivated", function() {
                     Async.prototype._getDomain = domainGetter;
-                    util.toFastProperties(process);
-                    process.emit("domainsActivated");
-                }
-            });
+                });
+            } else {
+                var usingDomains = false;
+                Object.defineProperty(EventsModule, "usingDomains", {
+                    configurable: false,
+                    enumerable: true,
+                    get: function() {
+                        return usingDomains;
+                    },
+                    set: function(value) {
+                        if (usingDomains || !value) return;
+                        usingDomains = true;
+                        Async.prototype._getDomain = domainGetter;
+                        util.toFastProperties(process);
+                        process.emit("domainsActivated");
+                    }
+                });
+            }
         }
-
-
     }
+}
 }
 
 function AsyncInvokeLater(fn, receiver, arg) {
@@ -10138,6 +10182,10 @@ var returner = function () {
 var thrower = function () {
     throw this;
 };
+var returnUndefined = function() {};
+var throwUndefined = function() {
+    throw undefined;
+};
 
 var wrapper = function (value, action) {
     if (action === 1) {
@@ -10154,6 +10202,8 @@ var wrapper = function (value, action) {
 
 Promise.prototype["return"] =
 Promise.prototype.thenReturn = function (value) {
+    if (value === undefined) return this.then(returnUndefined);
+
     if (wrapsPrimitiveReceiver && isPrimitive(value)) {
         return this._then(
             wrapper(value, 2),
@@ -10168,6 +10218,8 @@ Promise.prototype.thenReturn = function (value) {
 
 Promise.prototype["throw"] =
 Promise.prototype.thenThrow = function (reason) {
+    if (reason === undefined) return this.then(throwUndefined);
+
     if (wrapsPrimitiveReceiver && isPrimitive(reason)) {
         return this._then(
             wrapper(reason, 1),
@@ -12706,23 +12758,16 @@ Promise.reduce = function (promises, fn, initialValue, _each) {
 },{"./async.js":2,"./util.js":38}],31:[function(_dereq_,module,exports){
 "use strict";
 var schedule;
+var util = _dereq_("./util");
 var noAsyncScheduler = function() {
     throw new Error("No async scheduler available\u000a\u000a    See http://goo.gl/m3OTXk\u000a");
 };
-if (_dereq_("./util.js").isNode) {
-    var version = process.versions.node.split(".").map(Number);
-    schedule = (version[0] === 0 && version[1] > 10) || (version[0] > 0)
-        ? global.setImmediate : process.nextTick;
-
-    if (!schedule) {
-        if (typeof setImmediate !== "undefined") {
-            schedule = setImmediate;
-        } else if (typeof setTimeout !== "undefined") {
-            schedule = setTimeout;
-        } else {
-            schedule = noAsyncScheduler;
-        }
-    }
+if (util.isNode && typeof MutationObserver === "undefined") {
+    var GlobalSetImmediate = global.setImmediate;
+    var ProcessNextTick = process.nextTick;
+    schedule = util.isRecentNode
+                ? function(fn) { GlobalSetImmediate.call(global, fn); }
+                : function(fn) { ProcessNextTick.call(process, fn); };
 } else if (typeof MutationObserver !== "undefined") {
     schedule = function(fn) {
         var div = document.createElement("div");
@@ -12744,7 +12789,7 @@ if (_dereq_("./util.js").isNode) {
 }
 module.exports = schedule;
 
-},{"./util.js":38}],32:[function(_dereq_,module,exports){
+},{"./util":38}],32:[function(_dereq_,module,exports){
 "use strict";
 module.exports =
     function(Promise, PromiseArray) {
@@ -13643,6 +13688,10 @@ var ret = {
     isNode: typeof process !== "undefined" &&
         classString(process).toLowerCase() === "[object process]"
 };
+ret.isRecentNode = ret.isNode && (function() {
+    var version = process.versions.node.split(".").map(Number);
+    return (version[0] === 0 && version[1] > 10) || (version[0] > 0);
+})();
 try {throw new Error(); } catch (e) {ret.lastLineError = e;}
 module.exports = ret;
 
@@ -13958,32 +14007,64 @@ function isUndefined(arg) {
 var process = module.exports = {};
 var queue = [];
 var draining = false;
+var currentQueue;
+var queueIndex = -1;
+
+function cleanUpNextTick() {
+    draining = false;
+    if (currentQueue.length) {
+        queue = currentQueue.concat(queue);
+    } else {
+        queueIndex = -1;
+    }
+    if (queue.length) {
+        drainQueue();
+    }
+}
 
 function drainQueue() {
     if (draining) {
         return;
     }
+    var timeout = setTimeout(cleanUpNextTick);
     draining = true;
-    var currentQueue;
+
     var len = queue.length;
     while(len) {
         currentQueue = queue;
         queue = [];
-        var i = -1;
-        while (++i < len) {
-            currentQueue[i]();
+        while (++queueIndex < len) {
+            currentQueue[queueIndex].run();
         }
+        queueIndex = -1;
         len = queue.length;
     }
+    currentQueue = null;
     draining = false;
+    clearTimeout(timeout);
 }
+
 process.nextTick = function (fun) {
-    queue.push(fun);
-    if (!draining) {
+    var args = new Array(arguments.length - 1);
+    if (arguments.length > 1) {
+        for (var i = 1; i < arguments.length; i++) {
+            args[i - 1] = arguments[i];
+        }
+    }
+    queue.push(new Item(fun, args));
+    if (queue.length === 1 && !draining) {
         setTimeout(drainQueue, 0);
     }
 };
 
+// v8 likes predictible objects
+function Item(fun, array) {
+    this.fun = fun;
+    this.array = array;
+}
+Item.prototype.run = function () {
+    this.fun.apply(null, this.array);
+};
 process.title = 'browser';
 process.browser = true;
 process.env = {};
@@ -14013,7 +14094,7 @@ process.chdir = function (dir) {
 process.umask = function() { return 0; };
 
 },{}],16:[function(require,module,exports){
-//     Validate.js 0.7.0
+//     Validate.js 0.7.1
 
 //     (c) 2013-2015 Nicklas Ansman, 2013 Wrapp
 //     Validate.js may be freely distributed under the MIT license.
@@ -14070,8 +14151,8 @@ process.umask = function() { return 0; };
     version: {
       major: 0,
       minor: 7,
-      patch: 0,
-      metadata: null,
+      patch: 1,
+      metadata: "development",
       toString: function() {
         var version = v.format("%{major}.%{minor}.%{patch}", v.version);
         if (!v.isEmpty(v.version.metadata)) {
@@ -14194,6 +14275,12 @@ process.umask = function() { return 0; };
     // It can be called even if no validations returned a promise.
     async: function(attributes, constraints, options) {
       options = v.extend({}, v.async.options, options);
+
+      // Removes unknown attributes
+      if (options.cleanAttributes !== false) {
+        attributes = v.cleanAttributes(attributes, constraints);
+      }
+
       var results = v.runValidations(attributes, constraints, options);
 
       return new v.Promise(function(resolve, reject) {
@@ -14289,6 +14376,11 @@ process.umask = function() { return 0; };
       return obj === Object(obj);
     },
 
+    // Simply checks if the object is an instance of a date
+    isDate: function(obj) {
+      return obj instanceof Date;
+    },
+
     // Returns false if the object is `null` of `undefined`
     isDefined: function(obj) {
       return obj !== null && obj !== undefined;
@@ -14347,6 +14439,11 @@ process.umask = function() { return 0; };
       // For arrays we use the length property
       if (v.isArray(value)) {
         return value.length === 0;
+      }
+
+      // Dates have no attributes but aren't empty
+      if (v.isDate(value)) {
+        return false;
       }
 
       // If we find at least one property we consider it non empty
@@ -14440,8 +14537,8 @@ process.umask = function() { return 0; };
       return value in obj;
     },
 
-    getDeepObjectValue: function(obj, keypath) {
-      if (!v.isObject(obj) || !v.isString(keypath)) {
+    forEachKeyInKeypath: function(object, keypath, callback) {
+      if (!v.isString(keypath)) {
         return undefined;
       }
 
@@ -14455,11 +14552,9 @@ process.umask = function() { return 0; };
             if (escape) {
               escape = false;
               key += '.';
-            } else if (key in obj) {
-              obj = obj[key];
-              key = "";
             } else {
-              return undefined;
+              object = callback(object, key, false);
+              key = "";
             }
             break;
 
@@ -14479,11 +14574,19 @@ process.umask = function() { return 0; };
         }
       }
 
-      if (v.isDefined(obj) && key in obj) {
-        return obj[key];
-      } else {
+      return callback(object, key, true);
+    },
+
+    getDeepObjectValue: function(obj, keypath) {
+      if (!v.isObject(obj)) {
         return undefined;
       }
+
+      return v.forEachKeyInKeypath(obj, keypath, function(obj, key) {
+        if (v.isObject(obj)) {
+          return obj[key];
+        }
+      });
     },
 
     // This returns an object with all the values of the form.
@@ -14633,6 +14736,56 @@ process.umask = function() { return 0; };
     // ["<message 1>", "<message 2>"]
     flattenErrorsToArray: function(errors) {
       return errors.map(function(error) { return error.error; });
+    },
+
+    cleanAttributes: function(attributes, whitelist) {
+      function whitelistCreator(obj, key, last) {
+        if (v.isObject(obj[key])) {
+          return obj[key];
+        }
+        return (obj[key] = last ? true : {});
+      }
+
+      function buildObjectWhitelist(whitelist) {
+        var ow = {}
+          , lastObject
+          , attr;
+        for (attr in whitelist) {
+          if (!whitelist[attr]) {
+            continue;
+          }
+          v.forEachKeyInKeypath(ow, attr, whitelistCreator);
+        }
+        return ow;
+      }
+
+      function cleanRecursive(attributes, whitelist) {
+        if (!v.isObject(attributes)) {
+          return attributes;
+        }
+
+        var ret = v.extend({}, attributes)
+          , w
+          , attribute;
+
+        for (attribute in attributes) {
+          w = whitelist[attribute];
+
+          if (v.isObject(w)) {
+            ret[attribute] = cleanRecursive(ret[attribute], w);
+          } else if (!w) {
+            delete ret[attribute];
+          }
+        }
+        return ret;
+      }
+
+      if (!v.isObject(whitelist) || !v.isObject(attributes)) {
+        return {};
+      }
+
+      whitelist = buildObjectWhitelist(whitelist);
+      return cleanRecursive(attributes, whitelist);
     },
 
     exposeModule: function(validate, root, exports, module, define) {
