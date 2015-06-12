@@ -16,50 +16,38 @@
               priority: 1200,
               transclude: 'element',
               link: function (scope, element, attr, ctrl, transclude) {
-                  var currentScope,
-                      previousElement;
-
-                  var options = scope.$eval(attr.region);
-                  if(options){
-                    loadRegion(options);
-                  } else {
-                    var newScope = scope.$new();
-                    var clone = transclude(newScope, function (clone) {
-                        previousElement = clone;
-                        currentScope = newScope;
-                        element.after(clone);
-                    });
-                  }
+                  var previousElement,
+                      name      = scope.$eval(attr.region),
+                      newScope  = scope.$new(),
+                      clone     = transclude(newScope, function (clone) {
+                                      previousElement = clone;
+                                      element.after(clone);
+                                 });
 
                   function loadRegion(options) {
-                      $templateRequest(options.template, true).then(function (response) {
-                          cleanupLastIncludeContent();
-                          var newScope = scope.$new();
-                          currentScope = newScope;
+                      if(!options.template) {
+                          throw new Error('template must be specified on region options');
+                      }
 
-                          if(options.controller){
+                      $templateRequest(options.template, true).then(function (response) {
+                          previousElement.remove();
+                          newScope.$destroy();
+                          newScope = scope.$new();
+
+                          if (options.controller){
                             var controller = $controller(options.controller, { $scope: newScope });
                             if (options.controllerAs) {
                                 scope[options.controllerAs] = controller;
                             }
                           }
 
-                          var template = $compile(response);
-                          var bound  = template(newScope)
+                          var template = $compile(response),
+                              bound    = template(newScope);
                           previousElement = bound;
                           element.after(bound);
+                      }, function(){
+                          throw new Error(format('template %1 was not found', options.template));
                       });
-                  };
-
-                  var cleanupLastIncludeContent = function () {
-                      if (previousElement) {
-                          previousElement.remove();
-                          previousElement = null;
-                      }
-                      if (currentScope) {
-                          currentScope.$destroy();
-                          currentScope = null;
-                      }
                   };
 
                   var viewOne = {
