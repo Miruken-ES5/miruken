@@ -5413,7 +5413,7 @@ new function () { // closure
                 resolve: function (factory, composer) {
                     var context = composer.resolve(Context);
                     if (context) {
-                        var id       = assignID(context),
+                        var id       = context.id,
                             instance = _cache[id];
                         if (!instance) {
                             var object = factory();

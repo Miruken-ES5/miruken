@@ -5737,7 +5737,7 @@ new function () { // closure
                 resolve: function (factory, composer) {
                     var context = composer.resolve(Context);
                     if (context) {
-                        var id       = assignID(context),
+                        var id       = context.id,
                             instance = _cache[id];
                         if (!instance) {
                             var object = factory();
@@ -8647,18 +8647,18 @@ new function () { // closure
     });
 
     /**
-     * Protocol representing an area on the screen where a controller can be rendered.
+     * Protocol representing an area on the screen where a controller or view can be rendered.
      * @class ViewRegion
      * @extends StrictProtocol
      */
     var ViewRegion = StrictProtocol.extend({
         /**
-         * Renders the controller in the view region.
-         * @method presentController
-         * @param   {miruken.mvc.Controller} controller  -  controller
-         * @returns {Promise} promise reflecting rendering.
+         * Renders a controller or view in the region.
+         * @method present
+         * @param   {Object} presentation  -  presentation options
+         * @returns {Promise} promise reflecting render.
          */                                        
-        presentController: function (controller) {}
+        present: function (presentation) {}
     });
     
     /**
