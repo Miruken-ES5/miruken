@@ -1,5 +1,14 @@
 <div>
-	<h1>{{ vm.message }}</h1>
+	<h1>Regions Demo</h1>
 
-	<div region></div>
+	<div region>
+		<h1>This is some default content in the region.</h1>
+		<p>It should be visible initially and then be replaced.</p>
+		<div ng-controller="InitialPartialController as vm">
+			<div ng-include="'app/regions/initialPartial.html'"></div>
+		</div>
+	</div>
+	
+	<!-- <div region="{template:'app/regions/initialPartial.html', controller:'InitialPartialController', controllerAs:'vm'}">
+	</div> -->
 </div>
