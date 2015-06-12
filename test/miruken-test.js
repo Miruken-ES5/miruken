@@ -556,16 +556,23 @@ describe("$decorate", function () {
             });
         expect(reverse.name).to.equal("ykrapS");
     });
+});
 
-    it("should treat decorator and decoratee as equal", function () {
-        var dog   = new Dog("Pluto"),
-            upper = $decorate(dog, {
-                getName: function () {
-                    return this.base().toUpperCase();
-                }
-            });
-        expect(upper.equals(dog)).to.be.true;
+describe("$decorated", function () {
+    it("should return nearest decorated instance", function () {
+        var dog        = new Dog("Brutus"),
+            decorator  = $decorate(dog),
+            decorator2 = $decorate(decorator);
+        expect($decorated(decorator)).to.equal(dog);
+        expect($decorated(decorator2)).to.equal(decorator);
     });
+
+    it("should return deepest decorated instance", function () {
+        var dog       = new Dog("Brutus"),
+            decorator = $decorate($decorate(dog));
+        expect($decorated(decorator, true)).to.equal(dog);
+    });
+
 });
 
 describe("Modifier", function () {

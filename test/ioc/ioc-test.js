@@ -716,7 +716,7 @@ describe("IoContainer", function () {
             }
             catch (error) {
                 expect(error).to.be.instanceOf(ComponentModelError);
-                expect(error.validation["key"].errors["required"][0]).to.eql({
+                expect(error.validationResults["key"].errors["required"][0]).to.eql({
                     message: "Key could not be determined for component."
                 });
                 done();
@@ -729,7 +729,7 @@ describe("IoContainer", function () {
             }
             catch (error) {
                 expect(error).to.be.instanceOf(ComponentModelError);
-                expect(error.validation["factory"].errors["required"][0]).to.eql({
+                expect(error.validationResults["factory"].errors["required"][0]).to.eql({
                     message: "Factory could not be determined for component."
                 });
                 done();
@@ -1005,7 +1005,7 @@ describe("IoContainer", function () {
                 });
             container.register($component(Registry));
             Promise.resolve(container.resolve(Registry)).then(function (registry) {
-                expect(registry.getComposer().handler).to.equal(context);
+                expect($decorated(registry.getComposer())).to.equal(context);
                 Promise.resolve(Validator(registry.getComposer()).validate(registry))
                     .then(function (validation) {
                         expect(validation.isValid()).to.be.true;
