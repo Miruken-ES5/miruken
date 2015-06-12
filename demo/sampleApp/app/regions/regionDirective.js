@@ -3,14 +3,15 @@
     var infrastructure = new base2.Package(this, {
         name:    "sampleApp",
         imports: "miruken.ng",
-        exports: ""
+        exports: "Region"
     });
 
     eval(this.imports);
-    
-    var regionDirective = ['$templateRequest', '$controller', '$compile',
-        function ($templateRequest, $controller, $compile) {
-          return {
+
+    var Region = Directive.extend({
+      $inject: ['$templateRequest', '$controller', '$compile'],
+      constructor: function($templateRequest, $controller, $compile){
+          this.extend({
               restrict: 'A',
               priority: 1200,
               transclude: 'element',
@@ -78,13 +79,9 @@
                         loaded = load;
                     }.bind(this), 2000);
               }
-          };
-      }];
-
-    angular
-        .module('sampleApp')
-        .directive('region', regionDirective);
-
-
+          });
+      }
+    });
+    
     eval(this.exports);
 }
