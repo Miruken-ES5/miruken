@@ -2438,6 +2438,15 @@ new function () { // closure
         }
     });
 
+    var compositionScope = $decorator({
+        handleCallback: function (callback, greedy, composer) {
+            if (!(callback instanceof Composition)) {
+                callback = new Composition(callback);
+            }
+            return this.base(callback, greedy, composer);
+        }
+    });
+    
     /**
      * Base class for handling arbitrary callbacks.<br/>
      * See {{#crossLink "miruken.callback.$callbacks"}}{{/crossLink}}
@@ -2472,14 +2481,7 @@ new function () { // closure
                 return false;
             }
             if ($isNothing(composer)) {
-                composer = this.decorate({
-                    handleCallback: function (callback, greedy, composer) {
-                        if (!(callback instanceof Composition)) {
-                            callback = new Composition(callback);
-                        }
-                        return this.base(callback, greedy, composer);
-                    }
-                });
+                composer = compositionScope(this);
             }
             return !!this.handleCallback(callback, !!greedy, composer);
         },
