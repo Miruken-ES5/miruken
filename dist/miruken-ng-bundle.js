@@ -32,7 +32,7 @@ new function () { // closure
         version: miruken.version,
         parent:  miruken,
         imports: "miruken,miruken.callback,miruken.context,miruken.validate,miruken.ioc,miruken.mvc",
-        exports: "Runner,Directive,UseModelValidation,$rootContext"
+        exports: "Runner,Directive,Region,UseModelValidation,$rootContext"
     });
 
     eval(this.imports);
@@ -63,18 +63,132 @@ new function () { // closure
     });
 
     /**
-     * Marks a class 
+     * Marks a class as an
+     * [Angular Directive Definition Object] (https://docs.angularjs.org/guide/module)
      * @class Directive
      * @constructor
      * @extends Base     
      */
-    var Directive = Base.extend();
+    var Directive = Base.extend(null, {
+        /**
+         * Gets the nearest {{#crossLink "miruken.mvc.Controller"}}{{/crossLink}} in the scope chain.
+         * @method getNearestController
+         * @static
+         * @param   {Scope}    scope      -  angular scope
+         * @returns {miruken.mvc.Controller} nearest controller.
+         */                                
+        getNearestController: function (scope) {
+            while (scope) {
+                for (var key in scope) {
+                    var value = scope[key];
+                    if (value instanceof Controller) {
+                        return value;
+                    }
+                }
+                scope = scope.$parent;
+            }
+        }
+    });
 
     /**
-     * Description goes here
+     * Represents an Angular partial region.
+     * @class AngularPartial
+     * @constructor
+     * @param {Element}  container         -  html container element
+     * @param {Scope}    scope             -  partial scope
+     * @param {Element}  content           -  initial html content
+     * @param {Object}   $templateRequest  -  angular $templateRequest service
+     * @param {Object}   $controller       -  angular $controller service
+     * @param {Object}   $compile          -  angular $compile service
+     * @param {Object}   $q                -  angular $q service
+     * @extends Base
+     * @uses miruken.$inferProperties
+     * @uses miruken.mvc.PartialRegion     
+     */
+    var AngularPartial = Base.extend(PartialRegion, $inferProperties, {
+        constructor: function (container, content, scope, partialScope,
+                               $templateRequest, $controller, $compile, $q) {
+            var _controller;
+
+            this.extend({
+                getContext: function () { return scope.context; },
+                getController: function () { return _controller; },
+                getControllerContext: function () { return _controller && _controller.context; },
+                present: function (presentation) {
+                    var template   = presentation.template,
+                        controller = presentation.controller;
+                    
+                    if (!template) {
+                        return $q.reject(new Error('No template must be specified'));
+                    }
+                    
+                    return $templateRequest(template, true).then(function (template) {
+                        content.remove();
+                        partialScope.$destroy();
+                        partialScope = scope.$new();
+                        _controller  = null;
+                        
+                        if (controller) {
+                            _controller = $controller(controller, { $scope: partialScope });
+                            if (presentation.controllerAs) {
+                                scope[presentation.controllerAs] = _controller;
+                            }
+                        }
+                        
+                        content = $compile(template)(partialScope),
+                        container.after(content);
+                        return $q.when(this.controllerContext);
+                    });
+                }
+            });
+
+            if (content) {
+                container.after(content);
+            }
+        },
+    });
+
+    /**
+     * Angular directive marking a view region.
+     * @class Region
+     * @constructor
+     * @extends miruken.ng.Directive     
+     */
+    var Region = Directive.extend({
+        scope:      true,
+        restrict:   'A',
+        priority:   1200,
+        transclude: 'element',
+        $inject: ['$templateRequest', '$controller', '$compile', '$q'],
+        constructor: function ($templateRequest, $controller, $compile, $q) {
+            this.extend({
+                link: function (scope, element, attr, ctrl, transclude) {
+                    var partialScope = scope.$new(),
+                        name         = scope.$eval(attr.region) || attr.region;
+                    
+                    transclude(partialScope, function (content) {
+                        var partial = new AngularPartial(
+                            element, content, scope, partialScope,
+                            $templateRequest, $controller, $compile, $q);
+                        scope.context.addHandlers(partial);
+                        
+                        if (name) {
+                            var owningController = Directive.getNearestController(scope);
+                            if (owningController) {
+                                owningController[name] = partial;
+                            }
+                        }
+                    });
+                }
+            });
+        }
+    });
+
+    /**
+     * Angular directive enabling model validation.
      * @class UseModelValidation
      * @constructor
-     * @extends Directive     
+     * @extends miruken.ng.Directive     
      */
     var UseModelValidation = Directive.extend({
         restrict: 'A',
@@ -90,7 +204,7 @@ new function () { // closure
             }, 100, false, true);
         }
     });
-    
+
     Package.implement({
         init: function () {
             this.base();
@@ -8515,7 +8629,7 @@ new function () { // closure
         version: miruken.version,
         parent:  miruken,
         imports: "miruken,miruken.callback,miruken.context,miruken.validate",
-        exports: "Model,ViewRegion,Controller,MasterDetail,MasterDetailAware"
+        exports: "Model,Controller,ViewRegion,PartialRegion,MasterDetail,MasterDetailAware"
     });
 
     eval(this.imports);
@@ -8647,7 +8761,7 @@ new function () { // closure
     });
 
     /**
-     * Protocol representing an area on the screen where a controller or view can be rendered.
+     * Protocol for rendering a controller or view on the screen.
      * @class ViewRegion
      * @extends StrictProtocol
      */
@@ -8655,10 +8769,36 @@ new function () { // closure
         /**
          * Renders a controller or view in the region.
          * @method present
-         * @param   {Object} presentation  -  presentation options
+         * @param   {Object}  presentation  -  presentation options
          * @returns {Promise} promise reflecting render.
          */                                        
         present: function (presentation) {}
+    });
+
+    /**
+     * Protocol for rendering a controller in an area on the screen.
+     * @class PartialRegion
+     * @extends {miruken.mvc.ViewRegion}
+     */
+    var PartialRegion = ViewRegion.extend({
+        /**
+         * Gets the region's context.
+         * @method getContext
+         * @returns {miruken.context.Context} region context.
+         */
+        getContext: function () {},
+        /**
+         * Gets the region's controller.
+         * @method getController
+         * @return {miruken.mvc.Controller} region controller.
+         */            
+        getController: function () {},
+        /**
+         * Gets the region's controller context.
+         * @method getControllerContext
+         * @return {miruken.context.Context} region controller context.
+         */            
+        getControllerContext: function () {}
     });
     
     /**
@@ -8666,7 +8806,9 @@ new function () { // closure
      * @class Controller
      * @constructor
      * @extends miruken.callback.CallbackHandler
-     * @uses miruken.context.Contextual
+     * @uses miruken.$inferProperties
+     * @uses miruken.context.$contextual,
+     * @uses miruken.validate.$validateThat,
      * @uses miruken.validate.Validating
      */
     var Controller = CallbackHandler.extend(

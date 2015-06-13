@@ -8191,7 +8191,7 @@ new function () { // closure
         version: miruken.version,
         parent:  miruken,
         imports: "miruken,miruken.callback,miruken.context,miruken.validate",
-        exports: "Model,ViewRegion,Controller,MasterDetail,MasterDetailAware"
+        exports: "Model,Controller,ViewRegion,PartialRegion,MasterDetail,MasterDetailAware"
     });
 
     eval(this.imports);
@@ -8323,7 +8323,7 @@ new function () { // closure
     });
 
     /**
-     * Protocol representing an area on the screen where a controller or view can be rendered.
+     * Protocol for rendering a controller or view on the screen.
      * @class ViewRegion
      * @extends StrictProtocol
      */
@@ -8331,10 +8331,36 @@ new function () { // closure
         /**
          * Renders a controller or view in the region.
          * @method present
-         * @param   {Object} presentation  -  presentation options
+         * @param   {Object}  presentation  -  presentation options
          * @returns {Promise} promise reflecting render.
          */                                        
         present: function (presentation) {}
+    });
+
+    /**
+     * Protocol for rendering a controller in an area on the screen.
+     * @class PartialRegion
+     * @extends {miruken.mvc.ViewRegion}
+     */
+    var PartialRegion = ViewRegion.extend({
+        /**
+         * Gets the region's context.
+         * @method getContext
+         * @returns {miruken.context.Context} region context.
+         */
+        getContext: function () {},
+        /**
+         * Gets the region's controller.
+         * @method getController
+         * @return {miruken.mvc.Controller} region controller.
+         */            
+        getController: function () {},
+        /**
+         * Gets the region's controller context.
+         * @method getControllerContext
+         * @return {miruken.context.Context} region controller context.
+         */            
+        getControllerContext: function () {}
     });
     
     /**
@@ -8342,7 +8368,9 @@ new function () { // closure
      * @class Controller
      * @constructor
      * @extends miruken.callback.CallbackHandler
-     * @uses miruken.context.Contextual
+     * @uses miruken.$inferProperties
+     * @uses miruken.context.$contextual,
+     * @uses miruken.validate.$validateThat,
      * @uses miruken.validate.Validating
      */
     var Controller = CallbackHandler.extend(
