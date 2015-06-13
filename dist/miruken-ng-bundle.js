@@ -123,8 +123,9 @@ new function () { // closure
                     }
                     
                     return $templateRequest(template, true).then(function (template) {
-                        partialScope.$destroy();
+                        var oldScope = partialScope;
                         partialScope = scope.$new();
+                        oldScope.$destroy();
                         _controller  = null;
                         
                         if (controller) {
