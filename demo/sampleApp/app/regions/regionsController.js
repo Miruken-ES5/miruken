@@ -11,7 +11,15 @@ new function() {
 	var RegionsController = Controller.extend({
 		$properties:{
 			message: 'Hello, Regions!'
-		}
+		},
+        partialOne: function () {
+            var viewOne = {
+                template:     'app/regions/partialOne.html',
+                controller:   'PartialOneController',
+                controllerAs: 'vm'
+            };
+            ViewRegion(this.content.context).present(viewOne);
+        }
 	});
 
 	eval(this.exports);
