@@ -25,7 +25,7 @@ new function() {
 					this.tabs[i].active = false;
 				};
 				tab.active = true;	
-				ViewRegion(this.bootstrapTabContent.context).present(tab.view);
+				ViewRegion(this.tabContent.context).present(tab.view);
 			},
 			getDefault: function(){
 				if(this.tabs.length){
@@ -49,7 +49,7 @@ new function() {
 						  	'<a href="">{{ tab.name }}</a>' +
 						  '</li>' +
 						'</ul>' +
-						'<div region="bootstrapTabContent" onload="vm.load(vm.active ? vm.active : vm.default)" foo="bar">' +
+						'<div region="tabContent" onload="vm.load(vm.active ? vm.active : vm.default)" foo="bar">' +
 						'</div>' +
 					'</div>'
 	});
