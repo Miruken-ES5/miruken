@@ -9,7 +9,7 @@
     eval(this.imports);
 
     var TabBController = Controller.extend({
-        message: "howdy",
+        message: "Howdy",
         items:   ["B", "C", "D"]
     });
 

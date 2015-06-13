@@ -12,8 +12,8 @@ new function() {
 		$inject: ['$routeProvider'],
 		constructor: function($routeProvider){
 			$routeProvider.when('/tabs', {
-				templateUrl: 'app/tabs/tabs.html',
-				controller: 'TabsController',
+				templateUrl: 'app/tabs/demoTabs.html',
+				controller: 'DemoTabsController',
 				controllerAs: 'vm'
 			});
 		}

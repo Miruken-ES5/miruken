@@ -3,7 +3,7 @@ new function() {
 	var sampleApp = new base2.Package(this, {
 		name:    'sampleApp',
 		imports: 'miruken.mvc',
-		exports: 'TabsController'
+		exports: 'DemoTabsController'
 	});
 
 	eval(this.imports);
@@ -15,7 +15,7 @@ new function() {
 		regionContext: null
 	});
 
-	var TabsController = Controller.extend({
+	var DemoTabsController = Controller.extend({
 		constructor: function(){
 			this.extend({
 				tabs: [

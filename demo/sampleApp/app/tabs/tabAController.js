@@ -9,8 +9,8 @@
     eval(this.imports);
 
     var TabAController = Controller.extend({
-        message: "hello",
-        items:   [0,1,2,3]
+        message: "Hello",
+        items:   [1,2,3]
     });
 
     eval(this.exports);
