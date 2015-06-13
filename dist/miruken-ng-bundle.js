@@ -123,7 +123,6 @@ new function () { // closure
                     }
                     
                     return $templateRequest(template, true).then(function (template) {
-                        content.remove();
                         partialScope.$destroy();
                         partialScope = scope.$new();
                         _controller  = null;
@@ -131,11 +130,13 @@ new function () { // closure
                         if (controller) {
                             _controller = $controller(controller, { $scope: partialScope });
                             if (presentation.controllerAs) {
-                                scope[presentation.controllerAs] = _controller;
+                                partialScope[presentation.controllerAs] = _controller;
                             }
                         }
-                        
+
+                        var oldContent = content;
                         content = $compile(template)(partialScope),
+                        oldContent.remove();                        
                         container.after(content);
                         return $q.when(this.controllerContext);
                     });
