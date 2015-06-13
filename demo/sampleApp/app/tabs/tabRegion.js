@@ -3,7 +3,7 @@ new function() {
 	var sampleApp = new base2.Package(this, {
 		name:    'sampleApp',
 		imports: 'miruken.ng,miruken.mvc',
-		exports: 'Tab,TabRegion'
+		exports: 'Tab,TabRegion,BsTabRegion'
 	});
 
 	eval(this.imports);
@@ -19,7 +19,6 @@ new function() {
 			tabs:   '=',
 			active: '='
 		},
-		templateUrl: 'app/tabs/bootstrapTabs.html',
 		controller: Controller.extend({
 			load: function(tab){
 				for (var i = 0; i < this.tabs.length; i++) {
@@ -36,6 +35,23 @@ new function() {
 		}),
 		controllerAs: 'vm',
 		bindToController: true
+	});
+
+	var BsTabRegion = TabRegion.extend({
+		scope: {
+			tabs:   '=',
+			active: '=',
+			pills:   '='
+		},
+		template: 	'<div>' +
+						'<ul class="nav" ng-class="{\'nav-tabs\': !vm.pills, \'nav-pills\': vm.pills}">' +
+						  '<li role="presentation" ng-repeat="tab in vm.tabs" ng-click="vm.load(tab)" ng-class="{\'active\': tab.active}">' +
+						  	'<a href="">{{ tab.name }}</a>' +
+						  '</li>' +
+						'</ul>' +
+						'<div region="bootstrapTabContent" onload="vm.load(vm.active ? vm.active : vm.default)" foo="bar">' +
+						'</div>' +
+					'</div>'
 	});
 
 	eval(this.exports);
