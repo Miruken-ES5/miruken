@@ -11,15 +11,16 @@
     var PartialTwoController = Controller.extend({
         constructor: function () {
             var initialView = {
-                template:     'app/regions/initialPartial.html',
-                controller:   'InitialPartialController',
+                template:     'app/regions/partialThree.html',
+                controller:   'PartialThreeController',
                 controllerAs: 'vm'
             };            
             setTimeout(function () {
                 ViewRegion(this.context).present(initialView);
             }.bind(this), 2000);
         },
-        message: "howdy"
+        message: "Howdy!",
+        items: [2,3,4]
     });
 
     eval(this.exports);

@@ -41,7 +41,7 @@ new function() {
 		scope: {
 			tabs:   '=',
 			active: '=',
-			pills:   '='
+			pills:  '='
 		},
 		template: 	'<div>' +
 						'<ul class="nav" ng-class="{\'nav-tabs\': !vm.pills, \'nav-pills\': vm.pills}">' +

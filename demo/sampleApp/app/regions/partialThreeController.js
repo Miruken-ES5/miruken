@@ -3,12 +3,12 @@
     var sampleApp = new base2.Package(this, {
         name:    "sampleApp",
         imports: "miruken.mvc",
-        exports: "InitialPartialController"
+        exports: "PartialThreeController"
     });
 
     eval(this.imports);
 
-    var InitialPartialController = Controller.extend({
+    var PartialThreeController = Controller.extend({
         constructor: function () {
             var viewOne = {
                 template:     'app/regions/partialOne.html',
@@ -19,8 +19,8 @@
                 ViewRegion(this.context).present(viewOne);
             }.bind(this), 2000);
         },
-        message: "Hi, y'all from the initial partial view",
-        list: [1,2,3],
+        message: "Hi, y'all from partial three!",
+        list: [3,4,5],
     });
 
     eval(this.exports);

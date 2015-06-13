@@ -17,15 +17,16 @@
                 controller:   'PartialTwoController',
                 controllerAs: 'vm'
             };
-
-            this.message = format("Hello - dispoed %1", disposed);
-            
             setTimeout(function () {
                 ViewRegion(this.context).present(viewTwo);
             }.bind(this), 2000);
         },
         dispose: function () { ++disposed; },
-        items: [0,1,2,3]
+        message: 'Hello',
+        items: [1,2,3],
+        getDisposed: function(){
+            return disposed;
+        }
     });
 
     eval(this.exports);
