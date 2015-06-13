@@ -91,8 +91,8 @@ new function () { // closure
     });
 
     /**
-     * Represents an Angular partial region.
-     * @class AngularPartial
+     * Represents an area of a view template.
+     * @class PartialView
      * @constructor
      * @param {Element}  container         -  html container element
      * @param {Scope}    scope             -  partial scope
@@ -105,7 +105,7 @@ new function () { // closure
      * @uses miruken.$inferProperties
      * @uses miruken.mvc.PartialRegion     
      */
-    var AngularPartial = Base.extend(PartialRegion, $inferProperties, {
+    var PartialView = Base.extend(PartialRegion, $inferProperties, {
         constructor: function (container, content, scope, partialScope,
                                $templateRequest, $controller, $compile, $q) {
             var _controller;
@@ -168,7 +168,7 @@ new function () { // closure
                         name         = scope.$eval(attr.region) || attr.region;
                     
                     transclude(partialScope, function (content) {
-                        var partial = new AngularPartial(
+                        var partial = new PartialView(
                             element, content, scope, partialScope,
                             $templateRequest, $controller, $compile, $q);
                         scope.context.addHandlers(partial);
