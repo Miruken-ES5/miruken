@@ -1,0 +1,13 @@
+<div>
+	<h1>Tabs Demo</h1>
+
+	<ul class="nav nav-tabs">
+	  <li role="presentation" ng-repeat="tab in vm.tabs" ng-click="vm.load(tab)" ng-class="{'active': tab.active}">
+	  	<a href="">{{ tab.name }}</a>
+	  </li>
+	</ul>
+
+	<div region="tabContent" onload="vm.load(vm.tabs[0])">
+		<h2>Transcluded content</h2>
+	</div>
+</div>
