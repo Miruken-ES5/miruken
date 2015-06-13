@@ -146,7 +146,7 @@ new function () { // closure
             if (content) {
                 container.after(content);
             }
-        },
+        }
     });
 
     /**
