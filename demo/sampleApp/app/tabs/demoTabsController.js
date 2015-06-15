@@ -45,6 +45,14 @@ new function() {
 			                controller:   'TabDController',
 			                controllerAs: 'vm'
 		            	}
+					}),
+					new Tab({
+						name: 'Tab E',
+						view: {
+			                template:     'app/tabs/tabE.html',
+			                controller:   'TabEController',
+			                controllerAs: 'vm'
+		            	}
 					})
 				]
 			});

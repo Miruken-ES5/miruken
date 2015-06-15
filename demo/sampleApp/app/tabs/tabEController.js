@@ -3,14 +3,14 @@
     var sampleApp = new base2.Package(this, {
         name:    "sampleApp",
         imports: "miruken.mvc",
-        exports: "TabAController"
+        exports: "TabEController"
     });
 
     eval(this.imports);
 
-    var TabAController = Controller.extend({
-        message: "Hello",
-        items:   ['A','B','C']
+    var TabEController = Controller.extend({
+        message: "Good Day",
+        list:    ['E', 'F', 'G'],
     });
 
     eval(this.exports);
