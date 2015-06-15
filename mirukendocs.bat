@@ -1,2 +1,2 @@
-call grunt api
-%systemroot%\System32\xcopy documentation\api ..\miruken.github.io\api /Y /E
+call grunt docs
+%systemroot%\System32\xcopy documentation\docs ..\miruken.github.io\docs /Y /E

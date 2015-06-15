@@ -1722,7 +1722,7 @@ new function () { // closure
         version: miruken.version,
         parent:  miruken,
         imports: "miruken",
-        exports: "CallbackHandler,CallbackHandlerDecorator,CallbackHandlerFilter,CallbackHandlerAspect,CascadeCallbackHandler,CompositeCallbackHandler,ConditionalCallbackHandler,AcceptingCallbackHandler,ProvidingCallbackHandler,MethodCallbackHandler,InvocationOptions,Resolution,Composition,HandleMethod,RejectedError,getEffectivePromise,$handle,$callbacks,$define,$provide,$lookup,$NOT_HANDLED"
+        exports: "CallbackHandler,CascadeCallbackHandler,CompositeCallbackHandler,InvocationOptions,Resolution,Composition,HandleMethod,RejectedError,getEffectivePromise,$handle,$callbacks,$define,$provide,$lookup,$NOT_HANDLED"
     });
 
     eval(this.imports);
@@ -2093,7 +2093,7 @@ new function () { // closure
     });
 
     /**
-     * Marks a callback as composable.
+     * Marks a callback as composed.
      * @class Composition
      * @constructor
      * @param   {Object}  callback  -  callback to compose
@@ -2114,6 +2114,15 @@ new function () { // closure
         }
     });
 
+    var compositionScope = $decorator({
+        handleCallback: function (callback, greedy, composer) {
+            if (!(callback instanceof Composition)) {
+                callback = new Composition(callback);
+            }
+            return this.base(callback, greedy, composer);
+        }
+    });
+    
     /**
      * Base class for handling arbitrary callbacks.<br/>
      * See {{#crossLink "miruken.callback.$callbacks"}}{{/crossLink}}
@@ -2148,7 +2157,7 @@ new function () { // closure
                 return false;
             }
             if ($isNothing(composer)) {
-                composer = new CompositionScope(this);
+                composer = compositionScope(this);
             }
             return !!this.handleCallback(callback, !!greedy, composer);
         },
@@ -2180,11 +2189,11 @@ new function () { // closure
                     var implied  = new _Node(key),
                         delegate = this.delegate;
                     if (delegate && implied.match($classOf(delegate), Variance.Contravariant)) {
-                        resolution.resolve(delegate);
+                        resolution.resolve($decorated(delegate));
                         resolved = true;
                     }
                     if ((!resolved || many) && implied.match($classOf(this), Variance.Contravariant)) {
-                        resolution.resolve(this);
+                        resolution.resolve($decorated(this));
                         resolved = true;
                     }
                 }
@@ -2213,108 +2222,20 @@ new function () { // closure
     });
 
     /**
-     * Wraps all callbacks for composition and continues processing.
-     * @class CompositionScope
-     * @constructor
-     * @param  {miruken.callback.CallbackHandler)  handler  -  forwarding handler
-     * @extends miruken.callback.CallbackHandler
-     */
-    var CompositionScope = CallbackHandler.extend({
-        constructor: function _(handler) {
-            var spec = _.spec || (_.spec = {});
-            spec.value = handler;
-            /**
-             * Gets the composition handler.
-             * @property {miruken.callback.CallbackHandler} handler
-             * @readOnly
-             */                                    
-            Object.defineProperty(this, 'handler', spec);
-            delete spec.value;
-        },
-        handleCallback: function (callback, greedy, composer) {
-            if (!(callback instanceof Composition)) {
-                callback = new Composition(callback);
-            }
-            return this.handler.handleCallback(callback, greedy, composer);
-        }
-    });
-
-    /**
-     * Base class for all CallbackHandler decorators.<br/>
-     * See [Decorator Pattern](http://en.wikipedia.org/wiki/Decorator_pattern)
-     * @class CallbackHandlerDecorator
-     * @constructor
-     * @param  {miruken.callback.CallbackHandler}  decoratee  -  decoratee
-     * @extends miruken.callback.CallbackHandler
-     */
-    var CallbackHandlerDecorator = CallbackHandler.extend({
-        constructor: function _(decoratee) {
-            if ($isNothing(decoratee)) {
-                throw new TypeError("No decoratee specified.");
-            }
-            /**
-             * Gets/Sets the decoratee.
-             * @property {miruken.callback.CallbackHandler} decoratee
-             */                        
-            Object.defineProperty(this, 'decoratee', {
-                get: function () { return decoratee; },
-                set: function (value) { decoratee = value.toCallbackHandler() }
-            });
-            this.decoratee = decoratee;
-        },
-        handleCallback: function (callback, greedy, composer) {
-            return this.decoratee.handleCallback(callback, greedy, composer)
-                || this.base(callback, greedy, composer);
-        }
-    });
-
-    /**
-     * Represents a {{#crossLink "miruken.callback.CallbackHandler"}}{{/crossLink}} that can filter callbacks.
-     * @class CallbackHandlerFilter
-     * @constructor
-     * @param  {miruken.callback.CallbackHandler}  decoratee  -  decoratee
-     * @param  {Function}                          filter     -  callback filter
-     * @extends miruken.callback.CallbackHandlerDecorator
-     */
-    var CallbackHandlerFilter = CallbackHandlerDecorator.extend({
-        constructor: function _(decoratee, filter) {
-            this.base(decoratee);
-            if (!$isFunction(filter)) {
-                throw new TypeError(format("Invalid filter: %1 is not a function.", filter));
-            }
-            var spec = _.spec || (_.spec = {});
-            spec.value = filter;
-            /**
-             * Gets the callback filter.
-             * @property {Function} filter
-             * @readOnly
-             */                                    
-            Object.defineProperty(this, '_filter', spec);
-            delete spec.value;
-        },
-        /**
-         * Gets the filter reentrancy.  Reentrant filters will be applied during composition.
-         * @property {boolean} true if reentrant, false otherwise.
-         */
-        isReentrant: function () { return false; },
-        handleCallback: function (callback, greedy, composer) {
-            var decoratee = this.decoratee;
-            if (!this.isReentrant() && (callback instanceof Composition)) {
-                return decoratee.handleCallback(callback, greedy, composer);
-            }
-            return this._filter(callback, composer, function () {
-                return decoratee.handleCallback(callback, greedy, composer);
-            })
-        }
-    });                                                                   
-
-    /**
      * Identifies a rejected callback.  This usually occurs from aspect processing.<br/>
      * See {{#crossLink "miruken.callback.CallbackHandlerAspect"}}{{/crossLink}}
      * @class RejectedError
+     * @constructor
+     * @param {Object}  callback  -  rejected callback
      * @extends Error
      */
-    function RejectedError() {
+    function RejectedError(callback) {
+        /**
+         * Gets the rejected callback.
+         * @property {Object} callback
+         */         
+        this.callback = callback;
+
         if (Error.captureStackTrace) {
             Error.captureStackTrace(this, this.constructor);
         } else {
@@ -2323,68 +2244,6 @@ new function () { // closure
     }
     RejectedError.prototype             = new Error;
     RejectedError.prototype.constructor = RejectedError;
-
-    /**
-     * Represents a {{#crossLink "miruken.callback.CallbackHandler"}}{{/crossLink}}
-     * that can apply pre/post actions.
-     * @class CallbackHandlerAspect
-     * @constructor
-     * @param  {miruken.callback.CallbackHandler}  decoratee  -  decoratee
-     * @param  {Function}                          before     -  before predicate
-     * @param  {Function}                          after      -  after action
-     * @extends miruken.callback.CallbackHandlerFilter
-     */
-    var CallbackHandlerAspect = CallbackHandlerFilter.extend({
-        constructor: function (decoratee, before, after) {
-            this.base(decoratee, function (callback, composer, proceed) {
-                if ($isFunction(before)) {
-                    var test     = before(callback, composer),
-                        isMethod = callback instanceof HandleMethod;
-                    if ($isPromise(test)) {
-                        var accept = test.then(function (accepted) {
-                            if (accepted !== false) {
-                                _aspectProceed(callback, composer, proceed);
-                                return isMethod ? callback.getReturnValue() : true;
-                            }
-                            return Promise.reject(new RejectedError);
-                        });
-                        if (isMethod) {
-                            callback.setReturnValue(accept);
-                        } else if (callback instanceof Deferred) {
-                            callback.track(accept);
-                        }
-                        return true;
-                    } else if (test === false) {
-                        return true;
-                    }
-                }
-                return _aspectProceed(callback, composer, proceed, after);
-            });
-        }
-    });
-
-    function _aspectProceed(callback, composer, proceed, after) {
-        var promise;
-        try {
-            var handled = proceed();
-            if (handled && (promise = getEffectivePromise(callback))) {
-                // Use 'fulfilled' or 'rejected' handlers instead of 'finally' to ensure
-                // aspect boundary is consistent with synchronous invocations and avoid
-                // reentrancy issues.
-                if ($isFunction(after))
-                    promise.then(function (result) {
-                        after(callback, composer);
-                    }, function (error) {
-                        after(callback, composer);
-                    });
-            }
-            return handled;
-        } finally {
-            if (!promise && $isFunction(after)) {
-                after(callback, composer);
-            }
-        }
-    }
     
     /**
      * Represents a two-way {{#crossLink "miruken.callback.CallbackHandler"}}{{/crossLink}} path.
@@ -2508,136 +2367,61 @@ new function () { // closure
     });
 
     /**
-     * {{#crossLink "miruken.callback.CallbackHandler"}}{{/crossLink}}
-     * that tests a condition before handling callbacks.
-     * @class ConditionalCallbackHandler
-     * @constructor
-     * @param  {miruken.callback.CallbackHandler}  decoratee  -  decoratee
-     * @param  {Function}                          condition  -  condition predicate
-     * @extends miruken.callback.CallbackHandlerDecorator
-     */
-    var ConditionalCallbackHandler = CallbackHandlerDecorator.extend({
-        constructor: function _(decoratee, condition) {
-            this.base(decoratee);
-            if ($isNothing(condition)) {
-                throw new TypeError("No condition specified.");
-            } else if (!$isFunction(condition)) {
-                throw new TypeError(format(
-                    "Invalid condition: %1 is not a function.", condition));
-            }
-            var spec = _.spec || (_.spec = {});
-            spec.value = condition;
-            /**
-             * Gets the callback condiition.
-             * @property {Function} condition
-             * @readOnly
-             */                                                                        
-            Object.defineProperty(this, 'condition', spec);
-            delete spec.value;
-        },
-        handleCallback: function (callback, greedy, composer) {
-            return this.condition(callback)
-                 ? this.base(callback, greedy, composer)
-                 : false;
-        }
-    });
-
-    /**
      * Shortcut for handling a callback.
-     * @class AcceptingCallbackHandler
-     * @constructor
-     * @param  {Function}  handler     -  handles callbacks
-     * @param  {Any}       constraint  -  callback constraint
-     * @extends miruken.callback.CallbackHandler
+     * @method
+     * @static
+     * @param   {Function}  handler     -  handles callbacks
+     * @param   {Any}       constraint  -  callback constraint
+     * @returns {miruken.callback.CallbackHandler} callback handler.
+     * @for miruken.callback.CallbackHandler
      */
-    var AcceptingCallbackHandler = CallbackHandler.extend({
-        constructor: function (handler, constraint) {
-            $handle(this, constraint, handler);
-        }
-    });
-
-    if (Function.prototype.accepting === undefined)
-        Function.prototype.accepting = function (constraint) {
-            return new AcceptingCallbackHandler(this, constraint);
-        };
-
     CallbackHandler.accepting = function (handler, constraint) {
-        return new AcceptingCallbackHandler(handler, constraint);
+        var accepting = new CallbackHandler;
+        $handle(accepting, constraint, handler);
+        return accepting;
     };
 
     /**
      * Shortcut for providing a callback.
-     * @class ProvidingCallbackHandler
-     * @constructor
+     * @method
+     * @static
      * @param  {Function}  provider    -  provides callbacks
      * @param  {Any}       constraint  -  callback constraint
-     * @extends miruken.callback.CallbackHandler
+     * @returns {miruken.callback.CallbackHandler} callback provider.
+     * @for miruken.callback.CallbackHandler
      */
-    var ProvidingCallbackHandler = CallbackHandler.extend({
-        constructor: function (provider, constraint) {
-            $provide(this, constraint, provider);
-        }
-    });
-
-    if (Function.prototype.providing === undefined)
-        Function.prototype.providing = function (constraint) {
-            return new ProvidingCallbackHandler(this, constraint);
-        };
-
     CallbackHandler.providing = function (provider, constraint) {
-        return new ProvidingCallbackHandler(provider, constraint);
+        var providing = new CallbackHandler;
+        $provide(providing, constraint, provider);
+        return providing;
     };
 
     /**
-     * Shortcut for exposing a method as a
-     * {{#crossLink "miruken.callback.CallbackHandler"}}{{/crossLink}}.
-     * @class MethodCallbackHandler
-     * @constructor
+     * Shortcut for handling a 
+     * {{#crossLink "miruken.callback.HandleMethod"}}{{/crossLink}} callback.
+     * @method
+     * @static
      * @param  {string}    methodName  -  method name
      * @param  {Function}  method      -  method function
-     * @extends miruken.callback.CallbackHandler
+     * @returns {miruken.callback.CallbackHandler} method handler.
+     * @for miruken.callback.CallbackHandler
      */
-    var MethodCallbackHandler = CallbackHandler.extend({
-        constructor: function _(methodName, method) {
-            if (!$isString(methodName) || methodName.length === 0 || !methodName.trim()) {
-                throw new TypeError("No methodName specified.");
-            } else if (!$isFunction(method)) {
-                throw new TypeError(format("Invalid method: %1 is not a function.", method));
-            }
-            var spec = _.spec || (_.spec = {});
-            spec.value = methodName;
-            /**
-             * Gets the method name.
-             * @property {string} methodName
-             * @readOnly
-             */
-            Object.defineProperty(this, 'methodName', spec);
-            spec.value = method;
-            /**
-             * Gets the method function.
-             * @property {Function} method
-             * @readOnly
-             */            
-            Object.defineProperty(this, 'method', spec);
-            delete spec.value;
-        },
-        handleCallback: function (callback, greedy, composer) {
-            if (callback instanceof HandleMethod) {
-                var target = new Object;
-                target[this.methodName] = this.method;
-                return callback.invokeOn(target);
-            }
-            return false;
-        }
-    });
-
-    if (Function.prototype.implementing === undefined)
-        Function.prototype.implementing = function (methodName) {
-            return new MethodCallbackHandler(methodName, this);
-        };
-
     CallbackHandler.implementing = function (methodName, method) {
-        return new MethodCallbackHandler(methodName, method);
+        if (!$isString(methodName) || methodName.length === 0 || !methodName.trim()) {
+            throw new TypeError("No methodName specified.");
+        } else if (!$isFunction(method)) {
+            throw new TypeError(format("Invalid method: %1 is not a function.", method));
+        }
+        return (new CallbackHandler).extend({
+            handleCallback: function (callback, greedy, composer) {
+                if (callback instanceof HandleMethod) {
+                    var target = new Object;
+                    target[methodName] = method;
+                    return callback.invokeOn(target);
+                }
+                return false;
+            }
+        });
     };
 
     /**
@@ -2735,42 +2519,6 @@ new function () { // closure
     });
 
     /**
-     * Handles invocation semantics.
-     * @class InvocationOptionsHandler
-     * @constructor
-     * @param   {miruken.callback.CallbackHandler}      handler  -  forwarding handler
-     * @param   {miruken.callback.InvocationSemantics}  options  -  invocation semantics
-     * @extends miruken.callback.CallbackHandler
-     */
-    var InvocationOptionsHandler = CallbackHandler.extend({
-        constructor: function _(handler, options) {
-            var spec = _.spec || (_.spec = {});
-            spec.value = handler;
-            /**
-             * Gets the forwarding handler.
-             * @property {miruken.callback.CallbackHandler} handler
-             * @readOnly
-             */                        
-            Object.defineProperty(this, 'handler', spec);
-            spec.value = new InvocationSemantics(options);
-            /**
-             * Gets the invocation semantics.
-             * @property {miruken.callback.InvocationSemantics} semantics
-             * @readOnly
-             */                                    
-            Object.defineProperty(this, 'semantics', spec);
-            delete spec.value;
-        },
-        handleCallback: function (callback, greedy, composer) {
-            if (callback instanceof InvocationSemantics) {
-                this.semantics.mergeInto(callback);
-                return true;
-            }
-            return this.handler.handleCallback(callback, greedy, composer);
-        }
-    });
-
-    /**
      * Delegates properties and methods to a callback handler using 
      * {{#crossLink "miruken.callback.HandleMethod"}}{{/crossLink}}.
      * @class InvocationDelegate
@@ -2820,21 +2568,21 @@ new function () { // closure
         /**
          * Establishes strict invocation semantics.
          * @method $strict
-         * @returns {miruken.callback.InvocationOptionsHandler} strict semantics.
+         * @returns {miruken.callback.CallbackHandler} strict semantics.
          * @for miruken.callback.CallbackHandler
          */
         $strict: function () { return this.$callOptions(InvocationOptions.Strict); },
         /**
          * Establishes broadcast invocation semantics.
          * @method $broadcast
-         * @returns {miruken.callback.InvocationOptionsHandler} broadcast semanics.
+         * @returns {miruken.callback.CallbackHandler} broadcast semanics.
          * @for miruken.callback.CallbackHandler
          */        
         $broadcast: function () { return this.$callOptions(InvocationOptions.Broadcast); },
         /**
          * Establishes best-effort invocation semantics.
          * @method $bestEffort
-         * @returns {miruken.callback.InvocationOptionsHandler} best-effort semanics.
+         * @returns {miruken.callback.CallbackHandler} best-effort semanics.
          * @for miruken.callback.CallbackHandler
          */                
         $bestEffort: function () { return this.$callOptions(InvocationOptions.BestEffort); },
@@ -2849,10 +2597,21 @@ new function () { // closure
          * Establishes custom invocation semantics.
          * @method $callOptions
          * @param  {miruken.callback.InvocationOptions}  options  -  invocation semantics
-         * @returns {miruken.callback.InvocationOptionsHandler} custom semanics.
+         * @returns {miruken.callback.CallbackHandler} custom invocation semanics.
          * @for miruken.callback.CallbackHandler
          */                        
-        $callOptions: function (options) { return new InvocationOptionsHandler(this, options); }
+        $callOptions: function (options) {
+            var semantics = new InvocationSemantics(options);
+            return this.decorate({
+                handleCallback: function (callback, greedy, composer) {
+                    if (callback instanceof InvocationSemantics) {
+                        semantics.mergeInto(callback);
+                        return true;
+                    }
+                    return this.base(callback, greedy, composer);
+                }
+            });
+        }
     });
 
     CallbackHandler.implement({
@@ -2957,45 +2716,96 @@ new function () { // closure
             return [];
         },
         /**
-         * Creates a handler for the filtering callbacks.
+         * Decorates the handler.
+         * @method decorate
+         * @param   {Object}  decorations  -  decorations
+         * @returns {miruken.callback.CallbackHandler} decorated callback handler.
+         * @for miruken.callback.CallbackHandler
+         */        
+        decorate: function (decorations) {
+            return $decorate(this, decorations);
+        },
+        /**
+         * Decorates the handler for filtering callbacks.
          * @method filter
-         * @param   {Function}  filter  -  filter
-         * @returns {miruken.callback.CallbackHandlerFilter}  filtered callback handler.
+         * @param   {Function}  filter     -  filter
+         * @param   {boolean}   reentrant  -  true if reentrant, false otherwise
+         * @returns {miruken.callback.CallbackHandler} filtered callback handler.
          * @for miruken.callback.CallbackHandler
          */                                                        
-        filter: function (filter) {
-            return $isNothing(filter) ? this : new CallbackHandlerFilter(this, filter);
+        filter: function (filter, reentrant) {
+            if (!$isFunction(filter)) {
+                throw new TypeError(format("Invalid filter: %1 is not a function.", filter));
+            }
+            return this.decorate({
+                handleCallback: function (callback, greedy, composer) {
+                    if (!reentrant && (callback instanceof Composition)) {
+                        return this.base(callback, greedy, composer);
+                    }
+                    return filter(callback, composer, function () {
+                        return this.base(callback, greedy, composer);
+                    }.bind(this));
+                }
+            });
         },
         /**
-         * Creates a handler for applying aspects to callbacks.
+         * Decorates the handler for applying aspects to callbacks.
          * @method aspect
-         * @param   {Function}  before  -  before predicate
-         * @param   {Function}  action  -  after action
-         * @returns {miruken.callback.CallbackHandlerAspect}  aspected callback handler.
+         * @param   {Function}  before     -  before predicate
+         * @param   {Function}  action     -  after action
+         * @param   {boolean}   reentrant  -  true if reentrant, false otherwise
+         * @returns {miruken.callback.CallbackHandler}  callback handler aspect.
          * @for miruken.callback.CallbackHandler
          */                                                                
-        aspect: function (before, after) {
-            return new CallbackHandlerAspect(this, before, after);
+        aspect: function (before, after, reentrant) {
+            return this.filter(function (callback, composer, proceed) {
+                if ($isFunction(before)) {
+                    var test     = before(callback, composer),
+                        isMethod = callback instanceof HandleMethod;
+                    if ($isPromise(test)) {
+                        var accept = test.then(function (accepted) {
+                            if (accepted !== false) {
+                                _aspectProceed(callback, composer, proceed);
+                                return isMethod ? callback.getReturnValue() : true;
+                            }
+                            return Promise.reject(new RejectedError);
+                        });
+                        if (isMethod) {
+                            callback.setReturnValue(accept);
+                        } else if (callback instanceof Deferred) {
+                            callback.track(accept);
+                        }
+                        return true;
+                    } else if (test === false) {
+                        return true;
+                    }
+                }
+                return _aspectProceed(callback, composer, proceed, after);
+            });
         },
         /**
-         * Creates a handler for conditionally handling callbacks.
+         * Decorates the handler to conditionally handle callbacks.
          * @method when
          * @param   {Any}  constraint  -  matching constraint
          * @returns {miruken.callback.ConditionalCallbackHandler}  conditional callback handler.
          * @for miruken.callback.CallbackHandler
          */                                                                        
         when: function (constraint) {
-            var when      = new _Node(constraint),
+            var when = new _Node(constraint),
                 condition = function (callback) {
-                if (callback instanceof Deferred) {
-                    return when.match($classOf(callback.getCallback()), Variance.Contravariant);
-                } else if (callback instanceof Resolution) {
-                    return when.match(callback.getKey(), Variance.Covariant);
-                } else {
-                    return when.match($classOf(callback), Variance.Contravariant);
+                    if (callback instanceof Deferred) {
+                        return when.match($classOf(callback.getCallback()), Variance.Contravariant);
+                    } else if (callback instanceof Resolution) {
+                        return when.match(callback.getKey(), Variance.Covariant);
+                    } else {
+                        return when.match($classOf(callback), Variance.Contravariant);
+                    }
+                };
+            return this.decorate({
+                handleCallback: function (callback, greedy, composer) {
+                    return condition(callback) && this.base(callback, greedy, composer);
                 }
-            };
-            return new ConditionalCallbackHandler(this, condition);
+            });
         },
         /**
          * Builds a handler chain.
@@ -3012,6 +2822,29 @@ new function () { // closure
             }
         }
     });
+
+    function _aspectProceed(callback, composer, proceed, after) {
+        var promise;
+        try {
+            var handled = proceed();
+            if (handled && (promise = getEffectivePromise(callback))) {
+                // Use 'fulfilled' or 'rejected' handlers instead of 'finally' to ensure
+                // aspect boundary is consistent with synchronous invocations and avoid
+                // reentrancy issues.
+                if ($isFunction(after))
+                    promise.then(function (result) {
+                        after(callback, composer);
+                    }, function (error) {
+                        after(callback, composer);
+                    });
+            }
+            return handled;
+        } finally {
+            if (!promise && $isFunction(after)) {
+                after(callback, composer);
+            }
+        }
+    }
 
     /**
      * Defines a new handler grouping.  This is the main extensibility point for handling callbacks.
@@ -3435,13 +3268,19 @@ new function () { // closure
         constructor: function (parent) {
             this.base();
 
-            var _state              = ContextState.Active,
+            var _id                 = assignID(this),
+                _state              = ContextState.Active,
                 _parent             = parent,
                 _children           = new Array2,
                 _baseHandleCallback = this.handleCallback,
                 _observers;
 
             this.extend({
+                /**
+                 * Gets the unique id of this context.
+                 * @property {string} id
+                 */
+                getId: function () { return _id },
                 /**
                  * Gets the context state.
                  * @property {miruken.context.ContextState} state
@@ -3476,9 +3315,9 @@ new function () { // closure
                  * @property {miruken.context.Context} root
                  */                                
                 getRoot: function () {
-                    var root = this;    
-                    while (root && root.getParent()) {
-                        root = root.getParent();
+                    var root = this, parent;    
+                    while (root && (parent = root.getParent())) {
+                        root = parent;
                     }
                     return root;
                 },
@@ -3486,13 +3325,14 @@ new function () { // closure
                     _ensureActive();
                     var childContext = new ($classOf(this))(this).extend({
                         end: function () {
-                            if (_observers) {
-                                _observers.invoke('childContextEnding', childContext);
+                            var observers = _observers ? _observers.copy() : null;
+                            if (observers) {
+                                observers.invoke('childContextEnding', childContext);
                             }
                             _children.remove(childContext);
                             this.base();
-                            if (_observers) {
-                                _observers.invoke('childContextEnded', childContext);
+                            if (observers) {
+                                observers.invoke('childContextEnded', childContext);
                             }
                         }
                     });
@@ -3597,14 +3437,15 @@ new function () { // closure
                  */                                                                
                 end: function () { 
                     if (_state == ContextState.Active) {
+                        var observers = _observers ? _observers.copy() : null;
                         _state = ContextState.Ending;
-                        if (_observers) {
-                            _observers.invoke('contextEnding', this);
+                        if (observers) {
+                            observers.invoke('contextEnding', this);
                         }
                         this.unwind();
                         _state = ContextState.Ended;
-                        if (_observers) {
-                            _observers.invoke('contextEnded', this);
+                        if (observers) {
+                            observers.invoke('contextEnded', this);
                         }
                         _observers = null;
                     }
@@ -3811,16 +3652,22 @@ new function () { // closure
      * Context traversal
      */
     var axisControl = {
+        /**
+         * Changes the default traversal axis.
+         * @method axis
+         * @param   {miruken.graph.TraversingAxis}  axis  -  axis
+         * @returns {miruken.context.Context} callback handler axis.
+         * @for miruken.context.Context
+         */
         axis: function (axis) {
-            var context = this;
-            return pcopy(this).extend({
+            return this.decorate({
                 handle: function (callback, greedy, composer) {
                     return (callback instanceof Composition)
                          ? base.handle(callback, greedy, composer)
                          : this.handleAxis(axis, callback, greedy, composer);
                 },
                 equals: function (other) {
-                    return (this === other) || (other === context);
+                    return (this === other) || (other === this.decoratee);
                 }
             });
         }},
@@ -3834,7 +3681,7 @@ new function () { // closure
     }
 
     /**
-     * Sets the default callback handler axis to
+     * Sets the default traversal axis to
      * {{#crossLink "miruken.graph.TraversingAxis/Self:property"}}{{/crossLink}}.
      * @method $self
      * @returns {miruken.context.Context} default traversal axis.
@@ -3842,7 +3689,7 @@ new function () { // closure
      */
 
     /**
-     * Sets the default callback handler axis to
+     * Sets the default traversal axis to
      * {{#crossLink "miruken.graph.TraversingAxis/Root:property"}}{{/crossLink}}.
      * @method $root
      * @returns {miruken.context.Context} default traversal axis.
@@ -3850,7 +3697,7 @@ new function () { // closure
      */
 
     /**
-     * Sets the default callback handler axis to
+     * Sets the default traversal axis to
      * {{#crossLink "miruken.graph.TraversingAxis/Child:property"}}{{/crossLink}}.
      * @method $child
      * @returns {miruken.context.Context} default traversal axis.
@@ -3858,7 +3705,7 @@ new function () { // closure
      */
 
     /**
-     * Sets the default callback handler axis to
+     * Sets the default traversal axis to
      * {{#crossLink "miruken.graph.TraversingAxis/Sibling:property"}}{{/crossLink}}.
      * @method $sibling
      * @returns {miruken.context.Context} default traversal axis.
@@ -3866,7 +3713,7 @@ new function () { // closure
      */
 
     /**
-     * Sets the default callback handler axis to
+     * Sets the default traversal axis to
      * {{#crossLink "miruken.graph.TraversingAxis/Ancestor:property"}}{{/crossLink}}.
      * @method $ancestor
      * @returns {miruken.context.Context} default traversal axis.
@@ -3874,7 +3721,7 @@ new function () { // closure
      */
 
     /**
-     * Sets the default callback handler axis to
+     * Sets the default traversal axis to
      * {{#crossLink "miruken.graph.TraversingAxis/Descendant:property"}}{{/crossLink}}.
      * @method $descendant
      * @returns {miruken.context.Context} default traversal axis.
@@ -3882,7 +3729,7 @@ new function () { // closure
      */
 
     /**
-     * Sets the default callback handler axis to
+     * Sets the default traversal axis to
      * {{#crossLink "miruken.graph.TraversingAxis/DescendantReverse:property"}}{{/crossLink}}.
      * @method $descendantReverse
      * @returns {miruken.context.Context} default traversal axis.
@@ -3890,7 +3737,7 @@ new function () { // closure
      */        
 
     /**
-     * Sets the default callback handler axis to
+     * Sets the default traversal axis to
      * {{#crossLink "miruken.graph.TraversingAxis/ChildOrSelf:property"}}{{/crossLink}}.
      * @method $childOrSelf
      * @returns {miruken.context.Context} default traversal axis.
@@ -3898,7 +3745,7 @@ new function () { // closure
      */
 
     /**
-     * Sets the default callback handler axis to
+     * Sets the default traversal axis to
      * {{#crossLink "miruken.graph.TraversingAxis/SiblingOrSelf:property"}}{{/crossLink}}.
      * @method $siblingOrSelf
      * @returns {miruken.context.Context} default traversal axis.
@@ -3906,7 +3753,7 @@ new function () { // closure
      */
 
     /**
-     * Sets the default callback handler axis to
+     * Sets the default traversal axis to
      * {{#crossLink "miruken.graph.TraversingAxis/AncestorOrSelf:property"}}{{/crossLink}}.
      * @method $ancestorOrSelf
      * @returns {miruken.context.Context} default traversal axis.
@@ -3914,7 +3761,7 @@ new function () { // closure
      */        
 
     /**
-     * Sets the default callback handler axis to
+     * Sets the default traversal axis to
      * {{#crossLink "miruken.graph.TraversingAxis/DescendantOrSelf:property"}}{{/crossLink}}.
      * @method $descendantOrSelf
      * @returns {miruken.context.Context} default traversal axis.
@@ -3922,7 +3769,7 @@ new function () { // closure
      */
 
     /**
-     * Sets the default callback handler axis to
+     * Sets the default traversal axis to
      * {{#crossLink "miruken.graph.TraversingAxis/DescendantOrSelfReverse:property"}}{{/crossLink}}.
      * @method $descendantOrSelfReverse
      * @returns {miruken.context.Context} default traversal axis.
@@ -3930,7 +3777,7 @@ new function () { // closure
      */
 
     /**
-     * Sets the default callback handler axis to
+     * Sets the default traversal axis to
      * {{#crossLink "miruken.graph.TraversingAxis/AncestorSiblingOrSelf:property"}}{{/crossLink}}.
      * @method $ancestorSiblingOrSelf
      * @returns {miruken.context.Context} default traversal axis.
@@ -4083,7 +3930,7 @@ new function() { // closure
          * @for miruken.callback.CallbackHandler
          */        
         $recover: function (context) {
-            return new CallbackHandlerFilter(this, function(callback, composer, proceed) {
+            return this.filter(function(callback, composer, proceed) {
                 try {
                     var promise,
                     handled = proceed();
@@ -5568,7 +5415,7 @@ new function () { // closure
                 resolve: function (factory, composer) {
                     var context = composer.resolve(Context);
                     if (context) {
-                        var id       = assignID(context),
+                        var id       = context.id,
                             instance = _cache[id];
                         if (!instance) {
                             var object = factory();
@@ -5946,35 +5793,57 @@ new function () { // closure
      * @extends Error
      */
     function DependencyResolutionError(dependency, message) {
-        this.message    = message;
+        /**
+         * Gets the error message.
+         * @property {string} message
+         */
+        this.message = message;
+        /**
+         * Gets the failing dependency resolution.
+         * @property {miruken.ioc.DependencyResolution} dependency
+         */
         this.dependency = dependency;
-        this.stack      = (new Error).stack;
+        if (Error.captureStackTrace) {
+            Error.captureStackTrace(this, this.constructor);
+        } else {
+            Error.call(this);
+        }
     }
-    /**
-     * Failing dependency resolution.
-     * @property {miruken.ioc.DependencyResolution} dependency
-     */
     DependencyResolutionError.prototype             = new Error;
     DependencyResolutionError.prototype.constructor = DependencyResolutionError;
 
     /**
      * Identifies an invalid {{#crossLink "miruken.ioc.ComponentModel"}}{{/crossLink}}.
      * @class ComponentModelError
-     * @param {miruken.ioc.ComponentModel}        componentModel  -  invalid component model
-     * @param {miruken.validate.ValidationResult} validation      -  validation failures
-     * @param {string}                            message         -  error message
+     * @constructor
+     * @param {miruken.ioc.ComponentModel}        componentModel     -  invalid component model
+     * @param {miruken.validate.ValidationResult} validationResults  -  validation results
+     * @param {string}                            message            -  error message
      * @extends Error
      */
-    function ComponentModelError(componentModel, validation, message) {
-        this.message        = message || "The component model contains one or more errors";
+    function ComponentModelError(componentModel, validationResults, message) {
+        /**
+         * Gets the error message.
+         * @property {string} message
+         */
+        this.message = message || "The component model contains one or more errors";
+        /**
+         * Gets the invalid component model.
+         * @property {miruken.ioc.ComponentModel} componentModel
+         */         
         this.componentModel = componentModel;
-        this.validation     = validation;
-        this.stack          = (new Error).stack;
+        /**
+         * Gets the failing validation results.
+         * @property {miruken.validate.ValidationResult} validationResults
+         */         
+        this.validationResults = validationResults;
+        
+        if (Error.captureStackTrace) {
+            Error.captureStackTrace(this, this.constructor);
+        } else {
+            Error.call(this);
+        }
     }
-    /**
-     * Invalid component model.
-     * @property {miruken.ioc.ComponentModel} componentModel
-     */    
     ComponentModelError.prototype             = new Error;
     ComponentModelError.prototype.constructor = ComponentModelError;
 
@@ -6222,7 +6091,7 @@ new function () { // closure
     var miruken = new base2.Package(this, {
         name:    "miruken",
         version: "1.0",
-        exports: "Enum,Variance,Protocol,StrictProtocol,Delegate,Miruken,MetaStep,MetaMacro,Disposing,DisposingMixin,Invoking,Parenting,Starting,Startup,Facet,Interceptor,InterceptorSelector,ProxyBuilder,Modifier,ArrayManager,IndexedList,$isProtocol,$isClass,$classOf,$ancestorOf,$isString,$isFunction,$isObject,$isPromise,$isNothing,$isSomething,$using,$lift,$equals,$debounce,$eq,$use,$copy,$lazy,$eval,$every,$child,$optional,$promise,$instant,$createModifier,$properties,$inferProperties,$inheritStatic"
+        exports: "Enum,Variance,Protocol,StrictProtocol,Delegate,Miruken,MetaStep,MetaMacro,Disposing,DisposingMixin,Invoking,Parenting,Starting,Startup,Facet,Interceptor,InterceptorSelector,ProxyBuilder,Modifier,ArrayManager,IndexedList,$isProtocol,$isClass,$classOf,$ancestorOf,$isString,$isFunction,$isObject,$isPromise,$isNothing,$isSomething,$using,$lift,$equals,$decorator,$decorate,$decorated,$debounce,$eq,$use,$copy,$lazy,$eval,$every,$child,$optional,$promise,$instant,$createModifier,$properties,$inferProperties,$inheritStatic"
     });
 
     eval(this.imports);
@@ -8179,6 +8048,61 @@ new function () { // closure
     }
 
     /**
+     * Creates a decorator builder.<br/>
+     * See [Decorator Pattern](http://en.wikipedia.org/wiki/Decorator_pattern)
+     * @method
+     * @param   {Object}   decorations  -  object defining decorations
+     * @erturns {Function} function to build decorators.
+     */
+    function $decorator(decorations) {
+        return function (decoratee) {
+            if ($isNothing(decoratee)) {
+                throw new TypeError("No decoratee specified.");
+            }
+            var decorator = Object.create(decoratee),
+                spec      = $decorator.spec || ($decorator.spec = {});
+            spec.value = decoratee;
+            Object.defineProperty(decorator, 'decoratee', spec);
+            if (decorations) {
+                decorator.extend(decorations);
+            }
+            delete spec.value;
+            return decorator;
+        }
+    }
+
+    /**
+     * Decorates an instance using the 
+     * [Decorator Pattern](http://en.wikipedia.org/wiki/Decorator_pattern).
+     * @method
+     * @param   {Object}   decoratee    -  decoratee
+     * @param   {Object}   decorations  -  object defining decorations
+     * @erturns {Function} function to build decorators.
+     */
+    function $decorate(decoratee, decorations) {
+        return $decorator(decorations)(decoratee);
+    }
+
+    /**
+     * Gets the decoratee used in the  
+     * [Decorator Pattern](http://en.wikipedia.org/wiki/Decorator_pattern).
+     * @method
+     * @param   {Object}   decorator  -  possible decorator
+     * @param   {boolean}  deepest    -  true if deepest decoratee, false if nearest.
+     * @erturns {Object}   decoratee if present, otherwise decorator.
+     */
+    function $decorated(decorator, deepest) {
+        var decoratee;
+        while (decorator && (decoratee = decorator.decoratee)) {
+            if (!deepest) {
+                return decoratee;
+            }
+            decorator = decoratee;
+        }
+        return decorator;
+    }
+
+    /**
      * Throttles a function over a time period.
      * @method $debounce
      * @param    {Function} func                - function to throttle
@@ -8269,7 +8193,7 @@ new function () { // closure
         version: miruken.version,
         parent:  miruken,
         imports: "miruken,miruken.callback,miruken.context,miruken.validate",
-        exports: "Model,ViewRegion,Controller,MasterDetail,MasterDetailAware"
+        exports: "Model,Controller,ViewRegion,PartialRegion,MasterDetail,MasterDetailAware"
     });
 
     eval(this.imports);
@@ -8401,18 +8325,44 @@ new function () { // closure
     });
 
     /**
-     * Protocol representing a region on the screen where a controller can be rendered.
+     * Protocol for rendering a controller or view on the screen.
      * @class ViewRegion
      * @extends StrictProtocol
      */
     var ViewRegion = StrictProtocol.extend({
         /**
-         * Renders the controller in the view region.
-         * @method presentController
-         * @param   {miruken.mvc.Controller} controller  -  controller
-         * @returns {Promise} promise when rendering complete.
+         * Renders a controller or view in the region.
+         * @method present
+         * @param   {Object}  presentation  -  presentation options
+         * @returns {Promise} promise reflecting render.
          */                                        
-        presentController: function (controller) {}
+        present: function (presentation) {}
+    });
+
+    /**
+     * Protocol for rendering a controller in an area on the screen.
+     * @class PartialRegion
+     * @extends {miruken.mvc.ViewRegion}
+     */
+    var PartialRegion = ViewRegion.extend({
+        /**
+         * Gets the region's context.
+         * @method getContext
+         * @returns {miruken.context.Context} region context.
+         */
+        getContext: function () {},
+        /**
+         * Gets the region's controller.
+         * @method getController
+         * @return {miruken.mvc.Controller} region controller.
+         */            
+        getController: function () {},
+        /**
+         * Gets the region's controller context.
+         * @method getControllerContext
+         * @return {miruken.context.Context} region controller context.
+         */            
+        getControllerContext: function () {}
     });
     
     /**
@@ -8420,7 +8370,9 @@ new function () { // closure
      * @class Controller
      * @constructor
      * @extends miruken.callback.CallbackHandler
-     * @uses miruken.context.Contextual
+     * @uses miruken.$inferProperties
+     * @uses miruken.context.$contextual,
+     * @uses miruken.validate.$validateThat,
      * @uses miruken.validate.Validating
      */
     var Controller = CallbackHandler.extend(
@@ -9257,7 +9209,7 @@ new function () { // closure
  * 
  */
 /**
- * bluebird build version 2.9.27
+ * bluebird build version 2.9.24
  * Features enabled: core, race, call_get, generators, map, nodeify, promisify, props, reduce, settle, some, cancel, using, filter, any, each, timers
 */
 !function(e){if("object"==typeof exports&&"undefined"!=typeof module)module.exports=e();else if("function"==typeof define&&define.amd)define([],e);else{var f;"undefined"!=typeof window?f=window:"undefined"!=typeof global?f=global:"undefined"!=typeof self&&(f=self),f.Promise=e()}}(function(){var define,module,exports;return (function e(t,n,r){function s(o,u){if(!n[o]){if(!t[o]){var a=typeof _dereq_=="function"&&_dereq_;if(!u&&a)return a(o,!0);if(i)return i(o,!0);var f=new Error("Cannot find module '"+o+"'");throw f.code="MODULE_NOT_FOUND",f}var l=n[o]={exports:{}};t[o][0].call(l.exports,function(e){var n=t[o][1][e];return s(n?n:e)},l,l.exports,e,t,n,r)}return n[o].exports}var i=typeof _dereq_=="function"&&_dereq_;for(var o=0;o<r.length;o++)s(r[o]);return s})({1:[function(_dereq_,module,exports){
@@ -9345,7 +9297,6 @@ Async.prototype.throwLater = function(fn, arg) {
 
 Async.prototype._getDomain = function() {};
 
-if (!true) {
 if (util.isNode) {
     var EventsModule = _dereq_("events");
 
@@ -9361,31 +9312,30 @@ if (util.isNode) {
         var descriptor =
             Object.getOwnPropertyDescriptor(EventsModule, "usingDomains");
 
-        if (descriptor) {
-            if (!descriptor.configurable) {
-                process.on("domainsActivated", function() {
+        if (!descriptor.configurable) {
+            process.on("domainsActivated", function() {
+                Async.prototype._getDomain = domainGetter;
+            });
+        } else {
+            var usingDomains = false;
+            Object.defineProperty(EventsModule, "usingDomains", {
+                configurable: false,
+                enumerable: true,
+                get: function() {
+                    return usingDomains;
+                },
+                set: function(value) {
+                    if (usingDomains || !value) return;
+                    usingDomains = true;
                     Async.prototype._getDomain = domainGetter;
-                });
-            } else {
-                var usingDomains = false;
-                Object.defineProperty(EventsModule, "usingDomains", {
-                    configurable: false,
-                    enumerable: true,
-                    get: function() {
-                        return usingDomains;
-                    },
-                    set: function(value) {
-                        if (usingDomains || !value) return;
-                        usingDomains = true;
-                        Async.prototype._getDomain = domainGetter;
-                        util.toFastProperties(process);
-                        process.emit("domainsActivated");
-                    }
-                });
-            }
+                    util.toFastProperties(process);
+                    process.emit("domainsActivated");
+                }
+            });
         }
+
+
     }
-}
 }
 
 function AsyncInvokeLater(fn, receiver, arg) {
@@ -10516,10 +10466,6 @@ var returner = function () {
 var thrower = function () {
     throw this;
 };
-var returnUndefined = function() {};
-var throwUndefined = function() {
-    throw undefined;
-};
 
 var wrapper = function (value, action) {
     if (action === 1) {
@@ -10536,8 +10482,6 @@ var wrapper = function (value, action) {
 
 Promise.prototype["return"] =
 Promise.prototype.thenReturn = function (value) {
-    if (value === undefined) return this.then(returnUndefined);
-
     if (wrapsPrimitiveReceiver && isPrimitive(value)) {
         return this._then(
             wrapper(value, 2),
@@ -10552,8 +10496,6 @@ Promise.prototype.thenReturn = function (value) {
 
 Promise.prototype["throw"] =
 Promise.prototype.thenThrow = function (reason) {
-    if (reason === undefined) return this.then(throwUndefined);
-
     if (wrapsPrimitiveReceiver && isPrimitive(reason)) {
         return this._then(
             wrapper(reason, 1),
@@ -13092,16 +13034,23 @@ Promise.reduce = function (promises, fn, initialValue, _each) {
 },{"./async.js":2,"./util.js":38}],31:[function(_dereq_,module,exports){
 "use strict";
 var schedule;
-var util = _dereq_("./util");
 var noAsyncScheduler = function() {
     throw new Error("No async scheduler available\u000a\u000a    See http://goo.gl/m3OTXk\u000a");
 };
-if (util.isNode && typeof MutationObserver === "undefined") {
-    var GlobalSetImmediate = global.setImmediate;
-    var ProcessNextTick = process.nextTick;
-    schedule = util.isRecentNode
-                ? function(fn) { GlobalSetImmediate.call(global, fn); }
-                : function(fn) { ProcessNextTick.call(process, fn); };
+if (_dereq_("./util.js").isNode) {
+    var version = process.versions.node.split(".").map(Number);
+    schedule = (version[0] === 0 && version[1] > 10) || (version[0] > 0)
+        ? global.setImmediate : process.nextTick;
+
+    if (!schedule) {
+        if (typeof setImmediate !== "undefined") {
+            schedule = setImmediate;
+        } else if (typeof setTimeout !== "undefined") {
+            schedule = setTimeout;
+        } else {
+            schedule = noAsyncScheduler;
+        }
+    }
 } else if (typeof MutationObserver !== "undefined") {
     schedule = function(fn) {
         var div = document.createElement("div");
@@ -13123,7 +13072,7 @@ if (util.isNode && typeof MutationObserver === "undefined") {
 }
 module.exports = schedule;
 
-},{"./util":38}],32:[function(_dereq_,module,exports){
+},{"./util.js":38}],32:[function(_dereq_,module,exports){
 "use strict";
 module.exports =
     function(Promise, PromiseArray) {
@@ -14022,10 +13971,6 @@ var ret = {
     isNode: typeof process !== "undefined" &&
         classString(process).toLowerCase() === "[object process]"
 };
-ret.isRecentNode = ret.isNode && (function() {
-    var version = process.versions.node.split(".").map(Number);
-    return (version[0] === 0 && version[1] > 10) || (version[0] > 0);
-})();
 try {throw new Error(); } catch (e) {ret.lastLineError = e;}
 module.exports = ret;
 
@@ -19000,149 +18945,68 @@ Buffer.TYPED_ARRAY_SUPPORT = (function () {
  * By augmenting the instances, we can avoid modifying the `Uint8Array`
  * prototype.
  */
-function Buffer (arg) {
-  if (!(this instanceof Buffer)) {
-    // Avoid going through an ArgumentsAdaptorTrampoline in the common case.
-    if (arguments.length > 1) return new Buffer(arg, arguments[1])
-    return new Buffer(arg)
-  }
+function Buffer (subject, encoding) {
+  var self = this
+  if (!(self instanceof Buffer)) return new Buffer(subject, encoding)
 
-  this.length = 0
-  this.parent = undefined
+  var type = typeof subject
+  var length
 
-  // Common case.
-  if (typeof arg === 'number') {
-    return fromNumber(this, arg)
-  }
-
-  // Slightly less common case.
-  if (typeof arg === 'string') {
-    return fromString(this, arg, arguments.length > 1 ? arguments[1] : 'utf8')
-  }
-
-  // Unusual.
-  return fromObject(this, arg)
-}
-
-function fromNumber (that, length) {
-  that = allocate(that, length < 0 ? 0 : checked(length) | 0)
-  if (!Buffer.TYPED_ARRAY_SUPPORT) {
-    for (var i = 0; i < length; i++) {
-      that[i] = 0
-    }
-  }
-  return that
-}
-
-function fromString (that, string, encoding) {
-  if (typeof encoding !== 'string' || encoding === '') encoding = 'utf8'
-
-  // Assumption: byteLength() return value is always < kMaxLength.
-  var length = byteLength(string, encoding) | 0
-  that = allocate(that, length)
-
-  that.write(string, encoding)
-  return that
-}
-
-function fromObject (that, object) {
-  if (Buffer.isBuffer(object)) return fromBuffer(that, object)
-
-  if (isArray(object)) return fromArray(that, object)
-
-  if (object == null) {
+  if (type === 'number') {
+    length = +subject
+  } else if (type === 'string') {
+    length = Buffer.byteLength(subject, encoding)
+  } else if (type === 'object' && subject !== null) {
+    // assume object is array-like
+    if (subject.type === 'Buffer' && isArray(subject.data)) subject = subject.data
+    length = +subject.length
+  } else {
     throw new TypeError('must start with number, buffer, array or string')
   }
 
-  if (typeof ArrayBuffer !== 'undefined' && object.buffer instanceof ArrayBuffer) {
-    return fromTypedArray(that, object)
+  if (length > kMaxLength) {
+    throw new RangeError('Attempt to allocate Buffer larger than maximum size: 0x' +
+      kMaxLength.toString(16) + ' bytes')
   }
 
-  if (object.length) return fromArrayLike(that, object)
+  if (length < 0) length = 0
+  else length >>>= 0 // coerce to uint32
 
-  return fromJsonObject(that, object)
-}
-
-function fromBuffer (that, buffer) {
-  var length = checked(buffer.length) | 0
-  that = allocate(that, length)
-  buffer.copy(that, 0, 0, length)
-  return that
-}
-
-function fromArray (that, array) {
-  var length = checked(array.length) | 0
-  that = allocate(that, length)
-  for (var i = 0; i < length; i += 1) {
-    that[i] = array[i] & 255
-  }
-  return that
-}
-
-// Duplicate of fromArray() to keep fromArray() monomorphic.
-function fromTypedArray (that, array) {
-  var length = checked(array.length) | 0
-  that = allocate(that, length)
-  // Truncating the elements is probably not what people expect from typed
-  // arrays with BYTES_PER_ELEMENT > 1 but it's compatible with the behavior
-  // of the old Buffer constructor.
-  for (var i = 0; i < length; i += 1) {
-    that[i] = array[i] & 255
-  }
-  return that
-}
-
-function fromArrayLike (that, array) {
-  var length = checked(array.length) | 0
-  that = allocate(that, length)
-  for (var i = 0; i < length; i += 1) {
-    that[i] = array[i] & 255
-  }
-  return that
-}
-
-// Deserialize { type: 'Buffer', data: [1,2,3,...] } into a Buffer object.
-// Returns a zero-length buffer for inputs that don't conform to the spec.
-function fromJsonObject (that, object) {
-  var array
-  var length = 0
-
-  if (object.type === 'Buffer' && isArray(object.data)) {
-    array = object.data
-    length = checked(array.length) | 0
-  }
-  that = allocate(that, length)
-
-  for (var i = 0; i < length; i += 1) {
-    that[i] = array[i] & 255
-  }
-  return that
-}
-
-function allocate (that, length) {
   if (Buffer.TYPED_ARRAY_SUPPORT) {
-    // Return an augmented `Uint8Array` instance, for best performance
-    that = Buffer._augment(new Uint8Array(length))
+    // Preferred: Return an augmented `Uint8Array` instance for best performance
+    self = Buffer._augment(new Uint8Array(length)) // eslint-disable-line consistent-this
   } else {
-    // Fallback: Return an object instance of the Buffer class
-    that.length = length
-    that._isBuffer = true
+    // Fallback: Return THIS instance of Buffer (created by `new`)
+    self.length = length
+    self._isBuffer = true
   }
 
-  var fromPool = length !== 0 && length <= Buffer.poolSize >>> 1
-  if (fromPool) that.parent = rootParent
-
-  return that
-}
-
-function checked (length) {
-  // Note: cannot use `length < kMaxLength` here because that fails when
-  // length is NaN (which is otherwise coerced to zero.)
-  if (length >= kMaxLength) {
-    throw new RangeError('Attempt to allocate Buffer larger than maximum ' +
-                         'size: 0x' + kMaxLength.toString(16) + ' bytes')
+  var i
+  if (Buffer.TYPED_ARRAY_SUPPORT && typeof subject.byteLength === 'number') {
+    // Speed optimization -- use set if we're copying from a typed array
+    self._set(subject)
+  } else if (isArrayish(subject)) {
+    // Treat array-ish objects as a byte array
+    if (Buffer.isBuffer(subject)) {
+      for (i = 0; i < length; i++) {
+        self[i] = subject.readUInt8(i)
+      }
+    } else {
+      for (i = 0; i < length; i++) {
+        self[i] = ((subject[i] % 256) + 256) % 256
+      }
+    }
+  } else if (type === 'string') {
+    self.write(subject, 0, encoding)
+  } else if (type === 'number' && !Buffer.TYPED_ARRAY_SUPPORT) {
+    for (i = 0; i < length; i++) {
+      self[i] = 0
+    }
   }
-  return length | 0
+
+  if (length > 0 && length <= Buffer.poolSize) self.parent = rootParent
+
+  return self
 }
 
 function SlowBuffer (subject, encoding) {
@@ -19166,20 +19030,11 @@ Buffer.compare = function compare (a, b) {
 
   var x = a.length
   var y = b.length
-
-  var i = 0
-  var len = Math.min(x, y)
-  while (i < len) {
-    if (a[i] !== b[i]) break
-
-    ++i
-  }
-
+  for (var i = 0, len = Math.min(x, y); i < len && a[i] === b[i]; i++) {}
   if (i !== len) {
     x = a[i]
     y = b[i]
   }
-
   if (x < y) return -1
   if (y < x) return 1
   return 0
@@ -19204,7 +19059,7 @@ Buffer.isEncoding = function isEncoding (encoding) {
   }
 }
 
-Buffer.concat = function concat (list, length) {
+Buffer.concat = function concat (list, totalLength) {
   if (!isArray(list)) throw new TypeError('list argument must be an Array of Buffers.')
 
   if (list.length === 0) {
@@ -19214,14 +19069,14 @@ Buffer.concat = function concat (list, length) {
   }
 
   var i
-  if (length === undefined) {
-    length = 0
+  if (totalLength === undefined) {
+    totalLength = 0
     for (i = 0; i < list.length; i++) {
-      length += list[i].length
+      totalLength += list[i].length
     }
   }
 
-  var buf = new Buffer(length)
+  var buf = new Buffer(totalLength)
   var pos = 0
   for (i = 0; i < list.length; i++) {
     var item = list[i]
@@ -19231,33 +19086,36 @@ Buffer.concat = function concat (list, length) {
   return buf
 }
 
-function byteLength (string, encoding) {
-  if (typeof string !== 'string') string = String(string)
-
-  if (string.length === 0) return 0
-
+Buffer.byteLength = function byteLength (str, encoding) {
+  var ret
+  str = str + ''
   switch (encoding || 'utf8') {
     case 'ascii':
     case 'binary':
     case 'raw':
-      return string.length
+      ret = str.length
+      break
     case 'ucs2':
     case 'ucs-2':
     case 'utf16le':
     case 'utf-16le':
-      return string.length * 2
+      ret = str.length * 2
+      break
     case 'hex':
-      return string.length >>> 1
+      ret = str.length >>> 1
+      break
     case 'utf8':
     case 'utf-8':
-      return utf8ToBytes(string).length
+      ret = utf8ToBytes(str).length
+      break
     case 'base64':
-      return base64ToBytes(string).length
+      ret = base64ToBytes(str).length
+      break
     default:
-      return string.length
+      ret = str.length
   }
+  return ret
 }
-Buffer.byteLength = byteLength
 
 // pre-set for values that may exist in the future
 Buffer.prototype.length = undefined
@@ -19267,8 +19125,8 @@ Buffer.prototype.parent = undefined
 Buffer.prototype.toString = function toString (encoding, start, end) {
   var loweredCase = false
 
-  start = start | 0
-  end = end === undefined || end === Infinity ? this.length : end | 0
+  start = start >>> 0
+  end = end === undefined || end === Infinity ? this.length : end >>> 0
 
   if (!encoding) encoding = 'utf8'
   if (start < 0) start = 0
@@ -19410,11 +19268,13 @@ function hexWrite (buf, string, offset, length) {
 }
 
 function utf8Write (buf, string, offset, length) {
-  return blitBuffer(utf8ToBytes(string, buf.length - offset), buf, offset, length)
+  var charsWritten = blitBuffer(utf8ToBytes(string, buf.length - offset), buf, offset, length)
+  return charsWritten
 }
 
 function asciiWrite (buf, string, offset, length) {
-  return blitBuffer(asciiToBytes(string), buf, offset, length)
+  var charsWritten = blitBuffer(asciiToBytes(string), buf, offset, length)
+  return charsWritten
 }
 
 function binaryWrite (buf, string, offset, length) {
@@ -19422,83 +19282,75 @@ function binaryWrite (buf, string, offset, length) {
 }
 
 function base64Write (buf, string, offset, length) {
-  return blitBuffer(base64ToBytes(string), buf, offset, length)
+  var charsWritten = blitBuffer(base64ToBytes(string), buf, offset, length)
+  return charsWritten
 }
 
-function ucs2Write (buf, string, offset, length) {
-  return blitBuffer(utf16leToBytes(string, buf.length - offset), buf, offset, length)
+function utf16leWrite (buf, string, offset, length) {
+  var charsWritten = blitBuffer(utf16leToBytes(string, buf.length - offset), buf, offset, length)
+  return charsWritten
 }
 
 Buffer.prototype.write = function write (string, offset, length, encoding) {
-  // Buffer#write(string)
-  if (offset === undefined) {
-    encoding = 'utf8'
-    length = this.length
-    offset = 0
-  // Buffer#write(string, encoding)
-  } else if (length === undefined && typeof offset === 'string') {
-    encoding = offset
-    length = this.length
-    offset = 0
-  // Buffer#write(string, offset[, length][, encoding])
-  } else if (isFinite(offset)) {
-    offset = offset | 0
-    if (isFinite(length)) {
-      length = length | 0
-      if (encoding === undefined) encoding = 'utf8'
-    } else {
+  // Support both (string, offset, length, encoding)
+  // and the legacy (string, encoding, offset, length)
+  if (isFinite(offset)) {
+    if (!isFinite(length)) {
       encoding = length
       length = undefined
     }
-  // legacy write(string, encoding, offset, length) - remove in v0.13
-  } else {
+  } else {  // legacy
     var swap = encoding
     encoding = offset
-    offset = length | 0
+    offset = length
     length = swap
   }
 
-  var remaining = this.length - offset
-  if (length === undefined || length > remaining) length = remaining
+  offset = Number(offset) || 0
 
-  if ((string.length > 0 && (length < 0 || offset < 0)) || offset > this.length) {
+  if (length < 0 || offset < 0 || offset > this.length) {
     throw new RangeError('attempt to write outside buffer bounds')
   }
 
-  if (!encoding) encoding = 'utf8'
-
-  var loweredCase = false
-  for (;;) {
-    switch (encoding) {
-      case 'hex':
-        return hexWrite(this, string, offset, length)
-
-      case 'utf8':
-      case 'utf-8':
-        return utf8Write(this, string, offset, length)
-
-      case 'ascii':
-        return asciiWrite(this, string, offset, length)
-
-      case 'binary':
-        return binaryWrite(this, string, offset, length)
-
-      case 'base64':
-        // Warning: maxLength not taken into account in base64Write
-        return base64Write(this, string, offset, length)
-
-      case 'ucs2':
-      case 'ucs-2':
-      case 'utf16le':
-      case 'utf-16le':
-        return ucs2Write(this, string, offset, length)
-
-      default:
-        if (loweredCase) throw new TypeError('Unknown encoding: ' + encoding)
-        encoding = ('' + encoding).toLowerCase()
-        loweredCase = true
+  var remaining = this.length - offset
+  if (!length) {
+    length = remaining
+  } else {
+    length = Number(length)
+    if (length > remaining) {
+      length = remaining
     }
   }
+  encoding = String(encoding || 'utf8').toLowerCase()
+
+  var ret
+  switch (encoding) {
+    case 'hex':
+      ret = hexWrite(this, string, offset, length)
+      break
+    case 'utf8':
+    case 'utf-8':
+      ret = utf8Write(this, string, offset, length)
+      break
+    case 'ascii':
+      ret = asciiWrite(this, string, offset, length)
+      break
+    case 'binary':
+      ret = binaryWrite(this, string, offset, length)
+      break
+    case 'base64':
+      ret = base64Write(this, string, offset, length)
+      break
+    case 'ucs2':
+    case 'ucs-2':
+    case 'utf16le':
+    case 'utf-16le':
+      ret = utf16leWrite(this, string, offset, length)
+      break
+    default:
+      throw new TypeError('Unknown encoding: ' + encoding)
+  }
+  return ret
 }
 
 Buffer.prototype.toJSON = function toJSON () {
@@ -19621,8 +19473,8 @@ function checkOffset (offset, ext, length) {
 }
 
 Buffer.prototype.readUIntLE = function readUIntLE (offset, byteLength, noAssert) {
-  offset = offset | 0
-  byteLength = byteLength | 0
+  offset = offset >>> 0
+  byteLength = byteLength >>> 0
   if (!noAssert) checkOffset(offset, byteLength, this.length)
 
   var val = this[offset]
@@ -19636,8 +19488,8 @@ Buffer.prototype.readUIntLE = function readUIntLE (offset, byteLength, noAssert)
 }
 
 Buffer.prototype.readUIntBE = function readUIntBE (offset, byteLength, noAssert) {
-  offset = offset | 0
-  byteLength = byteLength | 0
+  offset = offset >>> 0
+  byteLength = byteLength >>> 0
   if (!noAssert) {
     checkOffset(offset, byteLength, this.length)
   }
@@ -19685,8 +19537,8 @@ Buffer.prototype.readUInt32BE = function readUInt32BE (offset, noAssert) {
 }
 
 Buffer.prototype.readIntLE = function readIntLE (offset, byteLength, noAssert) {
-  offset = offset | 0
-  byteLength = byteLength | 0
+  offset = offset >>> 0
+  byteLength = byteLength >>> 0
   if (!noAssert) checkOffset(offset, byteLength, this.length)
 
   var val = this[offset]
@@ -19703,8 +19555,8 @@ Buffer.prototype.readIntLE = function readIntLE (offset, byteLength, noAssert) {
 }
 
 Buffer.prototype.readIntBE = function readIntBE (offset, byteLength, noAssert) {
-  offset = offset | 0
-  byteLength = byteLength | 0
+  offset = offset >>> 0
+  byteLength = byteLength >>> 0
   if (!noAssert) checkOffset(offset, byteLength, this.length)
 
   var i = byteLength
@@ -19784,15 +19636,15 @@ function checkInt (buf, value, offset, ext, max, min) {
 
 Buffer.prototype.writeUIntLE = function writeUIntLE (value, offset, byteLength, noAssert) {
   value = +value
-  offset = offset | 0
-  byteLength = byteLength | 0
+  offset = offset >>> 0
+  byteLength = byteLength >>> 0
   if (!noAssert) checkInt(this, value, offset, byteLength, Math.pow(2, 8 * byteLength), 0)
 
   var mul = 1
   var i = 0
   this[offset] = value & 0xFF
   while (++i < byteLength && (mul *= 0x100)) {
-    this[offset + i] = (value / mul) & 0xFF
+    this[offset + i] = (value / mul) >>> 0 & 0xFF
   }
 
   return offset + byteLength
@@ -19800,15 +19652,15 @@ Buffer.prototype.writeUIntLE = function writeUIntLE (value, offset, byteLength, 
 
 Buffer.prototype.writeUIntBE = function writeUIntBE (value, offset, byteLength, noAssert) {
   value = +value
-  offset = offset | 0
-  byteLength = byteLength | 0
+  offset = offset >>> 0
+  byteLength = byteLength >>> 0
   if (!noAssert) checkInt(this, value, offset, byteLength, Math.pow(2, 8 * byteLength), 0)
 
   var i = byteLength - 1
   var mul = 1
   this[offset + i] = value & 0xFF
   while (--i >= 0 && (mul *= 0x100)) {
-    this[offset + i] = (value / mul) & 0xFF
+    this[offset + i] = (value / mul) >>> 0 & 0xFF
   }
 
   return offset + byteLength
@@ -19816,7 +19668,7 @@ Buffer.prototype.writeUIntBE = function writeUIntBE (value, offset, byteLength, 
 
 Buffer.prototype.writeUInt8 = function writeUInt8 (value, offset, noAssert) {
   value = +value
-  offset = offset | 0
+  offset = offset >>> 0
   if (!noAssert) checkInt(this, value, offset, 1, 0xff, 0)
   if (!Buffer.TYPED_ARRAY_SUPPORT) value = Math.floor(value)
   this[offset] = value
@@ -19833,7 +19685,7 @@ function objectWriteUInt16 (buf, value, offset, littleEndian) {
 
 Buffer.prototype.writeUInt16LE = function writeUInt16LE (value, offset, noAssert) {
   value = +value
-  offset = offset | 0
+  offset = offset >>> 0
   if (!noAssert) checkInt(this, value, offset, 2, 0xffff, 0)
   if (Buffer.TYPED_ARRAY_SUPPORT) {
     this[offset] = value
@@ -19846,7 +19698,7 @@ Buffer.prototype.writeUInt16LE = function writeUInt16LE (value, offset, noAssert
 
 Buffer.prototype.writeUInt16BE = function writeUInt16BE (value, offset, noAssert) {
   value = +value
-  offset = offset | 0
+  offset = offset >>> 0
   if (!noAssert) checkInt(this, value, offset, 2, 0xffff, 0)
   if (Buffer.TYPED_ARRAY_SUPPORT) {
     this[offset] = (value >>> 8)
@@ -19866,7 +19718,7 @@ function objectWriteUInt32 (buf, value, offset, littleEndian) {
 
 Buffer.prototype.writeUInt32LE = function writeUInt32LE (value, offset, noAssert) {
   value = +value
-  offset = offset | 0
+  offset = offset >>> 0
   if (!noAssert) checkInt(this, value, offset, 4, 0xffffffff, 0)
   if (Buffer.TYPED_ARRAY_SUPPORT) {
     this[offset + 3] = (value >>> 24)
@@ -19881,7 +19733,7 @@ Buffer.prototype.writeUInt32LE = function writeUInt32LE (value, offset, noAssert
 
 Buffer.prototype.writeUInt32BE = function writeUInt32BE (value, offset, noAssert) {
   value = +value
-  offset = offset | 0
+  offset = offset >>> 0
   if (!noAssert) checkInt(this, value, offset, 4, 0xffffffff, 0)
   if (Buffer.TYPED_ARRAY_SUPPORT) {
     this[offset] = (value >>> 24)
@@ -19896,11 +19748,13 @@ Buffer.prototype.writeUInt32BE = function writeUInt32BE (value, offset, noAssert
 
 Buffer.prototype.writeIntLE = function writeIntLE (value, offset, byteLength, noAssert) {
   value = +value
-  offset = offset | 0
+  offset = offset >>> 0
   if (!noAssert) {
-    var limit = Math.pow(2, 8 * byteLength - 1)
-
-    checkInt(this, value, offset, byteLength, limit - 1, -limit)
+    checkInt(
+      this, value, offset, byteLength,
+      Math.pow(2, 8 * byteLength - 1) - 1,
+      -Math.pow(2, 8 * byteLength - 1)
+    )
   }
 
   var i = 0
@@ -19916,11 +19770,13 @@ Buffer.prototype.writeIntLE = function writeIntLE (value, offset, byteLength, no
 
 Buffer.prototype.writeIntBE = function writeIntBE (value, offset, byteLength, noAssert) {
   value = +value
-  offset = offset | 0
+  offset = offset >>> 0
   if (!noAssert) {
-    var limit = Math.pow(2, 8 * byteLength - 1)
-
-    checkInt(this, value, offset, byteLength, limit - 1, -limit)
+    checkInt(
+      this, value, offset, byteLength,
+      Math.pow(2, 8 * byteLength - 1) - 1,
+      -Math.pow(2, 8 * byteLength - 1)
+    )
   }
 
   var i = byteLength - 1
@@ -19936,7 +19792,7 @@ Buffer.prototype.writeIntBE = function writeIntBE (value, offset, byteLength, no
 
 Buffer.prototype.writeInt8 = function writeInt8 (value, offset, noAssert) {
   value = +value
-  offset = offset | 0
+  offset = offset >>> 0
   if (!noAssert) checkInt(this, value, offset, 1, 0x7f, -0x80)
   if (!Buffer.TYPED_ARRAY_SUPPORT) value = Math.floor(value)
   if (value < 0) value = 0xff + value + 1
@@ -19946,7 +19802,7 @@ Buffer.prototype.writeInt8 = function writeInt8 (value, offset, noAssert) {
 
 Buffer.prototype.writeInt16LE = function writeInt16LE (value, offset, noAssert) {
   value = +value
-  offset = offset | 0
+  offset = offset >>> 0
   if (!noAssert) checkInt(this, value, offset, 2, 0x7fff, -0x8000)
   if (Buffer.TYPED_ARRAY_SUPPORT) {
     this[offset] = value
@@ -19959,7 +19815,7 @@ Buffer.prototype.writeInt16LE = function writeInt16LE (value, offset, noAssert) 
 
 Buffer.prototype.writeInt16BE = function writeInt16BE (value, offset, noAssert) {
   value = +value
-  offset = offset | 0
+  offset = offset >>> 0
   if (!noAssert) checkInt(this, value, offset, 2, 0x7fff, -0x8000)
   if (Buffer.TYPED_ARRAY_SUPPORT) {
     this[offset] = (value >>> 8)
@@ -19972,7 +19828,7 @@ Buffer.prototype.writeInt16BE = function writeInt16BE (value, offset, noAssert) 
 
 Buffer.prototype.writeInt32LE = function writeInt32LE (value, offset, noAssert) {
   value = +value
-  offset = offset | 0
+  offset = offset >>> 0
   if (!noAssert) checkInt(this, value, offset, 4, 0x7fffffff, -0x80000000)
   if (Buffer.TYPED_ARRAY_SUPPORT) {
     this[offset] = value
@@ -19987,7 +19843,7 @@ Buffer.prototype.writeInt32LE = function writeInt32LE (value, offset, noAssert) 
 
 Buffer.prototype.writeInt32BE = function writeInt32BE (value, offset, noAssert) {
   value = +value
-  offset = offset | 0
+  offset = offset >>> 0
   if (!noAssert) checkInt(this, value, offset, 4, 0x7fffffff, -0x80000000)
   if (value < 0) value = 0xffffffff + value + 1
   if (Buffer.TYPED_ARRAY_SUPPORT) {
@@ -20040,38 +19896,40 @@ Buffer.prototype.writeDoubleBE = function writeDoubleBE (value, offset, noAssert
 }
 
 // copy(targetBuffer, targetStart=0, sourceStart=0, sourceEnd=buffer.length)
-Buffer.prototype.copy = function copy (target, targetStart, start, end) {
+Buffer.prototype.copy = function copy (target, target_start, start, end) {
+  var self = this // source
+
   if (!start) start = 0
   if (!end && end !== 0) end = this.length
-  if (targetStart >= target.length) targetStart = target.length
-  if (!targetStart) targetStart = 0
+  if (target_start >= target.length) target_start = target.length
+  if (!target_start) target_start = 0
   if (end > 0 && end < start) end = start
 
   // Copy 0 bytes; we're done
   if (end === start) return 0
-  if (target.length === 0 || this.length === 0) return 0
+  if (target.length === 0 || self.length === 0) return 0
 
   // Fatal error conditions
-  if (targetStart < 0) {
+  if (target_start < 0) {
     throw new RangeError('targetStart out of bounds')
   }
-  if (start < 0 || start >= this.length) throw new RangeError('sourceStart out of bounds')
+  if (start < 0 || start >= self.length) throw new RangeError('sourceStart out of bounds')
   if (end < 0) throw new RangeError('sourceEnd out of bounds')
 
   // Are we oob?
   if (end > this.length) end = this.length
-  if (target.length - targetStart < end - start) {
-    end = target.length - targetStart + start
+  if (target.length - target_start < end - start) {
+    end = target.length - target_start + start
   }
 
   var len = end - start
 
   if (len < 1000 || !Buffer.TYPED_ARRAY_SUPPORT) {
     for (var i = 0; i < len; i++) {
-      target[i + targetStart] = this[i + start]
+      target[i + target_start] = this[i + start]
     }
   } else {
-    target._set(this.subarray(start, start + len), targetStart)
+    target._set(this.subarray(start, start + len), target_start)
   }
 
   return len
@@ -20140,7 +19998,8 @@ Buffer._augment = function _augment (arr) {
   arr.constructor = Buffer
   arr._isBuffer = true
 
-  // save reference to original Uint8Array set method before overwriting
+  // save reference to original Uint8Array get/set methods before overwriting
+  arr._get = arr.get
   arr._set = arr.set
 
   // deprecated, will be removed in node 0.13+
@@ -20216,6 +20075,12 @@ function base64clean (str) {
 function stringtrim (str) {
   if (str.trim) return str.trim()
   return str.replace(/^\s+|\s+$/g, '')
+}
+
+function isArrayish (subject) {
+  return isArray(subject) || Buffer.isBuffer(subject) ||
+      subject && typeof subject === 'object' &&
+      typeof subject.length === 'number'
 }
 
 function toHex (n) {
@@ -20476,7 +20341,7 @@ var lookup = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/';
 }(typeof exports === 'undefined' ? (this.base64js = {}) : exports))
 
 },{}],51:[function(require,module,exports){
-exports.read = function (buffer, offset, isLE, mLen, nBytes) {
+exports.read = function(buffer, offset, isLE, mLen, nBytes) {
   var e, m,
       eLen = nBytes * 8 - mLen - 1,
       eMax = (1 << eLen) - 1,
@@ -20484,32 +20349,32 @@ exports.read = function (buffer, offset, isLE, mLen, nBytes) {
       nBits = -7,
       i = isLE ? (nBytes - 1) : 0,
       d = isLE ? -1 : 1,
-      s = buffer[offset + i]
+      s = buffer[offset + i];
 
-  i += d
+  i += d;
 
-  e = s & ((1 << (-nBits)) - 1)
-  s >>= (-nBits)
-  nBits += eLen
-  for (; nBits > 0; e = e * 256 + buffer[offset + i], i += d, nBits -= 8) {}
+  e = s & ((1 << (-nBits)) - 1);
+  s >>= (-nBits);
+  nBits += eLen;
+  for (; nBits > 0; e = e * 256 + buffer[offset + i], i += d, nBits -= 8);
 
-  m = e & ((1 << (-nBits)) - 1)
-  e >>= (-nBits)
-  nBits += mLen
-  for (; nBits > 0; m = m * 256 + buffer[offset + i], i += d, nBits -= 8) {}
+  m = e & ((1 << (-nBits)) - 1);
+  e >>= (-nBits);
+  nBits += mLen;
+  for (; nBits > 0; m = m * 256 + buffer[offset + i], i += d, nBits -= 8);
 
   if (e === 0) {
-    e = 1 - eBias
+    e = 1 - eBias;
   } else if (e === eMax) {
-    return m ? NaN : ((s ? -1 : 1) * Infinity)
+    return m ? NaN : ((s ? -1 : 1) * Infinity);
   } else {
-    m = m + Math.pow(2, mLen)
-    e = e - eBias
+    m = m + Math.pow(2, mLen);
+    e = e - eBias;
   }
-  return (s ? -1 : 1) * m * Math.pow(2, e - mLen)
-}
+  return (s ? -1 : 1) * m * Math.pow(2, e - mLen);
+};
 
-exports.write = function (buffer, value, offset, isLE, mLen, nBytes) {
+exports.write = function(buffer, value, offset, isLE, mLen, nBytes) {
   var e, m, c,
       eLen = nBytes * 8 - mLen - 1,
       eMax = (1 << eLen) - 1,
@@ -20517,49 +20382,49 @@ exports.write = function (buffer, value, offset, isLE, mLen, nBytes) {
       rt = (mLen === 23 ? Math.pow(2, -24) - Math.pow(2, -77) : 0),
       i = isLE ? 0 : (nBytes - 1),
       d = isLE ? 1 : -1,
-      s = value < 0 || (value === 0 && 1 / value < 0) ? 1 : 0
+      s = value < 0 || (value === 0 && 1 / value < 0) ? 1 : 0;
 
-  value = Math.abs(value)
+  value = Math.abs(value);
 
   if (isNaN(value) || value === Infinity) {
-    m = isNaN(value) ? 1 : 0
-    e = eMax
+    m = isNaN(value) ? 1 : 0;
+    e = eMax;
   } else {
-    e = Math.floor(Math.log(value) / Math.LN2)
+    e = Math.floor(Math.log(value) / Math.LN2);
     if (value * (c = Math.pow(2, -e)) < 1) {
-      e--
-      c *= 2
+      e--;
+      c *= 2;
     }
     if (e + eBias >= 1) {
-      value += rt / c
+      value += rt / c;
     } else {
-      value += rt * Math.pow(2, 1 - eBias)
+      value += rt * Math.pow(2, 1 - eBias);
     }
     if (value * c >= 2) {
-      e++
-      c /= 2
+      e++;
+      c /= 2;
     }
 
     if (e + eBias >= eMax) {
-      m = 0
-      e = eMax
+      m = 0;
+      e = eMax;
     } else if (e + eBias >= 1) {
-      m = (value * c - 1) * Math.pow(2, mLen)
-      e = e + eBias
+      m = (value * c - 1) * Math.pow(2, mLen);
+      e = e + eBias;
     } else {
-      m = value * Math.pow(2, eBias - 1) * Math.pow(2, mLen)
-      e = 0
+      m = value * Math.pow(2, eBias - 1) * Math.pow(2, mLen);
+      e = 0;
     }
   }
 
-  for (; mLen >= 8; buffer[offset + i] = m & 0xff, i += d, m /= 256, mLen -= 8) {}
+  for (; mLen >= 8; buffer[offset + i] = m & 0xff, i += d, m /= 256, mLen -= 8);
 
-  e = (e << mLen) | m
-  eLen += mLen
-  for (; eLen > 0; buffer[offset + i] = e & 0xff, i += d, e /= 256, eLen -= 8) {}
+  e = (e << mLen) | m;
+  eLen += mLen;
+  for (; eLen > 0; buffer[offset + i] = e & 0xff, i += d, e /= 256, eLen -= 8);
 
-  buffer[offset + i - d] |= s * 128
-}
+  buffer[offset + i - d] |= s * 128;
+};
 
 },{}],52:[function(require,module,exports){
 
@@ -20602,64 +20467,32 @@ module.exports = isArray || function (val) {
 var process = module.exports = {};
 var queue = [];
 var draining = false;
-var currentQueue;
-var queueIndex = -1;
-
-function cleanUpNextTick() {
-    draining = false;
-    if (currentQueue.length) {
-        queue = currentQueue.concat(queue);
-    } else {
-        queueIndex = -1;
-    }
-    if (queue.length) {
-        drainQueue();
-    }
-}
 
 function drainQueue() {
     if (draining) {
         return;
     }
-    var timeout = setTimeout(cleanUpNextTick);
     draining = true;
-
+    var currentQueue;
     var len = queue.length;
     while(len) {
         currentQueue = queue;
         queue = [];
-        while (++queueIndex < len) {
-            currentQueue[queueIndex].run();
+        var i = -1;
+        while (++i < len) {
+            currentQueue[i]();
         }
-        queueIndex = -1;
         len = queue.length;
     }
-    currentQueue = null;
     draining = false;
-    clearTimeout(timeout);
 }
-
 process.nextTick = function (fun) {
-    var args = new Array(arguments.length - 1);
-    if (arguments.length > 1) {
-        for (var i = 1; i < arguments.length; i++) {
-            args[i - 1] = arguments[i];
-        }
-    }
-    queue.push(new Item(fun, args));
-    if (queue.length === 1 && !draining) {
+    queue.push(fun);
+    if (!draining) {
         setTimeout(drainQueue, 0);
     }
 };
 
-// v8 likes predictible objects
-function Item(fun, array) {
-    this.fun = fun;
-    this.array = array;
-}
-Item.prototype.run = function () {
-    this.fun.apply(null, this.array);
-};
 process.title = 'browser';
 process.browser = true;
 process.env = {};
@@ -20689,7 +20522,7 @@ process.chdir = function (dir) {
 process.umask = function() { return 0; };
 
 },{}],54:[function(require,module,exports){
-//     Validate.js 0.7.1
+//     Validate.js 0.7.0
 
 //     (c) 2013-2015 Nicklas Ansman, 2013 Wrapp
 //     Validate.js may be freely distributed under the MIT license.
@@ -20746,8 +20579,8 @@ process.umask = function() { return 0; };
     version: {
       major: 0,
       minor: 7,
-      patch: 1,
-      metadata: "development",
+      patch: 0,
+      metadata: null,
       toString: function() {
         var version = v.format("%{major}.%{minor}.%{patch}", v.version);
         if (!v.isEmpty(v.version.metadata)) {
@@ -20870,12 +20703,6 @@ process.umask = function() { return 0; };
     // It can be called even if no validations returned a promise.
     async: function(attributes, constraints, options) {
       options = v.extend({}, v.async.options, options);
-
-      // Removes unknown attributes
-      if (options.cleanAttributes !== false) {
-        attributes = v.cleanAttributes(attributes, constraints);
-      }
-
       var results = v.runValidations(attributes, constraints, options);
 
       return new v.Promise(function(resolve, reject) {
@@ -20971,11 +20798,6 @@ process.umask = function() { return 0; };
       return obj === Object(obj);
     },
 
-    // Simply checks if the object is an instance of a date
-    isDate: function(obj) {
-      return obj instanceof Date;
-    },
-
     // Returns false if the object is `null` of `undefined`
     isDefined: function(obj) {
       return obj !== null && obj !== undefined;
@@ -21034,11 +20856,6 @@ process.umask = function() { return 0; };
       // For arrays we use the length property
       if (v.isArray(value)) {
         return value.length === 0;
-      }
-
-      // Dates have no attributes but aren't empty
-      if (v.isDate(value)) {
-        return false;
       }
 
       // If we find at least one property we consider it non empty
@@ -21132,8 +20949,8 @@ process.umask = function() { return 0; };
       return value in obj;
     },
 
-    forEachKeyInKeypath: function(object, keypath, callback) {
-      if (!v.isString(keypath)) {
+    getDeepObjectValue: function(obj, keypath) {
+      if (!v.isObject(obj) || !v.isString(keypath)) {
         return undefined;
       }
 
@@ -21147,9 +20964,11 @@ process.umask = function() { return 0; };
             if (escape) {
               escape = false;
               key += '.';
-            } else {
-              object = callback(object, key, false);
+            } else if (key in obj) {
+              obj = obj[key];
               key = "";
+            } else {
+              return undefined;
             }
             break;
 
@@ -21169,19 +20988,11 @@ process.umask = function() { return 0; };
         }
       }
 
-      return callback(object, key, true);
-    },
-
-    getDeepObjectValue: function(obj, keypath) {
-      if (!v.isObject(obj)) {
+      if (v.isDefined(obj) && key in obj) {
+        return obj[key];
+      } else {
         return undefined;
       }
-
-      return v.forEachKeyInKeypath(obj, keypath, function(obj, key) {
-        if (v.isObject(obj)) {
-          return obj[key];
-        }
-      });
     },
 
     // This returns an object with all the values of the form.
@@ -21331,56 +21142,6 @@ process.umask = function() { return 0; };
     // ["<message 1>", "<message 2>"]
     flattenErrorsToArray: function(errors) {
       return errors.map(function(error) { return error.error; });
-    },
-
-    cleanAttributes: function(attributes, whitelist) {
-      function whitelistCreator(obj, key, last) {
-        if (v.isObject(obj[key])) {
-          return obj[key];
-        }
-        return (obj[key] = last ? true : {});
-      }
-
-      function buildObjectWhitelist(whitelist) {
-        var ow = {}
-          , lastObject
-          , attr;
-        for (attr in whitelist) {
-          if (!whitelist[attr]) {
-            continue;
-          }
-          v.forEachKeyInKeypath(ow, attr, whitelistCreator);
-        }
-        return ow;
-      }
-
-      function cleanRecursive(attributes, whitelist) {
-        if (!v.isObject(attributes)) {
-          return attributes;
-        }
-
-        var ret = v.extend({}, attributes)
-          , w
-          , attribute;
-
-        for (attribute in attributes) {
-          w = whitelist[attribute];
-
-          if (v.isObject(w)) {
-            ret[attribute] = cleanRecursive(ret[attribute], w);
-          } else if (!w) {
-            delete ret[attribute];
-          }
-        }
-        return ret;
-      }
-
-      if (!v.isObject(whitelist) || !v.isObject(attributes)) {
-        return {};
-      }
-
-      whitelist = buildObjectWhitelist(whitelist);
-      return cleanRecursive(attributes, whitelist);
     },
 
     exposeModule: function(validate, root, exports, module, define) {
@@ -22917,248 +22678,7 @@ describe("CallbackHandler", function () {
         });
     });
 
-    describe("#next", function () {
-        it("should cascade handlers using short syntax", function () {
-            var guest    = new Guest(17),
-                baccarat = new Activity('Baccarat'),
-                level1   = new Level1Security,
-                level2   = new Level2Security,
-                security = CallbackHandler(level1).next(level2);
-            expect(Security(security).admit(guest)).to.be.false;
-            Security(security).trackActivity(baccarat);
-        });
-
-        it("should compose handlers using short syntax", function () {
-            var baccarat = new Activity('Baccarat'),
-                level1   = new Level1Security,
-                level2   = new Level2Security,
-                compose  = CallbackHandler(level1).next(level2, baccarat),
-            countMoney = new CountMoney();
-            expect(compose.handle(countMoney)).to.be.true;
-        });
-    });
-
-    describe("#when", function () {
-        it("should restrict handlers using short syntax", function () {
-            var blackjack  = new CardTable("BlackJack", 1, 5),
-                cardGames  = (new (CallbackHandler.extend({
-                    $handle:[
-                        True, function (cardTable) {
-                            cardTable.closed = true;
-                        }]
-                }))).when(CardTable);
-            expect(cardGames.handle(blackjack)).to.be.true;
-            expect(blackjack.closed).to.be.true;
-            expect(cardGames.handle(new Cashier)).to.be.false;
-        });
-
-        it("should restrict handlers invariantly using short syntax", function () {
-            var Blackjack  = CardTable.extend({
-                    constructor: function () {
-                        this.base("BlackJack", 1, 5);
-                    }
-                }),
-                blackjack  = new Blackjack,
-                cardGames  = (new (CallbackHandler.extend({
-                    $handle:[
-                        True, function (cardTable) {
-                            cardTable.closed = true;
-                        }]
-                }))).when($eq(CardTable));
-            expect(cardGames.handle(blackjack)).to.be.false;
-            expect(blackjack.closed).to.be.undefined;
-            expect(cardGames.handle(new Cashier)).to.be.false;
-        });
-
-        it("should restrict providers using short syntax", function () {
-            var blackjack  = new CardTable("BlackJack", 1, 5),
-                cardGames  = (new (CallbackHandler.extend({
-                    $provide:[
-                        True, function (resolution) {
-                            return blackjack;
-                        }]
-                }))).when(CardTable);
-            expect(cardGames.resolve(CardTable)).to.equal(blackjack);
-            expect(cardGames.resolve(Cashier)).to.be.undefined;
-        });
-
-        it("should restrict providers invariantly using short syntax", function () {
-            var blackjack  = new CardTable("BlackJack", 1, 5),
-                cardGames  = (new (CallbackHandler.extend({
-                    $provide:[
-                        True, function (resolution) {
-                            return blackjack;
-                        }]
-                }))).when($eq(Activity));
-            expect(cardGames.resolve(Activity)).to.equal(blackjack);
-            expect(cardGames.resolve(CardTable)).to.be.undefined;
-            expect(cardGames.resolve(Cashier)).to.be.undefined;
-        });
-    });
-});
-
-describe("MethodCallbackHandler", function () {
-    var Calculator = Protocol.extend({
-        add:    function (op1, op2) {},
-        divide: function (dividend, divisor) {},
-        clear:  function () {}
-    });
-
-    describe("#handle", function () {
-        it("should call function", function () {
-            var add = new MethodCallbackHandler("add", function (op1, op2) {
-                return op1 + op2;
-            });
-            expect(Calculator(add).add(5, 10)).to.equal(15);
-        });
-
-        it("should call function using short syntax", function () {
-            var add = function (op1, op2) { return op1 + op2; }.implementing("add");
-            expect(Calculator(add).add(22, 19)).to.equal(41);
-        });
-
-        it("should propgate exception in function", function () {
-            var divide = new MethodCallbackHandler("divide", function (dividend, divisor) {
-                if (divisor === 0)
-                    throw new Error("Division by zero");
-                return dividend / divisor;
-            });
-            expect(function () {
-                Calculator(divide).divide(10,0);
-            }).to.throw(Error, /Division by zero/);
-        });
-
-        it("should bind function", function () {
-            var context = new Object,
-                clear   = new MethodCallbackHandler("clear", (function () {
-                return context;
-            }).bind(context));
-            expect(Calculator(clear).clear()).to.equal(context);
-        });
-
-        it("should require non-empty method name", function () {
-            expect(function () {
-                new MethodCallbackHandler(null, function () {});
-            }).to.throw(Error, /No methodName specified/);
-
-            expect(function () {
-                new MethodCallbackHandler(void 0, function () {});
-            }).to.throw(Error, /No methodName specified/);
-
-            expect(function () {
-                new MethodCallbackHandler(10, function () {});
-            }).to.throw(Error, /No methodName specified/);
-
-            expect(function () {
-                new MethodCallbackHandler("", function () {});
-            }).to.throw(Error, /No methodName specified/);
-
-            expect(function () {
-                new MethodCallbackHandler("   ", function () {});
-            }).to.throw(Error, /No methodName specified/);
-        });
-    });
-});
-
-describe("CascadeCallbackHandler", function () {
-    describe("#handle", function () {
-        it("should cascade handlers", function () {
-            var guest    = new Guest(17),
-                baccarat = new Activity('Baccarat'),
-                level1   = new Level1Security,
-                level2   = new Level2Security,
-                security = new CascadeCallbackHandler(level1, level2);
-            expect(Security(security).admit(guest)).to.be.false;
-            Security(security).trackActivity(baccarat);
-        });
-    });
-});
-
-describe("InvocationCallbackHandler", function () {
-    describe("#handle", function () {
-        it("should handle invocations", function () {
-            var guest1 = new Guest(17),
-                guest2 = new Guest(21),
-                level1 = CallbackHandler(new Level1Security);
-            expect(Security(level1).admit(guest1)).to.be.false;
-            expect(Security(level1).admit(guest2)).to.be.true;
-        });
-        
-        it("should handle async invocations", function (done) {
-            var level2 = CallbackHandler(new Level2Security);
-            Security(level2).scan().then(function () {
-                done();
-            });
-        });
-
-        it("should ignore explicitly unhandled invocations", function () {
-            var texasHoldEm = new CardTable("Texas Hold'em", 2, 7),
-            casino    = new Casino('Caesars Palace')
-                .addHandlers(texasHoldEm);
-            expect(function () {
-                Game(casino).open(5);
-            }).to.not.throw(Error);
-            expect(function () {
-                Game(casino).open(9);
-            }).to.throw(Error, /has no method 'open'/);
-        });
-
-        it("should fail missing methods", function () {
-            var letItRide = new Activity('Let It Ride'),
-                level1    = new Level1Security,
-                casino    = new Casino('Treasure Island')
-                .addHandlers(level1, letItRide);
-
-            expect(function () {
-                Security(casino).trackActivity(letItRide)
-            }).to.throw(Error, /has no method 'trackActivity'/);
-        });
-
-        it("can ignore missing methods", function () {
-            var letItRide = new Activity('Let It Ride'),
-                level1    = new Level1Security,
-                casino    = new Casino('Treasure Island')
-                .addHandlers(level1, letItRide);
-            expect(Security(casino.$bestEffort()).trackActivity(letItRide)).to.be.undefined;
-        });
-
-        it("should require protocol conformance", function () {
-            var gate  = new (CallbackHandler.extend(Security, {
-                    admit: function (guest) { return true; }
-                }));
-            expect(Security(gate.$strict()).admit(new Guest('Me'))).to.be.true;
-        });
-
-        it("should reject if no protocol conformance", function () {
-            var gate  = new (CallbackHandler.extend({
-                    admit: function (guest) { return true; }
-                }));
-            expect(function () {
-                Security(gate.$strict()).admit(new Guest('Me'))
-            }).to.throw(Error, /has no method 'admit'/);
-        });
-
-        it("can broadcast invocations", function () {
-            var letItRide = new Activity('Let It Ride'),
-                level1    = new Level1Security,
-                level2    = new Level2Security,
-                casino    = new Casino('Treasure Island')
-                .addHandlers(level1, level2, letItRide);
-            Security(casino.$broadcast()).trackActivity(letItRide);
-        });
-
-        it("can notify invocations", function () {
-            var letItRide = new Activity('Let It Ride'),
-                level1    = new Level1Security,
-                casino    = new Casino('Treasure Island')
-                .addHandlers(level1, letItRide);
-            Security(casino.$notify()).trackActivity(letItRide);
-        });
-    })
-});
-
-describe("CallbackHandlerFilter", function () {
-    describe("#handle", function () {
+    describe("#filter", function () {
         it("should accept callback", function () {
             var cashier    = new Cashier(1000000.00),
                 casino     = new Casino('Belagio').addHandlers(cashier),
@@ -23188,10 +22708,8 @@ describe("CallbackHandlerFilter", function () {
             expect(filterCalled).to.equal(1);
         });
     });
-});
 
-describe("CallbackHandlerAspect", function () {
-    describe("#handle", function () {
+    describe("#aspect", function () {
         it("should ignore callback", function () {
             var cashier    = new Cashier(1000000.00),
                 casino     = new Casino('Belagio').addHandlers(cashier),
@@ -23306,6 +22824,238 @@ describe("CallbackHandlerAspect", function () {
             });
         });
     });
+    
+    describe("#next", function () {
+        it("should cascade handlers using short syntax", function () {
+            var guest    = new Guest(17),
+                baccarat = new Activity('Baccarat'),
+                level1   = new Level1Security,
+                level2   = new Level2Security,
+                security = CallbackHandler(level1).next(level2);
+            expect(Security(security).admit(guest)).to.be.false;
+            Security(security).trackActivity(baccarat);
+        });
+
+        it("should compose handlers using short syntax", function () {
+            var baccarat = new Activity('Baccarat'),
+                level1   = new Level1Security,
+                level2   = new Level2Security,
+                compose  = CallbackHandler(level1).next(level2, baccarat),
+            countMoney = new CountMoney();
+            expect(compose.handle(countMoney)).to.be.true;
+        });
+    });
+
+    describe("#when", function () {
+        it("should restrict handlers using short syntax", function () {
+            var blackjack  = new CardTable("BlackJack", 1, 5),
+                cardGames  = (new (CallbackHandler.extend({
+                    $handle:[
+                        True, function (cardTable) {
+                            cardTable.closed = true;
+                        }]
+                }))).when(CardTable);
+            expect(cardGames.handle(blackjack)).to.be.true;
+            expect(blackjack.closed).to.be.true;
+            expect(cardGames.handle(new Cashier)).to.be.false;
+        });
+
+        it("should restrict handlers invariantly using short syntax", function () {
+            var Blackjack  = CardTable.extend({
+                    constructor: function () {
+                        this.base("BlackJack", 1, 5);
+                    }
+                }),
+                blackjack  = new Blackjack,
+                cardGames  = (new (CallbackHandler.extend({
+                    $handle:[
+                        True, function (cardTable) {
+                            cardTable.closed = true;
+                        }]
+                }))).when($eq(CardTable));
+            expect(cardGames.handle(blackjack)).to.be.false;
+            expect(blackjack.closed).to.be.undefined;
+            expect(cardGames.handle(new Cashier)).to.be.false;
+        });
+
+        it("should restrict providers using short syntax", function () {
+            var blackjack  = new CardTable("BlackJack", 1, 5),
+                cardGames  = (new (CallbackHandler.extend({
+                    $provide:[
+                        True, function (resolution) {
+                            return blackjack;
+                        }]
+                }))).when(CardTable);
+            expect(cardGames.resolve(CardTable)).to.equal(blackjack);
+            expect(cardGames.resolve(Cashier)).to.be.undefined;
+        });
+
+        it("should restrict providers invariantly using short syntax", function () {
+            var blackjack  = new CardTable("BlackJack", 1, 5),
+                cardGames  = (new (CallbackHandler.extend({
+                    $provide:[
+                        True, function (resolution) {
+                            return blackjack;
+                        }]
+                }))).when($eq(Activity));
+            expect(cardGames.resolve(Activity)).to.equal(blackjack);
+            expect(cardGames.resolve(CardTable)).to.be.undefined;
+            expect(cardGames.resolve(Cashier)).to.be.undefined;
+        });
+    });
+
+    describe("#implementing", function () {
+        var Calculator = Protocol.extend({
+            add:    function (op1, op2) {},
+            divide: function (dividend, divisor) {},
+            clear:  function () {}
+        });
+        
+        it("should call function", function () {
+            var add = CallbackHandler.implementing("add", function (op1, op2) {
+                return op1 + op2;
+            });
+            expect(Calculator(add).add(5, 10)).to.equal(15);
+        });
+
+        it("should propgate exception in function", function () {
+            var divide = CallbackHandler.implementing("divide", function (dividend, divisor) {
+                if (divisor === 0)
+                    throw new Error("Division by zero");
+                return dividend / divisor;
+            });
+            expect(function () {
+                Calculator(divide).divide(10,0);
+            }).to.throw(Error, /Division by zero/);
+        });
+
+        it("should bind function", function () {
+            var context = new Object,
+                clear   = CallbackHandler.implementing("clear", (function () {
+                return context;
+            }).bind(context));
+            expect(Calculator(clear).clear()).to.equal(context);
+        });
+
+        it("should require non-empty method name", function () {
+            expect(function () {
+                CallbackHandler.implementing(null, function () {});
+            }).to.throw(Error, /No methodName specified/);
+
+            expect(function () {
+                 CallbackHandler.implementing(void 0, function () {});
+            }).to.throw(Error, /No methodName specified/);
+
+            expect(function () {
+                CallbackHandler.implementing(10, function () {});
+            }).to.throw(Error, /No methodName specified/);
+
+            expect(function () {
+                CallbackHandler.implementing("", function () {});
+            }).to.throw(Error, /No methodName specified/);
+
+            expect(function () {
+                CallbackHandler.implementing("   ", function () {});
+            }).to.throw(Error, /No methodName specified/);
+        });
+    });
+});
+
+describe("CascadeCallbackHandler", function () {
+    describe("#handle", function () {
+        it("should cascade handlers", function () {
+            var guest    = new Guest(17),
+                baccarat = new Activity('Baccarat'),
+                level1   = new Level1Security,
+                level2   = new Level2Security,
+                security = new CascadeCallbackHandler(level1, level2);
+            expect(Security(security).admit(guest)).to.be.false;
+            Security(security).trackActivity(baccarat);
+        });
+    });
+});
+
+describe("InvocationCallbackHandler", function () {
+    describe("#handle", function () {
+        it("should handle invocations", function () {
+            var guest1 = new Guest(17),
+                guest2 = new Guest(21),
+                level1 = CallbackHandler(new Level1Security);
+            expect(Security(level1).admit(guest1)).to.be.false;
+            expect(Security(level1).admit(guest2)).to.be.true;
+        });
+        
+        it("should handle async invocations", function (done) {
+            var level2 = CallbackHandler(new Level2Security);
+            Security(level2).scan().then(function () {
+                done();
+            });
+        });
+
+        it("should ignore explicitly unhandled invocations", function () {
+            var texasHoldEm = new CardTable("Texas Hold'em", 2, 7),
+            casino    = new Casino('Caesars Palace')
+                .addHandlers(texasHoldEm);
+            expect(function () {
+                Game(casino).open(5);
+            }).to.not.throw(Error);
+            expect(function () {
+                Game(casino).open(9);
+            }).to.throw(Error, /has no method 'open'/);
+        });
+
+        it("should fail missing methods", function () {
+            var letItRide = new Activity('Let It Ride'),
+                level1    = new Level1Security,
+                casino    = new Casino('Treasure Island')
+                .addHandlers(level1, letItRide);
+
+            expect(function () {
+                Security(casino).trackActivity(letItRide)
+            }).to.throw(Error, /has no method 'trackActivity'/);
+        });
+
+        it("can ignore missing methods", function () {
+            var letItRide = new Activity('Let It Ride'),
+                level1    = new Level1Security,
+                casino    = new Casino('Treasure Island')
+                .addHandlers(level1, letItRide);
+            expect(Security(casino.$bestEffort()).trackActivity(letItRide)).to.be.undefined;
+        });
+
+        it("should require protocol conformance", function () {
+            var gate  = new (CallbackHandler.extend(Security, {
+                    admit: function (guest) { return true; }
+                }));
+            expect(Security(gate.$strict()).admit(new Guest('Me'))).to.be.true;
+        });
+
+        it("should reject if no protocol conformance", function () {
+            var gate  = new (CallbackHandler.extend({
+                    admit: function (guest) { return true; }
+                }));
+            expect(function () {
+                Security(gate.$strict()).admit(new Guest('Me'))
+            }).to.throw(Error, /has no method 'admit'/);
+        });
+
+        it("can broadcast invocations", function () {
+            var letItRide = new Activity('Let It Ride'),
+                level1    = new Level1Security,
+                level2    = new Level2Security,
+                casino    = new Casino('Treasure Island')
+                .addHandlers(level1, level2, letItRide);
+            Security(casino.$broadcast()).trackActivity(letItRide);
+        });
+
+        it("can notify invocations", function () {
+            var letItRide = new Activity('Let It Ride'),
+                level1    = new Level1Security,
+                casino    = new Casino('Treasure Island')
+                .addHandlers(level1, letItRide);
+            Security(casino.$notify()).trackActivity(letItRide);
+        });
+    })
 });
 
 },{"../lib/callback.js":2,"../lib/miruken.js":10,"bluebird":16,"chai":17}],56:[function(require,module,exports){
@@ -25271,7 +25021,7 @@ describe("IoContainer", function () {
             }
             catch (error) {
                 expect(error).to.be.instanceOf(ComponentModelError);
-                expect(error.validation["key"].errors["required"][0]).to.eql({
+                expect(error.validationResults["key"].errors["required"][0]).to.eql({
                     message: "Key could not be determined for component."
                 });
                 done();
@@ -25284,7 +25034,7 @@ describe("IoContainer", function () {
             }
             catch (error) {
                 expect(error).to.be.instanceOf(ComponentModelError);
-                expect(error.validation["factory"].errors["required"][0]).to.eql({
+                expect(error.validationResults["factory"].errors["required"][0]).to.eql({
                     message: "Factory could not be determined for component."
                 });
                 done();
@@ -25560,7 +25310,7 @@ describe("IoContainer", function () {
                 });
             container.register($component(Registry));
             Promise.resolve(container.resolve(Registry)).then(function (registry) {
-                expect(registry.getComposer().handler).to.equal(context);
+                expect($decorated(registry.getComposer())).to.equal(context);
                 Promise.resolve(Validator(registry.getComposer()).validate(registry))
                     .then(function (validation) {
                         expect(validation.isValid()).to.be.true;
@@ -25848,7 +25598,7 @@ new function () { // closure
         talk: function () { return 'Ruff Ruff'; },
         fetch: function (item) { return 'Fetched ' + item; }
     });
-
+    
     var Elephant = Base.extend(CircusAnimal, {
     });
     
@@ -26335,6 +26085,48 @@ describe("$using", function () {
             done();
         });
     });
+});
+
+describe("$decorator", function () {
+    it("should create a decorator", function () {
+        var dog  = new Dog("Snuffy"),
+            echo = $decorator({
+                getName: function () {
+                    return this.base() + ' ' + this.base();
+                }
+            }),
+            dogEcho = echo(dog);
+        expect(dogEcho.name).to.equal("Snuffy Snuffy");
+    });
+});
+
+describe("$decorate", function () {
+    it("should decorate an instance", function () {
+        var dog     = new Dog("Sparky"),
+            reverse = $decorate(dog, {
+                getName: function () {
+                    return this.base().split('').reverse().join('');
+                }
+            });
+        expect(reverse.name).to.equal("ykrapS");
+    });
+});
+
+describe("$decorated", function () {
+    it("should return nearest decorated instance", function () {
+        var dog        = new Dog("Brutus"),
+            decorator  = $decorate(dog),
+            decorator2 = $decorate(decorator);
+        expect($decorated(decorator)).to.equal(dog);
+        expect($decorated(decorator2)).to.equal(decorator);
+    });
+
+    it("should return deepest decorated instance", function () {
+        var dog       = new Dog("Brutus"),
+            decorator = $decorate($decorate(dog));
+        expect($decorated(decorator, true)).to.equal(dog);
+    });
+
 });
 
 describe("Modifier", function () {

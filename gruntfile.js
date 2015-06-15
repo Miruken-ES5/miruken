@@ -41,7 +41,7 @@ module.exports = function(grunt) {
       },
       debug: {
         files: {
-           'debug/miruken-tests.js':  ['test/context-test.js']
+           'debug/miruken-tests.js':  ['test/ioc/ioc-test.js']
            //'debug/miruken-tests.js':     ['test/**/*.js']
         }
       }
@@ -83,7 +83,7 @@ module.exports = function(grunt) {
             options: {
                 paths:       ['./lib'],
                 ignorePaths: ['./lib/base2.js'],
-                outdir:       './documentation/api/',
+                outdir:       './documentation/docs/',
                 themedir:     './documentation/theme'
             }
         }
@@ -110,5 +110,5 @@ module.exports = function(grunt) {
   grunt.registerTask('build',  ['minify','copy:main', 'karma:dist', 'yuidoc']);
   grunt.registerTask('debug',  ['browserify:debug','karma:debug']);
   grunt.registerTask("minify", ['browserify:dist', 'uglify']);
-  grunt.registerTask("api",   ['yuidoc']);
+  grunt.registerTask("docs",   ['yuidoc']);
 };

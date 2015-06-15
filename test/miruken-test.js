@@ -44,7 +44,7 @@ new function () { // closure
         talk: function () { return 'Ruff Ruff'; },
         fetch: function (item) { return 'Fetched ' + item; }
     });
-
+    
     var Elephant = Base.extend(CircusAnimal, {
     });
     
@@ -531,6 +531,48 @@ describe("$using", function () {
             done();
         });
     });
+});
+
+describe("$decorator", function () {
+    it("should create a decorator", function () {
+        var dog  = new Dog("Snuffy"),
+            echo = $decorator({
+                getName: function () {
+                    return this.base() + ' ' + this.base();
+                }
+            }),
+            dogEcho = echo(dog);
+        expect(dogEcho.name).to.equal("Snuffy Snuffy");
+    });
+});
+
+describe("$decorate", function () {
+    it("should decorate an instance", function () {
+        var dog     = new Dog("Sparky"),
+            reverse = $decorate(dog, {
+                getName: function () {
+                    return this.base().split('').reverse().join('');
+                }
+            });
+        expect(reverse.name).to.equal("ykrapS");
+    });
+});
+
+describe("$decorated", function () {
+    it("should return nearest decorated instance", function () {
+        var dog        = new Dog("Brutus"),
+            decorator  = $decorate(dog),
+            decorator2 = $decorate(decorator);
+        expect($decorated(decorator)).to.equal(dog);
+        expect($decorated(decorator2)).to.equal(decorator);
+    });
+
+    it("should return deepest decorated instance", function () {
+        var dog       = new Dog("Brutus"),
+            decorator = $decorate($decorate(dog));
+        expect($decorated(decorator, true)).to.equal(dog);
+    });
+
 });
 
 describe("Modifier", function () {

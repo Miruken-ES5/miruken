@@ -1,10 +1,10 @@
 new function(){	
 
 	var sampleApp = new base2.Package(this, {
-		name: "sampleApp",
-		imports: 'miruken.ioc',
-		exports: 'sampleAppInstaller', 
-		ngModule: ['ngRoute']
+		name:     "sampleApp",
+		imports:  "miruken.ioc,miruken.ng",
+		exports:  "sampleAppInstaller,Region", 
+		ngModule: [ "ngRoute" ]
 	});
 
 	eval(this.imports);
@@ -13,8 +13,8 @@ new function(){
 		$inject: ['$routeProvider'],
 		constructor: function($routeProvider){
 			$routeProvider.when('/', {
-				templateUrl: 'app/welcome/welcome.html',
-				controller: 'WelcomeController',
+				templateUrl:  'app/welcome/welcome.html',
+				controller:   'WelcomeController',
 				controllerAs: 'vm'
 			});
 		}

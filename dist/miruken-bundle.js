@@ -1722,7 +1722,7 @@ new function () { // closure
         version: miruken.version,
         parent:  miruken,
         imports: "miruken",
-        exports: "CallbackHandler,CallbackHandlerDecorator,CallbackHandlerFilter,CallbackHandlerAspect,CascadeCallbackHandler,CompositeCallbackHandler,ConditionalCallbackHandler,AcceptingCallbackHandler,ProvidingCallbackHandler,MethodCallbackHandler,InvocationOptions,Resolution,Composition,HandleMethod,RejectedError,getEffectivePromise,$handle,$callbacks,$define,$provide,$lookup,$NOT_HANDLED"
+        exports: "CallbackHandler,CascadeCallbackHandler,CompositeCallbackHandler,InvocationOptions,Resolution,Composition,HandleMethod,RejectedError,getEffectivePromise,$handle,$callbacks,$define,$provide,$lookup,$NOT_HANDLED"
     });
 
     eval(this.imports);
@@ -2093,7 +2093,7 @@ new function () { // closure
     });
 
     /**
-     * Marks a callback as composable.
+     * Marks a callback as composed.
      * @class Composition
      * @constructor
      * @param   {Object}  callback  -  callback to compose
@@ -2114,6 +2114,15 @@ new function () { // closure
         }
     });
 
+    var compositionScope = $decorator({
+        handleCallback: function (callback, greedy, composer) {
+            if (!(callback instanceof Composition)) {
+                callback = new Composition(callback);
+            }
+            return this.base(callback, greedy, composer);
+        }
+    });
+    
     /**
      * Base class for handling arbitrary callbacks.<br/>
      * See {{#crossLink "miruken.callback.$callbacks"}}{{/crossLink}}
@@ -2148,7 +2157,7 @@ new function () { // closure
                 return false;
             }
             if ($isNothing(composer)) {
-                composer = new CompositionScope(this);
+                composer = compositionScope(this);
             }
             return !!this.handleCallback(callback, !!greedy, composer);
         },
@@ -2180,11 +2189,11 @@ new function () { // closure
                     var implied  = new _Node(key),
                         delegate = this.delegate;
                     if (delegate && implied.match($classOf(delegate), Variance.Contravariant)) {
-                        resolution.resolve(delegate);
+                        resolution.resolve($decorated(delegate));
                         resolved = true;
                     }
                     if ((!resolved || many) && implied.match($classOf(this), Variance.Contravariant)) {
-                        resolution.resolve(this);
+                        resolution.resolve($decorated(this));
                         resolved = true;
                     }
                 }
@@ -2213,108 +2222,20 @@ new function () { // closure
     });
 
     /**
-     * Wraps all callbacks for composition and continues processing.
-     * @class CompositionScope
-     * @constructor
-     * @param  {miruken.callback.CallbackHandler)  handler  -  forwarding handler
-     * @extends miruken.callback.CallbackHandler
-     */
-    var CompositionScope = CallbackHandler.extend({
-        constructor: function _(handler) {
-            var spec = _.spec || (_.spec = {});
-            spec.value = handler;
-            /**
-             * Gets the composition handler.
-             * @property {miruken.callback.CallbackHandler} handler
-             * @readOnly
-             */                                    
-            Object.defineProperty(this, 'handler', spec);
-            delete spec.value;
-        },
-        handleCallback: function (callback, greedy, composer) {
-            if (!(callback instanceof Composition)) {
-                callback = new Composition(callback);
-            }
-            return this.handler.handleCallback(callback, greedy, composer);
-        }
-    });
-
-    /**
-     * Base class for all CallbackHandler decorators.<br/>
-     * See [Decorator Pattern](http://en.wikipedia.org/wiki/Decorator_pattern)
-     * @class CallbackHandlerDecorator
-     * @constructor
-     * @param  {miruken.callback.CallbackHandler}  decoratee  -  decoratee
-     * @extends miruken.callback.CallbackHandler
-     */
-    var CallbackHandlerDecorator = CallbackHandler.extend({
-        constructor: function _(decoratee) {
-            if ($isNothing(decoratee)) {
-                throw new TypeError("No decoratee specified.");
-            }
-            /**
-             * Gets/Sets the decoratee.
-             * @property {miruken.callback.CallbackHandler} decoratee
-             */                        
-            Object.defineProperty(this, 'decoratee', {
-                get: function () { return decoratee; },
-                set: function (value) { decoratee = value.toCallbackHandler() }
-            });
-            this.decoratee = decoratee;
-        },
-        handleCallback: function (callback, greedy, composer) {
-            return this.decoratee.handleCallback(callback, greedy, composer)
-                || this.base(callback, greedy, composer);
-        }
-    });
-
-    /**
-     * Represents a {{#crossLink "miruken.callback.CallbackHandler"}}{{/crossLink}} that can filter callbacks.
-     * @class CallbackHandlerFilter
-     * @constructor
-     * @param  {miruken.callback.CallbackHandler}  decoratee  -  decoratee
-     * @param  {Function}                          filter     -  callback filter
-     * @extends miruken.callback.CallbackHandlerDecorator
-     */
-    var CallbackHandlerFilter = CallbackHandlerDecorator.extend({
-        constructor: function _(decoratee, filter) {
-            this.base(decoratee);
-            if (!$isFunction(filter)) {
-                throw new TypeError(format("Invalid filter: %1 is not a function.", filter));
-            }
-            var spec = _.spec || (_.spec = {});
-            spec.value = filter;
-            /**
-             * Gets the callback filter.
-             * @property {Function} filter
-             * @readOnly
-             */                                    
-            Object.defineProperty(this, '_filter', spec);
-            delete spec.value;
-        },
-        /**
-         * Gets the filter reentrancy.  Reentrant filters will be applied during composition.
-         * @property {boolean} true if reentrant, false otherwise.
-         */
-        isReentrant: function () { return false; },
-        handleCallback: function (callback, greedy, composer) {
-            var decoratee = this.decoratee;
-            if (!this.isReentrant() && (callback instanceof Composition)) {
-                return decoratee.handleCallback(callback, greedy, composer);
-            }
-            return this._filter(callback, composer, function () {
-                return decoratee.handleCallback(callback, greedy, composer);
-            })
-        }
-    });                                                                   
-
-    /**
      * Identifies a rejected callback.  This usually occurs from aspect processing.<br/>
      * See {{#crossLink "miruken.callback.CallbackHandlerAspect"}}{{/crossLink}}
      * @class RejectedError
+     * @constructor
+     * @param {Object}  callback  -  rejected callback
      * @extends Error
      */
-    function RejectedError() {
+    function RejectedError(callback) {
+        /**
+         * Gets the rejected callback.
+         * @property {Object} callback
+         */         
+        this.callback = callback;
+
         if (Error.captureStackTrace) {
             Error.captureStackTrace(this, this.constructor);
         } else {
@@ -2323,68 +2244,6 @@ new function () { // closure
     }
     RejectedError.prototype             = new Error;
     RejectedError.prototype.constructor = RejectedError;
-
-    /**
-     * Represents a {{#crossLink "miruken.callback.CallbackHandler"}}{{/crossLink}}
-     * that can apply pre/post actions.
-     * @class CallbackHandlerAspect
-     * @constructor
-     * @param  {miruken.callback.CallbackHandler}  decoratee  -  decoratee
-     * @param  {Function}                          before     -  before predicate
-     * @param  {Function}                          after      -  after action
-     * @extends miruken.callback.CallbackHandlerFilter
-     */
-    var CallbackHandlerAspect = CallbackHandlerFilter.extend({
-        constructor: function (decoratee, before, after) {
-            this.base(decoratee, function (callback, composer, proceed) {
-                if ($isFunction(before)) {
-                    var test     = before(callback, composer),
-                        isMethod = callback instanceof HandleMethod;
-                    if ($isPromise(test)) {
-                        var accept = test.then(function (accepted) {
-                            if (accepted !== false) {
-                                _aspectProceed(callback, composer, proceed);
-                                return isMethod ? callback.getReturnValue() : true;
-                            }
-                            return Promise.reject(new RejectedError);
-                        });
-                        if (isMethod) {
-                            callback.setReturnValue(accept);
-                        } else if (callback instanceof Deferred) {
-                            callback.track(accept);
-                        }
-                        return true;
-                    } else if (test === false) {
-                        return true;
-                    }
-                }
-                return _aspectProceed(callback, composer, proceed, after);
-            });
-        }
-    });
-
-    function _aspectProceed(callback, composer, proceed, after) {
-        var promise;
-        try {
-            var handled = proceed();
-            if (handled && (promise = getEffectivePromise(callback))) {
-                // Use 'fulfilled' or 'rejected' handlers instead of 'finally' to ensure
-                // aspect boundary is consistent with synchronous invocations and avoid
-                // reentrancy issues.
-                if ($isFunction(after))
-                    promise.then(function (result) {
-                        after(callback, composer);
-                    }, function (error) {
-                        after(callback, composer);
-                    });
-            }
-            return handled;
-        } finally {
-            if (!promise && $isFunction(after)) {
-                after(callback, composer);
-            }
-        }
-    }
     
     /**
      * Represents a two-way {{#crossLink "miruken.callback.CallbackHandler"}}{{/crossLink}} path.
@@ -2508,136 +2367,61 @@ new function () { // closure
     });
 
     /**
-     * {{#crossLink "miruken.callback.CallbackHandler"}}{{/crossLink}}
-     * that tests a condition before handling callbacks.
-     * @class ConditionalCallbackHandler
-     * @constructor
-     * @param  {miruken.callback.CallbackHandler}  decoratee  -  decoratee
-     * @param  {Function}                          condition  -  condition predicate
-     * @extends miruken.callback.CallbackHandlerDecorator
-     */
-    var ConditionalCallbackHandler = CallbackHandlerDecorator.extend({
-        constructor: function _(decoratee, condition) {
-            this.base(decoratee);
-            if ($isNothing(condition)) {
-                throw new TypeError("No condition specified.");
-            } else if (!$isFunction(condition)) {
-                throw new TypeError(format(
-                    "Invalid condition: %1 is not a function.", condition));
-            }
-            var spec = _.spec || (_.spec = {});
-            spec.value = condition;
-            /**
-             * Gets the callback condiition.
-             * @property {Function} condition
-             * @readOnly
-             */                                                                        
-            Object.defineProperty(this, 'condition', spec);
-            delete spec.value;
-        },
-        handleCallback: function (callback, greedy, composer) {
-            return this.condition(callback)
-                 ? this.base(callback, greedy, composer)
-                 : false;
-        }
-    });
-
-    /**
      * Shortcut for handling a callback.
-     * @class AcceptingCallbackHandler
-     * @constructor
-     * @param  {Function}  handler     -  handles callbacks
-     * @param  {Any}       constraint  -  callback constraint
-     * @extends miruken.callback.CallbackHandler
+     * @method
+     * @static
+     * @param   {Function}  handler     -  handles callbacks
+     * @param   {Any}       constraint  -  callback constraint
+     * @returns {miruken.callback.CallbackHandler} callback handler.
+     * @for miruken.callback.CallbackHandler
      */
-    var AcceptingCallbackHandler = CallbackHandler.extend({
-        constructor: function (handler, constraint) {
-            $handle(this, constraint, handler);
-        }
-    });
-
-    if (Function.prototype.accepting === undefined)
-        Function.prototype.accepting = function (constraint) {
-            return new AcceptingCallbackHandler(this, constraint);
-        };
-
     CallbackHandler.accepting = function (handler, constraint) {
-        return new AcceptingCallbackHandler(handler, constraint);
+        var accepting = new CallbackHandler;
+        $handle(accepting, constraint, handler);
+        return accepting;
     };
 
     /**
      * Shortcut for providing a callback.
-     * @class ProvidingCallbackHandler
-     * @constructor
+     * @method
+     * @static
      * @param  {Function}  provider    -  provides callbacks
      * @param  {Any}       constraint  -  callback constraint
-     * @extends miruken.callback.CallbackHandler
+     * @returns {miruken.callback.CallbackHandler} callback provider.
+     * @for miruken.callback.CallbackHandler
      */
-    var ProvidingCallbackHandler = CallbackHandler.extend({
-        constructor: function (provider, constraint) {
-            $provide(this, constraint, provider);
-        }
-    });
-
-    if (Function.prototype.providing === undefined)
-        Function.prototype.providing = function (constraint) {
-            return new ProvidingCallbackHandler(this, constraint);
-        };
-
     CallbackHandler.providing = function (provider, constraint) {
-        return new ProvidingCallbackHandler(provider, constraint);
+        var providing = new CallbackHandler;
+        $provide(providing, constraint, provider);
+        return providing;
     };
 
     /**
-     * Shortcut for exposing a method as a
-     * {{#crossLink "miruken.callback.CallbackHandler"}}{{/crossLink}}.
-     * @class MethodCallbackHandler
-     * @constructor
+     * Shortcut for handling a 
+     * {{#crossLink "miruken.callback.HandleMethod"}}{{/crossLink}} callback.
+     * @method
+     * @static
      * @param  {string}    methodName  -  method name
      * @param  {Function}  method      -  method function
-     * @extends miruken.callback.CallbackHandler
+     * @returns {miruken.callback.CallbackHandler} method handler.
+     * @for miruken.callback.CallbackHandler
      */
-    var MethodCallbackHandler = CallbackHandler.extend({
-        constructor: function _(methodName, method) {
-            if (!$isString(methodName) || methodName.length === 0 || !methodName.trim()) {
-                throw new TypeError("No methodName specified.");
-            } else if (!$isFunction(method)) {
-                throw new TypeError(format("Invalid method: %1 is not a function.", method));
-            }
-            var spec = _.spec || (_.spec = {});
-            spec.value = methodName;
-            /**
-             * Gets the method name.
-             * @property {string} methodName
-             * @readOnly
-             */
-            Object.defineProperty(this, 'methodName', spec);
-            spec.value = method;
-            /**
-             * Gets the method function.
-             * @property {Function} method
-             * @readOnly
-             */            
-            Object.defineProperty(this, 'method', spec);
-            delete spec.value;
-        },
-        handleCallback: function (callback, greedy, composer) {
-            if (callback instanceof HandleMethod) {
-                var target = new Object;
-                target[this.methodName] = this.method;
-                return callback.invokeOn(target);
-            }
-            return false;
-        }
-    });
-
-    if (Function.prototype.implementing === undefined)
-        Function.prototype.implementing = function (methodName) {
-            return new MethodCallbackHandler(methodName, this);
-        };
-
     CallbackHandler.implementing = function (methodName, method) {
-        return new MethodCallbackHandler(methodName, method);
+        if (!$isString(methodName) || methodName.length === 0 || !methodName.trim()) {
+            throw new TypeError("No methodName specified.");
+        } else if (!$isFunction(method)) {
+            throw new TypeError(format("Invalid method: %1 is not a function.", method));
+        }
+        return (new CallbackHandler).extend({
+            handleCallback: function (callback, greedy, composer) {
+                if (callback instanceof HandleMethod) {
+                    var target = new Object;
+                    target[methodName] = method;
+                    return callback.invokeOn(target);
+                }
+                return false;
+            }
+        });
     };
 
     /**
@@ -2735,42 +2519,6 @@ new function () { // closure
     });
 
     /**
-     * Handles invocation semantics.
-     * @class InvocationOptionsHandler
-     * @constructor
-     * @param   {miruken.callback.CallbackHandler}      handler  -  forwarding handler
-     * @param   {miruken.callback.InvocationSemantics}  options  -  invocation semantics
-     * @extends miruken.callback.CallbackHandler
-     */
-    var InvocationOptionsHandler = CallbackHandler.extend({
-        constructor: function _(handler, options) {
-            var spec = _.spec || (_.spec = {});
-            spec.value = handler;
-            /**
-             * Gets the forwarding handler.
-             * @property {miruken.callback.CallbackHandler} handler
-             * @readOnly
-             */                        
-            Object.defineProperty(this, 'handler', spec);
-            spec.value = new InvocationSemantics(options);
-            /**
-             * Gets the invocation semantics.
-             * @property {miruken.callback.InvocationSemantics} semantics
-             * @readOnly
-             */                                    
-            Object.defineProperty(this, 'semantics', spec);
-            delete spec.value;
-        },
-        handleCallback: function (callback, greedy, composer) {
-            if (callback instanceof InvocationSemantics) {
-                this.semantics.mergeInto(callback);
-                return true;
-            }
-            return this.handler.handleCallback(callback, greedy, composer);
-        }
-    });
-
-    /**
      * Delegates properties and methods to a callback handler using 
      * {{#crossLink "miruken.callback.HandleMethod"}}{{/crossLink}}.
      * @class InvocationDelegate
@@ -2820,21 +2568,21 @@ new function () { // closure
         /**
          * Establishes strict invocation semantics.
          * @method $strict
-         * @returns {miruken.callback.InvocationOptionsHandler} strict semantics.
+         * @returns {miruken.callback.CallbackHandler} strict semantics.
          * @for miruken.callback.CallbackHandler
          */
         $strict: function () { return this.$callOptions(InvocationOptions.Strict); },
         /**
          * Establishes broadcast invocation semantics.
          * @method $broadcast
-         * @returns {miruken.callback.InvocationOptionsHandler} broadcast semanics.
+         * @returns {miruken.callback.CallbackHandler} broadcast semanics.
          * @for miruken.callback.CallbackHandler
          */        
         $broadcast: function () { return this.$callOptions(InvocationOptions.Broadcast); },
         /**
          * Establishes best-effort invocation semantics.
          * @method $bestEffort
-         * @returns {miruken.callback.InvocationOptionsHandler} best-effort semanics.
+         * @returns {miruken.callback.CallbackHandler} best-effort semanics.
          * @for miruken.callback.CallbackHandler
          */                
         $bestEffort: function () { return this.$callOptions(InvocationOptions.BestEffort); },
@@ -2849,10 +2597,21 @@ new function () { // closure
          * Establishes custom invocation semantics.
          * @method $callOptions
          * @param  {miruken.callback.InvocationOptions}  options  -  invocation semantics
-         * @returns {miruken.callback.InvocationOptionsHandler} custom semanics.
+         * @returns {miruken.callback.CallbackHandler} custom invocation semanics.
          * @for miruken.callback.CallbackHandler
          */                        
-        $callOptions: function (options) { return new InvocationOptionsHandler(this, options); }
+        $callOptions: function (options) {
+            var semantics = new InvocationSemantics(options);
+            return this.decorate({
+                handleCallback: function (callback, greedy, composer) {
+                    if (callback instanceof InvocationSemantics) {
+                        semantics.mergeInto(callback);
+                        return true;
+                    }
+                    return this.base(callback, greedy, composer);
+                }
+            });
+        }
     });
 
     CallbackHandler.implement({
@@ -2957,45 +2716,96 @@ new function () { // closure
             return [];
         },
         /**
-         * Creates a handler for the filtering callbacks.
+         * Decorates the handler.
+         * @method decorate
+         * @param   {Object}  decorations  -  decorations
+         * @returns {miruken.callback.CallbackHandler} decorated callback handler.
+         * @for miruken.callback.CallbackHandler
+         */        
+        decorate: function (decorations) {
+            return $decorate(this, decorations);
+        },
+        /**
+         * Decorates the handler for filtering callbacks.
          * @method filter
-         * @param   {Function}  filter  -  filter
-         * @returns {miruken.callback.CallbackHandlerFilter}  filtered callback handler.
+         * @param   {Function}  filter     -  filter
+         * @param   {boolean}   reentrant  -  true if reentrant, false otherwise
+         * @returns {miruken.callback.CallbackHandler} filtered callback handler.
          * @for miruken.callback.CallbackHandler
          */                                                        
-        filter: function (filter) {
-            return $isNothing(filter) ? this : new CallbackHandlerFilter(this, filter);
+        filter: function (filter, reentrant) {
+            if (!$isFunction(filter)) {
+                throw new TypeError(format("Invalid filter: %1 is not a function.", filter));
+            }
+            return this.decorate({
+                handleCallback: function (callback, greedy, composer) {
+                    if (!reentrant && (callback instanceof Composition)) {
+                        return this.base(callback, greedy, composer);
+                    }
+                    return filter(callback, composer, function () {
+                        return this.base(callback, greedy, composer);
+                    }.bind(this));
+                }
+            });
         },
         /**
-         * Creates a handler for applying aspects to callbacks.
+         * Decorates the handler for applying aspects to callbacks.
          * @method aspect
-         * @param   {Function}  before  -  before predicate
-         * @param   {Function}  action  -  after action
-         * @returns {miruken.callback.CallbackHandlerAspect}  aspected callback handler.
+         * @param   {Function}  before     -  before predicate
+         * @param   {Function}  action     -  after action
+         * @param   {boolean}   reentrant  -  true if reentrant, false otherwise
+         * @returns {miruken.callback.CallbackHandler}  callback handler aspect.
          * @for miruken.callback.CallbackHandler
          */                                                                
-        aspect: function (before, after) {
-            return new CallbackHandlerAspect(this, before, after);
+        aspect: function (before, after, reentrant) {
+            return this.filter(function (callback, composer, proceed) {
+                if ($isFunction(before)) {
+                    var test     = before(callback, composer),
+                        isMethod = callback instanceof HandleMethod;
+                    if ($isPromise(test)) {
+                        var accept = test.then(function (accepted) {
+                            if (accepted !== false) {
+                                _aspectProceed(callback, composer, proceed);
+                                return isMethod ? callback.getReturnValue() : true;
+                            }
+                            return Promise.reject(new RejectedError);
+                        });
+                        if (isMethod) {
+                            callback.setReturnValue(accept);
+                        } else if (callback instanceof Deferred) {
+                            callback.track(accept);
+                        }
+                        return true;
+                    } else if (test === false) {
+                        return true;
+                    }
+                }
+                return _aspectProceed(callback, composer, proceed, after);
+            });
         },
         /**
-         * Creates a handler for conditionally handling callbacks.
+         * Decorates the handler to conditionally handle callbacks.
          * @method when
          * @param   {Any}  constraint  -  matching constraint
          * @returns {miruken.callback.ConditionalCallbackHandler}  conditional callback handler.
          * @for miruken.callback.CallbackHandler
          */                                                                        
         when: function (constraint) {
-            var when      = new _Node(constraint),
+            var when = new _Node(constraint),
                 condition = function (callback) {
-                if (callback instanceof Deferred) {
-                    return when.match($classOf(callback.getCallback()), Variance.Contravariant);
-                } else if (callback instanceof Resolution) {
-                    return when.match(callback.getKey(), Variance.Covariant);
-                } else {
-                    return when.match($classOf(callback), Variance.Contravariant);
+                    if (callback instanceof Deferred) {
+                        return when.match($classOf(callback.getCallback()), Variance.Contravariant);
+                    } else if (callback instanceof Resolution) {
+                        return when.match(callback.getKey(), Variance.Covariant);
+                    } else {
+                        return when.match($classOf(callback), Variance.Contravariant);
+                    }
+                };
+            return this.decorate({
+                handleCallback: function (callback, greedy, composer) {
+                    return condition(callback) && this.base(callback, greedy, composer);
                 }
-            };
-            return new ConditionalCallbackHandler(this, condition);
+            });
         },
         /**
          * Builds a handler chain.
@@ -3012,6 +2822,29 @@ new function () { // closure
             }
         }
     });
+
+    function _aspectProceed(callback, composer, proceed, after) {
+        var promise;
+        try {
+            var handled = proceed();
+            if (handled && (promise = getEffectivePromise(callback))) {
+                // Use 'fulfilled' or 'rejected' handlers instead of 'finally' to ensure
+                // aspect boundary is consistent with synchronous invocations and avoid
+                // reentrancy issues.
+                if ($isFunction(after))
+                    promise.then(function (result) {
+                        after(callback, composer);
+                    }, function (error) {
+                        after(callback, composer);
+                    });
+            }
+            return handled;
+        } finally {
+            if (!promise && $isFunction(after)) {
+                after(callback, composer);
+            }
+        }
+    }
 
     /**
      * Defines a new handler grouping.  This is the main extensibility point for handling callbacks.
@@ -3435,13 +3268,19 @@ new function () { // closure
         constructor: function (parent) {
             this.base();
 
-            var _state              = ContextState.Active,
+            var _id                 = assignID(this),
+                _state              = ContextState.Active,
                 _parent             = parent,
                 _children           = new Array2,
                 _baseHandleCallback = this.handleCallback,
                 _observers;
 
             this.extend({
+                /**
+                 * Gets the unique id of this context.
+                 * @property {string} id
+                 */
+                getId: function () { return _id },
                 /**
                  * Gets the context state.
                  * @property {miruken.context.ContextState} state
@@ -3476,9 +3315,9 @@ new function () { // closure
                  * @property {miruken.context.Context} root
                  */                                
                 getRoot: function () {
-                    var root = this;    
-                    while (root && root.getParent()) {
-                        root = root.getParent();
+                    var root = this, parent;    
+                    while (root && (parent = root.getParent())) {
+                        root = parent;
                     }
                     return root;
                 },
@@ -3486,13 +3325,14 @@ new function () { // closure
                     _ensureActive();
                     var childContext = new ($classOf(this))(this).extend({
                         end: function () {
-                            if (_observers) {
-                                _observers.invoke('childContextEnding', childContext);
+                            var observers = _observers ? _observers.copy() : null;
+                            if (observers) {
+                                observers.invoke('childContextEnding', childContext);
                             }
                             _children.remove(childContext);
                             this.base();
-                            if (_observers) {
-                                _observers.invoke('childContextEnded', childContext);
+                            if (observers) {
+                                observers.invoke('childContextEnded', childContext);
                             }
                         }
                     });
@@ -3597,14 +3437,15 @@ new function () { // closure
                  */                                                                
                 end: function () { 
                     if (_state == ContextState.Active) {
+                        var observers = _observers ? _observers.copy() : null;
                         _state = ContextState.Ending;
-                        if (_observers) {
-                            _observers.invoke('contextEnding', this);
+                        if (observers) {
+                            observers.invoke('contextEnding', this);
                         }
                         this.unwind();
                         _state = ContextState.Ended;
-                        if (_observers) {
-                            _observers.invoke('contextEnded', this);
+                        if (observers) {
+                            observers.invoke('contextEnded', this);
                         }
                         _observers = null;
                     }
@@ -3811,16 +3652,22 @@ new function () { // closure
      * Context traversal
      */
     var axisControl = {
+        /**
+         * Changes the default traversal axis.
+         * @method axis
+         * @param   {miruken.graph.TraversingAxis}  axis  -  axis
+         * @returns {miruken.context.Context} callback handler axis.
+         * @for miruken.context.Context
+         */
         axis: function (axis) {
-            var context = this;
-            return pcopy(this).extend({
+            return this.decorate({
                 handle: function (callback, greedy, composer) {
                     return (callback instanceof Composition)
                          ? base.handle(callback, greedy, composer)
                          : this.handleAxis(axis, callback, greedy, composer);
                 },
                 equals: function (other) {
-                    return (this === other) || (other === context);
+                    return (this === other) || (other === this.decoratee);
                 }
             });
         }},
@@ -3834,7 +3681,7 @@ new function () { // closure
     }
 
     /**
-     * Sets the default callback handler axis to
+     * Sets the default traversal axis to
      * {{#crossLink "miruken.graph.TraversingAxis/Self:property"}}{{/crossLink}}.
      * @method $self
      * @returns {miruken.context.Context} default traversal axis.
@@ -3842,7 +3689,7 @@ new function () { // closure
      */
 
     /**
-     * Sets the default callback handler axis to
+     * Sets the default traversal axis to
      * {{#crossLink "miruken.graph.TraversingAxis/Root:property"}}{{/crossLink}}.
      * @method $root
      * @returns {miruken.context.Context} default traversal axis.
@@ -3850,7 +3697,7 @@ new function () { // closure
      */
 
     /**
-     * Sets the default callback handler axis to
+     * Sets the default traversal axis to
      * {{#crossLink "miruken.graph.TraversingAxis/Child:property"}}{{/crossLink}}.
      * @method $child
      * @returns {miruken.context.Context} default traversal axis.
@@ -3858,7 +3705,7 @@ new function () { // closure
      */
 
     /**
-     * Sets the default callback handler axis to
+     * Sets the default traversal axis to
      * {{#crossLink "miruken.graph.TraversingAxis/Sibling:property"}}{{/crossLink}}.
      * @method $sibling
      * @returns {miruken.context.Context} default traversal axis.
@@ -3866,7 +3713,7 @@ new function () { // closure
      */
 
     /**
-     * Sets the default callback handler axis to
+     * Sets the default traversal axis to
      * {{#crossLink "miruken.graph.TraversingAxis/Ancestor:property"}}{{/crossLink}}.
      * @method $ancestor
      * @returns {miruken.context.Context} default traversal axis.
@@ -3874,7 +3721,7 @@ new function () { // closure
      */
 
     /**
-     * Sets the default callback handler axis to
+     * Sets the default traversal axis to
      * {{#crossLink "miruken.graph.TraversingAxis/Descendant:property"}}{{/crossLink}}.
      * @method $descendant
      * @returns {miruken.context.Context} default traversal axis.
@@ -3882,7 +3729,7 @@ new function () { // closure
      */
 
     /**
-     * Sets the default callback handler axis to
+     * Sets the default traversal axis to
      * {{#crossLink "miruken.graph.TraversingAxis/DescendantReverse:property"}}{{/crossLink}}.
      * @method $descendantReverse
      * @returns {miruken.context.Context} default traversal axis.
@@ -3890,7 +3737,7 @@ new function () { // closure
      */        
 
     /**
-     * Sets the default callback handler axis to
+     * Sets the default traversal axis to
      * {{#crossLink "miruken.graph.TraversingAxis/ChildOrSelf:property"}}{{/crossLink}}.
      * @method $childOrSelf
      * @returns {miruken.context.Context} default traversal axis.
@@ -3898,7 +3745,7 @@ new function () { // closure
      */
 
     /**
-     * Sets the default callback handler axis to
+     * Sets the default traversal axis to
      * {{#crossLink "miruken.graph.TraversingAxis/SiblingOrSelf:property"}}{{/crossLink}}.
      * @method $siblingOrSelf
      * @returns {miruken.context.Context} default traversal axis.
@@ -3906,7 +3753,7 @@ new function () { // closure
      */
 
     /**
-     * Sets the default callback handler axis to
+     * Sets the default traversal axis to
      * {{#crossLink "miruken.graph.TraversingAxis/AncestorOrSelf:property"}}{{/crossLink}}.
      * @method $ancestorOrSelf
      * @returns {miruken.context.Context} default traversal axis.
@@ -3914,7 +3761,7 @@ new function () { // closure
      */        
 
     /**
-     * Sets the default callback handler axis to
+     * Sets the default traversal axis to
      * {{#crossLink "miruken.graph.TraversingAxis/DescendantOrSelf:property"}}{{/crossLink}}.
      * @method $descendantOrSelf
      * @returns {miruken.context.Context} default traversal axis.
@@ -3922,7 +3769,7 @@ new function () { // closure
      */
 
     /**
-     * Sets the default callback handler axis to
+     * Sets the default traversal axis to
      * {{#crossLink "miruken.graph.TraversingAxis/DescendantOrSelfReverse:property"}}{{/crossLink}}.
      * @method $descendantOrSelfReverse
      * @returns {miruken.context.Context} default traversal axis.
@@ -3930,7 +3777,7 @@ new function () { // closure
      */
 
     /**
-     * Sets the default callback handler axis to
+     * Sets the default traversal axis to
      * {{#crossLink "miruken.graph.TraversingAxis/AncestorSiblingOrSelf:property"}}{{/crossLink}}.
      * @method $ancestorSiblingOrSelf
      * @returns {miruken.context.Context} default traversal axis.
@@ -4083,7 +3930,7 @@ new function() { // closure
          * @for miruken.callback.CallbackHandler
          */        
         $recover: function (context) {
-            return new CallbackHandlerFilter(this, function(callback, composer, proceed) {
+            return this.filter(function(callback, composer, proceed) {
                 try {
                     var promise,
                     handled = proceed();
@@ -5568,7 +5415,7 @@ new function () { // closure
                 resolve: function (factory, composer) {
                     var context = composer.resolve(Context);
                     if (context) {
-                        var id       = assignID(context),
+                        var id       = context.id,
                             instance = _cache[id];
                         if (!instance) {
                             var object = factory();
@@ -5946,35 +5793,57 @@ new function () { // closure
      * @extends Error
      */
     function DependencyResolutionError(dependency, message) {
-        this.message    = message;
+        /**
+         * Gets the error message.
+         * @property {string} message
+         */
+        this.message = message;
+        /**
+         * Gets the failing dependency resolution.
+         * @property {miruken.ioc.DependencyResolution} dependency
+         */
         this.dependency = dependency;
-        this.stack      = (new Error).stack;
+        if (Error.captureStackTrace) {
+            Error.captureStackTrace(this, this.constructor);
+        } else {
+            Error.call(this);
+        }
     }
-    /**
-     * Failing dependency resolution.
-     * @property {miruken.ioc.DependencyResolution} dependency
-     */
     DependencyResolutionError.prototype             = new Error;
     DependencyResolutionError.prototype.constructor = DependencyResolutionError;
 
     /**
      * Identifies an invalid {{#crossLink "miruken.ioc.ComponentModel"}}{{/crossLink}}.
      * @class ComponentModelError
-     * @param {miruken.ioc.ComponentModel}        componentModel  -  invalid component model
-     * @param {miruken.validate.ValidationResult} validation      -  validation failures
-     * @param {string}                            message         -  error message
+     * @constructor
+     * @param {miruken.ioc.ComponentModel}        componentModel     -  invalid component model
+     * @param {miruken.validate.ValidationResult} validationResults  -  validation results
+     * @param {string}                            message            -  error message
      * @extends Error
      */
-    function ComponentModelError(componentModel, validation, message) {
-        this.message        = message || "The component model contains one or more errors";
+    function ComponentModelError(componentModel, validationResults, message) {
+        /**
+         * Gets the error message.
+         * @property {string} message
+         */
+        this.message = message || "The component model contains one or more errors";
+        /**
+         * Gets the invalid component model.
+         * @property {miruken.ioc.ComponentModel} componentModel
+         */         
         this.componentModel = componentModel;
-        this.validation     = validation;
-        this.stack          = (new Error).stack;
+        /**
+         * Gets the failing validation results.
+         * @property {miruken.validate.ValidationResult} validationResults
+         */         
+        this.validationResults = validationResults;
+        
+        if (Error.captureStackTrace) {
+            Error.captureStackTrace(this, this.constructor);
+        } else {
+            Error.call(this);
+        }
     }
-    /**
-     * Invalid component model.
-     * @property {miruken.ioc.ComponentModel} componentModel
-     */    
     ComponentModelError.prototype             = new Error;
     ComponentModelError.prototype.constructor = ComponentModelError;
 
@@ -6222,7 +6091,7 @@ new function () { // closure
     var miruken = new base2.Package(this, {
         name:    "miruken",
         version: "1.0",
-        exports: "Enum,Variance,Protocol,StrictProtocol,Delegate,Miruken,MetaStep,MetaMacro,Disposing,DisposingMixin,Invoking,Parenting,Starting,Startup,Facet,Interceptor,InterceptorSelector,ProxyBuilder,Modifier,ArrayManager,IndexedList,$isProtocol,$isClass,$classOf,$ancestorOf,$isString,$isFunction,$isObject,$isPromise,$isNothing,$isSomething,$using,$lift,$equals,$debounce,$eq,$use,$copy,$lazy,$eval,$every,$child,$optional,$promise,$instant,$createModifier,$properties,$inferProperties,$inheritStatic"
+        exports: "Enum,Variance,Protocol,StrictProtocol,Delegate,Miruken,MetaStep,MetaMacro,Disposing,DisposingMixin,Invoking,Parenting,Starting,Startup,Facet,Interceptor,InterceptorSelector,ProxyBuilder,Modifier,ArrayManager,IndexedList,$isProtocol,$isClass,$classOf,$ancestorOf,$isString,$isFunction,$isObject,$isPromise,$isNothing,$isSomething,$using,$lift,$equals,$decorator,$decorate,$decorated,$debounce,$eq,$use,$copy,$lazy,$eval,$every,$child,$optional,$promise,$instant,$createModifier,$properties,$inferProperties,$inheritStatic"
     });
 
     eval(this.imports);
@@ -8179,6 +8048,61 @@ new function () { // closure
     }
 
     /**
+     * Creates a decorator builder.<br/>
+     * See [Decorator Pattern](http://en.wikipedia.org/wiki/Decorator_pattern)
+     * @method
+     * @param   {Object}   decorations  -  object defining decorations
+     * @erturns {Function} function to build decorators.
+     */
+    function $decorator(decorations) {
+        return function (decoratee) {
+            if ($isNothing(decoratee)) {
+                throw new TypeError("No decoratee specified.");
+            }
+            var decorator = Object.create(decoratee),
+                spec      = $decorator.spec || ($decorator.spec = {});
+            spec.value = decoratee;
+            Object.defineProperty(decorator, 'decoratee', spec);
+            if (decorations) {
+                decorator.extend(decorations);
+            }
+            delete spec.value;
+            return decorator;
+        }
+    }
+
+    /**
+     * Decorates an instance using the 
+     * [Decorator Pattern](http://en.wikipedia.org/wiki/Decorator_pattern).
+     * @method
+     * @param   {Object}   decoratee    -  decoratee
+     * @param   {Object}   decorations  -  object defining decorations
+     * @erturns {Function} function to build decorators.
+     */
+    function $decorate(decoratee, decorations) {
+        return $decorator(decorations)(decoratee);
+    }
+
+    /**
+     * Gets the decoratee used in the  
+     * [Decorator Pattern](http://en.wikipedia.org/wiki/Decorator_pattern).
+     * @method
+     * @param   {Object}   decorator  -  possible decorator
+     * @param   {boolean}  deepest    -  true if deepest decoratee, false if nearest.
+     * @erturns {Object}   decoratee if present, otherwise decorator.
+     */
+    function $decorated(decorator, deepest) {
+        var decoratee;
+        while (decorator && (decoratee = decorator.decoratee)) {
+            if (!deepest) {
+                return decoratee;
+            }
+            decorator = decoratee;
+        }
+        return decorator;
+    }
+
+    /**
      * Throttles a function over a time period.
      * @method $debounce
      * @param    {Function} func                - function to throttle
@@ -8923,7 +8847,7 @@ new function () { // closure
  * 
  */
 /**
- * bluebird build version 2.9.27
+ * bluebird build version 2.9.24
  * Features enabled: core, race, call_get, generators, map, nodeify, promisify, props, reduce, settle, some, cancel, using, filter, any, each, timers
 */
 !function(e){if("object"==typeof exports&&"undefined"!=typeof module)module.exports=e();else if("function"==typeof define&&define.amd)define([],e);else{var f;"undefined"!=typeof window?f=window:"undefined"!=typeof global?f=global:"undefined"!=typeof self&&(f=self),f.Promise=e()}}(function(){var define,module,exports;return (function e(t,n,r){function s(o,u){if(!n[o]){if(!t[o]){var a=typeof _dereq_=="function"&&_dereq_;if(!u&&a)return a(o,!0);if(i)return i(o,!0);var f=new Error("Cannot find module '"+o+"'");throw f.code="MODULE_NOT_FOUND",f}var l=n[o]={exports:{}};t[o][0].call(l.exports,function(e){var n=t[o][1][e];return s(n?n:e)},l,l.exports,e,t,n,r)}return n[o].exports}var i=typeof _dereq_=="function"&&_dereq_;for(var o=0;o<r.length;o++)s(r[o]);return s})({1:[function(_dereq_,module,exports){
@@ -9011,7 +8935,6 @@ Async.prototype.throwLater = function(fn, arg) {
 
 Async.prototype._getDomain = function() {};
 
-if (!true) {
 if (util.isNode) {
     var EventsModule = _dereq_("events");
 
@@ -9027,31 +8950,30 @@ if (util.isNode) {
         var descriptor =
             Object.getOwnPropertyDescriptor(EventsModule, "usingDomains");
 
-        if (descriptor) {
-            if (!descriptor.configurable) {
-                process.on("domainsActivated", function() {
+        if (!descriptor.configurable) {
+            process.on("domainsActivated", function() {
+                Async.prototype._getDomain = domainGetter;
+            });
+        } else {
+            var usingDomains = false;
+            Object.defineProperty(EventsModule, "usingDomains", {
+                configurable: false,
+                enumerable: true,
+                get: function() {
+                    return usingDomains;
+                },
+                set: function(value) {
+                    if (usingDomains || !value) return;
+                    usingDomains = true;
                     Async.prototype._getDomain = domainGetter;
-                });
-            } else {
-                var usingDomains = false;
-                Object.defineProperty(EventsModule, "usingDomains", {
-                    configurable: false,
-                    enumerable: true,
-                    get: function() {
-                        return usingDomains;
-                    },
-                    set: function(value) {
-                        if (usingDomains || !value) return;
-                        usingDomains = true;
-                        Async.prototype._getDomain = domainGetter;
-                        util.toFastProperties(process);
-                        process.emit("domainsActivated");
-                    }
-                });
-            }
+                    util.toFastProperties(process);
+                    process.emit("domainsActivated");
+                }
+            });
         }
+
+
     }
-}
 }
 
 function AsyncInvokeLater(fn, receiver, arg) {
@@ -10182,10 +10104,6 @@ var returner = function () {
 var thrower = function () {
     throw this;
 };
-var returnUndefined = function() {};
-var throwUndefined = function() {
-    throw undefined;
-};
 
 var wrapper = function (value, action) {
     if (action === 1) {
@@ -10202,8 +10120,6 @@ var wrapper = function (value, action) {
 
 Promise.prototype["return"] =
 Promise.prototype.thenReturn = function (value) {
-    if (value === undefined) return this.then(returnUndefined);
-
     if (wrapsPrimitiveReceiver && isPrimitive(value)) {
         return this._then(
             wrapper(value, 2),
@@ -10218,8 +10134,6 @@ Promise.prototype.thenReturn = function (value) {
 
 Promise.prototype["throw"] =
 Promise.prototype.thenThrow = function (reason) {
-    if (reason === undefined) return this.then(throwUndefined);
-
     if (wrapsPrimitiveReceiver && isPrimitive(reason)) {
         return this._then(
             wrapper(reason, 1),
@@ -12758,16 +12672,23 @@ Promise.reduce = function (promises, fn, initialValue, _each) {
 },{"./async.js":2,"./util.js":38}],31:[function(_dereq_,module,exports){
 "use strict";
 var schedule;
-var util = _dereq_("./util");
 var noAsyncScheduler = function() {
     throw new Error("No async scheduler available\u000a\u000a    See http://goo.gl/m3OTXk\u000a");
 };
-if (util.isNode && typeof MutationObserver === "undefined") {
-    var GlobalSetImmediate = global.setImmediate;
-    var ProcessNextTick = process.nextTick;
-    schedule = util.isRecentNode
-                ? function(fn) { GlobalSetImmediate.call(global, fn); }
-                : function(fn) { ProcessNextTick.call(process, fn); };
+if (_dereq_("./util.js").isNode) {
+    var version = process.versions.node.split(".").map(Number);
+    schedule = (version[0] === 0 && version[1] > 10) || (version[0] > 0)
+        ? global.setImmediate : process.nextTick;
+
+    if (!schedule) {
+        if (typeof setImmediate !== "undefined") {
+            schedule = setImmediate;
+        } else if (typeof setTimeout !== "undefined") {
+            schedule = setTimeout;
+        } else {
+            schedule = noAsyncScheduler;
+        }
+    }
 } else if (typeof MutationObserver !== "undefined") {
     schedule = function(fn) {
         var div = document.createElement("div");
@@ -12789,7 +12710,7 @@ if (util.isNode && typeof MutationObserver === "undefined") {
 }
 module.exports = schedule;
 
-},{"./util":38}],32:[function(_dereq_,module,exports){
+},{"./util.js":38}],32:[function(_dereq_,module,exports){
 "use strict";
 module.exports =
     function(Promise, PromiseArray) {
@@ -13688,10 +13609,6 @@ var ret = {
     isNode: typeof process !== "undefined" &&
         classString(process).toLowerCase() === "[object process]"
 };
-ret.isRecentNode = ret.isNode && (function() {
-    var version = process.versions.node.split(".").map(Number);
-    return (version[0] === 0 && version[1] > 10) || (version[0] > 0);
-})();
 try {throw new Error(); } catch (e) {ret.lastLineError = e;}
 module.exports = ret;
 
@@ -14007,64 +13924,32 @@ function isUndefined(arg) {
 var process = module.exports = {};
 var queue = [];
 var draining = false;
-var currentQueue;
-var queueIndex = -1;
-
-function cleanUpNextTick() {
-    draining = false;
-    if (currentQueue.length) {
-        queue = currentQueue.concat(queue);
-    } else {
-        queueIndex = -1;
-    }
-    if (queue.length) {
-        drainQueue();
-    }
-}
 
 function drainQueue() {
     if (draining) {
         return;
     }
-    var timeout = setTimeout(cleanUpNextTick);
     draining = true;
-
+    var currentQueue;
     var len = queue.length;
     while(len) {
         currentQueue = queue;
         queue = [];
-        while (++queueIndex < len) {
-            currentQueue[queueIndex].run();
+        var i = -1;
+        while (++i < len) {
+            currentQueue[i]();
         }
-        queueIndex = -1;
         len = queue.length;
     }
-    currentQueue = null;
     draining = false;
-    clearTimeout(timeout);
 }
-
 process.nextTick = function (fun) {
-    var args = new Array(arguments.length - 1);
-    if (arguments.length > 1) {
-        for (var i = 1; i < arguments.length; i++) {
-            args[i - 1] = arguments[i];
-        }
-    }
-    queue.push(new Item(fun, args));
-    if (queue.length === 1 && !draining) {
+    queue.push(fun);
+    if (!draining) {
         setTimeout(drainQueue, 0);
     }
 };
 
-// v8 likes predictible objects
-function Item(fun, array) {
-    this.fun = fun;
-    this.array = array;
-}
-Item.prototype.run = function () {
-    this.fun.apply(null, this.array);
-};
 process.title = 'browser';
 process.browser = true;
 process.env = {};
@@ -14094,7 +13979,7 @@ process.chdir = function (dir) {
 process.umask = function() { return 0; };
 
 },{}],16:[function(require,module,exports){
-//     Validate.js 0.7.1
+//     Validate.js 0.7.0
 
 //     (c) 2013-2015 Nicklas Ansman, 2013 Wrapp
 //     Validate.js may be freely distributed under the MIT license.
@@ -14151,8 +14036,8 @@ process.umask = function() { return 0; };
     version: {
       major: 0,
       minor: 7,
-      patch: 1,
-      metadata: "development",
+      patch: 0,
+      metadata: null,
       toString: function() {
         var version = v.format("%{major}.%{minor}.%{patch}", v.version);
         if (!v.isEmpty(v.version.metadata)) {
@@ -14275,12 +14160,6 @@ process.umask = function() { return 0; };
     // It can be called even if no validations returned a promise.
     async: function(attributes, constraints, options) {
       options = v.extend({}, v.async.options, options);
-
-      // Removes unknown attributes
-      if (options.cleanAttributes !== false) {
-        attributes = v.cleanAttributes(attributes, constraints);
-      }
-
       var results = v.runValidations(attributes, constraints, options);
 
       return new v.Promise(function(resolve, reject) {
@@ -14376,11 +14255,6 @@ process.umask = function() { return 0; };
       return obj === Object(obj);
     },
 
-    // Simply checks if the object is an instance of a date
-    isDate: function(obj) {
-      return obj instanceof Date;
-    },
-
     // Returns false if the object is `null` of `undefined`
     isDefined: function(obj) {
       return obj !== null && obj !== undefined;
@@ -14439,11 +14313,6 @@ process.umask = function() { return 0; };
       // For arrays we use the length property
       if (v.isArray(value)) {
         return value.length === 0;
-      }
-
-      // Dates have no attributes but aren't empty
-      if (v.isDate(value)) {
-        return false;
       }
 
       // If we find at least one property we consider it non empty
@@ -14537,8 +14406,8 @@ process.umask = function() { return 0; };
       return value in obj;
     },
 
-    forEachKeyInKeypath: function(object, keypath, callback) {
-      if (!v.isString(keypath)) {
+    getDeepObjectValue: function(obj, keypath) {
+      if (!v.isObject(obj) || !v.isString(keypath)) {
         return undefined;
       }
 
@@ -14552,9 +14421,11 @@ process.umask = function() { return 0; };
             if (escape) {
               escape = false;
               key += '.';
-            } else {
-              object = callback(object, key, false);
+            } else if (key in obj) {
+              obj = obj[key];
               key = "";
+            } else {
+              return undefined;
             }
             break;
 
@@ -14574,19 +14445,11 @@ process.umask = function() { return 0; };
         }
       }
 
-      return callback(object, key, true);
-    },
-
-    getDeepObjectValue: function(obj, keypath) {
-      if (!v.isObject(obj)) {
+      if (v.isDefined(obj) && key in obj) {
+        return obj[key];
+      } else {
         return undefined;
       }
-
-      return v.forEachKeyInKeypath(obj, keypath, function(obj, key) {
-        if (v.isObject(obj)) {
-          return obj[key];
-        }
-      });
     },
 
     // This returns an object with all the values of the form.
@@ -14736,56 +14599,6 @@ process.umask = function() { return 0; };
     // ["<message 1>", "<message 2>"]
     flattenErrorsToArray: function(errors) {
       return errors.map(function(error) { return error.error; });
-    },
-
-    cleanAttributes: function(attributes, whitelist) {
-      function whitelistCreator(obj, key, last) {
-        if (v.isObject(obj[key])) {
-          return obj[key];
-        }
-        return (obj[key] = last ? true : {});
-      }
-
-      function buildObjectWhitelist(whitelist) {
-        var ow = {}
-          , lastObject
-          , attr;
-        for (attr in whitelist) {
-          if (!whitelist[attr]) {
-            continue;
-          }
-          v.forEachKeyInKeypath(ow, attr, whitelistCreator);
-        }
-        return ow;
-      }
-
-      function cleanRecursive(attributes, whitelist) {
-        if (!v.isObject(attributes)) {
-          return attributes;
-        }
-
-        var ret = v.extend({}, attributes)
-          , w
-          , attribute;
-
-        for (attribute in attributes) {
-          w = whitelist[attribute];
-
-          if (v.isObject(w)) {
-            ret[attribute] = cleanRecursive(ret[attribute], w);
-          } else if (!w) {
-            delete ret[attribute];
-          }
-        }
-        return ret;
-      }
-
-      if (!v.isObject(whitelist) || !v.isObject(attributes)) {
-        return {};
-      }
-
-      whitelist = buildObjectWhitelist(whitelist);
-      return cleanRecursive(attributes, whitelist);
     },
 
     exposeModule: function(validate, root, exports, module, define) {
