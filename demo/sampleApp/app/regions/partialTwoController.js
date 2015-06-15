@@ -12,8 +12,7 @@
         constructor: function () {
             var initialView = {
                 templateUrl:  'app/regions/partialThree.html',
-                controller:   'PartialThreeController',
-                controllerAs: 'vm'
+                controller:   'PartialThreeController as vm'
             };            
             setTimeout(function () {
                 ViewRegion(this.context).present(initialView);

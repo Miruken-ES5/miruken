@@ -16,16 +16,14 @@ new function() {
 						name: 'Tab A',
 						view: {	
 			                templateUrl:  'app/tabs/tabA.html',
-			                controller:   'TabAController',
-			                controllerAs: 'vm'
+			                controller:   'TabAController as vm'
 		            	}
 					}),
 					new Tab({
 						name: 'Tab B',
 						view: {
 			                templateUrl:  'app/tabs/tabB.html',
-			                controller:   'TabBController',
-			                controllerAs: 'vm'
+			                controller:   'TabBController as vm'
 		            	}
 					})
 				],
@@ -34,24 +32,21 @@ new function() {
 						name: 'Tab C',
 						view: {
 			                templateUrl:  'app/tabs/tabC.html',
-			                controller:   'TabCController',
-			                controllerAs: 'vm'
+			                controller:   'TabCController as vm'
 		            	}
 					}),
 					new Tab({
 						name: 'Tab D',
 						view: {
 			                templateUrl:  'app/tabs/tabD.html',
-			                controller:   'TabDController',
-			                controllerAs: 'vm'
+			                controller:   'TabDController as vm'
 		            	}
 					}),
 					new Tab({
 						name: 'Tab E',
 						view: {
-			                template:     'app/tabs/tabE.html',
-			                controller:   'TabEController',
-			                controllerAs: 'vm'
+			                templateUrl:  'app/tabs/tabE.html',
+			                controller:   'TabEController as vm'
 		            	}
 					})
 				]

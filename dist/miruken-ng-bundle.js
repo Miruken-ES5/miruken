@@ -135,8 +135,10 @@ new function () { // closure
                         _controller  = null;
                         
                         if (controller) {
+                            var parts = controller.split(' ');
+                            controller = parts[0];
                             _controller = $controller(controller, { $scope: partialScope });
-                            var controllerAs = presentation.controllerAs || 'ctrl';
+                            var controllerAs = parts.length > 1 ?  parts[parts.length - 1] : 'ctrl';
                             partialScope[controllerAs] = _controller;
                             var cancel = _controller.context.observe({
                                 contextEnding: function (context) {

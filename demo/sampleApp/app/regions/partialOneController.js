@@ -14,8 +14,7 @@
         constructor: function () {
             var viewTwo = {
                 templateUrl:  'app/regions/partialTwo.html',
-                controller:   'PartialTwoController',
-                controllerAs: 'vm'
+                controller:   'PartialTwoController as vm'
             };
             setTimeout(function () {
                 ViewRegion(this.context).present(viewTwo);

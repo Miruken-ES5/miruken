@@ -15,8 +15,7 @@ new function() {
         partialOne: function () {
             var viewOne = {
                 templateUrl:  'app/regions/partialOne.html',
-                controller:   'PartialOneController',
-                controllerAs: 'vm'
+                controller:   'PartialOneController as vm'
             };
             ViewRegion(this.content.context).present(viewOne);
         }
