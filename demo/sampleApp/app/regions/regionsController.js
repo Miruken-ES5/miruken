@@ -14,7 +14,7 @@ new function() {
 		},
         partialOne: function () {
             var viewOne = {
-                template:     'app/regions/partialOne.html',
+                templateUrl:  'app/regions/partialOne.html',
                 controller:   'PartialOneController',
                 controllerAs: 'vm'
             };

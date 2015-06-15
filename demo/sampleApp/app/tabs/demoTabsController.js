@@ -15,7 +15,7 @@ new function() {
 					new Tab({
 						name: 'Tab A',
 						view: {	
-			                template:     'app/tabs/tabA.html',
+			                templateUrl:  'app/tabs/tabA.html',
 			                controller:   'TabAController',
 			                controllerAs: 'vm'
 		            	}
@@ -23,7 +23,7 @@ new function() {
 					new Tab({
 						name: 'Tab B',
 						view: {
-			                template:     'app/tabs/tabB.html',
+			                templateUrl:  'app/tabs/tabB.html',
 			                controller:   'TabBController',
 			                controllerAs: 'vm'
 		            	}
@@ -33,7 +33,7 @@ new function() {
 					new Tab({
 						name: 'Tab C',
 						view: {
-			                template:     'app/tabs/tabC.html',
+			                templateUrl:  'app/tabs/tabC.html',
 			                controller:   'TabCController',
 			                controllerAs: 'vm'
 		            	}
@@ -41,7 +41,7 @@ new function() {
 					new Tab({
 						name: 'Tab D',
 						view: {
-			                template:     'app/tabs/tabD.html',
+			                templateUrl:  'app/tabs/tabD.html',
 			                controller:   'TabDController',
 			                controllerAs: 'vm'
 		            	}

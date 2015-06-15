@@ -11,7 +11,7 @@
     var PartialTwoController = Controller.extend({
         constructor: function () {
             var initialView = {
-                template:     'app/regions/partialThree.html',
+                templateUrl:  'app/regions/partialThree.html',
                 controller:   'PartialThreeController',
                 controllerAs: 'vm'
             };            

@@ -115,14 +115,21 @@ new function () { // closure
                 getController: function () { return _controller; },
                 getControllerContext: function () { return _controller && _controller.context; },
                 present: function (presentation) {
-                    var template   = presentation.template,
-                        controller = presentation.controller;
+                    var template    = presentation.template,
+                        templateUrl = presentation.templateUrl,
+                        controller  = presentation.controller;
                     
-                    if (!template) {
-                        return $q.reject(new Error('No template must be specified'));
+                    if (template) {
+                        return replaceContent(template);
+                    } else if (templateUrl) {
+                        return $templateRequest(templateUrl, true).then(function (template) {
+                            return replaceContent(template);
+                        });
+                    } else {
+                        return $q.reject(new Error('A template or templateUrl must be specified'));
                     }
                     
-                    return $templateRequest(template, true).then(function (template) {
+                    function replaceContent(template) {
                         var oldScope = partialScope;
                         partialScope = scope.$new();
                         oldScope.$destroy();
@@ -139,8 +146,8 @@ new function () { // closure
                         content = $compile(template)(partialScope),
                         oldContent.remove();                        
                         container.after(content);
-                        return $q.when(this.controllerContext);
-                    });
+                        return $q.when(this.controllerContext);                        
+                    }
                 }
             });
         }
@@ -178,10 +185,12 @@ new function () { // closure
                             }
                         }
 
-                        if(onload){
-                            scope.$eval(onload);
-                        } else {
+                        if (content) {
                             element.after(content);
+                        }
+
+                        if (onload) {
+                            scope.$eval(onload);
                         }
                     });
                 }
@@ -9650,7 +9659,7 @@ new function () { // closure
  * 
  */
 /**
- * bluebird build version 2.9.25
+ * bluebird build version 2.9.24
  * Features enabled: core, race, call_get, generators, map, nodeify, promisify, props, reduce, settle, some, cancel, using, filter, any, each, timers
 */
 !function(e){if("object"==typeof exports&&"undefined"!=typeof module)module.exports=e();else if("function"==typeof define&&define.amd)define([],e);else{var f;"undefined"!=typeof window?f=window:"undefined"!=typeof global?f=global:"undefined"!=typeof self&&(f=self),f.Promise=e()}}(function(){var define,module,exports;return (function e(t,n,r){function s(o,u){if(!n[o]){if(!t[o]){var a=typeof _dereq_=="function"&&_dereq_;if(!u&&a)return a(o,!0);if(i)return i(o,!0);var f=new Error("Cannot find module '"+o+"'");throw f.code="MODULE_NOT_FOUND",f}var l=n[o]={exports:{}};t[o][0].call(l.exports,function(e){var n=t[o][1][e];return s(n?n:e)},l,l.exports,e,t,n,r)}return n[o].exports}var i=typeof _dereq_=="function"&&_dereq_;for(var o=0;o<r.length;o++)s(r[o]);return s})({1:[function(_dereq_,module,exports){
@@ -9738,7 +9747,6 @@ Async.prototype.throwLater = function(fn, arg) {
 
 Async.prototype._getDomain = function() {};
 
-if (!true) {
 if (util.isNode) {
     var EventsModule = _dereq_("events");
 
@@ -9754,31 +9762,30 @@ if (util.isNode) {
         var descriptor =
             Object.getOwnPropertyDescriptor(EventsModule, "usingDomains");
 
-        if (descriptor) {
-            if (!descriptor.configurable) {
-                process.on("domainsActivated", function() {
+        if (!descriptor.configurable) {
+            process.on("domainsActivated", function() {
+                Async.prototype._getDomain = domainGetter;
+            });
+        } else {
+            var usingDomains = false;
+            Object.defineProperty(EventsModule, "usingDomains", {
+                configurable: false,
+                enumerable: true,
+                get: function() {
+                    return usingDomains;
+                },
+                set: function(value) {
+                    if (usingDomains || !value) return;
+                    usingDomains = true;
                     Async.prototype._getDomain = domainGetter;
-                });
-            } else {
-                var usingDomains = false;
-                Object.defineProperty(EventsModule, "usingDomains", {
-                    configurable: false,
-                    enumerable: true,
-                    get: function() {
-                        return usingDomains;
-                    },
-                    set: function(value) {
-                        if (usingDomains || !value) return;
-                        usingDomains = true;
-                        Async.prototype._getDomain = domainGetter;
-                        util.toFastProperties(process);
-                        process.emit("domainsActivated");
-                    }
-                });
-            }
+                    util.toFastProperties(process);
+                    process.emit("domainsActivated");
+                }
+            });
         }
+
+
     }
-}
 }
 
 function AsyncInvokeLater(fn, receiver, arg) {

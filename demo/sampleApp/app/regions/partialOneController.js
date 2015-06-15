@@ -13,7 +13,7 @@
     var PartialOneController = Controller.extend(Disposing, {
         constructor: function () {
             var viewTwo = {
-                template:     'app/regions/partialTwo.html',
+                templateUrl:  'app/regions/partialTwo.html',
                 controller:   'PartialTwoController',
                 controllerAs: 'vm'
             };
