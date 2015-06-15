@@ -260,23 +260,26 @@ pjax.updateTabState = function (src) {
     }
 };
 
-pjax.updateVisibility = function () {
-    var container = pjax.get('container');
+// This is used for the filter options and will need to be uncommented when
+// adding that feature back.
 
-    container.toggleClass('hide-inherited',
-            !Y.one('#api-show-inherited').get('checked'));
+// pjax.updateVisibility = function () {
+//     var container = pjax.get('container');
 
-    container.toggleClass('show-deprecated',
-            Y.one('#api-show-deprecated').get('checked'));
+//     container.toggleClass('hide-inherited',
+//             !Y.one('#api-show-inherited').get('checked'));
 
-    container.toggleClass('show-protected',
-            Y.one('#api-show-protected').get('checked'));
+//     container.toggleClass('show-deprecated',
+//             Y.one('#api-show-deprecated').get('checked'));
 
-    container.toggleClass('show-private',
-            Y.one('#api-show-private').get('checked'));
+//     container.toggleClass('show-protected',
+//             Y.one('#api-show-protected').get('checked'));
 
-    pjax.checkVisibility();
-};
+//     container.toggleClass('show-private',
+//             Y.one('#api-show-private').get('checked'));
+
+//     pjax.checkVisibility();
+// };
 
 // -- Route Handlers -----------------------------------------------------------
 
@@ -328,9 +331,12 @@ pjax.onNavigate = function (e) {
     bdNode.addClass('loading');
 };
 
-pjax.onOptionClick = function (e) {
-    pjax.updateVisibility();
-};
+
+// This is part of the filter options and will need to be enabled
+// when that feature is added back
+// pjax.onOptionClick = function (e) {
+//     pjax.updateVisibility();
+// };
 
 pjax.onTabSelectionChange = function (e) {
     var tab   = e.newVal,
@@ -357,11 +363,16 @@ pjax.initRoot();
 pjax.upgrade();
 pjax.initClassTabView();
 pjax.initLineNumbers();
-pjax.updateVisibility();
+
+// This is part of the filter options and will need to be enabled
+// when that feature is added back
+// pjax.updateVisibility();
 
 Y.APIList.rootPath = pjax.get('root');
 
-Y.one('#api-options').delegate('click', pjax.onOptionClick, 'input');
+// This is part of the filter options and will need to be enabled
+// when that feature is added back
+// Y.one('#api-options').delegate('click', pjax.onOptionClick, 'input');
 
 Y.on('hashchange', function (e) {
     pjax.updateTabState('hashchange');
