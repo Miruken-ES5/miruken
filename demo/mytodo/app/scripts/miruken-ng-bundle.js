@@ -134,19 +134,34 @@ new function () { // closure
                         partialScope = scope.$new();
                         oldScope.$destroy();
                         _controller  = null;
+                        oldScope     = null;
                         
                         if (controller) {
                             _controller = $controller(controller, { $scope: partialScope });
-                            if (presentation.controllerAs) {
-                                partialScope[presentation.controllerAs] = _controller;
-                            }
+                            var controllerAs = presentation.controllerAs || 'ctrl';
+                            partialScope[controllerAs] = _controller;
+                            var cancel = _controller.context.observe({
+                                contextEnding: function (context) {
+                                    if (_controller && (context === _controller.context)) {
+                                        if (content) {
+                                            content.remove();
+                                            content = null;
+                                        }
+                                        _controller = null;
+                                    }
+                                    cancel();
+                                }
+                            });
                         }
 
                         var oldContent = content;
-                        content = $compile(template)(partialScope),
-                        oldContent.remove();                        
+                        content = $compile(template)(partialScope);
+                        if (oldContent) {
+                            oldContent.remove();
+                            oldContent = null;
+                        }
                         container.after(content);
-                        return $q.when(this.controllerContext);                        
+                        return $q.when(this.controllerContext);               
                     }
                 }
             });
@@ -3777,13 +3792,14 @@ new function () { // closure
                     _ensureActive();
                     var childContext = new ($classOf(this))(this).extend({
                         end: function () {
-                            if (_observers) {
-                                _observers.invoke('childContextEnding', childContext);
+                            var observers = _observers ? _observers.copy() : null;
+                            if (observers) {
+                                observers.invoke('childContextEnding', childContext);
                             }
                             _children.remove(childContext);
                             this.base();
-                            if (_observers) {
-                                _observers.invoke('childContextEnded', childContext);
+                            if (observers) {
+                                observers.invoke('childContextEnded', childContext);
                             }
                         }
                     });
@@ -3888,14 +3904,15 @@ new function () { // closure
                  */                                                                
                 end: function () { 
                     if (_state == ContextState.Active) {
+                        var observers = _observers ? _observers.copy() : null;
                         _state = ContextState.Ending;
-                        if (_observers) {
-                            _observers.invoke('contextEnding', this);
+                        if (observers) {
+                            observers.invoke('contextEnding', this);
                         }
                         this.unwind();
                         _state = ContextState.Ended;
-                        if (_observers) {
-                            _observers.invoke('contextEnded', this);
+                        if (observers) {
+                            observers.invoke('contextEnded', this);
                         }
                         _observers = null;
                     }
