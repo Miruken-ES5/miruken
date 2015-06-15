@@ -132,9 +132,7 @@ new function () { // closure
                     function replaceContent(template) {
                         var oldScope = partialScope;
                         partialScope = scope.$new();
-                        oldScope.$destroy();
                         _controller  = null;
-                        oldScope     = null;
                         
                         if (controller) {
                             _controller = $controller(controller, { $scope: partialScope });
@@ -158,9 +156,10 @@ new function () { // closure
                         content = $compile(template)(partialScope);
                         if (oldContent) {
                             oldContent.remove();
-                            oldContent = null;
                         }
                         container.after(content);
+                        oldScope.$destroy();
+                        
                         return $q.when(this.controllerContext);               
                     }
                 }
