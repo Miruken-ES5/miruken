@@ -10,6 +10,7 @@ new function() {
 
 	var RegionsController = Controller.extend({
 		$properties:{
+            content: null,
 			message: 'Hello, Regions!'
 		},
         partialOne: function () {

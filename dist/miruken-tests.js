@@ -3167,7 +3167,7 @@ new function () { // closure
 }
 
 }).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
-},{"./miruken.js":10,"bluebird":16}],3:[function(require,module,exports){
+},{"./miruken.js":10,"bluebird":18}],3:[function(require,module,exports){
 var miruken = require('./miruken.js');
               require('./graph.js');
               require('./callback.js');
@@ -3970,7 +3970,7 @@ new function() { // closure
 
 }
 
-},{"./callback.js":2,"./miruken.js":10,"bluebird":16}],5:[function(require,module,exports){
+},{"./callback.js":2,"./miruken.js":10,"bluebird":18}],5:[function(require,module,exports){
 var miruken = require('./miruken.js');
 
 new function () { // closure
@@ -4376,7 +4376,7 @@ require('./error.js');
 require('./validate');
 require('./ioc');
 
-},{"./callback.js":2,"./context.js":3,"./error.js":4,"./graph.js":5,"./ioc":8,"./miruken.js":10,"./validate":13}],7:[function(require,module,exports){
+},{"./callback.js":2,"./context.js":3,"./error.js":4,"./graph.js":5,"./ioc":8,"./miruken.js":10,"./validate":15}],7:[function(require,module,exports){
 var miruken = require('../miruken.js'),
     Promise = require('bluebird');
               require('./ioc.js');
@@ -4807,7 +4807,7 @@ new function () { // closure
     eval(this.exports);
 }
 
-},{"../miruken.js":10,"./ioc.js":9,"bluebird":16}],8:[function(require,module,exports){
+},{"../miruken.js":10,"./ioc.js":9,"bluebird":18}],8:[function(require,module,exports){
 module.exports = require('./ioc.js');
 require('./config.js');
 
@@ -6075,7 +6075,7 @@ new function () { // closure
 
 }
 
-},{"../callback.js":2,"../context.js":3,"../miruken.js":10,"../validate":13,"bluebird":16}],10:[function(require,module,exports){
+},{"../callback.js":2,"../context.js":3,"../miruken.js":10,"../validate":15,"bluebird":18}],10:[function(require,module,exports){
 (function (global){
 require('./base2.js');
 
@@ -8166,11 +8166,6 @@ new function () { // closure
 
 }).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
 },{"./base2.js":1}],11:[function(require,module,exports){
-module.exports = require('./mvc.js');
-
-
-
-},{"./mvc.js":12}],12:[function(require,module,exports){
 var miruken = require('../miruken.js');
               require('../callback.js');
               require('../context.js');
@@ -8193,177 +8188,10 @@ new function () { // closure
         version: miruken.version,
         parent:  miruken,
         imports: "miruken,miruken.callback,miruken.context,miruken.validate",
-        exports: "Model,Controller,ViewRegion,PartialRegion,MasterDetail,MasterDetailAware"
+        exports: "Controller,MasterDetail,MasterDetailAware"
     });
 
     eval(this.imports);
-
-    /**
-     * Base class for modelling concepts using one or more 
-     * {{#crossLink "miruken.$properties"}}{{/crossLink}}
-     * <pre>
-     *    var Child = Model.extend({
-     *       $properties: {
-     *           firstName: { validate: { presence: true } },
-     *           lastNane:  { validate: { presence: true } },
-     *           sibling:   { map: Child },
-     *           age:       { validate {
-     *                            numericality: {
-     *                                onlyInteger:       true,
-     *                                lessThanOrEqualTo: 12
-     *                            }
-     *                      }}
-     *       }
-     *    })
-     * </pre>
-     * @class Model
-     * @constructor
-     * @param {Object} [data]  -  json structured data 
-     * @extends Base
-     */
-    var Model = Base.extend(
-        $inferProperties, $validateThat, {
-        constructor: function (data) {
-            this.fromData(data);
-        },
-        /**
-         * Maps json structured data into the model.
-         * @method fromData
-         * @param   {Object}  data  -  json structured data
-         */            
-        fromData: function (data) {
-            if ($isNothing(data)) {
-                return;
-            }
-            var meta        = this.$meta,
-                descriptors = meta && meta.getDescriptor();
-            if (descriptors) {
-                for (var key in descriptors) {
-                    var descriptor = descriptors[key];
-                    if (descriptor && descriptor.root && descriptor.map) {
-                        this[key] = descriptor.map(data); 
-                    }
-                }
-            }
-            for (var key in data) {
-                var descriptor = descriptors && descriptors[key],
-                    mapper     = descriptor && descriptor.map;
-                if (mapper && descriptor.root) {
-                    continue;  // already rooted
-                }
-                var value = data[key];
-                if (key in this) {
-                    this[key] = mapper ? Model.map(value, mapper, descriptor) : value;
-                } else {
-                    var lkey = key.toLowerCase();
-                    for (var k in this) {
-                        if (k.toLowerCase() === lkey) {
-                            this[k] = mapper ? Model.map(value, mapper, descriptor) : value;
-                        }
-                    }
-                }
-            }
-            return this;
-        },
-        /**
-         * Maps the model into json structured data.
-         * @method toData
-         * @param   {Object}  spec    -  filters data to map
-         * @param   {Object}  [data]  -  receives mapped data
-         * @returns {Object} json structured data.
-         */                        
-        toData: function (spec, data) {
-            data = data || {};
-            var meta        = this.$meta,
-                descriptors = meta && meta.getDescriptor();
-            if (descriptors) {
-                var all = $isNothing(spec);
-                for (var key in descriptors) {
-                    if (all || (key in spec)) {
-                        var keyValue   = this[key],
-                            descriptor = descriptors[key],
-                            keySpec    = all ? spec : spec[key];
-                        if (!(all || keySpec)) {
-                            continue;
-                        }
-                        if (descriptor.root) {
-                            if (keyValue && $isFunction(keyValue.toData)) {
-                                keyValue.toData(keySpec, data);
-                            }
-                        } else if (keyValue && $isFunction(keyValue.toData)) {
-                            data[key] = keyValue.toData(keySpec);
-                        } else {
-                            data[key] = keyValue;
-                        }
-                    }
-                }
-            }            
-            return data;
-        }
-    }, {
-        /**
-         * Maps the model value into json using a mapper function.
-         * @method map
-         * @static
-         * @param   {Any}      value      -  model value
-         * @param   {Fnction}  mapper     -  mapping function or class
-         * @param   {Object}   [options]  -  mapping options
-         * @returns {Object} json structured data.
-         */                                
-        map: function (value, mapper, options) {
-            if (value) {
-                return value instanceof Array
-                     ? Array2.map(value, function (elem) {
-                         return Model.map(elem, mapper, options)
-                       })
-                     : mapper(value, options);
-            }
-        },
-        coerce: function () {
-            return this.new.apply(this, arguments);
-        }
-    });
-
-    /**
-     * Protocol for rendering a controller or view on the screen.
-     * @class ViewRegion
-     * @extends StrictProtocol
-     */
-    var ViewRegion = StrictProtocol.extend({
-        /**
-         * Renders a controller or view in the region.
-         * @method present
-         * @param   {Object}  presentation  -  presentation options
-         * @returns {Promise} promise reflecting render.
-         */                                        
-        present: function (presentation) {}
-    });
-
-    /**
-     * Protocol for rendering a controller in an area on the screen.
-     * @class PartialRegion
-     * @extends {miruken.mvc.ViewRegion}
-     */
-    var PartialRegion = ViewRegion.extend({
-        /**
-         * Gets the region's context.
-         * @method getContext
-         * @returns {miruken.context.Context} region context.
-         */
-        getContext: function () {},
-        /**
-         * Gets the region's controller.
-         * @method getController
-         * @return {miruken.mvc.Controller} region controller.
-         */            
-        getController: function () {},
-        /**
-         * Gets the region's controller context.
-         * @method getControllerContext
-         * @return {miruken.context.Context} region controller context.
-         */            
-        getControllerContext: function () {}
-    });
     
     /**
      * Base class for controllers.
@@ -8489,50 +8317,330 @@ new function () { // closure
         masterChanged: function (master) {},
         /**
          * Informs a detail was selected.
-         * @method didSelectDetail
+         * @method detailSelected
          * @param  {Object}  detail  -  selected detail
          * @param  {Object}  master  -  master
          */
-        didSelectDetail: function (detail, master) {},
+        detailSelected: function (detail, master) {},
         /**
          * Informs a detail was unselected.
-         * @method didDeselectDetail
+         * @method detailUnselected
          * @param  {Object} detail  -  unselected detail
          * @param  {Object} master  -  master
          */
-        didDeselectDetail: function (detail, master) {},
+        detailUnselected: function (detail, master) {},
         /**
          * Informs a detail was added to the master.
-         * @method didAddDetail
+         * @method detailAdded
          * @param  {Object} detail  -  added detail
          * @param  {Object} master  -  master
          */
-        didAddDetail: function (detail, master) {},
+        detailAdded: function (detail, master) {},
         /**
          * Informs a detail was updated in the master.
-         * @method didUpdateDetail
+         * @method detailUpdated
          * @param  {Object} detail  -  updated detail
          * @param  {Object} master  -  master
          */
-        didUpdateDetail: function (detail, master) {},
+        detailUpdated: function (detail, master) {},
         /**
          * Informs a detail was removed from the master.
-         * @method didRemoveDetail
+         * @method detailRemoved
          * @param  {Object} detail  -  removed detail
          * @param  {Object} master  -  master
          */
-        didRemoveDetail: function (detail, master) {}
+        detailRemoved: function (detail, master) {}
     });
 
     eval(this.exports);
+    
 }
 
-},{"../callback.js":2,"../context.js":3,"../miruken.js":10,"../validate":13}],13:[function(require,module,exports){
+},{"../callback.js":2,"../context.js":3,"../miruken.js":10,"../validate":15}],12:[function(require,module,exports){
+module.exports = require('./model.js');
+require('./view.js');
+require('./controller.js');
+
+},{"./controller.js":11,"./model.js":13,"./view.js":14}],13:[function(require,module,exports){
+var miruken = require('../miruken.js');
+              require('../callback.js');
+              require('../context.js');
+              require('../validate');
+
+new function () { // closure
+
+    /**
+     * Package providing Model-View-Controller abstractions.<br/>
+     * Requires the {{#crossLinkModule "miruken"}}{{/crossLinkModule}},
+     * {{#crossLinkModule "callback"}}{{/crossLinkModule}},
+     * {{#crossLinkModule "context"}}{{/crossLinkModule}} and 
+     * {{#crossLinkModule "validate"}}{{/crossLinkModule}} modules.
+     * @module miruken
+     * @submodule mvc
+     * @namespace miruken.mvc
+     */
+    var mvc = new base2.Package(this, {
+        name:    "mvc",
+        version: miruken.version,
+        parent:  miruken,
+        imports: "miruken,miruken.validate",
+        exports: "Model"
+    });
+
+    eval(this.imports);
+
+    /**
+     * Base class for modelling concepts using one or more 
+     * {{#crossLink "miruken.$properties"}}{{/crossLink}}
+     * <pre>
+     *    var Child = Model.extend({
+     *       $properties: {
+     *           firstName: { validate: { presence: true } },
+     *           lastNane:  { validate: { presence: true } },
+     *           sibling:   { map: Child },
+     *           age:       { validate {
+     *                            numericality: {
+     *                                onlyInteger:       true,
+     *                                lessThanOrEqualTo: 12
+     *                            }
+     *                      }}
+     *       }
+     *    })
+     * </pre>
+     * @class Model
+     * @constructor
+     * @param {Object} [data]  -  json structured data 
+     * @extends Base
+     */
+    var Model = Base.extend(
+        $inferProperties, $validateThat, {
+        constructor: function (data) {
+            this.fromData(data);
+        },
+        /**
+         * Maps json structured data into the model.
+         * @method fromData
+         * @param   {Object}  data  -  json structured data
+         */            
+        fromData: function (data) {
+            if ($isNothing(data)) {
+                return;
+            }
+            var meta        = this.$meta,
+                descriptors = meta && meta.getDescriptor();
+            if (descriptors) {
+                for (var key in descriptors) {
+                    var descriptor = descriptors[key];
+                    if (descriptor && descriptor.root && descriptor.map) {
+                        this[key] = descriptor.map(data); 
+                    }
+                }
+            }
+            for (var key in data) {
+                var descriptor = descriptors && descriptors[key],
+                    mapper     = descriptor && descriptor.map;
+                if (mapper && descriptor.root) {
+                    continue;  // already rooted
+                }
+                var value = data[key];
+                if (key in this) {
+                    this[key] = mapper ? Model.map(value, mapper, descriptor) : value;
+                } else {
+                    var lkey = key.toLowerCase();
+                    for (var k in this) {
+                        if (k.toLowerCase() === lkey) {
+                            this[k] = mapper ? Model.map(value, mapper, descriptor) : value;
+                        }
+                    }
+                }
+            }
+            return this;
+        },
+        /**
+         * Maps the model into json structured data.
+         * @method toData
+         * @param   {Object}  spec    -  filters data to map
+         * @param   {Object}  [data]  -  receives mapped data
+         * @returns {Object} json structured data.
+         */                        
+        toData: function (spec, data) {
+            data = data || {};
+            var meta        = this.$meta,
+                descriptors = meta && meta.getDescriptor();
+            if (descriptors) {
+                var all = $isNothing(spec);
+                for (var key in descriptors) {
+                    if (all || (key in spec)) {
+                        var keyValue   = this[key],
+                            descriptor = descriptors[key],
+                            keySpec    = all ? spec : spec[key];
+                        if (!(all || keySpec)) {
+                            continue;
+                        }
+                        if (descriptor.root) {
+                            if (keyValue && $isFunction(keyValue.toData)) {
+                                keyValue.toData(keySpec, data);
+                            }
+                        } else if (keyValue && $isFunction(keyValue.toData)) {
+                            data[key] = keyValue.toData(keySpec);
+                        } else {
+                            data[key] = keyValue;
+                        }
+                    }
+                }
+            }            
+            return data;
+        },
+        /**
+         * Merges specified data into another model.
+         * @method mergeInto
+         * @param   {miruken.mvc.Model}  model  -  model to receive data
+         */            
+        mergeInto: function (model) {
+            if (model instanceof this.constructor) {
+                var meta        = this.$meta,
+                    descriptors = meta && meta.getDescriptor();
+                for (var key in descriptors) {
+                    var keyValue = this[key];
+                    if (keyValue !== undefined && this.hasOwnProperty(key)) {
+                        var modelValue = model[key];
+                        if (modelValue === undefined || !model.hasOwnProperty(key)) {
+                            model[key] = keyValue;
+                        } else if ($isFunction(keyValue.mergeInto)) {
+                            keyValue.mergeInto(modelValue);
+                        }
+                    }
+                }
+            }
+        }
+    }, {
+        /**
+         * Maps the model value into json using a mapper function.
+         * @method map
+         * @static
+         * @param   {Any}      value      -  model value
+         * @param   {Fnction}  mapper     -  mapping function or class
+         * @param   {Object}   [options]  -  mapping options
+         * @returns {Object} json structured data.
+         */                                
+        map: function (value, mapper, options) {
+            if (value) {
+                return value instanceof Array
+                     ? Array2.map(value, function (elem) {
+                         return Model.map(elem, mapper, options)
+                       })
+                     : mapper(value, options);
+            }
+        },
+        coerce: function () {
+            return this.new.apply(this, arguments);
+        }
+    });
+
+    eval(this.exports);
+    
+}
+
+},{"../callback.js":2,"../context.js":3,"../miruken.js":10,"../validate":15}],14:[function(require,module,exports){
+var miruken = require('../miruken.js');
+              require('../callback.js');
+              require('../context.js');
+              require('../validate');
+              require('./model.js');
+
+new function () { // closure
+
+    /**
+     * Package providing Model-View-Controller abstractions.<br/>
+     * Requires the {{#crossLinkModule "miruken"}}{{/crossLinkModule}},
+     * {{#crossLinkModule "callback"}}{{/crossLinkModule}},
+     * {{#crossLinkModule "context"}}{{/crossLinkModule}} and 
+     * {{#crossLinkModule "validate"}}{{/crossLinkModule}} modules.
+     * @module miruken
+     * @submodule mvc
+     * @namespace miruken.mvc
+     */
+    var mvc = new base2.Package(this, {
+        name:    "mvc",
+        version: miruken.version,
+        parent:  miruken,
+        imports: "miruken,miruken.callback",
+        exports: "ViewRegion,PartialRegion"
+    });
+
+    eval(this.imports);
+
+    /**
+     * Protocol for rendering a view on the screen.
+     * @class ViewRegion
+     * @extends StrictProtocol
+     */
+    var ViewRegion = StrictProtocol.extend({
+        /**
+         * Renders a controller or view in the region.
+         * @method present
+         * @param   {Object}  presentation  -  presentation options
+         * @returns {Promise} promise reflecting render.
+         */                                        
+        present: function (presentation) {}
+    });
+
+    /**
+     * Protocol for rendering a view in an area on the screen.
+     * @class PartialRegion
+     * @extends {miruken.mvc.ViewRegion}
+     */
+    var PartialRegion = ViewRegion.extend({
+        /**
+         * Gets the region's context.
+         * @method getContext
+         * @returns {miruken.context.Context} region context.
+         */
+        getContext: function () {},
+        /**
+         * Gets the region's controller.
+         * @method getController
+         * @return {miruken.mvc.Controller} region controller.
+         */            
+        getController: function () {},
+        /**
+         * Gets the region's controller context.
+         * @method getControllerContext
+         * @return {miruken.context.Context} region controller context.
+         */            
+        getControllerContext: function () {}
+    });
+
+    CallbackHandler.implement({
+        /**
+         * Schedules the $digest to run after callback is handled.
+         * @method $ngApply
+         * @returns {miruken.callback.CallbackHandler}  $digest aspect.
+         * @for miruken.callback.CallbackHandler
+         */                                                                
+        modal: function() {
+            return this.decorate({
+                handleCallback: function (callback, greedy, composer) {
+                    if (callback instanceof InvocationSemantics) {
+                        semantics.mergeInto(callback);
+                        return true;
+                    }
+                    return this.base(callback, greedy, composer);
+                }
+            });
+        }
+    });
+    
+    eval(this.exports);
+    
+}
+
+},{"../callback.js":2,"../context.js":3,"../miruken.js":10,"../validate":15,"./model.js":13}],15:[function(require,module,exports){
 module.exports = require('./validate.js');
 require('./validatejs.js');
 
 
-},{"./validate.js":14,"./validatejs.js":15}],14:[function(require,module,exports){
+},{"./validate.js":16,"./validatejs.js":17}],16:[function(require,module,exports){
 var miruken = require('../miruken.js'),
     Promise = require('bluebird');
               require('../callback.js');
@@ -8929,7 +9037,7 @@ new function () { // closure
 
 }
 
-},{"../callback.js":2,"../miruken.js":10,"bluebird":16}],15:[function(require,module,exports){
+},{"../callback.js":2,"../miruken.js":10,"bluebird":18}],17:[function(require,module,exports){
 var miruken    = require('../miruken.js'),
     validate   = require('./validate.js'),
     validatejs = require("validate.js"),
@@ -9182,7 +9290,7 @@ new function () { // closure
 
 }
 
-},{"../callback.js":2,"../miruken.js":10,"./validate.js":14,"bluebird":16,"validate.js":54}],16:[function(require,module,exports){
+},{"../callback.js":2,"../miruken.js":10,"./validate.js":16,"bluebird":18,"validate.js":56}],18:[function(require,module,exports){
 (function (process,global){
 /* @preserve
  * The MIT License (MIT)
@@ -14280,10 +14388,10 @@ function isUndefined(arg) {
 },{}]},{},[4])(4)
 });                    ;if (typeof window !== 'undefined' && window !== null) {                               window.P = window.Promise;                                                     } else if (typeof self !== 'undefined' && self !== null) {                             self.P = self.Promise;                                                         }
 }).call(this,require('_process'),typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
-},{"_process":53}],17:[function(require,module,exports){
+},{"_process":55}],19:[function(require,module,exports){
 module.exports = require('./lib/chai');
 
-},{"./lib/chai":18}],18:[function(require,module,exports){
+},{"./lib/chai":20}],20:[function(require,module,exports){
 /*!
  * chai
  * Copyright(c) 2011-2014 Jake Luer <jake@alogicalparadox.com>
@@ -14372,7 +14480,7 @@ exports.use(should);
 var assert = require('./chai/interface/assert');
 exports.use(assert);
 
-},{"./chai/assertion":19,"./chai/config":20,"./chai/core/assertions":21,"./chai/interface/assert":22,"./chai/interface/expect":23,"./chai/interface/should":24,"./chai/utils":35,"assertion-error":44}],19:[function(require,module,exports){
+},{"./chai/assertion":21,"./chai/config":22,"./chai/core/assertions":23,"./chai/interface/assert":24,"./chai/interface/expect":25,"./chai/interface/should":26,"./chai/utils":37,"assertion-error":46}],21:[function(require,module,exports){
 /*!
  * chai
  * http://chaijs.com
@@ -14509,7 +14617,7 @@ module.exports = function (_chai, util) {
   });
 };
 
-},{"./config":20}],20:[function(require,module,exports){
+},{"./config":22}],22:[function(require,module,exports){
 module.exports = {
 
   /**
@@ -14561,7 +14669,7 @@ module.exports = {
 
 };
 
-},{}],21:[function(require,module,exports){
+},{}],23:[function(require,module,exports){
 /*!
  * chai
  * http://chaijs.com
@@ -15922,7 +16030,7 @@ module.exports = function (chai, _) {
   });
 };
 
-},{}],22:[function(require,module,exports){
+},{}],24:[function(require,module,exports){
 /*!
  * chai
  * Copyright(c) 2011-2014 Jake Luer <jake@alogicalparadox.com>
@@ -16980,7 +17088,7 @@ module.exports = function (chai, util) {
   ('Throw', 'throws');
 };
 
-},{}],23:[function(require,module,exports){
+},{}],25:[function(require,module,exports){
 /*!
  * chai
  * Copyright(c) 2011-2014 Jake Luer <jake@alogicalparadox.com>
@@ -16994,7 +17102,7 @@ module.exports = function (chai, util) {
 };
 
 
-},{}],24:[function(require,module,exports){
+},{}],26:[function(require,module,exports){
 /*!
  * chai
  * Copyright(c) 2011-2014 Jake Luer <jake@alogicalparadox.com>
@@ -17074,7 +17182,7 @@ module.exports = function (chai, util) {
   chai.Should = loadShould;
 };
 
-},{}],25:[function(require,module,exports){
+},{}],27:[function(require,module,exports){
 /*!
  * Chai - addChainingMethod utility
  * Copyright(c) 2012-2014 Jake Luer <jake@alogicalparadox.com>
@@ -17187,7 +17295,7 @@ module.exports = function (ctx, name, method, chainingBehavior) {
   });
 };
 
-},{"../config":20,"./flag":28,"./transferFlags":42}],26:[function(require,module,exports){
+},{"../config":22,"./flag":30,"./transferFlags":44}],28:[function(require,module,exports){
 /*!
  * Chai - addMethod utility
  * Copyright(c) 2012-2014 Jake Luer <jake@alogicalparadox.com>
@@ -17232,7 +17340,7 @@ module.exports = function (ctx, name, method) {
   };
 };
 
-},{"../config":20,"./flag":28}],27:[function(require,module,exports){
+},{"../config":22,"./flag":30}],29:[function(require,module,exports){
 /*!
  * Chai - addProperty utility
  * Copyright(c) 2012-2014 Jake Luer <jake@alogicalparadox.com>
@@ -17274,7 +17382,7 @@ module.exports = function (ctx, name, getter) {
   });
 };
 
-},{}],28:[function(require,module,exports){
+},{}],30:[function(require,module,exports){
 /*!
  * Chai - flag utility
  * Copyright(c) 2012-2014 Jake Luer <jake@alogicalparadox.com>
@@ -17308,7 +17416,7 @@ module.exports = function (obj, key, value) {
   }
 };
 
-},{}],29:[function(require,module,exports){
+},{}],31:[function(require,module,exports){
 /*!
  * Chai - getActual utility
  * Copyright(c) 2012-2014 Jake Luer <jake@alogicalparadox.com>
@@ -17328,7 +17436,7 @@ module.exports = function (obj, args) {
   return args.length > 4 ? args[4] : obj._obj;
 };
 
-},{}],30:[function(require,module,exports){
+},{}],32:[function(require,module,exports){
 /*!
  * Chai - getEnumerableProperties utility
  * Copyright(c) 2012-2014 Jake Luer <jake@alogicalparadox.com>
@@ -17355,7 +17463,7 @@ module.exports = function getEnumerableProperties(object) {
   return result;
 };
 
-},{}],31:[function(require,module,exports){
+},{}],33:[function(require,module,exports){
 /*!
  * Chai - message composition utility
  * Copyright(c) 2012-2014 Jake Luer <jake@alogicalparadox.com>
@@ -17407,7 +17515,7 @@ module.exports = function (obj, args) {
   return flagMsg ? flagMsg + ': ' + msg : msg;
 };
 
-},{"./flag":28,"./getActual":29,"./inspect":36,"./objDisplay":37}],32:[function(require,module,exports){
+},{"./flag":30,"./getActual":31,"./inspect":38,"./objDisplay":39}],34:[function(require,module,exports){
 /*!
  * Chai - getName utility
  * Copyright(c) 2012-2014 Jake Luer <jake@alogicalparadox.com>
@@ -17429,7 +17537,7 @@ module.exports = function (func) {
   return match && match[1] ? match[1] : "";
 };
 
-},{}],33:[function(require,module,exports){
+},{}],35:[function(require,module,exports){
 /*!
  * Chai - getPathValue utility
  * Copyright(c) 2012-2014 Jake Luer <jake@alogicalparadox.com>
@@ -17533,7 +17641,7 @@ function _getPathValue (parsed, obj) {
   return res;
 };
 
-},{}],34:[function(require,module,exports){
+},{}],36:[function(require,module,exports){
 /*!
  * Chai - getProperties utility
  * Copyright(c) 2012-2014 Jake Luer <jake@alogicalparadox.com>
@@ -17570,7 +17678,7 @@ module.exports = function getProperties(object) {
   return result;
 };
 
-},{}],35:[function(require,module,exports){
+},{}],37:[function(require,module,exports){
 /*!
  * chai
  * Copyright(c) 2011 Jake Luer <jake@alogicalparadox.com>
@@ -17686,7 +17794,7 @@ exports.addChainableMethod = require('./addChainableMethod');
 exports.overwriteChainableMethod = require('./overwriteChainableMethod');
 
 
-},{"./addChainableMethod":25,"./addMethod":26,"./addProperty":27,"./flag":28,"./getActual":29,"./getMessage":31,"./getName":32,"./getPathValue":33,"./inspect":36,"./objDisplay":37,"./overwriteChainableMethod":38,"./overwriteMethod":39,"./overwriteProperty":40,"./test":41,"./transferFlags":42,"./type":43,"deep-eql":45}],36:[function(require,module,exports){
+},{"./addChainableMethod":27,"./addMethod":28,"./addProperty":29,"./flag":30,"./getActual":31,"./getMessage":33,"./getName":34,"./getPathValue":35,"./inspect":38,"./objDisplay":39,"./overwriteChainableMethod":40,"./overwriteMethod":41,"./overwriteProperty":42,"./test":43,"./transferFlags":44,"./type":45,"deep-eql":47}],38:[function(require,module,exports){
 // This is (almost) directly from Node.js utils
 // https://github.com/joyent/node/blob/f8c335d0caf47f16d31413f89aa28eda3878e3aa/lib/util.js
 
@@ -18021,7 +18129,7 @@ function objectToString(o) {
   return Object.prototype.toString.call(o);
 }
 
-},{"./getEnumerableProperties":30,"./getName":32,"./getProperties":34}],37:[function(require,module,exports){
+},{"./getEnumerableProperties":32,"./getName":34,"./getProperties":36}],39:[function(require,module,exports){
 /*!
  * Chai - flag utility
  * Copyright(c) 2012-2014 Jake Luer <jake@alogicalparadox.com>
@@ -18072,7 +18180,7 @@ module.exports = function (obj) {
   }
 };
 
-},{"../config":20,"./inspect":36}],38:[function(require,module,exports){
+},{"../config":22,"./inspect":38}],40:[function(require,module,exports){
 /*!
  * Chai - overwriteChainableMethod utility
  * Copyright(c) 2012-2014 Jake Luer <jake@alogicalparadox.com>
@@ -18127,7 +18235,7 @@ module.exports = function (ctx, name, method, chainingBehavior) {
   };
 };
 
-},{}],39:[function(require,module,exports){
+},{}],41:[function(require,module,exports){
 /*!
  * Chai - overwriteMethod utility
  * Copyright(c) 2012-2014 Jake Luer <jake@alogicalparadox.com>
@@ -18180,7 +18288,7 @@ module.exports = function (ctx, name, method) {
   }
 };
 
-},{}],40:[function(require,module,exports){
+},{}],42:[function(require,module,exports){
 /*!
  * Chai - overwriteProperty utility
  * Copyright(c) 2012-2014 Jake Luer <jake@alogicalparadox.com>
@@ -18236,7 +18344,7 @@ module.exports = function (ctx, name, getter) {
   });
 };
 
-},{}],41:[function(require,module,exports){
+},{}],43:[function(require,module,exports){
 /*!
  * Chai - test utility
  * Copyright(c) 2012-2014 Jake Luer <jake@alogicalparadox.com>
@@ -18264,7 +18372,7 @@ module.exports = function (obj, args) {
   return negate ? !expr : expr;
 };
 
-},{"./flag":28}],42:[function(require,module,exports){
+},{"./flag":30}],44:[function(require,module,exports){
 /*!
  * Chai - transferFlags utility
  * Copyright(c) 2012-2014 Jake Luer <jake@alogicalparadox.com>
@@ -18310,7 +18418,7 @@ module.exports = function (assertion, object, includeAll) {
   }
 };
 
-},{}],43:[function(require,module,exports){
+},{}],45:[function(require,module,exports){
 /*!
  * Chai - type utility
  * Copyright(c) 2012-2014 Jake Luer <jake@alogicalparadox.com>
@@ -18357,7 +18465,7 @@ module.exports = function (obj) {
   return typeof obj;
 };
 
-},{}],44:[function(require,module,exports){
+},{}],46:[function(require,module,exports){
 /*!
  * assertion-error
  * Copyright(c) 2013 Jake Luer <jake@qualiancy.com>
@@ -18469,10 +18577,10 @@ AssertionError.prototype.toJSON = function (stack) {
   return props;
 };
 
-},{}],45:[function(require,module,exports){
+},{}],47:[function(require,module,exports){
 module.exports = require('./lib/eql');
 
-},{"./lib/eql":46}],46:[function(require,module,exports){
+},{"./lib/eql":48}],48:[function(require,module,exports){
 /*!
  * deep-eql
  * Copyright(c) 2013 Jake Luer <jake@alogicalparadox.com>
@@ -18731,10 +18839,10 @@ function objectEqual(a, b, m) {
   return true;
 }
 
-},{"buffer":49,"type-detect":47}],47:[function(require,module,exports){
+},{"buffer":51,"type-detect":49}],49:[function(require,module,exports){
 module.exports = require('./lib/type');
 
-},{"./lib/type":48}],48:[function(require,module,exports){
+},{"./lib/type":50}],50:[function(require,module,exports){
 /*!
  * type-detect
  * Copyright(c) 2013 jake luer <jake@alogicalparadox.com>
@@ -18878,7 +18986,7 @@ Library.prototype.test = function (obj, type) {
   }
 };
 
-},{}],49:[function(require,module,exports){
+},{}],51:[function(require,module,exports){
 /*!
  * The buffer module from node.js, for the browser.
  *
@@ -20214,7 +20322,7 @@ function decodeUtf8Char (str) {
   }
 }
 
-},{"base64-js":50,"ieee754":51,"is-array":52}],50:[function(require,module,exports){
+},{"base64-js":52,"ieee754":53,"is-array":54}],52:[function(require,module,exports){
 var lookup = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/';
 
 ;(function (exports) {
@@ -20340,7 +20448,7 @@ var lookup = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/';
 	exports.fromByteArray = uint8ToBase64
 }(typeof exports === 'undefined' ? (this.base64js = {}) : exports))
 
-},{}],51:[function(require,module,exports){
+},{}],53:[function(require,module,exports){
 exports.read = function(buffer, offset, isLE, mLen, nBytes) {
   var e, m,
       eLen = nBytes * 8 - mLen - 1,
@@ -20426,7 +20534,7 @@ exports.write = function(buffer, value, offset, isLE, mLen, nBytes) {
   buffer[offset + i - d] |= s * 128;
 };
 
-},{}],52:[function(require,module,exports){
+},{}],54:[function(require,module,exports){
 
 /**
  * isArray
@@ -20461,7 +20569,7 @@ module.exports = isArray || function (val) {
   return !! val && '[object Array]' == str.call(val);
 };
 
-},{}],53:[function(require,module,exports){
+},{}],55:[function(require,module,exports){
 // shim for using process in browser
 
 var process = module.exports = {};
@@ -20521,7 +20629,7 @@ process.chdir = function (dir) {
 };
 process.umask = function() { return 0; };
 
-},{}],54:[function(require,module,exports){
+},{}],56:[function(require,module,exports){
 //     Validate.js 0.7.0
 
 //     (c) 2013-2015 Nicklas Ansman, 2013 Wrapp
@@ -21472,7 +21580,7 @@ process.umask = function() { return 0; };
         typeof module !== 'undefined' ? /* istanbul ignore next */ module : null,
         typeof define !== 'undefined' ? /* istanbul ignore next */ define : null);
 
-},{}],55:[function(require,module,exports){
+},{}],57:[function(require,module,exports){
 var miruken  = require('../lib/miruken.js'),
     callback = require('../lib/callback.js'),
     Promise  = require('bluebird'),
@@ -23058,7 +23166,7 @@ describe("InvocationCallbackHandler", function () {
     })
 });
 
-},{"../lib/callback.js":2,"../lib/miruken.js":10,"bluebird":16,"chai":17}],56:[function(require,module,exports){
+},{"../lib/callback.js":2,"../lib/miruken.js":10,"bluebird":18,"chai":19}],58:[function(require,module,exports){
 var miruken = require('../lib/miruken.js'),
     context = require('../lib/context.js')
     chai    = require("chai"),
@@ -23539,7 +23647,7 @@ describe("Contextual", function() {
     });
 });
 
-},{"../lib/context.js":3,"../lib/miruken.js":10,"chai":17}],57:[function(require,module,exports){
+},{"../lib/context.js":3,"../lib/miruken.js":10,"chai":19}],59:[function(require,module,exports){
 var miruken  = require('../lib/miruken.js'),
     context  = require('../lib/context.js')
     error    = require('../lib/error.js'),
@@ -23677,7 +23785,7 @@ describe("CallbackHandler", function () {
     });
 });
 
-},{"../lib/context.js":3,"../lib/error.js":4,"../lib/miruken.js":10,"bluebird":16,"chai":17}],58:[function(require,module,exports){
+},{"../lib/context.js":3,"../lib/error.js":4,"../lib/miruken.js":10,"bluebird":18,"chai":19}],60:[function(require,module,exports){
 var miruken = require('../lib/miruken.js'),
     graph   = require('../lib/graph.js'),
     chai    = require("chai"),
@@ -23986,7 +24094,7 @@ describe("Traversal", function () {
     });
 });
 
-},{"../lib/graph.js":5,"../lib/miruken.js":10,"chai":17}],59:[function(require,module,exports){
+},{"../lib/graph.js":5,"../lib/miruken.js":10,"chai":19}],61:[function(require,module,exports){
 var miruken = require('../lib'),
     chai    = require("chai"),
     expect  = chai.expect;
@@ -24005,7 +24113,7 @@ describe("index", function () {
     });
 });
 
-},{"../lib":6,"chai":17}],60:[function(require,module,exports){
+},{"../lib":6,"chai":19}],62:[function(require,module,exports){
 var miruken  = require('../../lib/miruken.js'),
     config   = require('../../lib/ioc'),
     Promise  = require('bluebird'),
@@ -24302,7 +24410,7 @@ describe("$classes", function () {
         });
 });
 
-},{"../../lib/ioc":8,"../../lib/miruken.js":10,"bluebird":16,"chai":17}],61:[function(require,module,exports){
+},{"../../lib/ioc":8,"../../lib/miruken.js":10,"bluebird":18,"chai":19}],63:[function(require,module,exports){
 var miruken  = require('../../lib/miruken.js'),
     ioc      = require('../../lib/ioc/ioc.js'),
     Promise  = require('bluebird'),
@@ -25550,7 +25658,7 @@ describe("IoContainer", function () {
     });
 });
 
-},{"../../lib/ioc/ioc.js":9,"../../lib/miruken.js":10,"bluebird":16,"chai":17}],62:[function(require,module,exports){
+},{"../../lib/ioc/ioc.js":9,"../../lib/miruken.js":10,"bluebird":18,"chai":19}],64:[function(require,module,exports){
 (function (global){
 var miruken = require('../lib/miruken.js'),
     Promise = require('bluebird'),
@@ -26626,7 +26734,7 @@ describe("Package", function () {
 
 
 }).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
-},{"../lib/miruken.js":10,"bluebird":16,"chai":17}],63:[function(require,module,exports){
+},{"../lib/miruken.js":10,"bluebird":18,"chai":19}],65:[function(require,module,exports){
 var miruken  = require('../../lib/miruken.js'),
     mvc      = require('../../lib/mvc'),
     chai     = require("chai"),
@@ -26839,6 +26947,58 @@ describe("Model", function () {
         });
     });
 
+    describe("#mergeInto", function () {
+        it("should merge simple data", function () {
+            var person = new Person({
+                   firstName: 'Alexi',
+                   lastName:  'Sanchez',
+                   age:       10
+                }),
+                other = new Person;
+            person.mergeInto(other);
+            expect(other.firstName).to.equal(person.firstName);
+            expect(other.lastName).to.equal(person.lastName);
+            expect(other.age).to.equal(person.age);
+        });
+
+        it("should merge nested data", function () {
+            var patient = new Person({
+                   firstName: 'Raheem',
+                   lastName:  'Sterling',
+                   age:       10
+                }),
+                doctor = new Doctor({
+                    firstName: 'Daniel',
+                    lastName:  'Worrel',
+                }),
+                other  = new Doctor({
+                    lastName:  'Zigler',
+                    patient:   {
+                        firstName: 'Brad',
+                    }
+                });;
+            doctor.patient = patient;
+            doctor.mergeInto(other);
+            expect(other.firstName).to.equal(doctor.firstName);
+            expect(other.lastName).to.equal('Zigler');
+            expect(other.patient.firstName).to.equal('Brad');
+            expect(other.patient.lastName).to.equal(patient.lastName);
+            expect(other.patient.age).to.equal(patient.age);            
+        });
+
+        it("should merge contravariantly", function () {
+            var person = new Person({
+                   firstName: 'Client',
+                   lastName:  'Dempsey'
+                }),
+                doctor = new Doctor;
+            person.mergeInto(doctor);
+            expect(doctor.firstName).to.equal(person.firstName);
+            expect(doctor.lastName).to.equal(person.lastName);
+            expect(doctor.age).to.equal(0);
+        });
+    });
+    
     describe("#map", function () {
         it("should map one-to-one", function () {
             var data = {
@@ -27064,7 +27224,7 @@ describe("Controller", function () {
     });
 });
 
-},{"../../lib/miruken.js":10,"../../lib/mvc":11,"chai":17}],64:[function(require,module,exports){
+},{"../../lib/miruken.js":10,"../../lib/mvc":12,"chai":19}],66:[function(require,module,exports){
 var miruken  = require('../../lib/miruken.js'),
     context  = require('../../lib/context.js')
     validate = require('../../lib/validate'),
@@ -27475,7 +27635,7 @@ describe("$validateThat", function () {
 });
 
 
-},{"../../lib/context.js":3,"../../lib/miruken.js":10,"../../lib/validate":13,"bluebird":16,"chai":17}],65:[function(require,module,exports){
+},{"../../lib/context.js":3,"../../lib/miruken.js":10,"../../lib/validate":15,"bluebird":18,"chai":19}],67:[function(require,module,exports){
 var miruken    = require('../../lib/miruken.js'),
     context    = require('../../lib/context.js')
     validate   = require('../../lib/validate'),
@@ -27874,4 +28034,4 @@ describe("ValidateJsCallbackHandler", function () {
     });
 });
 
-},{"../../lib/context.js":3,"../../lib/miruken.js":10,"../../lib/validate":13,"bluebird":16,"chai":17,"validate.js":54}]},{},[55,56,57,58,59,60,61,62,63,64,65]);
+},{"../../lib/context.js":3,"../../lib/miruken.js":10,"../../lib/validate":15,"bluebird":18,"chai":19,"validate.js":56}]},{},[57,58,59,60,61,62,63,64,65,66,67]);

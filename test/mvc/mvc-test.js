@@ -210,6 +210,58 @@ describe("Model", function () {
         });
     });
 
+    describe("#mergeInto", function () {
+        it("should merge simple data", function () {
+            var person = new Person({
+                   firstName: 'Alexi',
+                   lastName:  'Sanchez',
+                   age:       10
+                }),
+                other = new Person;
+            person.mergeInto(other);
+            expect(other.firstName).to.equal(person.firstName);
+            expect(other.lastName).to.equal(person.lastName);
+            expect(other.age).to.equal(person.age);
+        });
+
+        it("should merge nested data", function () {
+            var patient = new Person({
+                   firstName: 'Raheem',
+                   lastName:  'Sterling',
+                   age:       10
+                }),
+                doctor = new Doctor({
+                    firstName: 'Daniel',
+                    lastName:  'Worrel',
+                }),
+                other  = new Doctor({
+                    lastName:  'Zigler',
+                    patient:   {
+                        firstName: 'Brad',
+                    }
+                });;
+            doctor.patient = patient;
+            doctor.mergeInto(other);
+            expect(other.firstName).to.equal(doctor.firstName);
+            expect(other.lastName).to.equal('Zigler');
+            expect(other.patient.firstName).to.equal('Brad');
+            expect(other.patient.lastName).to.equal(patient.lastName);
+            expect(other.patient.age).to.equal(patient.age);            
+        });
+
+        it("should merge contravariantly", function () {
+            var person = new Person({
+                   firstName: 'Client',
+                   lastName:  'Dempsey'
+                }),
+                doctor = new Doctor;
+            person.mergeInto(doctor);
+            expect(doctor.firstName).to.equal(person.firstName);
+            expect(doctor.lastName).to.equal(person.lastName);
+            expect(doctor.age).to.equal(0);
+        });
+    });
+    
     describe("#map", function () {
         it("should map one-to-one", function () {
             var data = {

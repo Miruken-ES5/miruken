@@ -115,9 +115,15 @@ new function () { // closure
                 getController: function () { return _controller; },
                 getControllerContext: function () { return _controller && _controller.context; },
                 present: function (presentation) {
-                    var template    = presentation.template,
+                    var template, templateUrl, controller;
+                    
+                    if ($isString(presentation)) {
+                        templateUrl = presentation;
+                    } else if (presentation ) {
+                        template    = presentation.template,
                         templateUrl = presentation.templateUrl,
                         controller  = presentation.controller;
+                    }
                     
                     if (template) {
                         return replaceContent(template);
@@ -135,8 +141,8 @@ new function () { // closure
                         _controller  = null;
                         
                         if (controller) {
-                            var parts = controller.split(' ');
-                            controller = parts[0];
+                            var parts   = controller.split(' ');
+                            controller  = parts[0];
                             _controller = $controller(controller, { $scope: partialScope });
                             var controllerAs = parts.length > 1 ?  parts[parts.length - 1] : 'ctrl';
                             partialScope[controllerAs] = _controller;
@@ -180,7 +186,7 @@ new function () { // closure
         restrict:   'A',
         priority:   1200,
         transclude: 'element',
-        $inject: ['$templateRequest', '$controller', '$compile', '$q'],
+        $inject:    ['$templateRequest', '$controller', '$compile', '$q'],
         constructor: function ($templateRequest, $controller, $compile, $q) {
             this.extend({
                 link: function (scope, element, attr, ctrl, transclude) {
@@ -281,6 +287,37 @@ new function () { // closure
         }
     });
 
+    CallbackHandler.implement({
+        /**
+         * Schedules the $digest to run after callback is handled.
+         * @method $ngApply
+         * @returns {miruken.callback.CallbackHandler}  $digest aspect.
+         * @for miruken.callback.CallbackHandler
+         */                                                                
+        $ngApply: function() {
+            return this.aspect(null, function(_, composer) {
+                var scope = composer.resolve('$scope');
+                if (scope) {
+                    scope.$apply();
+                }
+            });
+        },
+        /**
+         * Schedules the $digest to run at some time in the future after callback is handled.
+         * @method $ngApplyAsync
+         * @returns {miruken.callback.CallbackHandler}  $digest aspect.
+         * @for miruken.callback.CallbackHandler
+         */                                                                
+        $ngApplyAsync: function() {
+            return this.aspect(null, function(_, composer) {
+                var scope = composer.resolve('$scope');
+                if (scope) {
+                    scope.$applyAsync();
+                }
+            });
+        }        
+    });
+    
     /**
      * @function _instrumentScopes
      * Instruments angular scopes with miruken contexts.
@@ -466,7 +503,7 @@ new function () { // closure
 }
 
 }).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
-},{"../ioc":10,"../miruken":12,"../mvc":13}],3:[function(require,module,exports){
+},{"../ioc":10,"../miruken":12,"../mvc":14}],3:[function(require,module,exports){
 /*
   base2 - copyright 2007-2009, Dean Edwards
   http://code.google.com/p/base2/
@@ -3635,7 +3672,7 @@ new function () { // closure
 }
 
 }).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
-},{"./miruken.js":12,"bluebird":18}],5:[function(require,module,exports){
+},{"./miruken.js":12,"bluebird":20}],5:[function(require,module,exports){
 var miruken = require('./miruken.js');
               require('./graph.js');
               require('./callback.js');
@@ -4438,7 +4475,7 @@ new function() { // closure
 
 }
 
-},{"./callback.js":4,"./miruken.js":12,"bluebird":18}],7:[function(require,module,exports){
+},{"./callback.js":4,"./miruken.js":12,"bluebird":20}],7:[function(require,module,exports){
 var miruken = require('./miruken.js');
 
 new function () { // closure
@@ -4844,7 +4881,7 @@ require('./error.js');
 require('./validate');
 require('./ioc');
 
-},{"./callback.js":4,"./context.js":5,"./error.js":6,"./graph.js":7,"./ioc":10,"./miruken.js":12,"./validate":15}],9:[function(require,module,exports){
+},{"./callback.js":4,"./context.js":5,"./error.js":6,"./graph.js":7,"./ioc":10,"./miruken.js":12,"./validate":17}],9:[function(require,module,exports){
 var miruken = require('../miruken.js'),
     Promise = require('bluebird');
               require('./ioc.js');
@@ -5275,7 +5312,7 @@ new function () { // closure
     eval(this.exports);
 }
 
-},{"../miruken.js":12,"./ioc.js":11,"bluebird":18}],10:[function(require,module,exports){
+},{"../miruken.js":12,"./ioc.js":11,"bluebird":20}],10:[function(require,module,exports){
 module.exports = require('./ioc.js');
 require('./config.js');
 
@@ -6543,7 +6580,7 @@ new function () { // closure
 
 }
 
-},{"../callback.js":4,"../context.js":5,"../miruken.js":12,"../validate":15,"bluebird":18}],12:[function(require,module,exports){
+},{"../callback.js":4,"../context.js":5,"../miruken.js":12,"../validate":17,"bluebird":20}],12:[function(require,module,exports){
 (function (global){
 require('./base2.js');
 
@@ -8634,11 +8671,6 @@ new function () { // closure
 
 }).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
 },{"./base2.js":3}],13:[function(require,module,exports){
-module.exports = require('./mvc.js');
-
-
-
-},{"./mvc.js":14}],14:[function(require,module,exports){
 var miruken = require('../miruken.js');
               require('../callback.js');
               require('../context.js');
@@ -8661,177 +8693,10 @@ new function () { // closure
         version: miruken.version,
         parent:  miruken,
         imports: "miruken,miruken.callback,miruken.context,miruken.validate",
-        exports: "Model,Controller,ViewRegion,PartialRegion,MasterDetail,MasterDetailAware"
+        exports: "Controller,MasterDetail,MasterDetailAware"
     });
 
     eval(this.imports);
-
-    /**
-     * Base class for modelling concepts using one or more 
-     * {{#crossLink "miruken.$properties"}}{{/crossLink}}
-     * <pre>
-     *    var Child = Model.extend({
-     *       $properties: {
-     *           firstName: { validate: { presence: true } },
-     *           lastNane:  { validate: { presence: true } },
-     *           sibling:   { map: Child },
-     *           age:       { validate {
-     *                            numericality: {
-     *                                onlyInteger:       true,
-     *                                lessThanOrEqualTo: 12
-     *                            }
-     *                      }}
-     *       }
-     *    })
-     * </pre>
-     * @class Model
-     * @constructor
-     * @param {Object} [data]  -  json structured data 
-     * @extends Base
-     */
-    var Model = Base.extend(
-        $inferProperties, $validateThat, {
-        constructor: function (data) {
-            this.fromData(data);
-        },
-        /**
-         * Maps json structured data into the model.
-         * @method fromData
-         * @param   {Object}  data  -  json structured data
-         */            
-        fromData: function (data) {
-            if ($isNothing(data)) {
-                return;
-            }
-            var meta        = this.$meta,
-                descriptors = meta && meta.getDescriptor();
-            if (descriptors) {
-                for (var key in descriptors) {
-                    var descriptor = descriptors[key];
-                    if (descriptor && descriptor.root && descriptor.map) {
-                        this[key] = descriptor.map(data); 
-                    }
-                }
-            }
-            for (var key in data) {
-                var descriptor = descriptors && descriptors[key],
-                    mapper     = descriptor && descriptor.map;
-                if (mapper && descriptor.root) {
-                    continue;  // already rooted
-                }
-                var value = data[key];
-                if (key in this) {
-                    this[key] = mapper ? Model.map(value, mapper, descriptor) : value;
-                } else {
-                    var lkey = key.toLowerCase();
-                    for (var k in this) {
-                        if (k.toLowerCase() === lkey) {
-                            this[k] = mapper ? Model.map(value, mapper, descriptor) : value;
-                        }
-                    }
-                }
-            }
-            return this;
-        },
-        /**
-         * Maps the model into json structured data.
-         * @method toData
-         * @param   {Object}  spec    -  filters data to map
-         * @param   {Object}  [data]  -  receives mapped data
-         * @returns {Object} json structured data.
-         */                        
-        toData: function (spec, data) {
-            data = data || {};
-            var meta        = this.$meta,
-                descriptors = meta && meta.getDescriptor();
-            if (descriptors) {
-                var all = $isNothing(spec);
-                for (var key in descriptors) {
-                    if (all || (key in spec)) {
-                        var keyValue   = this[key],
-                            descriptor = descriptors[key],
-                            keySpec    = all ? spec : spec[key];
-                        if (!(all || keySpec)) {
-                            continue;
-                        }
-                        if (descriptor.root) {
-                            if (keyValue && $isFunction(keyValue.toData)) {
-                                keyValue.toData(keySpec, data);
-                            }
-                        } else if (keyValue && $isFunction(keyValue.toData)) {
-                            data[key] = keyValue.toData(keySpec);
-                        } else {
-                            data[key] = keyValue;
-                        }
-                    }
-                }
-            }            
-            return data;
-        }
-    }, {
-        /**
-         * Maps the model value into json using a mapper function.
-         * @method map
-         * @static
-         * @param   {Any}      value      -  model value
-         * @param   {Fnction}  mapper     -  mapping function or class
-         * @param   {Object}   [options]  -  mapping options
-         * @returns {Object} json structured data.
-         */                                
-        map: function (value, mapper, options) {
-            if (value) {
-                return value instanceof Array
-                     ? Array2.map(value, function (elem) {
-                         return Model.map(elem, mapper, options)
-                       })
-                     : mapper(value, options);
-            }
-        },
-        coerce: function () {
-            return this.new.apply(this, arguments);
-        }
-    });
-
-    /**
-     * Protocol for rendering a controller or view on the screen.
-     * @class ViewRegion
-     * @extends StrictProtocol
-     */
-    var ViewRegion = StrictProtocol.extend({
-        /**
-         * Renders a controller or view in the region.
-         * @method present
-         * @param   {Object}  presentation  -  presentation options
-         * @returns {Promise} promise reflecting render.
-         */                                        
-        present: function (presentation) {}
-    });
-
-    /**
-     * Protocol for rendering a controller in an area on the screen.
-     * @class PartialRegion
-     * @extends {miruken.mvc.ViewRegion}
-     */
-    var PartialRegion = ViewRegion.extend({
-        /**
-         * Gets the region's context.
-         * @method getContext
-         * @returns {miruken.context.Context} region context.
-         */
-        getContext: function () {},
-        /**
-         * Gets the region's controller.
-         * @method getController
-         * @return {miruken.mvc.Controller} region controller.
-         */            
-        getController: function () {},
-        /**
-         * Gets the region's controller context.
-         * @method getControllerContext
-         * @return {miruken.context.Context} region controller context.
-         */            
-        getControllerContext: function () {}
-    });
     
     /**
      * Base class for controllers.
@@ -8957,50 +8822,330 @@ new function () { // closure
         masterChanged: function (master) {},
         /**
          * Informs a detail was selected.
-         * @method didSelectDetail
+         * @method detailSelected
          * @param  {Object}  detail  -  selected detail
          * @param  {Object}  master  -  master
          */
-        didSelectDetail: function (detail, master) {},
+        detailSelected: function (detail, master) {},
         /**
          * Informs a detail was unselected.
-         * @method didDeselectDetail
+         * @method detailUnselected
          * @param  {Object} detail  -  unselected detail
          * @param  {Object} master  -  master
          */
-        didDeselectDetail: function (detail, master) {},
+        detailUnselected: function (detail, master) {},
         /**
          * Informs a detail was added to the master.
-         * @method didAddDetail
+         * @method detailAdded
          * @param  {Object} detail  -  added detail
          * @param  {Object} master  -  master
          */
-        didAddDetail: function (detail, master) {},
+        detailAdded: function (detail, master) {},
         /**
          * Informs a detail was updated in the master.
-         * @method didUpdateDetail
+         * @method detailUpdated
          * @param  {Object} detail  -  updated detail
          * @param  {Object} master  -  master
          */
-        didUpdateDetail: function (detail, master) {},
+        detailUpdated: function (detail, master) {},
         /**
          * Informs a detail was removed from the master.
-         * @method didRemoveDetail
+         * @method detailRemoved
          * @param  {Object} detail  -  removed detail
          * @param  {Object} master  -  master
          */
-        didRemoveDetail: function (detail, master) {}
+        detailRemoved: function (detail, master) {}
     });
 
     eval(this.exports);
+    
 }
 
-},{"../callback.js":4,"../context.js":5,"../miruken.js":12,"../validate":15}],15:[function(require,module,exports){
+},{"../callback.js":4,"../context.js":5,"../miruken.js":12,"../validate":17}],14:[function(require,module,exports){
+module.exports = require('./model.js');
+require('./view.js');
+require('./controller.js');
+
+},{"./controller.js":13,"./model.js":15,"./view.js":16}],15:[function(require,module,exports){
+var miruken = require('../miruken.js');
+              require('../callback.js');
+              require('../context.js');
+              require('../validate');
+
+new function () { // closure
+
+    /**
+     * Package providing Model-View-Controller abstractions.<br/>
+     * Requires the {{#crossLinkModule "miruken"}}{{/crossLinkModule}},
+     * {{#crossLinkModule "callback"}}{{/crossLinkModule}},
+     * {{#crossLinkModule "context"}}{{/crossLinkModule}} and 
+     * {{#crossLinkModule "validate"}}{{/crossLinkModule}} modules.
+     * @module miruken
+     * @submodule mvc
+     * @namespace miruken.mvc
+     */
+    var mvc = new base2.Package(this, {
+        name:    "mvc",
+        version: miruken.version,
+        parent:  miruken,
+        imports: "miruken,miruken.validate",
+        exports: "Model"
+    });
+
+    eval(this.imports);
+
+    /**
+     * Base class for modelling concepts using one or more 
+     * {{#crossLink "miruken.$properties"}}{{/crossLink}}
+     * <pre>
+     *    var Child = Model.extend({
+     *       $properties: {
+     *           firstName: { validate: { presence: true } },
+     *           lastNane:  { validate: { presence: true } },
+     *           sibling:   { map: Child },
+     *           age:       { validate {
+     *                            numericality: {
+     *                                onlyInteger:       true,
+     *                                lessThanOrEqualTo: 12
+     *                            }
+     *                      }}
+     *       }
+     *    })
+     * </pre>
+     * @class Model
+     * @constructor
+     * @param {Object} [data]  -  json structured data 
+     * @extends Base
+     */
+    var Model = Base.extend(
+        $inferProperties, $validateThat, {
+        constructor: function (data) {
+            this.fromData(data);
+        },
+        /**
+         * Maps json structured data into the model.
+         * @method fromData
+         * @param   {Object}  data  -  json structured data
+         */            
+        fromData: function (data) {
+            if ($isNothing(data)) {
+                return;
+            }
+            var meta        = this.$meta,
+                descriptors = meta && meta.getDescriptor();
+            if (descriptors) {
+                for (var key in descriptors) {
+                    var descriptor = descriptors[key];
+                    if (descriptor && descriptor.root && descriptor.map) {
+                        this[key] = descriptor.map(data); 
+                    }
+                }
+            }
+            for (var key in data) {
+                var descriptor = descriptors && descriptors[key],
+                    mapper     = descriptor && descriptor.map;
+                if (mapper && descriptor.root) {
+                    continue;  // already rooted
+                }
+                var value = data[key];
+                if (key in this) {
+                    this[key] = mapper ? Model.map(value, mapper, descriptor) : value;
+                } else {
+                    var lkey = key.toLowerCase();
+                    for (var k in this) {
+                        if (k.toLowerCase() === lkey) {
+                            this[k] = mapper ? Model.map(value, mapper, descriptor) : value;
+                        }
+                    }
+                }
+            }
+            return this;
+        },
+        /**
+         * Maps the model into json structured data.
+         * @method toData
+         * @param   {Object}  spec    -  filters data to map
+         * @param   {Object}  [data]  -  receives mapped data
+         * @returns {Object} json structured data.
+         */                        
+        toData: function (spec, data) {
+            data = data || {};
+            var meta        = this.$meta,
+                descriptors = meta && meta.getDescriptor();
+            if (descriptors) {
+                var all = $isNothing(spec);
+                for (var key in descriptors) {
+                    if (all || (key in spec)) {
+                        var keyValue   = this[key],
+                            descriptor = descriptors[key],
+                            keySpec    = all ? spec : spec[key];
+                        if (!(all || keySpec)) {
+                            continue;
+                        }
+                        if (descriptor.root) {
+                            if (keyValue && $isFunction(keyValue.toData)) {
+                                keyValue.toData(keySpec, data);
+                            }
+                        } else if (keyValue && $isFunction(keyValue.toData)) {
+                            data[key] = keyValue.toData(keySpec);
+                        } else {
+                            data[key] = keyValue;
+                        }
+                    }
+                }
+            }            
+            return data;
+        },
+        /**
+         * Merges specified data into another model.
+         * @method mergeInto
+         * @param   {miruken.mvc.Model}  model  -  model to receive data
+         */            
+        mergeInto: function (model) {
+            if (model instanceof this.constructor) {
+                var meta        = this.$meta,
+                    descriptors = meta && meta.getDescriptor();
+                for (var key in descriptors) {
+                    var keyValue = this[key];
+                    if (keyValue !== undefined && this.hasOwnProperty(key)) {
+                        var modelValue = model[key];
+                        if (modelValue === undefined || !model.hasOwnProperty(key)) {
+                            model[key] = keyValue;
+                        } else if ($isFunction(keyValue.mergeInto)) {
+                            keyValue.mergeInto(modelValue);
+                        }
+                    }
+                }
+            }
+        }
+    }, {
+        /**
+         * Maps the model value into json using a mapper function.
+         * @method map
+         * @static
+         * @param   {Any}      value      -  model value
+         * @param   {Fnction}  mapper     -  mapping function or class
+         * @param   {Object}   [options]  -  mapping options
+         * @returns {Object} json structured data.
+         */                                
+        map: function (value, mapper, options) {
+            if (value) {
+                return value instanceof Array
+                     ? Array2.map(value, function (elem) {
+                         return Model.map(elem, mapper, options)
+                       })
+                     : mapper(value, options);
+            }
+        },
+        coerce: function () {
+            return this.new.apply(this, arguments);
+        }
+    });
+
+    eval(this.exports);
+    
+}
+
+},{"../callback.js":4,"../context.js":5,"../miruken.js":12,"../validate":17}],16:[function(require,module,exports){
+var miruken = require('../miruken.js');
+              require('../callback.js');
+              require('../context.js');
+              require('../validate');
+              require('./model.js');
+
+new function () { // closure
+
+    /**
+     * Package providing Model-View-Controller abstractions.<br/>
+     * Requires the {{#crossLinkModule "miruken"}}{{/crossLinkModule}},
+     * {{#crossLinkModule "callback"}}{{/crossLinkModule}},
+     * {{#crossLinkModule "context"}}{{/crossLinkModule}} and 
+     * {{#crossLinkModule "validate"}}{{/crossLinkModule}} modules.
+     * @module miruken
+     * @submodule mvc
+     * @namespace miruken.mvc
+     */
+    var mvc = new base2.Package(this, {
+        name:    "mvc",
+        version: miruken.version,
+        parent:  miruken,
+        imports: "miruken,miruken.callback",
+        exports: "ViewRegion,PartialRegion"
+    });
+
+    eval(this.imports);
+
+    /**
+     * Protocol for rendering a view on the screen.
+     * @class ViewRegion
+     * @extends StrictProtocol
+     */
+    var ViewRegion = StrictProtocol.extend({
+        /**
+         * Renders a controller or view in the region.
+         * @method present
+         * @param   {Object}  presentation  -  presentation options
+         * @returns {Promise} promise reflecting render.
+         */                                        
+        present: function (presentation) {}
+    });
+
+    /**
+     * Protocol for rendering a view in an area on the screen.
+     * @class PartialRegion
+     * @extends {miruken.mvc.ViewRegion}
+     */
+    var PartialRegion = ViewRegion.extend({
+        /**
+         * Gets the region's context.
+         * @method getContext
+         * @returns {miruken.context.Context} region context.
+         */
+        getContext: function () {},
+        /**
+         * Gets the region's controller.
+         * @method getController
+         * @return {miruken.mvc.Controller} region controller.
+         */            
+        getController: function () {},
+        /**
+         * Gets the region's controller context.
+         * @method getControllerContext
+         * @return {miruken.context.Context} region controller context.
+         */            
+        getControllerContext: function () {}
+    });
+
+    CallbackHandler.implement({
+        /**
+         * Schedules the $digest to run after callback is handled.
+         * @method $ngApply
+         * @returns {miruken.callback.CallbackHandler}  $digest aspect.
+         * @for miruken.callback.CallbackHandler
+         */                                                                
+        modal: function() {
+            return this.decorate({
+                handleCallback: function (callback, greedy, composer) {
+                    if (callback instanceof InvocationSemantics) {
+                        semantics.mergeInto(callback);
+                        return true;
+                    }
+                    return this.base(callback, greedy, composer);
+                }
+            });
+        }
+    });
+    
+    eval(this.exports);
+    
+}
+
+},{"../callback.js":4,"../context.js":5,"../miruken.js":12,"../validate":17,"./model.js":15}],17:[function(require,module,exports){
 module.exports = require('./validate.js');
 require('./validatejs.js');
 
 
-},{"./validate.js":16,"./validatejs.js":17}],16:[function(require,module,exports){
+},{"./validate.js":18,"./validatejs.js":19}],18:[function(require,module,exports){
 var miruken = require('../miruken.js'),
     Promise = require('bluebird');
               require('../callback.js');
@@ -9397,7 +9542,7 @@ new function () { // closure
 
 }
 
-},{"../callback.js":4,"../miruken.js":12,"bluebird":18}],17:[function(require,module,exports){
+},{"../callback.js":4,"../miruken.js":12,"bluebird":20}],19:[function(require,module,exports){
 var miruken    = require('../miruken.js'),
     validate   = require('./validate.js'),
     validatejs = require("validate.js"),
@@ -9650,7 +9795,7 @@ new function () { // closure
 
 }
 
-},{"../callback.js":4,"../miruken.js":12,"./validate.js":16,"bluebird":18,"validate.js":20}],18:[function(require,module,exports){
+},{"../callback.js":4,"../miruken.js":12,"./validate.js":18,"bluebird":20,"validate.js":22}],20:[function(require,module,exports){
 (function (process,global){
 /* @preserve
  * The MIT License (MIT)
@@ -14748,7 +14893,7 @@ function isUndefined(arg) {
 },{}]},{},[4])(4)
 });                    ;if (typeof window !== 'undefined' && window !== null) {                               window.P = window.Promise;                                                     } else if (typeof self !== 'undefined' && self !== null) {                             self.P = self.Promise;                                                         }
 }).call(this,require('_process'),typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
-},{"_process":19}],19:[function(require,module,exports){
+},{"_process":21}],21:[function(require,module,exports){
 // shim for using process in browser
 
 var process = module.exports = {};
@@ -14808,7 +14953,7 @@ process.chdir = function (dir) {
 };
 process.umask = function() { return 0; };
 
-},{}],20:[function(require,module,exports){
+},{}],22:[function(require,module,exports){
 //     Validate.js 0.7.0
 
 //     (c) 2013-2015 Nicklas Ansman, 2013 Wrapp
@@ -15759,4 +15904,4 @@ process.umask = function() { return 0; };
         typeof module !== 'undefined' ? /* istanbul ignore next */ module : null,
         typeof define !== 'undefined' ? /* istanbul ignore next */ define : null);
 
-},{}]},{},[8,13,1]);
+},{}]},{},[8,14,1]);

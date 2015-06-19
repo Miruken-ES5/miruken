@@ -10,12 +10,8 @@
 
     var PartialTwoController = Controller.extend({
         constructor: function () {
-            var initialView = {
-                templateUrl:  'app/regions/partialThree.html',
-                controller:   'PartialThreeController as vm'
-            };            
             setTimeout(function () {
-                ViewRegion(this.context).present(initialView);
+                ViewRegion(this.context).present('app/regions/partialThree.html');
             }.bind(this), 2000);
         },
         message: "Howdy!",
