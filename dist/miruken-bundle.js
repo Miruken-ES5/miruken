@@ -6756,7 +6756,8 @@ new function () { // closure
         }
     });
 
-    var baseExtend  = Base.extend;
+    var baseExtend   = Base.extend,
+        noDefinition = Object.freeze({}); 
     Base.extend = Abstract.extend = function () {
         return (function (base, args) {
             var protocols, mixins, macros, 
@@ -6785,8 +6786,8 @@ new function () { // closure
                 }
                 constraints.shift();
             }
-            var instanceDef = args.shift(),
-                staticDef   = args.shift(),
+            var instanceDef = args.shift() || noDefinition,
+                staticDef   = args.shift() || noDefinition,
                 subclass    = baseExtend.call(base, instanceDef, staticDef),
                 metadata    = new ClassMeta(base, subclass, protocols, macros);
             Object.defineProperty(subclass, META, {

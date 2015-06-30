@@ -218,7 +218,7 @@ describe("Model", function () {
                    age:       10
                 }),
                 other = new Person;
-            person.mergeInto(other);
+            expect(person.mergeInto(other)).to.be.true;
             expect(other.firstName).to.equal(person.firstName);
             expect(other.lastName).to.equal(person.lastName);
             expect(other.age).to.equal(person.age);
@@ -241,7 +241,7 @@ describe("Model", function () {
                     }
                 });;
             doctor.patient = patient;
-            doctor.mergeInto(other);
+            expect(doctor.mergeInto(other)).to.be.true;
             expect(other.firstName).to.equal(doctor.firstName);
             expect(other.lastName).to.equal('Zigler');
             expect(other.patient.firstName).to.equal('Brad');
@@ -255,10 +255,19 @@ describe("Model", function () {
                    lastName:  'Dempsey'
                 }),
                 doctor = new Doctor;
-            person.mergeInto(doctor);
+            expect(person.mergeInto(doctor)).to.be.true;
             expect(doctor.firstName).to.equal(person.firstName);
             expect(doctor.lastName).to.equal(person.lastName);
             expect(doctor.age).to.equal(0);
+        });
+
+        it("should not merge unrelated models", function () {
+            var person = new Person({
+                   firstName: 'Eduardo',
+                   lastName:  'Vargas'
+                }),
+                controller = new PersonController;
+            expect(person.mergeInto(controller)).to.be.false;
         });
     });
     
@@ -483,6 +492,15 @@ describe("Controller", function () {
                     value:   0
                 }]);
             });
+        });
+    });
+
+    describe("CallbackHandler", function () {
+        describe("#modal", function () {
+            it("should define modal policy", function () {
+                var modal = context.modal();
+                expect(modal.handle(new ModalPolicy)).to.be.true;
+            });            
         });
     });
 });

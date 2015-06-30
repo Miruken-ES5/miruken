@@ -7261,7 +7261,8 @@ new function () { // closure
         }
     });
 
-    var baseExtend  = Base.extend;
+    var baseExtend   = Base.extend,
+        noDefinition = Object.freeze({}); 
     Base.extend = Abstract.extend = function () {
         return (function (base, args) {
             var protocols, mixins, macros, 
@@ -7290,8 +7291,8 @@ new function () { // closure
                 }
                 constraints.shift();
             }
-            var instanceDef = args.shift(),
-                staticDef   = args.shift(),
+            var instanceDef = args.shift() || noDefinition,
+                staticDef   = args.shift() || noDefinition,
                 subclass    = baseExtend.call(base, instanceDef, staticDef),
                 metadata    = new ClassMeta(base, subclass, protocols, macros);
             Object.defineProperty(subclass, META, {
@@ -9070,7 +9071,7 @@ new function () { // closure
         version: miruken.version,
         parent:  miruken,
         imports: "miruken,miruken.callback",
-        exports: "ViewRegion,PartialRegion"
+        exports: "ViewRegion,PartialRegion,PresentationPolicy,ModalPolicy"
     });
 
     eval(this.imports);
@@ -9116,18 +9117,31 @@ new function () { // closure
         getControllerContext: function () {}
     });
 
+    /**
+     * Base class for representing presentation policies.
+     * @class PresentationPolicy
+     * @extends miruken.mvc.Model
+     */
+    var PresentationPolicy = Model.extend();
+
+    /**
+     * Policy for presenting modally. 
+     * @class ModalPolicy
+     * @extends miruken.mvc.PresentationPolicy
+     */
+    var ModalPolicy = PresentationPolicy.extend();
+    
     CallbackHandler.implement({
         /**
-         * Schedules the $digest to run after callback is handled.
-         * @method $ngApply
-         * @returns {miruken.callback.CallbackHandler}  $digest aspect.
+         * Configures modal presentation options.
+         * @method modal
+         * @returns {miruken.callback.CallbackHandler} modal options.
          * @for miruken.callback.CallbackHandler
          */                                                                
         modal: function() {
             return this.decorate({
                 handleCallback: function (callback, greedy, composer) {
-                    if (callback instanceof InvocationSemantics) {
-                        semantics.mergeInto(callback);
+                    if (callback instanceof ModalPolicy) {
                         return true;
                     }
                     return this.base(callback, greedy, composer);
