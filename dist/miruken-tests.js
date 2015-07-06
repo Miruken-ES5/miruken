@@ -8496,23 +8496,26 @@ new function () { // closure
          * Merges specified data into another model.
          * @method mergeInto
          * @param   {miruken.mvc.Model}  model  -  model to receive data
+         * @returns {boolean}  true if model could be merged into. 
          */            
         mergeInto: function (model) {
-            if (model instanceof this.constructor) {
-                var meta        = this.$meta,
-                    descriptors = meta && meta.getDescriptor();
-                for (var key in descriptors) {
-                    var keyValue = this[key];
-                    if (keyValue !== undefined && this.hasOwnProperty(key)) {
-                        var modelValue = model[key];
-                        if (modelValue === undefined || !model.hasOwnProperty(key)) {
-                            model[key] = keyValue;
-                        } else if ($isFunction(keyValue.mergeInto)) {
-                            keyValue.mergeInto(modelValue);
-                        }
+            if (!(model instanceof this.constructor)) {
+                return false;
+            }
+            var meta        = this.$meta,
+                descriptors = meta && meta.getDescriptor();
+            for (var key in descriptors) {
+                var keyValue = this[key];
+                if (keyValue !== undefined && this.hasOwnProperty(key)) {
+                    var modelValue = model[key];
+                    if (modelValue === undefined || !model.hasOwnProperty(key)) {
+                        model[key] = keyValue;
+                    } else if ($isFunction(keyValue.mergeInto)) {
+                        keyValue.mergeInto(modelValue);
                     }
                 }
             }
+            return true;
         }
     }, {
         /**
@@ -8566,7 +8569,7 @@ new function () { // closure
         version: miruken.version,
         parent:  miruken,
         imports: "miruken,miruken.callback",
-        exports: "ViewRegion,PartialRegion,PresentationPolicy,ModalPolicy"
+        exports: "ViewRegion,PartialRegion,PresentationPolicy,ModalPolicy,ModalProviding"
     });
 
     eval(this.imports);
@@ -8620,28 +8623,55 @@ new function () { // closure
     var PresentationPolicy = Model.extend();
 
     /**
-     * Policy for presenting modally. 
+     * Policy for describing modal presentation.
      * @class ModalPolicy
      * @extends miruken.mvc.PresentationPolicy
      */
-    var ModalPolicy = PresentationPolicy.extend();
+    var ModalPolicy = PresentationPolicy.extend({
+        $properties: {
+            title: ''
+        }
+    });
+
+    /**
+     * Protocol for interacting with a modal provider.
+     * @class ModalProviding
+     * @extends StrictProtocol
+     */
+    var ModalProviding = StrictProtocol.extend({
+        /**
+         * Presents the content in a modal dialog.
+         * @method showModal
+         * @param  {Element}                  content  -  modal content
+         * @param  {miruken.mvc.ModalPolicy}  policy   -  modal policy
+         */
+        showModal: function (content, policy) {}
+    });
     
     CallbackHandler.implement({
         /**
          * Configures modal presentation options.
          * @method modal
-         * @returns {miruken.callback.CallbackHandler} modal options.
+         * @param {Object}  options  -  modal options
+         * @returns {miruken.callback.CallbackHandler} modal handler.
          * @for miruken.callback.CallbackHandler
          */                                                                
-        modal: function() {
-            return this.decorate({
+        modal: function (options) {
+            return this.presenting(new ModalPolicy(options));
+        },
+        /**
+         * Applies the presentation policy to the handler.
+         * @method presenting
+         * @returns {miruken.callback.CallbackHandler} presenting handler.
+         * @for miruken.callback.CallbackHandler
+         */
+        presenting: function (policy) {
+            return policy ? this.decorate({
                 handleCallback: function (callback, greedy, composer) {
-                    if (callback instanceof ModalPolicy) {
-                        return true;
-                    }
-                    return this.base(callback, greedy, composer);
+                    return policy.mergeInto(callback)
+                        || this.base(callback, greedy, composer);
                 }
-            });
+            }) : this;
         }
     });
     
@@ -26969,7 +26999,7 @@ describe("Model", function () {
                    age:       10
                 }),
                 other = new Person;
-            person.mergeInto(other);
+            expect(person.mergeInto(other)).to.be.true;
             expect(other.firstName).to.equal(person.firstName);
             expect(other.lastName).to.equal(person.lastName);
             expect(other.age).to.equal(person.age);
@@ -26992,7 +27022,7 @@ describe("Model", function () {
                     }
                 });;
             doctor.patient = patient;
-            doctor.mergeInto(other);
+            expect(doctor.mergeInto(other)).to.be.true;
             expect(other.firstName).to.equal(doctor.firstName);
             expect(other.lastName).to.equal('Zigler');
             expect(other.patient.firstName).to.equal('Brad');
@@ -27006,10 +27036,19 @@ describe("Model", function () {
                    lastName:  'Dempsey'
                 }),
                 doctor = new Doctor;
-            person.mergeInto(doctor);
+            expect(person.mergeInto(doctor)).to.be.true;
             expect(doctor.firstName).to.equal(person.firstName);
             expect(doctor.lastName).to.equal(person.lastName);
             expect(doctor.age).to.equal(0);
+        });
+
+        it("should not merge unrelated models", function () {
+            var person = new Person({
+                   firstName: 'Eduardo',
+                   lastName:  'Vargas'
+                }),
+                controller = new PersonController;
+            expect(person.mergeInto(controller)).to.be.false;
         });
     });
     
@@ -27233,6 +27272,22 @@ describe("Controller", function () {
                     message: "Age must be greater than 11",
                     value:   0
                 }]);
+            });
+        });
+    });
+
+    describe("CallbackHandler", function () {
+        describe("#modal", function () {
+            it("should define modal policy", function () {
+                var modal = context.modal();
+                expect(modal.handle(new ModalPolicy)).to.be.true;
+            });
+
+            it("should specify modal title", function () {
+                var modal   = context.modal({title: 'Hello'}),
+                    options = new ModalPolicy;
+                expect(modal.handle(options)).to.be.true;
+                expect(options.title).to.equal('Hello');
             });
         });
     });

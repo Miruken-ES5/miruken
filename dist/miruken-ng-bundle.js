@@ -160,12 +160,19 @@ new function () { // closure
                             });
                         }
 
-                        var oldContent = content;
+                        var oldContent  = content,
+                            modalPolicy = new ModalPolicy;
+                        
                         content = $compile(template)(partialScope);
-                        if (oldContent) {
-                            oldContent.remove();
+
+                        if (scope.context.handle(modalPolicy)) {
+                            ModalProviding(scope.context).showModal(content, modalPolicy);
+                        } else {
+                            if (oldContent) {
+                                oldContent.remove();
+                            }
+                            container.after(content);
                         }
-                        container.after(content);
                         oldScope.$destroy();
                         
                         return $q.when(this.controllerContext);               
@@ -9001,23 +9008,26 @@ new function () { // closure
          * Merges specified data into another model.
          * @method mergeInto
          * @param   {miruken.mvc.Model}  model  -  model to receive data
+         * @returns {boolean}  true if model could be merged into. 
          */            
         mergeInto: function (model) {
-            if (model instanceof this.constructor) {
-                var meta        = this.$meta,
-                    descriptors = meta && meta.getDescriptor();
-                for (var key in descriptors) {
-                    var keyValue = this[key];
-                    if (keyValue !== undefined && this.hasOwnProperty(key)) {
-                        var modelValue = model[key];
-                        if (modelValue === undefined || !model.hasOwnProperty(key)) {
-                            model[key] = keyValue;
-                        } else if ($isFunction(keyValue.mergeInto)) {
-                            keyValue.mergeInto(modelValue);
-                        }
+            if (!(model instanceof this.constructor)) {
+                return false;
+            }
+            var meta        = this.$meta,
+                descriptors = meta && meta.getDescriptor();
+            for (var key in descriptors) {
+                var keyValue = this[key];
+                if (keyValue !== undefined && this.hasOwnProperty(key)) {
+                    var modelValue = model[key];
+                    if (modelValue === undefined || !model.hasOwnProperty(key)) {
+                        model[key] = keyValue;
+                    } else if ($isFunction(keyValue.mergeInto)) {
+                        keyValue.mergeInto(modelValue);
                     }
                 }
             }
+            return true;
         }
     }, {
         /**
@@ -9071,7 +9081,7 @@ new function () { // closure
         version: miruken.version,
         parent:  miruken,
         imports: "miruken,miruken.callback",
-        exports: "ViewRegion,PartialRegion,PresentationPolicy,ModalPolicy"
+        exports: "ViewRegion,PartialRegion,PresentationPolicy,ModalPolicy,ModalProviding"
     });
 
     eval(this.imports);
@@ -9125,28 +9135,55 @@ new function () { // closure
     var PresentationPolicy = Model.extend();
 
     /**
-     * Policy for presenting modally. 
+     * Policy for describing modal presentation.
      * @class ModalPolicy
      * @extends miruken.mvc.PresentationPolicy
      */
-    var ModalPolicy = PresentationPolicy.extend();
+    var ModalPolicy = PresentationPolicy.extend({
+        $properties: {
+            title: ''
+        }
+    });
+
+    /**
+     * Protocol for interacting with a modal provider.
+     * @class ModalProviding
+     * @extends StrictProtocol
+     */
+    var ModalProviding = StrictProtocol.extend({
+        /**
+         * Presents the content in a modal dialog.
+         * @method showModal
+         * @param  {Element}                  content  -  modal content
+         * @param  {miruken.mvc.ModalPolicy}  policy   -  modal policy
+         */
+        showModal: function (content, policy) {}
+    });
     
     CallbackHandler.implement({
         /**
          * Configures modal presentation options.
          * @method modal
-         * @returns {miruken.callback.CallbackHandler} modal options.
+         * @param {Object}  options  -  modal options
+         * @returns {miruken.callback.CallbackHandler} modal handler.
          * @for miruken.callback.CallbackHandler
          */                                                                
-        modal: function() {
-            return this.decorate({
+        modal: function (options) {
+            return this.presenting(new ModalPolicy(options));
+        },
+        /**
+         * Applies the presentation policy to the handler.
+         * @method presenting
+         * @returns {miruken.callback.CallbackHandler} presenting handler.
+         * @for miruken.callback.CallbackHandler
+         */
+        presenting: function (policy) {
+            return policy ? this.decorate({
                 handleCallback: function (callback, greedy, composer) {
-                    if (callback instanceof ModalPolicy) {
-                        return true;
-                    }
-                    return this.base(callback, greedy, composer);
+                    return policy.mergeInto(callback)
+                        || this.base(callback, greedy, composer);
                 }
-            });
+            }) : this;
         }
     });
     

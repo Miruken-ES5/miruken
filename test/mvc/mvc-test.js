@@ -500,7 +500,14 @@ describe("Controller", function () {
             it("should define modal policy", function () {
                 var modal = context.modal();
                 expect(modal.handle(new ModalPolicy)).to.be.true;
-            });            
+            });
+
+            it("should specify modal title", function () {
+                var modal   = context.modal({title: 'Hello'}),
+                    options = new ModalPolicy;
+                expect(modal.handle(options)).to.be.true;
+                expect(options.title).to.equal('Hello');
+            });
         });
     });
 });
