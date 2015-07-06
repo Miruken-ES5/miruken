@@ -8,8 +8,8 @@ new function(){
 	eval(this.imports);
 
 	var ModalsController = Controller.extend({
-		$properties:{
-			message: 'Hello, Modal!'
+		showModal: function(){
+			alert('Show modal here');
 		}
 	});
 
