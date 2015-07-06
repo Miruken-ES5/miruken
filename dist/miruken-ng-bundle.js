@@ -115,7 +115,8 @@ new function () { // closure
                 getController: function () { return _controller; },
                 getControllerContext: function () { return _controller && _controller.context; },
                 present: function (presentation) {
-                    var template, templateUrl, controller;
+                    var template, templateUrl, controller,
+                        composer = $composer;
                     
                     if ($isString(presentation)) {
                         templateUrl = presentation;
@@ -161,21 +162,23 @@ new function () { // closure
                         }
 
                         var oldContent  = content,
-                            modalPolicy = new ModalPolicy;
+                            modalPolicy = new ModalPolicy,
+                            promise;
                         
                         content = $compile(template)(partialScope);
 
-                        if (scope.context.handle(modalPolicy)) {
-                            ModalProviding(scope.context).showModal(content, modalPolicy);
+                        if (composer.handle(modalPolicy, true)) {
+                            promise = ModalProviding(composer).showModal(container, content, modalPolicy);
                         } else {
                             if (oldContent) {
                                 oldContent.remove();
                             }
                             container.after(content);
+                            promise = $q.when(this.controllerContext);
                         }
                         oldScope.$destroy();
                         
-                        return $q.when(this.controllerContext);               
+                        return promise;        
                     }
                 }
             });
@@ -510,7 +513,7 @@ new function () { // closure
 }
 
 }).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
-},{"../ioc":10,"../miruken":12,"../mvc":14}],3:[function(require,module,exports){
+},{"../ioc":10,"../miruken":12,"../mvc":15}],3:[function(require,module,exports){
 /*
   base2 - copyright 2007-2009, Dean Edwards
   http://code.google.com/p/base2/
@@ -3679,7 +3682,7 @@ new function () { // closure
 }
 
 }).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
-},{"./miruken.js":12,"bluebird":20}],5:[function(require,module,exports){
+},{"./miruken.js":12,"bluebird":21}],5:[function(require,module,exports){
 var miruken = require('./miruken.js');
               require('./graph.js');
               require('./callback.js');
@@ -4482,7 +4485,7 @@ new function() { // closure
 
 }
 
-},{"./callback.js":4,"./miruken.js":12,"bluebird":20}],7:[function(require,module,exports){
+},{"./callback.js":4,"./miruken.js":12,"bluebird":21}],7:[function(require,module,exports){
 var miruken = require('./miruken.js');
 
 new function () { // closure
@@ -4888,7 +4891,7 @@ require('./error.js');
 require('./validate');
 require('./ioc');
 
-},{"./callback.js":4,"./context.js":5,"./error.js":6,"./graph.js":7,"./ioc":10,"./miruken.js":12,"./validate":17}],9:[function(require,module,exports){
+},{"./callback.js":4,"./context.js":5,"./error.js":6,"./graph.js":7,"./ioc":10,"./miruken.js":12,"./validate":18}],9:[function(require,module,exports){
 var miruken = require('../miruken.js'),
     Promise = require('bluebird');
               require('./ioc.js');
@@ -5319,7 +5322,7 @@ new function () { // closure
     eval(this.exports);
 }
 
-},{"../miruken.js":12,"./ioc.js":11,"bluebird":20}],10:[function(require,module,exports){
+},{"../miruken.js":12,"./ioc.js":11,"bluebird":21}],10:[function(require,module,exports){
 module.exports = require('./ioc.js');
 require('./config.js');
 
@@ -6587,7 +6590,7 @@ new function () { // closure
 
 }
 
-},{"../callback.js":4,"../context.js":5,"../miruken.js":12,"../validate":17,"bluebird":20}],12:[function(require,module,exports){
+},{"../callback.js":4,"../context.js":5,"../miruken.js":12,"../validate":18,"bluebird":21}],12:[function(require,module,exports){
 (function (global){
 require('./base2.js');
 
@@ -8680,6 +8683,32 @@ new function () { // closure
 }).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
 },{"./base2.js":3}],13:[function(require,module,exports){
 var miruken = require('../miruken.js');
+              require('./view.js');
+
+new function () { // closure
+
+    var mvc = new base2.Package(this, {
+        name:    "mvc",
+        version: miruken.version,
+        parent:  miruken,
+        imports: "miruken.callback",
+        exports: "BootstrapModalProvider"
+    });
+
+    eval(this.imports);
+
+    var BootstrapModalProvider = Base.extend(ModalProviding, {
+        showModal: function (container, content, policy) {
+            alert(content.html());
+        }
+    });
+    
+    eval(this.exports);
+    
+}
+
+},{"../miruken.js":12,"./view.js":17}],14:[function(require,module,exports){
+var miruken = require('../miruken.js');
               require('../callback.js');
               require('../context.js');
               require('../validate');
@@ -8869,12 +8898,13 @@ new function () { // closure
     
 }
 
-},{"../callback.js":4,"../context.js":5,"../miruken.js":12,"../validate":17}],14:[function(require,module,exports){
+},{"../callback.js":4,"../context.js":5,"../miruken.js":12,"../validate":18}],15:[function(require,module,exports){
 module.exports = require('./model.js');
 require('./view.js');
 require('./controller.js');
+require('./bootstrapModal.js');
 
-},{"./controller.js":13,"./model.js":15,"./view.js":16}],15:[function(require,module,exports){
+},{"./bootstrapModal.js":13,"./controller.js":14,"./model.js":16,"./view.js":17}],16:[function(require,module,exports){
 var miruken = require('../miruken.js');
               require('../callback.js');
               require('../context.js');
@@ -9057,7 +9087,7 @@ new function () { // closure
     
 }
 
-},{"../callback.js":4,"../context.js":5,"../miruken.js":12,"../validate":17}],16:[function(require,module,exports){
+},{"../callback.js":4,"../context.js":5,"../miruken.js":12,"../validate":18}],17:[function(require,module,exports){
 var miruken = require('../miruken.js');
               require('../callback.js');
               require('../context.js');
@@ -9154,10 +9184,12 @@ new function () { // closure
         /**
          * Presents the content in a modal dialog.
          * @method showModal
-         * @param  {Element}                  content  -  modal content
-         * @param  {miruken.mvc.ModalPolicy}  policy   -  modal policy
+         * @param   {Element}                  container  -  element modal bound to
+         * @param   {Element}                  content    -  modal content element
+         * @param   {miruken.mvc.ModalPolicy}  policy     -  modal policy options
+         * @returns {Promise} promise representing the modal result.
          */
-        showModal: function (content, policy) {}
+        showModal: function (container, content, policy) {}
     });
     
     CallbackHandler.implement({
@@ -9179,10 +9211,9 @@ new function () { // closure
          */
         presenting: function (policy) {
             return policy ? this.decorate({
-                handleCallback: function (callback, greedy, composer) {
-                    return policy.mergeInto(callback)
-                        || this.base(callback, greedy, composer);
-                }
+                $handle: [PresentationPolicy, function (presenting) {
+                    return policy.mergeInto(presenting);
+                }]
             }) : this;
         }
     });
@@ -9191,12 +9222,12 @@ new function () { // closure
     
 }
 
-},{"../callback.js":4,"../context.js":5,"../miruken.js":12,"../validate":17,"./model.js":15}],17:[function(require,module,exports){
+},{"../callback.js":4,"../context.js":5,"../miruken.js":12,"../validate":18,"./model.js":16}],18:[function(require,module,exports){
 module.exports = require('./validate.js');
 require('./validatejs.js');
 
 
-},{"./validate.js":18,"./validatejs.js":19}],18:[function(require,module,exports){
+},{"./validate.js":19,"./validatejs.js":20}],19:[function(require,module,exports){
 var miruken = require('../miruken.js'),
     Promise = require('bluebird');
               require('../callback.js');
@@ -9593,7 +9624,7 @@ new function () { // closure
 
 }
 
-},{"../callback.js":4,"../miruken.js":12,"bluebird":20}],19:[function(require,module,exports){
+},{"../callback.js":4,"../miruken.js":12,"bluebird":21}],20:[function(require,module,exports){
 var miruken    = require('../miruken.js'),
     validate   = require('./validate.js'),
     validatejs = require("validate.js"),
@@ -9846,7 +9877,7 @@ new function () { // closure
 
 }
 
-},{"../callback.js":4,"../miruken.js":12,"./validate.js":18,"bluebird":20,"validate.js":22}],20:[function(require,module,exports){
+},{"../callback.js":4,"../miruken.js":12,"./validate.js":19,"bluebird":21,"validate.js":23}],21:[function(require,module,exports){
 (function (process,global){
 /* @preserve
  * The MIT License (MIT)
@@ -14944,7 +14975,7 @@ function isUndefined(arg) {
 },{}]},{},[4])(4)
 });                    ;if (typeof window !== 'undefined' && window !== null) {                               window.P = window.Promise;                                                     } else if (typeof self !== 'undefined' && self !== null) {                             self.P = self.Promise;                                                         }
 }).call(this,require('_process'),typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
-},{"_process":21}],21:[function(require,module,exports){
+},{"_process":22}],22:[function(require,module,exports){
 // shim for using process in browser
 
 var process = module.exports = {};
@@ -15004,7 +15035,7 @@ process.chdir = function (dir) {
 };
 process.umask = function() { return 0; };
 
-},{}],22:[function(require,module,exports){
+},{}],23:[function(require,module,exports){
 //     Validate.js 0.7.0
 
 //     (c) 2013-2015 Nicklas Ansman, 2013 Wrapp
@@ -15955,4 +15986,4 @@ process.umask = function() { return 0; };
         typeof module !== 'undefined' ? /* istanbul ignore next */ module : null,
         typeof define !== 'undefined' ? /* istanbul ignore next */ define : null);
 
-},{}]},{},[8,14,1]);
+},{}]},{},[8,15,1]);

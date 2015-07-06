@@ -1,6 +1,6 @@
 new function(){
 	var sampleApp = new base2.Package(this, {
-		name: 'sampleApp',
+		name:    'sampleApp',
 		imports: 'miruken.mvc',
 		exports: 'ModalsController'
 	});
@@ -8,8 +8,17 @@ new function(){
 	eval(this.imports);
 
 	var ModalsController = Controller.extend({
-		showModal: function(){
-			alert('Show modal here');
+        $inject: ['$rootContext'],
+        constructor: function ($rootContext) {
+            $rootContext.addHandlers(new BootstrapModalProvider);
+        },
+		showModal: function () {
+            var viewModal = {
+                templateUrl:  'app/modals/modalContent.html',
+                controller:   'ModalContentController as vm'
+            };
+            ViewRegion(this.content.context.modal({title: 'Hooray!'}))
+                       .present(viewModal);
 		}
 	});
 
