@@ -8,19 +8,15 @@ new function(){
 	eval(this.imports);
 
 	var ModalsController = Controller.extend({
-        $inject: ['$rootContext'],
-        constructor: function ($rootContext) {
-            $rootContext.addHandlers(new BootstrapModalProvider);
-        },
 		showModal: function () {
             var viewModal = {
-                templateUrl:  'app/modals/modalContent.html',
-                controller:   'ModalContentController as vm'
+                templateUrl: 'app/modals/modalContent.html',
+                controller:  'ModalContentController as vm'
             };
-            ViewRegion(this.content.context.modal({title: 'Hooray!'}))
-                       .present(viewModal);
+            ViewRegion(this.context.modal({title: 'Hooray!'})).present(viewModal);
 		}
 	});
 
 	eval(this.exports);
+    
 }

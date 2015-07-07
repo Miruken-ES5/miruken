@@ -44,9 +44,17 @@ new function () { // closure
                              new miruken.validate.ValidationCallbackHandler,
                              new miruken.validate.ValidateJsCallbackHandler,
                              new miruken.error.ErrorCallbackHandler);
-    
-    angular.module('ng').run(['$rootScope', '$injector', _instrumentScopes]);
 
+    angular.module('ng').run(['$rootElement', '$rootScope', '$injector',
+                              '$templateRequest', '$controller', '$compile', '$q',
+        function ($rootElement, $rootScope, $injector, $templateRequest, $controller, $compile, $q) {
+            _instrumentScopes($rootScope, $injector);
+            var rootRegion = new PartialView($rootElement, null, $rootScope, null,
+                                             $templateRequest, $controller, $compile, $q);
+            $rootContext.addHandlers(rootRegion, new BootstrapModalProvider);
+            
+    }]);
+    
     /**
      * Marks a class to be called during the run phase of an Angular module setup.<br/>
      * See [Angular Module Loading & Dependencies](https://docs.angularjs.org/guide/module)
@@ -120,7 +128,7 @@ new function () { // closure
                     
                     if ($isString(presentation)) {
                         templateUrl = presentation;
-                    } else if (presentation ) {
+                    } else if (presentation) {
                         template    = presentation.template,
                         templateUrl = presentation.templateUrl,
                         controller  = presentation.controller;
@@ -147,6 +155,7 @@ new function () { // closure
                             _controller = $controller(controller, { $scope: partialScope });
                             var controllerAs = parts.length > 1 ?  parts[parts.length - 1] : 'ctrl';
                             partialScope[controllerAs] = _controller;
+                            
                             var cancel = _controller.context.observe({
                                 contextEnding: function (context) {
                                     if (_controller && (context === _controller.context)) {
@@ -161,24 +170,21 @@ new function () { // closure
                             });
                         }
 
-                        var oldContent  = content,
-                            modalPolicy = new ModalPolicy,
-                            promise;
-                        
+                        var oldContent = content;
                         content = $compile(template)(partialScope);
 
-                        if (composer.handle(modalPolicy, true)) {
-                            promise = ModalProviding(composer).showModal(container, content, modalPolicy);
-                        } else {
-                            if (oldContent) {
-                                oldContent.remove();
-                            }
-                            container.after(content);
-                            promise = $q.when(this.controllerContext);
+                        var modalPolicy = new ModalPolicy;
+                        if (!oldScope || composer.handle(modalPolicy, true)) {
+                            return ModalProviding(composer).showModal(container, content, modalPolicy);
                         }
-                        oldScope.$destroy();
                         
-                        return promise;        
+                        if (oldContent) {
+                            oldContent.remove();
+                        }
+                        container.after(content);
+
+                        oldScope.$destroy();
+                        return $q.when(this.controllerContext);
                     }
                 }
             });
@@ -229,7 +235,7 @@ new function () { // closure
             });
         }
     });
-
+    
     /**
      * Angular directive enabling model validation.
      * @class UseModelValidation
