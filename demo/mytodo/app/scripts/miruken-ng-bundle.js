@@ -51,7 +51,7 @@ new function () { // closure
             _instrumentScopes($rootScope, $injector);
             var rootRegion = new PartialView($rootElement, null, $rootScope, null,
                                              $templateRequest, $controller, $compile, $q);
-            $rootContext.addHandlers(rootRegion, new BootstrapModalProvider);
+            $rootContext.addHandlers(rootRegion, new BootstrapModal);
             
     }]);
     
@@ -174,8 +174,9 @@ new function () { // closure
                         content = $compile(template)(partialScope);
 
                         var modalPolicy = new ModalPolicy;
-                        if (!oldScope || composer.handle(modalPolicy, true)) {
-                            return ModalProviding(composer).showModal(container, content, modalPolicy);
+                        if (composer.handle(modalPolicy, true) || !oldScope) {
+                            var provider = modalPolicy.style || ModalProviding;
+                            return provider(composer).showModal(container, content, modalPolicy);
                         }
                         
                         if (oldContent) {
@@ -8698,12 +8699,25 @@ new function () { // closure
         version: miruken.version,
         parent:  miruken,
         imports: "miruken.callback",
-        exports: "BootstrapModalProvider"
+        exports: "Bootstrap,BootstrapModal"
     });
 
     eval(this.imports);
 
-    var BootstrapModalProvider = Base.extend(ModalProviding, {
+    /**
+     * Marker for Bootstrap providers.
+     * @class Bootstrap
+     * @extends miruken.mvc.ModalProviding
+     */    
+    var Bootstrap = ModalProviding.extend();
+    
+    /**
+     * Bootstrap modal provider..
+     * @class BootstrapModal
+     * @extends Base
+     * @uses miruken.mvc.Bootstrap
+     */    
+    var BootstrapModal = Base.extend(Bootstrap, {
         showModal: function (container, content, policy) {
             alert(content.html());
         }
@@ -8908,9 +8922,9 @@ new function () { // closure
 module.exports = require('./model.js');
 require('./view.js');
 require('./controller.js');
-require('./bootstrapModal.js');
+require('./bootstrap.js');
 
-},{"./bootstrapModal.js":13,"./controller.js":14,"./model.js":16,"./view.js":17}],16:[function(require,module,exports){
+},{"./bootstrap.js":13,"./controller.js":14,"./model.js":16,"./view.js":17}],16:[function(require,module,exports){
 var miruken = require('../miruken.js');
               require('../callback.js');
               require('../context.js');
@@ -9177,7 +9191,8 @@ new function () { // closure
      */
     var ModalPolicy = PresentationPolicy.extend({
         $properties: {
-            title: ''
+            title: '',
+            style: undefined
         }
     });
 
