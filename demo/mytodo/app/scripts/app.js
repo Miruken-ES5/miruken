@@ -2,6 +2,8 @@ new function () {
 
     var mytodoApp = new base2.Package(this, {
         name:     'mytodoApp',
+        imports:  'miruken.ng',
+        exports:  'ReverseFilter',
         ngModule: [ 'ngAnimate',
                     'ngCookies',
                     'ngResource',
@@ -31,5 +33,22 @@ new function () {
                 .otherwise({
                     redirectTo: '/'
                 });
-        }); 
+        });
+
+    var ReverseFilter = Filter.extend({
+        filter: function (input, uppercase) {
+            var output = "";
+            input = input || '';
+            for (var i = 0; i < input.length; i++) {
+                output = input.charAt(i) + output;
+            }
+            if (uppercase) {
+                output = output.toUpperCase();
+            }
+            return output;
+        }
+    });
+    
+    eval(this.exports);
+    
 }

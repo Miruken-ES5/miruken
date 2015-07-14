@@ -32,7 +32,7 @@ new function () { // closure
         version: miruken.version,
         parent:  miruken,
         imports: "miruken,miruken.callback,miruken.context,miruken.validate,miruken.ioc,miruken.mvc",
-        exports: "Runner,Directive,Region,UseModelValidation,$rootContext"
+        exports: "Runner,Directive,Filter,RegionDirective,UseModelValidation,$rootContext"
     });
 
     eval(this.imports);
@@ -59,7 +59,6 @@ new function () { // closure
      * Marks a class to be called during the run phase of an Angular module setup.<br/>
      * See [Angular Module Loading & Dependencies](https://docs.angularjs.org/guide/module)
      * @class Runner
-     * @constructor
      * @extends Base     
      */
     var Runner = Base.extend({
@@ -74,7 +73,6 @@ new function () { // closure
      * Marks a class as an
      * [Angular Directive Definition Object] (https://docs.angularjs.org/guide/module)
      * @class Directive
-     * @constructor
      * @extends Base     
      */
     var Directive = Base.extend(null, {
@@ -82,7 +80,7 @@ new function () { // closure
          * Gets the nearest {{#crossLink "miruken.mvc.Controller"}}{{/crossLink}} in the scope chain.
          * @method getNearestController
          * @static
-         * @param   {Scope}    scope      -  angular scope
+         * @param   {Scope}    scope      -   angular scope
          * @returns {miruken.mvc.Controller} nearest controller.
          */                                
         getNearestController: function (scope) {
@@ -99,16 +97,32 @@ new function () { // closure
     });
 
     /**
+     * Marks a class as an
+     * [Angular Filter] (https://docs.angularjs.org/guide/filter)
+     * @class Filter
+     * @extends Base     
+     */
+    var Filter = Base.extend({
+        /**
+         * Transforms input from one value to another.
+         * @method get
+         * @param   {Any} input  -  in protocol
+         * @returns {Any} transformed input.
+         */
+        filter: function (input) { return input; }
+    });
+    
+    /**
      * Represents an area of a view template.
      * @class PartialView
      * @constructor
-     * @param {Element}  container         -  html container element
-     * @param {Scope}    scope             -  partial scope
-     * @param {Element}  content           -  initial html content
-     * @param {Object}   $templateRequest  -  angular $templateRequest service
-     * @param {Object}   $controller       -  angular $controller service
-     * @param {Object}   $compile          -  angular $compile service
-     * @param {Object}   $q                -  angular $q service
+     * @param {Element}  container         -   html container element
+     * @param {Scope}    scope             -   partial scope
+     * @param {Element}  content           -   initial html content
+     * @param {Object}   $templateRequest  -   angular $templateRequest service
+     * @param {Object}   $controller       -   angular $controller service
+     * @param {Object}   $compile          -   angular $compile service
+     * @param {Object}   $q                -   angular $q service
      * @extends Base
      * @uses miruken.$inferProperties
      * @uses miruken.mvc.PartialRegion     
@@ -194,11 +208,11 @@ new function () { // closure
 
     /**
      * Angular directive marking a view region.
-     * @class Region
+     * @class RegionDirective
      * @constructor
      * @extends miruken.ng.Directive     
      */
-    var Region = Directive.extend({
+    var RegionDirective = Directive.extend({
         scope:      true,
         restrict:   'A',
         priority:   1200,
@@ -284,7 +298,7 @@ new function () { // closure
                 var package   = this,
                     container = Container($rootContext),
                     runners   = [], starters = [];
-                _registerControllersAndDirectives(this, module, exports);
+                _registerContents(this, module, exports);
                 module.config(['$injector', function ($injector) {
                             _installPackage(package, module, exports, $injector, runners, starters);
                 }]);
@@ -338,8 +352,8 @@ new function () { // closure
     /**
      * @function _instrumentScopes
      * Instruments angular scopes with miruken contexts.
-     * @param  {Scope}   $rootScope  - angular's root scope
-     * @param  {Scope}   $injector   - angular's ng injector
+     * @param  {Scope}   $rootScope  -  angular's root scope
+     * @param  {Scope}   $injector   -  angular's ng injector
      */
     function _instrumentScopes($rootScope, $injector)
     {
@@ -367,13 +381,13 @@ new function () { // closure
     }
 
     /**
-     * @function _registerControllersAndDirectives
-     * Registers the package controllers and directives.
+     * @function _registerContents
+     * Registers the package controllers, filters and directives.
      * @param  {Package}   package  - module package
      * @param  {Module}    module   - angular module
      * @param  {Array}     exports  - exported members
      */
-    function _registerControllersAndDirectives(package, module, exports) {
+    function _registerContents(package, module, exports) {
         var container = Container($rootContext);
         Array2.forEach(exports, function (name) {
             var member = package[name];
@@ -387,6 +401,9 @@ new function () { // closure
                 var deps = _ngDependencies(directive);
                 deps.unshift('$rootScope');
                 deps.push(Shim(member, deps.slice()));
+                if (/Directive$/.test(name)) {
+                    name = name.substring(0, name.length - 9);
+                }
                 name = name.charAt(0).toLowerCase() + name.slice(1);
                 module.directive(name, deps);
             } else if (member.prototype instanceof Controller) {
@@ -398,6 +415,22 @@ new function () { // closure
                 deps.unshift('$scope', '$injector');
                 deps.push(Shim(member, deps.slice()));
                 module.controller(name, deps);
+            } else if (member.prototype instanceof Filter) {
+                var filter = new ComponentModel;
+                filter.setKey(member);
+                container.addComponent(filter);
+                var deps = _ngDependencies(filter);
+                deps.unshift('$rootScope');
+                var shim = Shim(member, deps.slice());
+                deps.push(function () {
+                    var instance = shim.apply(null, arguments);
+                    return instance.filter.bind(instance);
+                });
+                if (/Filter$/.test(name)) {
+                    name = name.substring(0, name.length - 6);
+                }
+                name = name.charAt(0).toLowerCase() + name.slice(1);
+                module.filter(name, deps);
             }
         });
     }
@@ -405,12 +438,12 @@ new function () { // closure
     /**
      * @function _installPackage
      * Registers the package Installers, Runners and Starters.
-     * @param  {Package}   package   - module package
-     * @param  {Module}    module    - angular module
-     * @param  {Array}     exports  - exported members
-     * @param  {Injector}  injector  - module injector
-     * @param  {Array}     runners   - collects runners
-     * @param  {Array}     starters  - collects starters
+     * @param  {Package}   package   -  module package
+     * @param  {Module}    module    -  angular module
+     * @param  {Array}     exports   -  exported members
+     * @param  {Injector}  injector  -  module injector
+     * @param  {Array}     runners   -  collects runners
+     * @param  {Array}     starters  -  collects starters
      */
     function _installPackage(package, module, exports, injector, runners, starters) {
         var container = Container($rootContext);
@@ -451,8 +484,8 @@ new function () { // closure
     /**
      * @function Shim
      * Resolves the component from the container.
-     * @param    {Function}  component   - component key
-     * @param    {Array}     deps        - angular dependency keys
+     * @param    {Function}  component   -  component key
+     * @param    {Array}     deps        -  angular dependency keys
      * @returns  {Function}  component constructor shim.  
      */
     function Shim(component, deps) {
@@ -477,8 +510,8 @@ new function () { // closure
     /**
      * @function _provideLiteral
      * Provides all keys from the object literal.
-     * @param  {Object}  owner    - owning instance
-     * @param  {Object}  literal  - object literal
+     * @param  {Object}  owner    -  owning instance
+     * @param  {Object}  literal  -  object literal
      */
     function _provideLiteral(owner, literal) {
         $provide(owner, null, function (resolution) {
@@ -490,8 +523,8 @@ new function () { // closure
     /**
      * @function _provideInjector
      * Attaches the supplied injector to owners $providers.
-     * @param  {Object}     owner    - owning instance
-     * @param  {Injector}  injector  - angular injector
+     * @param  {Object}    owner     -  owning instance
+     * @param  {Injector}  injector  -  angular injector
      */
     function _provideInjector(owner, injector) {
         $provide(owner, null, function (resolution) {
@@ -505,7 +538,7 @@ new function () { // closure
     /**
      * @function _ngDependencies
      * Extracts the string dependencies for the component.
-     * @param    {Function}  controller  - controller class
+     * @param    {Function}  controller  -  controller class
      * @returns  {Array} angular dependencies
      */
     function _ngDependencies(componentModel) {
