@@ -11,7 +11,7 @@ new function(){
 
 	var sampleAppInstaller = Installer.extend({
 		$inject: ['$routeProvider'],
-		constructor: function($routeProvider){
+		constructor: function ($routeProvider){
 			$routeProvider.when('/', {
 				templateUrl:  'app/welcome/welcome.html',
 				controller:   'WelcomeController',

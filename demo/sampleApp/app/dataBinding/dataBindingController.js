@@ -1,6 +1,7 @@
 new function(){
+    
 	var sampleApp = new base2.Package(this, {
-		name: 'sampleApp',
+		name:    'sampleApp',
 		imports: 'miruken.mvc',
 		exports: 'DataBindingController'
 	});
@@ -10,12 +11,13 @@ new function(){
 	var DataBindingController = Controller.extend({
 		$properties:{
 			first: 'Hari',
-			last: 'Seldon'
+			last:  'Seldon'
 		},
-		getFullName: function(){
+		getFullName: function () {
 			return format('%1 %2', this.first, this.last);
 		}
 	});
 
 	eval(this.exports);
+    
 }
