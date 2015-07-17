@@ -1,9 +1,159 @@
 (function e(t,n,r){function s(o,u){if(!n[o]){if(!t[o]){var a=typeof require=="function"&&require;if(!u&&a)return a(o,!0);if(i)return i(o,!0);var f=new Error("Cannot find module '"+o+"'");throw f.code="MODULE_NOT_FOUND",f}var l=n[o]={exports:{}};t[o][0].call(l.exports,function(e){var n=t[o][1][e];return s(n?n:e)},l,l.exports,e,t,n,r)}return n[o].exports}var i=typeof require=="function"&&require;for(var o=0;o<r.length;o++)s(r[o]);return s})({1:[function(require,module,exports){
+var miruken = require('../miruken.js'),
+    Promise = require('bluebird');
+              require('../mvc/view.js');
+              require('./ng');
+
+
+new function () { // closure
+
+    var bootstrap = new base2.Package(this, {
+        name:    "bootstrap",
+        version: miruken.version,
+        parent:  miruken,
+        imports: "miruken.callback,miruken.mvc,miruken.ng",
+        exports: "Bootstrap,BootstrapModal,BootstrapModalWrapperController",
+        ngModule: []
+    });
+
+    eval(this.imports);
+
+    angular.module('miruken.bootstrap').run(['$rootContext', '$controller', '$compile',
+        function ($rootContext, $controller, $compile) {
+            $rootContext.addHandlers(new BootstrapModal($controller, $compile));
+            
+    }]);
+
+    var BootstrapModalWrapperController = Controller.extend({
+        close: function(){
+            this.endContext();
+        }
+    });
+
+    /**
+     * Marker for Bootstrap providers.
+     * @class Bootstrap
+     * @extends miruken.mvc.ModalProviding
+     */    
+    var Bootstrap = ModalProviding.extend();
+    
+    /**
+     * Bootstrap modal provider..
+     * @class BootstrapModal
+     * @extends Base
+     * @uses miruken.mvc.Bootstrap
+     */    
+    var BootstrapModal = Base.extend(Bootstrap, {
+        constructor: function($controller, $compile){
+            this.extend({
+                showModal: function (container, content, policy, controller, scope) {
+                    var partialScope,
+                        wrapperController,
+                        wrapperElement;
+
+                    if(policy.wrap){
+
+                        var wrapper = ''; 
+                        wrapper += '<div class="modal" ng-controller="BootstrapModalWrapperController as vm">'
+                        wrapper +=     '<div class="modal-dialog">'
+                        wrapper +=         '<div class="modal-content">'
+
+                        if(true){
+                            wrapper +=         '<div class="modal-header">'
+                            wrapper +=             '<button type="button" class="close" ng-click="vm.close()">X</button>'
+                            wrapper +=             '<h4 class="modal-title">Title</h4>'
+                            wrapper +=         '</div>'
+                        }
+
+                        wrapper +=             '<div class="modal-body">'
+                        wrapper +=             '</div>'
+
+                        if(true){
+                            wrapper +=         '<div class="modal-footer text-right">'
+                            wrapper +=             '<button class="btn btn-primary btn-sm "ng-click="vm.close()">Close</button>'
+                            wrapper +=         '</div>'
+                        }
+                        wrapper +=         '</div>'
+                        wrapper +=     '</div>'
+                        wrapper += '</div>'
+
+                        partialScope = scope.$new();
+                        wrapperController = $controller('BootstrapModalWrapperController', { $scope: partialScope });
+                        partialScope['vm'] = wrapperController;
+                        wrapperElement = $compile(wrapper)(partialScope);
+
+                        var wrapperCancel = wrapperController.context.observe({
+                            contextEnding: function (context) {
+                                if (wrapperController && (context === wrapperController.context)) {
+                                    close();
+                                    if (wrapperElement) {
+                                        wrapperElement.remove();
+                                        
+                                    }
+                                    if(partialScope){
+                                        partialScope.$destroy();
+                                    }
+                                    wrapperElement    = null;
+                                    wrapperController = null;
+                                    partialScope      = null;
+                                }
+                                wrapperCancel();
+                            }
+                        });
+                        
+                        $('body').append(wrapperElement);
+                        $('.modal-body').append(content);
+
+                    } else {
+                        $('body').append(content);
+                    }
+
+                    var deferred = Promise.defer();
+
+                    var cancel = controller.context.observe({
+                        contextEnding: function (context) {
+                            if (controller && (context === controller.context)) {
+                                close();
+                            }
+                            cancel();
+                        }
+                    });
+
+                    $('.modal').modal();
+                    $('.modal').on('hidden.bs.modal', function(){
+                        close();
+                    });
+
+                    return deferred.promise;
+
+                    function close(){
+                        $('.modal').modal('hide');
+                        deferred.resolve(controller);
+
+                        if(controller && controller.context){
+                            controller.endContext();
+                        };
+
+                        if(wrapperController && wrapperController.context){
+                            wrapperController.endContext();
+                        };
+                    }
+                }
+            });
+        }
+    });
+    
+    eval(this.exports);
+    
+}
+
+},{"../miruken.js":13,"../mvc/view.js":17,"./ng":3,"bluebird":21}],2:[function(require,module,exports){
 module.exports = require('./ng.js');
+                 require('./bootstrap.js');
 
 
 
-},{"./ng.js":2}],2:[function(require,module,exports){
+},{"./bootstrap.js":1,"./ng.js":3}],3:[function(require,module,exports){
 (function (global){
 var miruken = require('../miruken');
               require('../ioc');
@@ -29,7 +179,7 @@ new function () { // closure
      */
     var ng = new base2.Package(this, {
         name:    "ng",
-        version: miruken.version,
+        version: miruken.version,   
         parent:  miruken,
         imports: "miruken,miruken.callback,miruken.context,miruken.validate,miruken.ioc,miruken.mvc",
         exports: "Runner,Directive,Filter,RegionDirective,UseModelValidation,$rootContext"
@@ -51,7 +201,7 @@ new function () { // closure
             _instrumentScopes($rootScope, $injector);
             var rootRegion = new PartialView($rootElement, null, $rootScope, null,
                                              $templateRequest, $controller, $compile, $q);
-            $rootContext.addHandlers(rootRegion, new BootstrapModal);
+            $rootContext.addHandlers(rootRegion);
             
     }]);
     
@@ -190,7 +340,7 @@ new function () { // closure
                         var modalPolicy = new ModalPolicy;
                         if (composer.handle(modalPolicy, true) || !oldScope) {
                             var provider = modalPolicy.style || ModalProviding;
-                            return provider(composer).showModal(container, content, modalPolicy);
+                            return provider(composer).showModal(container, content, modalPolicy, _controller, scope);
                         }
                         
                         if (oldContent) {
@@ -553,7 +703,7 @@ new function () { // closure
 }
 
 }).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
-},{"../ioc":10,"../miruken":12,"../mvc":15}],3:[function(require,module,exports){
+},{"../ioc":11,"../miruken":13,"../mvc":15}],4:[function(require,module,exports){
 /*
   base2 - copyright 2007-2009, Dean Edwards
   http://code.google.com/p/base2/
@@ -2257,7 +2407,7 @@ if (typeof exports !== 'undefined') {
 
 }; ////////////////////  END: CLOSURE  /////////////////////////////////////
 
-},{}],4:[function(require,module,exports){
+},{}],5:[function(require,module,exports){
 (function (global){
 var miruken = require('./miruken.js'),
     Promise = require('bluebird');
@@ -3722,7 +3872,7 @@ new function () { // closure
 }
 
 }).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
-},{"./miruken.js":12,"bluebird":21}],5:[function(require,module,exports){
+},{"./miruken.js":13,"bluebird":21}],6:[function(require,module,exports){
 var miruken = require('./miruken.js');
               require('./graph.js');
               require('./callback.js');
@@ -4383,7 +4533,7 @@ new function () { // closure
 
 }
 
-},{"./callback.js":4,"./graph.js":7,"./miruken.js":12}],6:[function(require,module,exports){
+},{"./callback.js":5,"./graph.js":8,"./miruken.js":13}],7:[function(require,module,exports){
 var miruken = require('./miruken.js'),
     Promise = require('bluebird');
               require('./callback.js');
@@ -4525,7 +4675,7 @@ new function() { // closure
 
 }
 
-},{"./callback.js":4,"./miruken.js":12,"bluebird":21}],7:[function(require,module,exports){
+},{"./callback.js":5,"./miruken.js":13,"bluebird":21}],8:[function(require,module,exports){
 var miruken = require('./miruken.js');
 
 new function () { // closure
@@ -4922,7 +5072,7 @@ new function () { // closure
 
 }
 
-},{"./miruken.js":12}],8:[function(require,module,exports){
+},{"./miruken.js":13}],9:[function(require,module,exports){
 module.exports = require('./miruken.js');
 require('./graph.js');
 require('./callback.js');
@@ -4931,7 +5081,7 @@ require('./error.js');
 require('./validate');
 require('./ioc');
 
-},{"./callback.js":4,"./context.js":5,"./error.js":6,"./graph.js":7,"./ioc":10,"./miruken.js":12,"./validate":18}],9:[function(require,module,exports){
+},{"./callback.js":5,"./context.js":6,"./error.js":7,"./graph.js":8,"./ioc":11,"./miruken.js":13,"./validate":18}],10:[function(require,module,exports){
 var miruken = require('../miruken.js'),
     Promise = require('bluebird');
               require('./ioc.js');
@@ -5362,12 +5512,12 @@ new function () { // closure
     eval(this.exports);
 }
 
-},{"../miruken.js":12,"./ioc.js":11,"bluebird":21}],10:[function(require,module,exports){
+},{"../miruken.js":13,"./ioc.js":12,"bluebird":21}],11:[function(require,module,exports){
 module.exports = require('./ioc.js');
 require('./config.js');
 
 
-},{"./config.js":9,"./ioc.js":11}],11:[function(require,module,exports){
+},{"./config.js":10,"./ioc.js":12}],12:[function(require,module,exports){
 var miruken = require('../miruken.js'),
     Promise = require('bluebird');
               require('../callback.js'),
@@ -6630,7 +6780,7 @@ new function () { // closure
 
 }
 
-},{"../callback.js":4,"../context.js":5,"../miruken.js":12,"../validate":18,"bluebird":21}],12:[function(require,module,exports){
+},{"../callback.js":5,"../context.js":6,"../miruken.js":13,"../validate":18,"bluebird":21}],13:[function(require,module,exports){
 (function (global){
 require('./base2.js');
 
@@ -8721,46 +8871,7 @@ new function () { // closure
 }
 
 }).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
-},{"./base2.js":3}],13:[function(require,module,exports){
-var miruken = require('../miruken.js');
-              require('./view.js');
-
-new function () { // closure
-
-    var mvc = new base2.Package(this, {
-        name:    "mvc",
-        version: miruken.version,
-        parent:  miruken,
-        imports: "miruken.callback",
-        exports: "Bootstrap,BootstrapModal"
-    });
-
-    eval(this.imports);
-
-    /**
-     * Marker for Bootstrap providers.
-     * @class Bootstrap
-     * @extends miruken.mvc.ModalProviding
-     */    
-    var Bootstrap = ModalProviding.extend();
-    
-    /**
-     * Bootstrap modal provider..
-     * @class BootstrapModal
-     * @extends Base
-     * @uses miruken.mvc.Bootstrap
-     */    
-    var BootstrapModal = Base.extend(Bootstrap, {
-        showModal: function (container, content, policy) {
-            alert(content.html());
-        }
-    });
-    
-    eval(this.exports);
-    
-}
-
-},{"../miruken.js":12,"./view.js":17}],14:[function(require,module,exports){
+},{"./base2.js":4}],14:[function(require,module,exports){
 var miruken = require('../miruken.js');
               require('../callback.js');
               require('../context.js');
@@ -8951,13 +9062,11 @@ new function () { // closure
     
 }
 
-},{"../callback.js":4,"../context.js":5,"../miruken.js":12,"../validate":18}],15:[function(require,module,exports){
+},{"../callback.js":5,"../context.js":6,"../miruken.js":13,"../validate":18}],15:[function(require,module,exports){
 module.exports = require('./model.js');
 require('./view.js');
 require('./controller.js');
-require('./bootstrap.js');
-
-},{"./bootstrap.js":13,"./controller.js":14,"./model.js":16,"./view.js":17}],16:[function(require,module,exports){
+},{"./controller.js":14,"./model.js":16,"./view.js":17}],16:[function(require,module,exports){
 var miruken = require('../miruken.js');
               require('../callback.js');
               require('../context.js');
@@ -9140,7 +9249,7 @@ new function () { // closure
     
 }
 
-},{"../callback.js":4,"../context.js":5,"../miruken.js":12,"../validate":18}],17:[function(require,module,exports){
+},{"../callback.js":5,"../context.js":6,"../miruken.js":13,"../validate":18}],17:[function(require,module,exports){
 var miruken = require('../miruken.js');
               require('../callback.js');
               require('../context.js');
@@ -9225,7 +9334,8 @@ new function () { // closure
     var ModalPolicy = PresentationPolicy.extend({
         $properties: {
             title: '',
-            style: undefined
+            style: undefined,
+            wrap: true  
         }
     });
 
@@ -9276,7 +9386,7 @@ new function () { // closure
     
 }
 
-},{"../callback.js":4,"../context.js":5,"../miruken.js":12,"../validate":18,"./model.js":16}],18:[function(require,module,exports){
+},{"../callback.js":5,"../context.js":6,"../miruken.js":13,"../validate":18,"./model.js":16}],18:[function(require,module,exports){
 module.exports = require('./validate.js');
 require('./validatejs.js');
 
@@ -9678,7 +9788,7 @@ new function () { // closure
 
 }
 
-},{"../callback.js":4,"../miruken.js":12,"bluebird":21}],20:[function(require,module,exports){
+},{"../callback.js":5,"../miruken.js":13,"bluebird":21}],20:[function(require,module,exports){
 var miruken    = require('../miruken.js'),
     validate   = require('./validate.js'),
     validatejs = require("validate.js"),
@@ -9931,7 +10041,7 @@ new function () { // closure
 
 }
 
-},{"../callback.js":4,"../miruken.js":12,"./validate.js":19,"bluebird":21,"validate.js":23}],21:[function(require,module,exports){
+},{"../callback.js":5,"../miruken.js":13,"./validate.js":19,"bluebird":21,"validate.js":23}],21:[function(require,module,exports){
 (function (process,global){
 /* @preserve
  * The MIT License (MIT)
@@ -9958,7 +10068,7 @@ new function () { // closure
  * 
  */
 /**
- * bluebird build version 2.9.24
+ * bluebird build version 2.9.25
  * Features enabled: core, race, call_get, generators, map, nodeify, promisify, props, reduce, settle, some, cancel, using, filter, any, each, timers
 */
 !function(e){if("object"==typeof exports&&"undefined"!=typeof module)module.exports=e();else if("function"==typeof define&&define.amd)define([],e);else{var f;"undefined"!=typeof window?f=window:"undefined"!=typeof global?f=global:"undefined"!=typeof self&&(f=self),f.Promise=e()}}(function(){var define,module,exports;return (function e(t,n,r){function s(o,u){if(!n[o]){if(!t[o]){var a=typeof _dereq_=="function"&&_dereq_;if(!u&&a)return a(o,!0);if(i)return i(o,!0);var f=new Error("Cannot find module '"+o+"'");throw f.code="MODULE_NOT_FOUND",f}var l=n[o]={exports:{}};t[o][0].call(l.exports,function(e){var n=t[o][1][e];return s(n?n:e)},l,l.exports,e,t,n,r)}return n[o].exports}var i=typeof _dereq_=="function"&&_dereq_;for(var o=0;o<r.length;o++)s(r[o]);return s})({1:[function(_dereq_,module,exports){
@@ -10046,6 +10156,7 @@ Async.prototype.throwLater = function(fn, arg) {
 
 Async.prototype._getDomain = function() {};
 
+if (!true) {
 if (util.isNode) {
     var EventsModule = _dereq_("events");
 
@@ -10061,30 +10172,31 @@ if (util.isNode) {
         var descriptor =
             Object.getOwnPropertyDescriptor(EventsModule, "usingDomains");
 
-        if (!descriptor.configurable) {
-            process.on("domainsActivated", function() {
-                Async.prototype._getDomain = domainGetter;
-            });
-        } else {
-            var usingDomains = false;
-            Object.defineProperty(EventsModule, "usingDomains", {
-                configurable: false,
-                enumerable: true,
-                get: function() {
-                    return usingDomains;
-                },
-                set: function(value) {
-                    if (usingDomains || !value) return;
-                    usingDomains = true;
+        if (descriptor) {
+            if (!descriptor.configurable) {
+                process.on("domainsActivated", function() {
                     Async.prototype._getDomain = domainGetter;
-                    util.toFastProperties(process);
-                    process.emit("domainsActivated");
-                }
-            });
+                });
+            } else {
+                var usingDomains = false;
+                Object.defineProperty(EventsModule, "usingDomains", {
+                    configurable: false,
+                    enumerable: true,
+                    get: function() {
+                        return usingDomains;
+                    },
+                    set: function(value) {
+                        if (usingDomains || !value) return;
+                        usingDomains = true;
+                        Async.prototype._getDomain = domainGetter;
+                        util.toFastProperties(process);
+                        process.emit("domainsActivated");
+                    }
+                });
+            }
         }
-
-
     }
+}
 }
 
 function AsyncInvokeLater(fn, receiver, arg) {
@@ -16040,4 +16152,4 @@ process.umask = function() { return 0; };
         typeof module !== 'undefined' ? /* istanbul ignore next */ module : null,
         typeof define !== 'undefined' ? /* istanbul ignore next */ define : null);
 
-},{}]},{},[8,15,1]);
+},{}]},{},[9,15,2]);

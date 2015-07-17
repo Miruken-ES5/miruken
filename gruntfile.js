@@ -106,6 +106,7 @@ module.exports = function(grunt) {
   grunt.option('force', true);
 
   //Test task.
+  grunt.registerTask('default',  ['browserify:dist','copy:main']);
   grunt.registerTask('test',   ['concurrent:test']);
   grunt.registerTask('build',  ['minify','copy:main', 'karma:dist', 'yuidoc']);
   grunt.registerTask('debug',  ['browserify:debug','karma:debug']);

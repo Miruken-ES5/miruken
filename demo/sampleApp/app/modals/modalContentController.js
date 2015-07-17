@@ -1,4 +1,4 @@
-﻿new function() {
+﻿    new function() {
 
     var sampleApp = new base2.Package(this, {
         name:    "sampleApp",

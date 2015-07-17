@@ -13,7 +13,13 @@ new function(){
                 templateUrl: 'app/modals/modalContent.html',
                 controller:  'ModalContentController as vm'
             };
-            ViewRegion(this.context.modal({title: 'Hooray!'})).present(viewModal);
+            ViewRegion(this.context
+            	.modal({
+            		title: 'Hooray!', 
+            		wrap: true	}))
+            .present(viewModal).then(function(controller){
+            	alert(controller.message);
+            });
 		}
 	});
 

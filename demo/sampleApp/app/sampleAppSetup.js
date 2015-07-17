@@ -3,8 +3,9 @@ new function(){
 	var sampleApp = new base2.Package(this, {
 		name:     "sampleApp",
 		imports:  "miruken.ioc,miruken.ng",
-		exports:  "sampleAppInstaller,RegionDirective", 
 		ngModule: [ "ngRoute" ]
+		exports:  "sampleAppInstaller,RegionDirective", 
+		ngModule: [ "ngRoute", "miruken.bootstrap" ]
 	});
 
 	eval(this.imports);
