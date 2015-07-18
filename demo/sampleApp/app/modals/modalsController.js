@@ -11,24 +11,18 @@ new function(){
 		showWrappedModal: function () {
             ViewRegion(this.context.modal({
             	title: 'Hooray!', 
-        		header: true,
         		footer: true }))
             .present({
                 templateUrl: 'app/modals/wrappedModal.html',
                 controller:  'WrappedModalController as vm'
-            }).then(function(controller){
-            	alert(controller.message);
             });
 		},
 		showWrappedModalWithHeader: function () {
             ViewRegion(this.context.modal({
-        		title: 'Modal with a header', 
         		header: true}))
             .present({
                 templateUrl: 'app/modals/wrappedModal.html',
                 controller:  'WrappedModalController as vm'
-            }).then(function(controller){
-            	alert(controller.message);
             });
 		},
 		showWrappedModalWithFooter: function () {
@@ -37,8 +31,6 @@ new function(){
             .present({
                 templateUrl: 'app/modals/wrappedModal.html',
                 controller:  'WrappedModalController as vm'
-            }).then(function(controller){
-            	alert(controller.message);
             });
 		},
 		showFullModal: function () {
@@ -46,19 +38,27 @@ new function(){
             	.present({
 	                templateUrl: 'app/modals/fullModal.html',
 	                controller:  'FullModalController as vm'
-	            }).then(function(controller){
-            		alert(controller.message);
-            	});
+	            });
 		},
 		showSelfClosingModal: function () {
-            ViewRegion(this.context.modal({ forceClose: true }))
+            ViewRegion(this.context.modal({ forceResponse: true }))
             	.present({
 	                templateUrl: 'app/modals/selfClosingModal.html',
 	                controller:  'SelfClosingModalController as vm'
-	            }).then(function(controller){
-            	alert(controller.message);
-            });
-		}
+	            });
+		},
+        showConfirmModal: function () {
+            ViewRegion(this.context.modal({ 
+                forceResponse: true,
+                title: 'Confirm',
+                buttons: [
+                    'Yes',
+                    'No'
+                ] }))
+                .present({ template: '<p>Are you sure you want to...?</p>' }).then(function(controller){
+                    alert(format('Result: %1', controller.modalResult));
+                });
+        }
 	});
 
 	eval(this.exports);
