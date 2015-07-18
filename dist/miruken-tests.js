@@ -8630,10 +8630,10 @@ new function () { // closure
         $properties: {
             title: '',
             style: undefined,
+            wrap: true,
             header: false,
             footer: false,
             forceClose: false,
-            wrap: true
         }
     });
 
@@ -8663,6 +8663,7 @@ new function () { // closure
          * @for miruken.callback.CallbackHandler
          */                                                                
         modal: function (options) {
+            debugger;
             return this.presenting(new ModalPolicy(options));
         },
         /**
@@ -8672,8 +8673,10 @@ new function () { // closure
          * @for miruken.callback.CallbackHandler
          */
         presenting: function (policy) {
+            debugger;
             return policy ? this.decorate({
                 $handle: [PresentationPolicy, function (presenting) {
+                    debugger;
                     return policy.mergeInto(presenting);
                 }]
             }) : this;

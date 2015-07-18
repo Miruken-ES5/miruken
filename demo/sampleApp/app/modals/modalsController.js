@@ -9,41 +9,35 @@ new function(){
 
 	var ModalsController = Controller.extend({
 		showWrappedModal: function () {
-            var viewModal = {
+            ViewRegion(this.context.modal({
+            	title: 'Hooray!', 
+        		header: true,
+        		footer: true }))
+            .present({
                 templateUrl: 'app/modals/wrappedModal.html',
                 controller:  'WrappedModalController as vm'
-            };
-            ViewRegion(this.context
-            	.modal({
-            		title: 'Hooray!', 
-            		header: true,
-            		footer: true }))
-            .present(viewModal).then(function(controller){
+            }).then(function(controller){
             	alert(controller.message);
             });
 		},
 		showWrappedModalWithHeader: function () {
-            var viewModal = {
+            ViewRegion(this.context.modal({
+        		title: 'Modal with a header', 
+        		header: true}))
+            .present({
                 templateUrl: 'app/modals/wrappedModal.html',
                 controller:  'WrappedModalController as vm'
-            };
-            ViewRegion(this.context
-            	.modal({
-            		title: 'Hooray!', 
-            		header: true}))
-            .present(viewModal).then(function(controller){
+            }).then(function(controller){
             	alert(controller.message);
             });
 		},
 		showWrappedModalWithFooter: function () {
-            var viewModal = {
+            ViewRegion(this.context.modal({
+        		footer: true}))
+            .present({
                 templateUrl: 'app/modals/wrappedModal.html',
                 controller:  'WrappedModalController as vm'
-            };
-            ViewRegion(this.context
-            	.modal({
-            		footer: true}))
-            .present(viewModal).then(function(controller){
+            }).then(function(controller){
             	alert(controller.message);
             });
 		},

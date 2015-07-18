@@ -12,23 +12,17 @@ new function () { // closure
         version: miruken.version,
         parent:  miruken,
         imports: "miruken.callback,miruken.mvc,miruken.ng",
-        exports: "Bootstrap,BootstrapModal,BootstrapModalWrapperController",
+        exports: "Bootstrap,BootstrapModal",
         ngModule: []
     });
 
     eval(this.imports);
 
-    angular.module('miruken.bootstrap').run(['$rootContext', '$controller', '$compile',
-        function ($rootContext, $controller, $compile) {
-            $rootContext.addHandlers(new BootstrapModal($controller, $compile));
+    angular.module('miruken.bootstrap').run(['$rootContext',
+        function ($rootContext) {
+            $rootContext.addHandlers(new BootstrapModal);
             
     }]);
-
-    var BootstrapModalWrapperController = Controller.extend({
-        close: function(){
-            this.endContext();
-        }
-    });
 
     /**
      * Marker for Bootstrap providers.
@@ -44,12 +38,7 @@ new function () { // closure
      * @uses miruken.mvc.Bootstrap
      */    
     var BootstrapModal = Base.extend(Bootstrap, {
-        constructor: function($controller, $compile){
-            this.extend({
-                showModal: function (container, content, policy, controller, scope) {
-                    var partialScope,
-                        wrapperController,
-                        wrapperElement;
+        showModal: function (container, content, policy, controller, scope) {
                     if(policy.wrap){    
                         var wrapper = ''; 
                         wrapper += format('<div class="modal" %1>', policy.forceClose ? 'data-backdrop="static"' : '')
@@ -75,31 +64,7 @@ new function () { // closure
                         wrapper +=     '</div>'
                         wrapper += '</div>'
 
-                        partialScope = scope.$new();
-                        wrapperController = $controller('BootstrapModalWrapperController', { $scope: partialScope });
-                        partialScope['vm'] = wrapperController;
-                        wrapperElement = $compile(wrapper)(partialScope);
-
-                        var wrapperCancel = wrapperController.context.observe({
-                            contextEnding: function (context) {
-                                if (wrapperController && (context === wrapperController.context)) {
-                                    close();
-                                    if (wrapperElement) {
-                                        wrapperElement.remove();
-                                        
-                                    }
-                                    if(partialScope){
-                                        partialScope.$destroy();
-                                    }
-                                    wrapperElement    = null;
-                                    wrapperController = null;
-                                    partialScope      = null;
-                                }
-                                wrapperCancel();
-                            }
-                        });
-                        
-                        $('body').append(wrapperElement);
+                        $('body').append(wrapper);
                         $('.modal-body').append(content);
                     } else {
                         $('body').append(content);
@@ -116,8 +81,9 @@ new function () { // closure
                         }
                     });
 
-                    $('.modal').modal();
-                    $('.modal').on('hidden.bs.modal', function(){
+                    var modal = $('.modal');
+                    modal.modal();
+                    modal.on('hidden.bs.modal', function(){
                         close();
                     });
                     $('.js-close').click(function(){
@@ -127,22 +93,18 @@ new function () { // closure
                     return deferred.promise;
 
                     function close(){
-                        $('.modal').modal('hide');
-                        $('.modal-backdrop').remove()
-                        $('body').removeClass('modal-open');    
-                        deferred.resolve(controller);
-
                         if(controller && controller.context){
                             controller.endContext();
                         };
 
-                        if(wrapperController && wrapperController.context){
-                            wrapperController.endContext();
-                        };
+                        modal.modal('hide');
+                        modal.remove();
+                        $('.modal-backdrop').remove()
+                        $('body').removeClass('modal-open');    
+                        
+                        deferred.resolve(controller);
                     }
                 }
-            });
-        }
     });
     
     eval(this.exports);
@@ -9337,10 +9299,10 @@ new function () { // closure
         $properties: {
             title: '',
             style: undefined,
+            wrap: true,
             header: false,
             footer: false,
             forceClose: false,
-            wrap: true
         }
     });
 
@@ -9370,6 +9332,7 @@ new function () { // closure
          * @for miruken.callback.CallbackHandler
          */                                                                
         modal: function (options) {
+            debugger;
             return this.presenting(new ModalPolicy(options));
         },
         /**
@@ -9379,8 +9342,10 @@ new function () { // closure
          * @for miruken.callback.CallbackHandler
          */
         presenting: function (policy) {
+            debugger;
             return policy ? this.decorate({
                 $handle: [PresentationPolicy, function (presenting) {
+                    debugger;
                     return policy.mergeInto(presenting);
                 }]
             }) : this;
