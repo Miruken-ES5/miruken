@@ -4,7 +4,7 @@ new function(){
 		name:     "sampleApp",
 		imports:  "miruken.ioc,miruken.ng",
 		exports:  "sampleAppInstaller,RegionDirective", 
-		ngModule: [ "ngRoute", "miruken.bootstrap" ]
+		ngModule: [ "ngRoute"]
 	});
 
 	eval(this.imports);
