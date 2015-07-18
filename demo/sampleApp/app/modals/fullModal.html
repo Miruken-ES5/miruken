@@ -1,26 +1,21 @@
-<div class="modal" data-backdrop="static" >
+<div class="modal">
     <div class="modal-dialog">
         <div class="modal-content">
             <div class="modal-header">
-                <button type="button" class="close" ng-click="vm.close()">X</button>
-                <h4 class="modal-title">Title</h4>
+                <button type="button" class="close" ng-click="vm.endContext()">X</button>
+                <h4 class="modal-title">Full Modal</h4>
             </div>
             <div class="modal-body">
-
-
 				<div>
-				    <h3>Modal Content</h3>
-				    <h4>{{vm.message}}</h4>
+				    <h3>Full Modal</h3>
 				    <ul>
 				        <li ng-repeat="item in vm.items">{{item}}</li>
 				    </ul>
 				    <p>Disposed: {{vm.disposed}}<p>
 				</div>                
-
-				
             </div>
             <div class="modal-footer text-right">
-                <button class="btn btn-primary btn-sm "ng-click="vm.close()">Close</button>
+                <button class="btn btn-primary btn-sm "ng-click="vm.endContext()">Close</button>
             </div>
         </div>
     </div>

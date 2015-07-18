@@ -50,25 +50,23 @@ new function () { // closure
                     var partialScope,
                         wrapperController,
                         wrapperElement;
-
-                    if(policy.wrap){
-
+                    if(policy.wrap){    
                         var wrapper = ''; 
-                        wrapper += '<div class="modal" ng-controller="BootstrapModalWrapperController as vm">'
+                        wrapper += format('<div class="modal" ng-controller="BootstrapModalWrapperController as vm" %1>', policy.forceClose ? 'data-backdrop="static"' : '')
                         wrapper +=     '<div class="modal-dialog">'
                         wrapper +=         '<div class="modal-content">'
 
-                        if(true){
+                        if(policy.header){
                             wrapper +=         '<div class="modal-header">'
                             wrapper +=             '<button type="button" class="close" ng-click="vm.close()">X</button>'
-                            wrapper +=             '<h4 class="modal-title">Title</h4>'
+                            wrapper +=             format('<h4 class="modal-title">%1</h4>', policy.title);
                             wrapper +=         '</div>'
                         }
 
                         wrapper +=             '<div class="modal-body">'
                         wrapper +=             '</div>'
 
-                        if(true){
+                        if(policy.footer){
                             wrapper +=         '<div class="modal-footer text-right">'
                             wrapper +=             '<button class="btn btn-primary btn-sm "ng-click="vm.close()">Close</button>'
                             wrapper +=         '</div>'
@@ -103,7 +101,6 @@ new function () { // closure
                         
                         $('body').append(wrapperElement);
                         $('.modal-body').append(content);
-
                     } else {
                         $('body').append(content);
                     }
@@ -128,6 +125,8 @@ new function () { // closure
 
                     function close(){
                         $('.modal').modal('hide');
+                        $('.modal-backdrop').remove()
+                        $('body').removeClass('modal-open');    
                         deferred.resolve(controller);
 
                         if(controller && controller.context){
@@ -9335,7 +9334,10 @@ new function () { // closure
         $properties: {
             title: '',
             style: undefined,
-            wrap: true  
+            header: false,
+            footer: false,
+            forceClose: false,
+            wrap: true
         }
     });
 

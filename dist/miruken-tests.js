@@ -8630,7 +8630,10 @@ new function () { // closure
         $properties: {
             title: '',
             style: undefined,
-            wrap: true  
+            header: false,
+            footer: false,
+            forceClose: false,
+            wrap: true
         }
     });
 
