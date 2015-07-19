@@ -186,7 +186,7 @@ new function () { // closure
                         var modalPolicy = new ModalPolicy;
                         if (composer.handle(modalPolicy, true) || !oldScope) {
                             var provider = modalPolicy.style || ModalProviding;
-                            return provider(composer).showModal(container, content, modalPolicy, _controller, scope);
+                            return provider(composer).showModal(container, content, _controller, modalPolicy);
                         }
                         
                         if (oldContent) {
@@ -8743,115 +8743,115 @@ new function () { // closure
     var Bootstrap = ModalProviding.extend();
     
     /**
-     * Bootstrap modal provider..
+     * Bootstrap modal provider.
      * @class BootstrapModal
      * @extends Base
      * @uses miruken.mvc.Bootstrap
      */    
     var BootstrapModal = Base.extend(Bootstrap, {
-        showModal: function (container, content, policy, controller, scope) {
-            var deferred = Promise.defer(),
-                result   = controller || {};
-
-            if (policy.wrap) {    
-                $('body').append(this.wrapper(policy));
-                $('.modal-body').append(content);
-            } else {
-                $('body').append(content);
-            }
-
-            if (controller && controller.context) {
-                var cancel = controller.context.observe({
-                    contextEnding: function (context) {
-                        if (context === controller.context) {
-                            close();
-                        }
-                        cancel();
-                    }
-                });    
-            }
-
-            var modal = $('.modal');
-            modal.modal();
-            modal.on('hidden.bs.modal', function (e){
-                close();
-            });
-            
-            $('.modal .js-close').click(function (e){
-                var buttonText = e.target.innerText;
-                if (buttonText != '\u00d7') {
-                    result.modalResult = buttonText;     
+        showModal: function (container, content, controller, policy) {
+            return new Promise(function (resolve, reject) {
+                if (policy.wrap) {    
+                    $('body').append(_buildWrapper(policy));
+                    $('.modal-body').append(content);
+                } else {
+                    $('body').append(content);
                 }
-                close()
-            });
-
-            return deferred.promise;
-
-            function close() {
-                if (controller) {
-                    controller.endContext();
-                };
-
-                modal.modal('hide');
-                modal.remove();
-                $('.modal-backdrop').remove()
-                $('body').removeClass('modal-open');    
                 
-                deferred.resolve(result);
-            }
-        },
-        wrapper: function (policy){
-            var wrapper = ''; 
-            wrapper += format('<div class="modal" %1>', policy.forceResponse ? 'data-backdrop="static"' : '')
-            wrapper +=     '<div class="modal-dialog">'
-            wrapper +=         '<div class="modal-content">'
-
-            buildHeader();
-
-            wrapper +=             '<div class="modal-body">'
-            wrapper +=             '</div>'
-
-            buildFooter();
-
-            wrapper +=         '</div>'
-            wrapper +=     '</div>'
-            wrapper += '</div>'
-
-            function buildHeader() {
-                if (policy.header || policy.title) {
-                    wrapper += '<div class="modal-header">'
-
-                    if (!policy.forceResponse) {
-                        wrapper += '<button type="button" class="close js-close">&times;</button>'
+                function close(result) {
+                    if (resolve) {
+                        resolve(result);
+                        resolve = null;
+                        
+                        modal.modal('hide');
+                        modal.remove();
+                        $('.modal-backdrop').remove();
+                        $('body').removeClass('modal-open');
+                        
+                        if (controller) {
+                            controller.endContext();
+                        };
                     }
-
-                    wrapper += format('<h4 class="modal-title"> %1 &nbsp</h4>', policy.title);
-                    wrapper += '</div>'
-                }    
-            }
-
-            function buildFooter() {
-                if (policy.footer || policy.buttons) {
-                    wrapper += '<div class="modal-footer text-right">'
-                    if (policy.buttons) {
-                        Array2.forEach(policy.buttons, function (button){
-                            if ($isString(button)){
-                                wrapper += format('<button class="btn btn-default btn-sm js-close">%1</button>', button);
-                            } else if ($isObject(button)) {
-                                wrapper += format('<button class="btn js-close %1">%2</button>', button.css, button.text);
-                            }
-                        });
-                    } else {
-                        wrapper += '<button class="btn btn-primary btn-sm js-close">Close</button>'
-                    }
-                    wrapper += '</div>'
                 }
-            }
-
-            return wrapper;
+                
+                if (controller && controller.context) {
+                    var cancel = controller.context.observe({
+                        contextEnded: function (context) {
+                            close();
+                            cancel();
+                        }
+                    });    
+                }
+                
+                var modal = $('.modal');
+                modal.modal();
+                modal.on('hidden.bs.modal', function (e) {
+                    close();
+                });
+                
+                $('.modal .js-close').click(function (e) {
+                    var buttonText = e.target.innerText,
+                        result     = buttonText != '\u00d7'
+                        ? buttonText : undefined;
+                    close(result)
+                });
+            });
         }
     });
-    
+
+    function _buildWrapper(policy) {
+        var wrapper = ''; 
+        wrapper += format('<div class="modal" %1>', policy.forceResponse ? 'data-backdrop="static"' : '');
+        wrapper +=     '<div class="modal-dialog">';
+        wrapper +=         '<div class="modal-content">';
+        
+        wrapper = _buildHeader(wrapper, policy);
+        
+        wrapper +=             '<div class="modal-body">';
+        wrapper +=             '</div>';
+        
+        wrapper = _buildFooter(wrapper, policy);
+        
+        wrapper +=         '</div>';
+        wrapper +=     '</div>';
+        wrapper += '</div>';
+        
+        return wrapper;
+    }
+
+    function _buildHeader(wrapper, policy) {
+        if (policy.header || policy.title) {
+            wrapper += '<div class="modal-header">';
+            
+            if (!policy.forceResponse) {
+                wrapper += '<button type="button" class="close js-close">&times;</button>';
+            }
+            
+            wrapper += format('<h4 class="modal-title"> %1 &nbsp</h4>', policy.title);
+            wrapper += '</div>';
+        }
+        return wrapper;
+    }
+
+    function _buildFooter(wrapper, policy) {
+        if (policy.footer || policy.buttons) {
+            wrapper += '<div class="modal-footer text-right">';
+            if (policy.buttons) {
+                Array2.forEach(policy.buttons, function (button) {
+                    if ($isString(button)) {
+                        wrapper += format('<button class="btn btn-default btn-sm js-close">%1</button>', button);
+                    } else if ($isObject(button)) {
+                        wrapper += format('<button class="btn js-close %1">%2</button>', button.css, button.text);
+                    }
+                });
+            } else {
+                wrapper += '<button class="btn btn-primary btn-sm js-close">Close</button>';
+            }
+            wrapper += '</div>';
+        }
+        return wrapper;
+    }
+
     eval(this.exports);
     
 }
@@ -9338,12 +9338,13 @@ new function () { // closure
         /**
          * Presents the content in a modal dialog.
          * @method showModal
-         * @param   {Element}                  container  -  element modal bound to
-         * @param   {Element}                  content    -  modal content element
-         * @param   {miruken.mvc.ModalPolicy}  policy     -  modal policy options
+         * @param   {Element}                  container   -  element modal bound to
+         * @param   {Element}                  content     -  modal content element
+         * @param   {miruken.mvc.Controller}   controller  -  associated controller
+         * @param   {miruken.mvc.ModalPolicy}  policy      -  modal policy options
          * @returns {Promise} promise representing the modal result.
          */
-        showModal: function (container, content, policy) {}
+        showModal: function (container, content, controller, policy) {}
     });
     
     CallbackHandler.implement({

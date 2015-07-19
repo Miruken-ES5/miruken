@@ -58,8 +58,8 @@ new function () {
                     { text: 'Warning', css: 'btn-warning'},
                     { text: 'Danger',  css: 'btn-danger btn-lg'},
                 ]})
-            ).present({ template: '<p>Demo adding buttons with classes.</p>' }).then(function (controller){
-                    alert(format('Result: %1', controller.modalResult));
+            ).present({ template: '<p>Demo adding buttons with classes.</p>' }).then(function (result) {
+                    alert(format('Result: %1', result));
                 });
         },
         showConfirmModal: function () {
@@ -70,8 +70,8 @@ new function () {
                     'Yes',
                     'No'
                 ]})
-            ).present({ template: '<p>Are you sure you want to...?</p>' }).then(function (controller){
-                alert(format('Result: %1', controller.modalResult));
+            ).present({ template: '<p>Are you sure you want to...?</p>' }).then(function (result) {
+                alert(format('Result: %1', result));
             });
         }
 	});
