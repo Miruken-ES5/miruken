@@ -73,6 +73,21 @@ new function () {
             ).present({ template: '<p>Are you sure you want to...?</p>' }).then(function (result) {
                 alert(format('Result: %1', result));
             });
+        },
+        showModalReturningInput: function () {
+            ViewRegion(this.context.modal({ 
+                title: 'Input',
+                buttons: [
+                    { text: 'Ok', css: 'btn-sm btn-primary' },
+                    'Cancel'
+                ]})
+            ).present({ 
+                templateUrl: 'app/modals/modalReturningInput.html',
+                controller:  'ModalReturningInputController as vm' }).then(function (result) {
+                    if(result == 'Ok'){
+                        alert(format('Hello, %1!', result));
+                    }
+                });
         }
 	});
 
