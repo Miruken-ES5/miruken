@@ -2959,20 +2959,18 @@ new function () { // closure
                     constraint = $classOf(constraint);
                 }
             }
-            var ok = _dispatch(delegate, delegate, callback, constraint, v, composer, all, results);
+            var ok = delegate && _dispatch(delegate, delegate.$meta, callback, constraint, v, composer, all, results);
             if (!ok || all) {
-                ok = ok || _dispatch(handler, handler, callback, constraint, v, composer, all, results);
+                ok = ok || _dispatch(handler, handler.$meta, callback, constraint, v, composer, all, results);
             }
             return ok;
         };
-        function _dispatch(target, owner, callback, constraint, v, composer, all, results) {
-            var dispatched = false;
-            while (owner && (owner !== Base) && (owner !== Object)) {
-                var meta      = owner.$meta,
-                    index     = _createIndex(constraint),
-                    list      = meta && meta[tag],
-                    invariant = (v === Variance.Invariant);
-                owner = (owner === target) ? $classOf(owner) : $ancestorOf(owner);
+        function _dispatch(target, meta, callback, constraint, v, composer, all, results) {
+            var dispatched = false,
+                invariant  = (v === Variance.Invariant),
+                index      = meta && _createIndex(constraint);
+            while (meta) {
+                var list = meta[tag];
                 if (list && (!invariant || index)) {
                     var node = list.getIndex(index) || list.head;
                     while (node) {
@@ -2982,7 +2980,7 @@ new function () { // closure
                             target.base    = function () {
                                 var baseResult;
                                 baseCalled = true;
-                                _dispatch(target, owner, callback, constraint, v, composer, false,
+                                _dispatch(target, meta.getParent(), callback, constraint, v, composer, false,
                                           function (result) { baseResult = result; });
                                 return baseResult;
                             };
@@ -3010,6 +3008,7 @@ new function () { // closure
                         node = node.next;
                     }
                 }
+                meta = meta.getParent();
             }
             return dispatched;
         }
@@ -6731,27 +6730,27 @@ new function () { // closure
      * @extends miruken.MetaBase
      */
     var InstanceMeta = MetaBase.extend({
-        constructor: function (classMeta) {
-            this.base(classMeta);
+        constructor: function (parent) {
+            this.base(parent);
             this.extend({
                 /**
                  * Gets the associated base class.
                  * @method getBase
                  * @returns  {Function} base class.
                  */                                
-                getBase: function () { return classMeta.getBase(); }, 
+                getBase: function () { return parent.getBase(); }, 
                 /**
                  * Gets the associated class
                  * @method getClass
                  * @returns  {Function} class.
                  */                                              
-                getClass: function () { return classMeta.getClass(); },
+                getClass: function () { return parent.getClass(); },
                 /**
                  * Determines if the meta-data represents a protocol.
                  * @method isProtocol
                  * @returns  {boolean} true if a protocol, false otherwise.
                  */                                                
-                isProtocol: function () { return classMeta.isProtocol(); }
+                isProtocol: function () { return parent.isProtocol(); }
             });
         }
     });
@@ -6810,14 +6809,14 @@ new function () { // closure
             })(this, Array.prototype.slice.call(arguments));
     };
 
-    function _createInstanceMeta() {
+    function _createInstanceMeta(parent) {
         var spec = _createInstanceMeta.spec ||
             (_createInstanceMeta.spec = {
                 enumerable:   false,
-                configurable: false,
+                configurable: true,
                 writable:     false
             }),
-            metadata = new InstanceMeta(this.constructor.$meta);
+            metadata = new InstanceMeta(parent || this.constructor.$meta);
         spec.value = metadata;
         Object.defineProperty(this, META, spec);
         delete spec.value;
@@ -8064,6 +8063,7 @@ new function () { // closure
                 spec      = $decorator.spec || ($decorator.spec = {});
             spec.value = decoratee;
             Object.defineProperty(decorator, 'decoratee', spec);
+            _createInstanceMeta.call(decorator, decoratee.$meta);
             if (decorations) {
                 decorator.extend(decorations);
             }
@@ -8848,7 +8848,7 @@ new function () { // closure
  * 
  */
 /**
- * bluebird build version 2.9.25
+ * bluebird build version 2.9.24
  * Features enabled: core, race, call_get, generators, map, nodeify, promisify, props, reduce, settle, some, cancel, using, filter, any, each, timers
 */
 !function(e){if("object"==typeof exports&&"undefined"!=typeof module)module.exports=e();else if("function"==typeof define&&define.amd)define([],e);else{var f;"undefined"!=typeof window?f=window:"undefined"!=typeof global?f=global:"undefined"!=typeof self&&(f=self),f.Promise=e()}}(function(){var define,module,exports;return (function e(t,n,r){function s(o,u){if(!n[o]){if(!t[o]){var a=typeof _dereq_=="function"&&_dereq_;if(!u&&a)return a(o,!0);if(i)return i(o,!0);var f=new Error("Cannot find module '"+o+"'");throw f.code="MODULE_NOT_FOUND",f}var l=n[o]={exports:{}};t[o][0].call(l.exports,function(e){var n=t[o][1][e];return s(n?n:e)},l,l.exports,e,t,n,r)}return n[o].exports}var i=typeof _dereq_=="function"&&_dereq_;for(var o=0;o<r.length;o++)s(r[o]);return s})({1:[function(_dereq_,module,exports){
@@ -8936,7 +8936,6 @@ Async.prototype.throwLater = function(fn, arg) {
 
 Async.prototype._getDomain = function() {};
 
-if (!true) {
 if (util.isNode) {
     var EventsModule = _dereq_("events");
 
@@ -8952,31 +8951,30 @@ if (util.isNode) {
         var descriptor =
             Object.getOwnPropertyDescriptor(EventsModule, "usingDomains");
 
-        if (descriptor) {
-            if (!descriptor.configurable) {
-                process.on("domainsActivated", function() {
+        if (!descriptor.configurable) {
+            process.on("domainsActivated", function() {
+                Async.prototype._getDomain = domainGetter;
+            });
+        } else {
+            var usingDomains = false;
+            Object.defineProperty(EventsModule, "usingDomains", {
+                configurable: false,
+                enumerable: true,
+                get: function() {
+                    return usingDomains;
+                },
+                set: function(value) {
+                    if (usingDomains || !value) return;
+                    usingDomains = true;
                     Async.prototype._getDomain = domainGetter;
-                });
-            } else {
-                var usingDomains = false;
-                Object.defineProperty(EventsModule, "usingDomains", {
-                    configurable: false,
-                    enumerable: true,
-                    get: function() {
-                        return usingDomains;
-                    },
-                    set: function(value) {
-                        if (usingDomains || !value) return;
-                        usingDomains = true;
-                        Async.prototype._getDomain = domainGetter;
-                        util.toFastProperties(process);
-                        process.emit("domainsActivated");
-                    }
-                });
-            }
+                    util.toFastProperties(process);
+                    process.emit("domainsActivated");
+                }
+            });
         }
+
+
     }
-}
 }
 
 function AsyncInvokeLater(fn, receiver, arg) {

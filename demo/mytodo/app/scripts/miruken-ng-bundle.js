@@ -49,7 +49,6 @@ new function () { // closure
             var rootRegion = new PartialView($rootElement, null, $rootScope, null,
                                              $templateRequest, $controller, $compile, $q);
             $rootContext.addHandlers(rootRegion, new BootstrapModal);
-            
     }]);
     
     /**
@@ -102,9 +101,9 @@ new function () { // closure
     var Filter = Base.extend({
         /**
          * Transforms input from one value to another.
-         * @method get
-         * @param   {Any} input  -  in protocol
-         * @returns {Any} transformed input.
+         * @method filter
+         * @param   {Any} input  -  any input
+         * @returns {Any} transformed output.
          */
         filter: function (input) { return input; }
     });
@@ -391,7 +390,8 @@ new function () { // closure
             if (!member) {
                 return;
             }
-            if (member.prototype instanceof Directive) {
+            var memberProto = member.prototype;
+            if (memberProto instanceof Directive) {
                 var directive = new ComponentModel;
                 directive.setKey(member);
                 container.addComponent(directive);
@@ -403,7 +403,7 @@ new function () { // closure
                 }
                 name = name.charAt(0).toLowerCase() + name.slice(1);
                 module.directive(name, deps);
-            } else if (member.prototype instanceof Controller) {
+            } else if (memberProto instanceof Controller) {
                 var controller = new ComponentModel;
                 controller.setKey(member);
                 controller.setLifestyle(new ContextualLifestyle);
@@ -412,7 +412,7 @@ new function () { // closure
                 deps.unshift('$scope', '$injector');
                 deps.push(Shim(member, deps.slice()));
                 module.controller(name, deps);
-            } else if (member.prototype instanceof Filter) {
+            } else if (memberProto instanceof Filter) {
                 var filter = new ComponentModel;
                 filter.setKey(member);
                 container.addComponent(filter);
@@ -3511,20 +3511,18 @@ new function () { // closure
                     constraint = $classOf(constraint);
                 }
             }
-            var ok = _dispatch(delegate, delegate, callback, constraint, v, composer, all, results);
+            var ok = delegate && _dispatch(delegate, delegate.$meta, callback, constraint, v, composer, all, results);
             if (!ok || all) {
-                ok = ok || _dispatch(handler, handler, callback, constraint, v, composer, all, results);
+                ok = ok || _dispatch(handler, handler.$meta, callback, constraint, v, composer, all, results);
             }
             return ok;
         };
-        function _dispatch(target, owner, callback, constraint, v, composer, all, results) {
-            var dispatched = false;
-            while (owner && (owner !== Base) && (owner !== Object)) {
-                var meta      = owner.$meta,
-                    index     = _createIndex(constraint),
-                    list      = meta && meta[tag],
-                    invariant = (v === Variance.Invariant);
-                owner = (owner === target) ? $classOf(owner) : $ancestorOf(owner);
+        function _dispatch(target, meta, callback, constraint, v, composer, all, results) {
+            var dispatched = false,
+                invariant  = (v === Variance.Invariant),
+                index      = meta && _createIndex(constraint);
+            while (meta) {
+                var list = meta[tag];
                 if (list && (!invariant || index)) {
                     var node = list.getIndex(index) || list.head;
                     while (node) {
@@ -3534,7 +3532,7 @@ new function () { // closure
                             target.base    = function () {
                                 var baseResult;
                                 baseCalled = true;
-                                _dispatch(target, owner, callback, constraint, v, composer, false,
+                                _dispatch(target, meta.getParent(), callback, constraint, v, composer, false,
                                           function (result) { baseResult = result; });
                                 return baseResult;
                             };
@@ -3562,6 +3560,7 @@ new function () { // closure
                         node = node.next;
                     }
                 }
+                meta = meta.getParent();
             }
             return dispatched;
         }
@@ -7283,27 +7282,27 @@ new function () { // closure
      * @extends miruken.MetaBase
      */
     var InstanceMeta = MetaBase.extend({
-        constructor: function (classMeta) {
-            this.base(classMeta);
+        constructor: function (parent) {
+            this.base(parent);
             this.extend({
                 /**
                  * Gets the associated base class.
                  * @method getBase
                  * @returns  {Function} base class.
                  */                                
-                getBase: function () { return classMeta.getBase(); }, 
+                getBase: function () { return parent.getBase(); }, 
                 /**
                  * Gets the associated class
                  * @method getClass
                  * @returns  {Function} class.
                  */                                              
-                getClass: function () { return classMeta.getClass(); },
+                getClass: function () { return parent.getClass(); },
                 /**
                  * Determines if the meta-data represents a protocol.
                  * @method isProtocol
                  * @returns  {boolean} true if a protocol, false otherwise.
                  */                                                
-                isProtocol: function () { return classMeta.isProtocol(); }
+                isProtocol: function () { return parent.isProtocol(); }
             });
         }
     });
@@ -7362,14 +7361,14 @@ new function () { // closure
             })(this, Array.prototype.slice.call(arguments));
     };
 
-    function _createInstanceMeta() {
+    function _createInstanceMeta(parent) {
         var spec = _createInstanceMeta.spec ||
             (_createInstanceMeta.spec = {
                 enumerable:   false,
-                configurable: false,
+                configurable: true,
                 writable:     false
             }),
-            metadata = new InstanceMeta(this.constructor.$meta);
+            metadata = new InstanceMeta(parent || this.constructor.$meta);
         spec.value = metadata;
         Object.defineProperty(this, META, spec);
         delete spec.value;
@@ -8616,6 +8615,7 @@ new function () { // closure
                 spec      = $decorator.spec || ($decorator.spec = {});
             spec.value = decoratee;
             Object.defineProperty(decorator, 'decoratee', spec);
+            _createInstanceMeta.call(decorator, decoratee.$meta);
             if (decorations) {
                 decorator.extend(decorations);
             }
@@ -8751,16 +8751,16 @@ new function () { // closure
     var BootstrapModal = Base.extend(Bootstrap, {
         showModal: function (container, content, policy, controller, scope) {
             var deferred = Promise.defer(),
-                result = controller || {};
+                result   = controller || {};
 
-            if(policy.wrap){    
+            if (policy.wrap) {    
                 $('body').append(this.wrapper(policy));
                 $('.modal-body').append(content);
             } else {
                 $('body').append(content);
             }
 
-            if(controller && controller.context){
+            if (controller && controller.context) {
                 var cancel = controller.context.observe({
                     contextEnding: function (context) {
                         if (context === controller.context) {
@@ -8773,13 +8773,13 @@ new function () { // closure
 
             var modal = $('.modal');
             modal.modal();
-            modal.on('hidden.bs.modal', function(e){
+            modal.on('hidden.bs.modal', function (e){
                 close();
             });
             
-            $('.modal .js-close').click(function(e){
+            $('.modal .js-close').click(function (e){
                 var buttonText = e.target.innerText;
-                if(buttonText != '\u00d7'){
+                if (buttonText != '\u00d7') {
                     result.modalResult = buttonText;     
                 }
                 close()
@@ -8787,8 +8787,8 @@ new function () { // closure
 
             return deferred.promise;
 
-            function close(){
-                if(controller){
+            function close() {
+                if (controller) {
                     controller.endContext();
                 };
 
@@ -8800,7 +8800,7 @@ new function () { // closure
                 deferred.resolve(result);
             }
         },
-        wrapper: function(policy){
+        wrapper: function (policy){
             var wrapper = ''; 
             wrapper += format('<div class="modal" %1>', policy.forceResponse ? 'data-backdrop="static"' : '')
             wrapper +=     '<div class="modal-dialog">'
@@ -8817,11 +8817,11 @@ new function () { // closure
             wrapper +=     '</div>'
             wrapper += '</div>'
 
-            function buildHeader(){
-                if(policy.header || policy.title){
+            function buildHeader() {
+                if (policy.header || policy.title) {
                     wrapper += '<div class="modal-header">'
 
-                    if(!policy.forceResponse){
+                    if (!policy.forceResponse) {
                         wrapper += '<button type="button" class="close js-close">&times;</button>'
                     }
 
@@ -8830,14 +8830,14 @@ new function () { // closure
                 }    
             }
 
-            function buildFooter(){
-                if(policy.footer || policy.buttons){
+            function buildFooter() {
+                if (policy.footer || policy.buttons) {
                     wrapper += '<div class="modal-footer text-right">'
-                    if(policy.buttons){
-                        Array2.forEach(policy.buttons, function(button){
-                            if($isString(button)){
+                    if (policy.buttons) {
+                        Array2.forEach(policy.buttons, function (button){
+                            if ($isString(button)){
                                 wrapper += format('<button class="btn btn-default btn-sm js-close">%1</button>', button);
-                            } else if($isObject(button)) {
+                            } else if ($isObject(button)) {
                                 wrapper += format('<button class="btn js-close %1">%2</button>', button.css, button.text);
                             }
                         });
@@ -8855,6 +8855,7 @@ new function () { // closure
     eval(this.exports);
     
 }
+
 },{"../miruken.js":12,"../mvc/view.js":17,"bluebird":21}],14:[function(require,module,exports){
 var miruken = require('../miruken.js');
               require('../callback.js');
@@ -9318,13 +9319,13 @@ new function () { // closure
      */
     var ModalPolicy = PresentationPolicy.extend({
         $properties: {
-            title: '',
-            style: undefined,
-            wrap: true,
-            header: false,
-            footer: false,
+            title:         '',
+            style:         null,
+            wrap:          true,
+            header:        false,
+            footer:        false,
             forceResponse: false,
-            buttons: null
+            buttons:       null
         }
     });
 
@@ -10057,7 +10058,7 @@ new function () { // closure
  * 
  */
 /**
- * bluebird build version 2.9.25
+ * bluebird build version 2.9.24
  * Features enabled: core, race, call_get, generators, map, nodeify, promisify, props, reduce, settle, some, cancel, using, filter, any, each, timers
 */
 !function(e){if("object"==typeof exports&&"undefined"!=typeof module)module.exports=e();else if("function"==typeof define&&define.amd)define([],e);else{var f;"undefined"!=typeof window?f=window:"undefined"!=typeof global?f=global:"undefined"!=typeof self&&(f=self),f.Promise=e()}}(function(){var define,module,exports;return (function e(t,n,r){function s(o,u){if(!n[o]){if(!t[o]){var a=typeof _dereq_=="function"&&_dereq_;if(!u&&a)return a(o,!0);if(i)return i(o,!0);var f=new Error("Cannot find module '"+o+"'");throw f.code="MODULE_NOT_FOUND",f}var l=n[o]={exports:{}};t[o][0].call(l.exports,function(e){var n=t[o][1][e];return s(n?n:e)},l,l.exports,e,t,n,r)}return n[o].exports}var i=typeof _dereq_=="function"&&_dereq_;for(var o=0;o<r.length;o++)s(r[o]);return s})({1:[function(_dereq_,module,exports){
@@ -10145,7 +10146,6 @@ Async.prototype.throwLater = function(fn, arg) {
 
 Async.prototype._getDomain = function() {};
 
-if (!true) {
 if (util.isNode) {
     var EventsModule = _dereq_("events");
 
@@ -10161,31 +10161,30 @@ if (util.isNode) {
         var descriptor =
             Object.getOwnPropertyDescriptor(EventsModule, "usingDomains");
 
-        if (descriptor) {
-            if (!descriptor.configurable) {
-                process.on("domainsActivated", function() {
+        if (!descriptor.configurable) {
+            process.on("domainsActivated", function() {
+                Async.prototype._getDomain = domainGetter;
+            });
+        } else {
+            var usingDomains = false;
+            Object.defineProperty(EventsModule, "usingDomains", {
+                configurable: false,
+                enumerable: true,
+                get: function() {
+                    return usingDomains;
+                },
+                set: function(value) {
+                    if (usingDomains || !value) return;
+                    usingDomains = true;
                     Async.prototype._getDomain = domainGetter;
-                });
-            } else {
-                var usingDomains = false;
-                Object.defineProperty(EventsModule, "usingDomains", {
-                    configurable: false,
-                    enumerable: true,
-                    get: function() {
-                        return usingDomains;
-                    },
-                    set: function(value) {
-                        if (usingDomains || !value) return;
-                        usingDomains = true;
-                        Async.prototype._getDomain = domainGetter;
-                        util.toFastProperties(process);
-                        process.emit("domainsActivated");
-                    }
-                });
-            }
+                    util.toFastProperties(process);
+                    process.emit("domainsActivated");
+                }
+            });
         }
+
+
     }
-}
 }
 
 function AsyncInvokeLater(fn, receiver, arg) {

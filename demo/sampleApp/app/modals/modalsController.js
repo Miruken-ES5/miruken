@@ -1,4 +1,5 @@
-new function(){
+new function () {
+    
 	var sampleApp = new base2.Package(this, {
 		name:    'sampleApp',
 		imports: 'miruken.mvc',
@@ -11,27 +12,27 @@ new function(){
 		showWrappedModal: function () {
             ViewRegion(this.context.modal({
             	title: 'Hooray!', 
-        		footer: true }))
-            .present({
+        		footer: true })
+            ).present({
                 templateUrl: 'app/modals/wrappedModal.html',
                 controller:  'WrappedModalController as vm'
             });
 		},
 		showWrappedModalWithHeader: function () {
             ViewRegion(this.context.modal({
-        		header: true}))
-            .present({
+                title: 'Just a Header',
+        		header: true})
+            ).present({
                 templateUrl: 'app/modals/wrappedModal.html',
                 controller:  'WrappedModalController as vm'
             });
 		},
 		showWrappedModalWithFooter: function () {
-            ViewRegion(this.context.modal({
-        		footer: true}))
-            .present({
-                templateUrl: 'app/modals/wrappedModal.html',
-                controller:  'WrappedModalController as vm'
-            });
+            ViewRegion(this.context.modal({ footer: true }))
+                .present({
+                    templateUrl: 'app/modals/wrappedModal.html',
+                    controller:  'WrappedModalController as vm'
+                });
 		},
 		showFullModal: function () {
             ViewRegion(this.context.modal({ wrap: false }))
@@ -56,8 +57,8 @@ new function(){
                     { text: 'Success', css: 'btn-success'},
                     { text: 'Warning', css: 'btn-warning'},
                     { text: 'Danger',  css: 'btn-danger btn-lg'},
-                ] }))
-                .present({ template: '<p>Demo adding buttons with classes.</p>' }).then(function(controller){
+                ]})
+            ).present({ template: '<p>Demo adding buttons with classes.</p>' }).then(function (controller){
                     alert(format('Result: %1', controller.modalResult));
                 });
         },
@@ -68,10 +69,10 @@ new function(){
                 buttons: [
                     'Yes',
                     'No'
-                ] }))
-                .present({ template: '<p>Are you sure you want to...?</p>' }).then(function(controller){
-                    alert(format('Result: %1', controller.modalResult));
-                });
+                ]})
+            ).present({ template: '<p>Are you sure you want to...?</p>' }).then(function (controller){
+                alert(format('Result: %1', controller.modalResult));
+            });
         }
 	});
 
