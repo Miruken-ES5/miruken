@@ -8837,6 +8837,8 @@ new function () { // closure
                         Array2.forEach(policy.buttons, function(button){
                             if($isString(button)){
                                 wrapper += format('<button class="btn btn-default btn-sm js-close">%1</button>', button);
+                            } else if($isObject(button)) {
+                                wrapper += format('<button class="btn js-close %1">%2</button>', button.css, button.text);
                             }
                         });
                     } else {

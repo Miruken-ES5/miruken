@@ -47,6 +47,20 @@ new function(){
 	                controller:  'SelfClosingModalController as vm'
 	            });
 		},
+        showModalWithButtons: function () {
+            ViewRegion(this.context.modal({ 
+                title: 'Buttons',
+                buttons: [
+                    { text: 'Primary', css: 'btn-primary btn-xs'},
+                    { text: 'Default', css: 'btn-default btn-sm'},
+                    { text: 'Success', css: 'btn-success'},
+                    { text: 'Warning', css: 'btn-warning'},
+                    { text: 'Danger',  css: 'btn-danger btn-lg'},
+                ] }))
+                .present({ template: '<p>Demo adding buttons with classes.</p>' }).then(function(controller){
+                    alert(format('Result: %1', controller.modalResult));
+                });
+        },
         showConfirmModal: function () {
             ViewRegion(this.context.modal({ 
                 forceResponse: true,
