@@ -8,7 +8,15 @@ new function () {
 
 	eval(this.imports);
 
-	var ModalsController = Controller.extend({
+	var ModalsController = Controller.extend(MasterDetail, {
+        getSelectedDetail: function(target){
+            if(target === Person){
+                return new Person({
+                    firstName: 'Dalinar',
+                    lastName:  'Kholin'
+                });
+            }
+        },
 		showWrappedModal: function () {
             ViewRegion(this.context.modal({
             	title: 'Hooray!', 
@@ -88,6 +96,14 @@ new function () {
                         alert(format('Hello, %1!', result));
                     }
                 });
+        },
+        showModalUsingMasterDetail: function () {
+            ViewRegion(this.context.modal({ 
+                title: 'Person'
+            })).present({ 
+                templateUrl: 'app/modals/modalUsingMasterDetail.html',
+                controller:  'ModalUsingMasterDetailController as vm' 
+            });
         }
 	});
 
