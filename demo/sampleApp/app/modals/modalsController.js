@@ -29,7 +29,7 @@ new function () {
 		showWrappedModalWithHeader: function () {
             ViewRegion(this.context.modal({
                 title: 'Just a Header',
-        		header: true})
+        		header: true })
             ).present({
                 templateUrl: 'app/modals/wrappedModal.html',
                 controller:  'WrappedModalController as vm'
@@ -60,13 +60,14 @@ new function () {
             ViewRegion(this.context.modal({ 
                 title: 'Buttons',
                 buttons: [
-                    { text: 'Primary', css: 'btn-primary btn-xs'},
-                    { text: 'Default', css: 'btn-default btn-sm'},
-                    { text: 'Success', css: 'btn-success'},
-                    { text: 'Warning', css: 'btn-warning'},
-                    { text: 'Danger',  css: 'btn-danger btn-lg'},
+                    { text: 'Primary', css: 'btn-primary btn-xs' },
+                    { text: 'Default', css: 'btn-default btn-sm' },
+                    { text: 'Success', css: 'btn-success' },
+                    { text: 'Warning', css: 'btn-warning' },
+                    { text: 'Danger',  css: 'btn-danger btn-lg' },
                 ]})
-            ).present({ template: '<p>Demo adding buttons with classes.</p>' }).then(function (result) {
+            ).present({ template: '<p>Demo adding buttons with classes.</p>' })
+                .then(function (result) {
                     alert(format('Result: %1', result));
                 });
         },
