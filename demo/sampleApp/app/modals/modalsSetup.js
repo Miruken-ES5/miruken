@@ -1,6 +1,6 @@
 new function(){
 	var sampleApp = new base2.Package(this, {
-		name: 'sampleApp',
+		name:    'sampleApp',
 		imports: 'miruken.ioc',
 		exports: 'ModalsInstaller'
 	});
@@ -9,10 +9,10 @@ new function(){
 
 	var ModalsInstaller = Installer.extend({
 		$inject: ['$routeProvider'],
-		constructor: function($routeProvider){
+		constructor: function ($routeProvider){
 			$routeProvider.when('/modals', {
-				templateUrl: 'app/modals/modals.html',
-				controller: 'ModalsController',
+				templateUrl:  'app/modals/modals.html',
+				controller:   'ModalsController',
 				controllerAs: 'vm'
 			});
 		}

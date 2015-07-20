@@ -2,7 +2,7 @@ new function () {
     
 	var sampleApp = new base2.Package(this, {
 		name:    'sampleApp',
-		imports: 'miruken.mvc',
+		imports: 'miruken.mvc,sampleApp.domain',
 		exports: 'ModalsController'
 	});
 
@@ -10,7 +10,7 @@ new function () {
 
 	var ModalsController = Controller.extend(MasterDetail, {
         getSelectedDetail: function(target){
-            if(target === Person){
+            if (target === Person) {
                 return new Person({
                     firstName: 'Dalinar',
                     lastName:  'Kholin'
@@ -93,7 +93,7 @@ new function () {
             ).present({ 
                 templateUrl: 'app/modals/modalReturningInput.html',
                 controller:  'ModalReturningInputController as vm' }).then(function (result) {
-                    if(result == 'Ok'){
+                    if (result == 'Ok') {
                         alert(format('Hello, %1!', result));
                     }
                 });
