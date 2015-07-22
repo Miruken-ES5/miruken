@@ -8222,7 +8222,7 @@ new function () { // closure
                 
                 if (context) {
                     var cancel = context.observe({
-                        contextEnded: function () {
+                        contextEnding: function () {
                             close();
                             cancel();
                         }
