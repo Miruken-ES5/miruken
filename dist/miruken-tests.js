@@ -8177,7 +8177,7 @@ new function () { // closure
         name:    "mvc",
         version: miruken.version,
         parent:  miruken,
-        imports: "miruken,miruken.callback,miruken.mvc",
+        imports: "miruken,miruken.mvc",
         exports: "Bootstrap,BootstrapModal"
     });
 
@@ -8198,9 +8198,9 @@ new function () { // closure
      */    
     var BootstrapModal = Base.extend(Bootstrap, {
         showModal: function (container, content, policy, context) {
-            var result = new Promise(function (resolve, reject) {
-                if (policy.wrap) {    
-                    $('body').append(_buildWrapper(policy));
+            var promise = new Promise(function (resolve, reject) {
+                if (policy.chrome) {    
+                    $('body').append(_buildChrome(policy));
                     $('.modal-body').append(content);
                 } else {
                     $('body').append(content);
@@ -8208,17 +8208,15 @@ new function () { // closure
                 
                 function close(result) {
                     if (resolve) {
+                        if (context) {
+                            promise.finally(context.end.bind(context));
+                        }
                         resolve(result);
                         resolve = null;
-                        
                         modal.modal('hide');
                         modal.remove();
                         $('.modal-backdrop').remove();
                         $('body').removeClass('modal-open');
-                        
-                        if (context) {
-                            context.end();
-                        };
                     }
                 }
                 
@@ -8231,74 +8229,83 @@ new function () { // closure
                     });
                 }
                 
-                var modal = $('.modal');
-                modal.modal();
-                modal.on('hidden.bs.modal', function (e) {
-                    close();
-                });
+                var modal = $('.modal').modal()
+                    .on('hidden.bs.modal', function (e) {
+                        close();
+                    });
                 
                 $('.modal .js-close').click(function (e) {
-                    var buttonText = e.target.innerText,
-                        result     = buttonText != '\u00d7'
-                                   ? buttonText : undefined;
+                    var result;
+                    if (e.target.innerText != '\u00d7') {
+                        var index = $(e.target).index();
+                        if (policy.buttons && policy.buttons.length > index) {
+                            result = new ButtonClicked(policy.buttons[index], index);
+                        }
+                    }
                     close(result)
                 });
             });
-            return result;
+            return context.decorate({
+                $properties: {
+                    modalResult: {
+                        get: function () { return promise; }
+                    }
+                }
+            });
         }
     });
 
-    function _buildWrapper(policy) {
-        var wrapper = ''; 
-        wrapper += format('<div class="modal" %1>', policy.forceResponse ? 'data-backdrop="static"' : '');
-        wrapper +=     '<div class="modal-dialog">';
-        wrapper +=         '<div class="modal-content">';
+    function _buildChrome(policy) {
+        var chrome = ''; 
+        chrome += format('<div class="modal" %1>', policy.forceClose ? 'data-backdrop="static"' : '');
+        chrome +=     '<div class="modal-dialog">';
+        chrome +=         '<div class="modal-content">';
         
-        wrapper = _buildHeader(wrapper, policy);
+        chrome = _buildHeader(chrome, policy);
         
-        wrapper +=             '<div class="modal-body">';
-        wrapper +=             '</div>';
+        chrome +=             '<div class="modal-body">';
+        chrome +=             '</div>';
         
-        wrapper = _buildFooter(wrapper, policy);
+        chrome = _buildFooter(chrome, policy);
         
-        wrapper +=         '</div>';
-        wrapper +=     '</div>';
-        wrapper += '</div>';
+        chrome +=         '</div>';
+        chrome +=     '</div>';
+        chrome += '</div>';
         
-        return wrapper;
+        return chrome;
     }
 
-    function _buildHeader(wrapper, policy) {
+    function _buildHeader(chrome, policy) {
         if (policy.header || policy.title) {
-            wrapper += '<div class="modal-header">';
+            chrome += '<div class="modal-header">';
             
-            if (!policy.forceResponse) {
-                wrapper += '<button type="button" class="close js-close">&times;</button>';
+            if (!policy.forceClose) {
+                chrome += '<button type="button" class="close js-close">&times;</button>';
             }
             
-            wrapper += format('<h4 class="modal-title"> %1 &nbsp</h4>', policy.title);
-            wrapper += '</div>';
+            chrome += format('<h4 class="modal-title"> %1 &nbsp</h4>', policy.title);
+            chrome += '</div>';
         }
-        return wrapper;
+        return chrome;
     }
 
-    function _buildFooter(wrapper, policy) {
+    function _buildFooter(chrome, policy) {
         if (policy.footer || policy.buttons) {
-            wrapper += '<div class="modal-footer text-right">';
+            chrome += '<div class="modal-footer text-right">';
             if (policy.buttons) {
                 Array2.forEach(policy.buttons, function (button) {
                     if ($isString(button)) {
-                        wrapper += format('<button class="btn btn-default btn-sm js-close">%1</button>', button);
+                        chrome += format('<button class="btn btn-default btn-sm js-close">%1</button>', button);
                     } else if ($isObject(button)) {
-                        wrapper += format('<button class="btn js-close %1">%2</button>', button.css, button.text);
+                        chrome += format('<button class="btn js-close %1">%2</button>', button.css, button.text);
                     }
                 });
             } else {
-                wrapper += '<button class="btn btn-primary btn-sm js-close">Close</button>';
+                chrome += '<button class="btn btn-primary btn-sm js-close">Close</button>';
             }
-            wrapper += '</div>';
+            chrome += '</div>';
         }
-        return wrapper;
+        return chrome;
     }
 
     eval(this.exports);
@@ -8708,7 +8715,7 @@ new function () { // closure
         version: miruken.version,
         parent:  miruken,
         imports: "miruken,miruken.callback,miruken.context",
-        exports: "ViewRegion,PartialRegion,PresentationPolicy,ModalPolicy,ModalProviding"
+        exports: "ViewRegion,PartialRegion,PresentationPolicy,ModalPolicy,ModalProviding,ButtonClicked"
     });
 
     eval(this.imports);
@@ -8768,16 +8775,41 @@ new function () { // closure
      */
     var ModalPolicy = PresentationPolicy.extend({
         $properties: {
-            title:         '',
-            style:         null,
-            wrap:          true,
-            header:        false,
-            footer:        false,
-            forceResponse: false,
-            buttons:       null
+            title:      '',
+            style:      null,
+            chrome:     true,
+            header:     false,
+            footer:     false,
+            forceClose: false,
+            buttons:    null
         }
     });
 
+    /**
+     * Represents the clicking of a button.
+     * @class ButtonClicked
+     * @constructor
+     * @param  {Object}  button  -  clicked button 
+     * @extends Base
+     */
+    var ButtonClicked = Base.extend(
+        $inferProperties, {
+        constructor: function (button, buttonIndex) {
+            this.extend({
+                /**
+                 * Gets the clicked button.
+                 * @property {Object} button
+                 */                                
+                getButton: function () { return button; },
+                /**
+                 * Gets the clicked button index.
+                 * @property {number} button index
+                 */                                
+                getButtonIndex: function () { return buttonIndex; }
+            });
+        }
+    });
+    
     /**
      * Protocol for interacting with a modal provider.
      * @class ModalProviding
