@@ -2189,11 +2189,11 @@ new function () { // closure
                     var implied  = new _Node(key),
                         delegate = this.delegate;
                     if (delegate && implied.match($classOf(delegate), Variance.Contravariant)) {
-                        resolution.resolve($decorated(delegate));
+                        resolution.resolve($decorated(delegate, true));
                         resolved = true;
                     }
                     if ((!resolved || many) && implied.match($classOf(this), Variance.Contravariant)) {
-                        resolution.resolve($decorated(this));
+                        resolution.resolve($decorated(this, true));
                         resolved = true;
                     }
                 }
@@ -8197,8 +8197,8 @@ new function () { // closure
      * @uses miruken.mvc.Bootstrap
      */    
     var BootstrapModal = Base.extend(Bootstrap, {
-        showModal: function (container, content, controller, policy) {
-            return new Promise(function (resolve, reject) {
+        showModal: function (container, content, policy, context) {
+            var result = new Promise(function (resolve, reject) {
                 if (policy.wrap) {    
                     $('body').append(_buildWrapper(policy));
                     $('.modal-body').append(content);
@@ -8216,15 +8216,15 @@ new function () { // closure
                         $('.modal-backdrop').remove();
                         $('body').removeClass('modal-open');
                         
-                        if (controller) {
-                            controller.endContext();
+                        if (context) {
+                            context.end();
                         };
                     }
                 }
                 
-                if (controller && controller.context) {
-                    var cancel = controller.context.observe({
-                        contextEnded: function (context) {
+                if (context) {
+                    var cancel = context.observe({
+                        contextEnded: function () {
                             close();
                             cancel();
                         }
@@ -8240,10 +8240,11 @@ new function () { // closure
                 $('.modal .js-close').click(function (e) {
                     var buttonText = e.target.innerText,
                         result     = buttonText != '\u00d7'
-                        ? buttonText : undefined;
+                                   ? buttonText : undefined;
                     close(result)
                 });
             });
+            return result;
         }
     });
 
@@ -8706,7 +8707,7 @@ new function () { // closure
         name:    "mvc",
         version: miruken.version,
         parent:  miruken,
-        imports: "miruken,miruken.callback",
+        imports: "miruken,miruken.callback,miruken.context",
         exports: "ViewRegion,PartialRegion,PresentationPolicy,ModalPolicy,ModalProviding"
     });
 
@@ -8786,13 +8787,13 @@ new function () { // closure
         /**
          * Presents the content in a modal dialog.
          * @method showModal
-         * @param   {Element}                  container   -  element modal bound to
-         * @param   {Element}                  content     -  modal content element
-         * @param   {miruken.mvc.Controller}   controller  -  associated controller
-         * @param   {miruken.mvc.ModalPolicy}  policy      -  modal policy options
+         * @param   {Element}                  container  -  element modal bound to
+         * @param   {Element}                  content    -  modal content element
+         * @param   {miruken.mvc.ModalPolicy}  policy     -  modal policy options
+         * @param   {miruken.context.Context}  context    -  modal context
          * @returns {Promise} promise representing the modal result.
          */
-        showModal: function (container, content, controller, policy) {}
+        showModal: function (container, content, policy, context) {}
     });
     
     CallbackHandler.implement({
