@@ -157,7 +157,7 @@ new function () { // closure
                     function replaceContent(template) {
                         var oldScope       = partialScope,
                             modalPolicy    = new ModalPolicy,
-                            isModal        = composer.handle(modalPolicy, true),
+                            isModal        = composer.handle(modalPolicy, true) || !oldScope,
                             parentScope    = isModal ? composer.resolve('$scope') : scope;
                         partialScope       = (parentScope || scope).$new();
                         var partialContext = partialScope.context;
@@ -169,7 +169,15 @@ new function () { // closure
                             _controller = $controller(controller, { $scope: partialScope });
                             var controllerAs = parts.length > 1 ?  parts[parts.length - 1] : 'ctrl';
                             partialScope[controllerAs] = _controller;
-                            
+                        }
+
+                        var oldContent = content;
+                        content = $compile(template)(partialScope);
+
+                        if (isModal) {
+                            var provider = modalPolicy.style || ModalProviding;
+                            partialContext = provider(composer).showModal(container, content, modalPolicy, partialContext);
+                        } else {
                             var cancel = partialContext.observe({
                                 contextEnding: function (context) {
                                     if (context === partialScope.context) {
@@ -182,24 +190,19 @@ new function () { // closure
                                     cancel();
                                 }
                             });
-                        }
-
-                        var oldContent = content;
-                        content = $compile(template)(partialScope);
-
-                        if (isModal || !oldScope) {
-                            var provider = modalPolicy.style || ModalProviding;
-                            partialContext = provider(composer).showModal(container, content, modalPolicy, partialContext);
-                        } else {
+                            
                             if (oldContent) {
                                 oldContent.remove();
                             }
+                            
                             container.after(content);
                             oldScope.$destroy();
                         }
                         
                         return $q.when(partialContext);
                     }
+                },
+                newChild: function () {
                 }
             });
         }
@@ -276,19 +279,20 @@ new function () { // closure
             this.base();
             var parent = this.parent,
                 module = this.ngModule;
-            if (module instanceof Array) {
-                var exists,
-                    name = String2.slice(this, 7, -1);  // [base2.xyz]
+            if (module) {
+                var name = String2.slice(this, 7, -1),  // [base2.xyz]
+                    exists;
                 try {
                     angular.module(name);
                     exists = true;
                 } catch (e) {
-                    module = angular.module(name, module);
-                    module.constant('$rootContext', $rootContext);
+                    // doesn't exist
                 }
                 if (exists) {
                     throw new Error(format("The Angular module '%1' already exists.", name));
                 }
+                module = angular.module(name, module);
+                module.constant('$rootContext', $rootContext);
             } else if (parent) {
                 module = parent.ngModule;
             }
@@ -374,13 +378,19 @@ new function () { // closure
             childScope.context = parentScope && parentScope.context
                                ? parentScope.context.newChild()
                                : new Context;
+            var cancel = childScope.context.observe({
+                contextEnded: function (context) {
+                    childScope.$destroy();
+                    cancel();
+                }
+            });
             return childScope;
         };
         scopeProto.$destroy = function () {
             var context = this.context;
             if (context !== $rootContext) {
-                delete this.context;
                 context.end();
+                delete this.context;
             }
             destroyScope.call(this);
         };
@@ -3730,7 +3740,7 @@ new function () { // closure
 }
 
 }).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
-},{"./miruken.js":12,"bluebird":21}],5:[function(require,module,exports){
+},{"./miruken.js":12,"bluebird":22}],5:[function(require,module,exports){
 var miruken = require('./miruken.js');
               require('./graph.js');
               require('./callback.js');
@@ -4533,7 +4543,7 @@ new function() { // closure
 
 }
 
-},{"./callback.js":4,"./miruken.js":12,"bluebird":21}],7:[function(require,module,exports){
+},{"./callback.js":4,"./miruken.js":12,"bluebird":22}],7:[function(require,module,exports){
 var miruken = require('./miruken.js');
 
 new function () { // closure
@@ -4939,7 +4949,7 @@ require('./error.js');
 require('./validate');
 require('./ioc');
 
-},{"./callback.js":4,"./context.js":5,"./error.js":6,"./graph.js":7,"./ioc":10,"./miruken.js":12,"./validate":18}],9:[function(require,module,exports){
+},{"./callback.js":4,"./context.js":5,"./error.js":6,"./graph.js":7,"./ioc":10,"./miruken.js":12,"./validate":19}],9:[function(require,module,exports){
 var miruken = require('../miruken.js'),
     Promise = require('bluebird');
               require('./ioc.js');
@@ -5370,7 +5380,7 @@ new function () { // closure
     eval(this.exports);
 }
 
-},{"../miruken.js":12,"./ioc.js":11,"bluebird":21}],10:[function(require,module,exports){
+},{"../miruken.js":12,"./ioc.js":11,"bluebird":22}],10:[function(require,module,exports){
 module.exports = require('./ioc.js');
 require('./config.js');
 
@@ -6638,7 +6648,7 @@ new function () { // closure
 
 }
 
-},{"../callback.js":4,"../context.js":5,"../miruken.js":12,"../validate":18,"bluebird":21}],12:[function(require,module,exports){
+},{"../callback.js":4,"../context.js":5,"../miruken.js":12,"../validate":19,"bluebird":22}],12:[function(require,module,exports){
 (function (global){
 require('./base2.js');
 
@@ -8772,15 +8782,9 @@ new function () { // closure
                 
                 function close(result) {
                     if (resolve) {
-                        if (context) {
-                            promise.finally(context.end.bind(context));
-                        }
                         resolve(result);
                         resolve = null;
                         modal.modal('hide');
-                        modal.remove();
-                        $('.modal-backdrop').remove();
-                        $('body').removeClass('modal-open');
                     }
                 }
                 
@@ -8795,7 +8799,10 @@ new function () { // closure
                 
                 var modal = $('.modal').modal()
                     .on('hidden.bs.modal', function (e) {
-                        close();
+                        modal.remove();
+                        $('.modal-backdrop').remove();
+                        $('body').removeClass('modal-open');
+                        context.end();
                     });
                 
                 $('.modal .js-close').click(function (e) {
@@ -8821,8 +8828,8 @@ new function () { // closure
 
     function _buildChrome(policy) {
         var chrome = ''; 
-        chrome += format('<div class="modal" %1>', policy.forceClose ? 'data-backdrop="static"' : '');
-        chrome +=     '<div class="modal-dialog">';
+        chrome += format('<div class="modal fade" role="dialog" %1>', policy.forceClose ? 'data-backdrop="static"' : '');
+        chrome +=     '<div class="modal-dialog" role="document">';
         chrome +=         '<div class="modal-content">';
         
         chrome = _buildHeader(chrome, policy);
@@ -8876,7 +8883,7 @@ new function () { // closure
     
 }
 
-},{"../miruken.js":12,"../mvc/view.js":17,"bluebird":21}],14:[function(require,module,exports){
+},{"../miruken.js":12,"../mvc/view.js":18,"bluebird":22}],14:[function(require,module,exports){
 var miruken = require('../miruken.js');
               require('../callback.js');
               require('../context.js');
@@ -9067,12 +9074,14 @@ new function () { // closure
     
 }
 
-},{"../callback.js":4,"../context.js":5,"../miruken.js":12,"../validate":18}],15:[function(require,module,exports){
+},{"../callback.js":4,"../context.js":5,"../miruken.js":12,"../validate":19}],15:[function(require,module,exports){
 module.exports = require('./model.js');
 require('./view.js');
 require('./controller.js');
+require('./tabController.js');
 require('./bootstrap.js');
-},{"./bootstrap.js":13,"./controller.js":14,"./model.js":16,"./view.js":17}],16:[function(require,module,exports){
+
+},{"./bootstrap.js":13,"./controller.js":14,"./model.js":16,"./tabController.js":17,"./view.js":18}],16:[function(require,module,exports){
 var miruken = require('../miruken.js');
               require('../callback.js');
               require('../context.js');
@@ -9255,7 +9264,34 @@ new function () { // closure
     
 }
 
-},{"../callback.js":4,"../context.js":5,"../miruken.js":12,"../validate":18}],17:[function(require,module,exports){
+},{"../callback.js":4,"../context.js":5,"../miruken.js":12,"../validate":19}],17:[function(require,module,exports){
+var miruken = require('../miruken.js');
+              require('../mvc/controller.js');
+
+new function () { // closure
+
+    var mvc = new base2.Package(this, {
+        name:    "mvc",
+        version: miruken.version,
+        parent:  miruken,
+        imports: "miruken.mvc",
+        exports: "TabController"
+    });
+
+    eval(this.imports);
+
+    var TabController = Controller.extend({
+        getTab: function (name) {
+        },
+        addTab: function (name, index) {
+        }
+    });
+    
+    eval(this.exports);
+    
+}
+
+},{"../miruken.js":12,"../mvc/controller.js":14}],18:[function(require,module,exports){
 var miruken = require('../miruken.js');
               require('../callback.js');
               require('../context.js');
@@ -9288,8 +9324,9 @@ new function () { // closure
      * Protocol for rendering a view on the screen.
      * @class ViewRegion
      * @extends StrictProtocol
+     * @uses miruken.Parenting
      */
-    var ViewRegion = StrictProtocol.extend({
+    var ViewRegion = StrictProtocol.extend(Parenting, {
         /**
          * Renders a controller or view in the region.
          * @method present
@@ -9422,12 +9459,12 @@ new function () { // closure
     
 }
 
-},{"../callback.js":4,"../context.js":5,"../miruken.js":12,"../validate":18,"./model.js":16}],18:[function(require,module,exports){
+},{"../callback.js":4,"../context.js":5,"../miruken.js":12,"../validate":19,"./model.js":16}],19:[function(require,module,exports){
 module.exports = require('./validate.js');
 require('./validatejs.js');
 
 
-},{"./validate.js":19,"./validatejs.js":20}],19:[function(require,module,exports){
+},{"./validate.js":20,"./validatejs.js":21}],20:[function(require,module,exports){
 var miruken = require('../miruken.js'),
     Promise = require('bluebird');
               require('../callback.js');
@@ -9824,7 +9861,7 @@ new function () { // closure
 
 }
 
-},{"../callback.js":4,"../miruken.js":12,"bluebird":21}],20:[function(require,module,exports){
+},{"../callback.js":4,"../miruken.js":12,"bluebird":22}],21:[function(require,module,exports){
 var miruken    = require('../miruken.js'),
     validate   = require('./validate.js'),
     validatejs = require("validate.js"),
@@ -10077,7 +10114,7 @@ new function () { // closure
 
 }
 
-},{"../callback.js":4,"../miruken.js":12,"./validate.js":19,"bluebird":21,"validate.js":23}],21:[function(require,module,exports){
+},{"../callback.js":4,"../miruken.js":12,"./validate.js":20,"bluebird":22,"validate.js":24}],22:[function(require,module,exports){
 (function (process,global){
 /* @preserve
  * The MIT License (MIT)
@@ -14937,7 +14974,7 @@ module.exports = ret;
 },{"./es5.js":14}]},{},[4])(4)
 });                    ;if (typeof window !== 'undefined' && window !== null) {                               window.P = window.Promise;                                                     } else if (typeof self !== 'undefined' && self !== null) {                             self.P = self.Promise;                                                         }
 }).call(this,require('_process'),typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
-},{"_process":22}],22:[function(require,module,exports){
+},{"_process":23}],23:[function(require,module,exports){
 // shim for using process in browser
 
 var process = module.exports = {};
@@ -15029,7 +15066,7 @@ process.chdir = function (dir) {
 };
 process.umask = function() { return 0; };
 
-},{}],23:[function(require,module,exports){
+},{}],24:[function(require,module,exports){
 //     Validate.js 0.7.0
 
 //     (c) 2013-2015 Nicklas Ansman, 2013 Wrapp
