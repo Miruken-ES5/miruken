@@ -3646,6 +3646,60 @@ new function () { // closure
             return childContext;
         }
     });
+
+    Context.implement({
+        /**
+         * Observes 'contextEnding' notification.
+         * @method onEnding
+         * @param   {Function}  observer  -  receives notification
+         * @returns {Function}  unsubscribes from 'contextEnding' notification.
+         * @for miruken.context.Context
+         */
+        onEnding: function (observer) {
+            return this.observe({
+                contextEnding: observer
+            });
+        },
+        /**
+         * Observes 'contextEnded' notification.
+         * @method onEnded
+         * @param   {Function}  observer  -  receives notification
+         * @returns {Function}  unsubscribes from 'contextEnded' notification.
+         * @for miruken.context.Context
+         * @chainable
+         */        
+        onEnded: function (observer) {
+            return this.observe({
+                contextEnded: observer
+            });
+        },
+        /**
+         * Observes 'childContextEnding' notification.
+         * @method onChildEnding
+         * @param   {Function}  observer  -  receives notification
+         * @returns {Function}  unsubscribes from 'childContextEnding' notification.
+         * @for miruken.context.Context
+         * @chainable
+         */                
+        onChildEnding: function (observer) {
+            return this.observe({
+                childContextEnding: observer
+            });
+        },
+        /**
+         * Observes 'childContextEnded' notification.
+         * @method onChildEnded
+         * @param   {Function}  observer  -  receives notification
+         * @returns {Function}  unsubscribes from 'childContextEnded' notification.
+         * @for miruken.context.Context
+         * @chainable
+         */                        
+        onChildEnded: function (observer) {
+            return this.observe({
+                childContextEnded: observer
+            });            
+        }        
+    });
     
    /**
      * Context traversal
@@ -5443,15 +5497,13 @@ new function () { // closure
                         ContextualHelper.bindContext(instance, context);
                     }
                     this.trackInstance(instance);
-                    var cancel = context.observe({
-                        contextEnded: function () {
-                            if ($isFunction(instance.setContext)) {
-                                instance.setContext(null);
-                            }
-                            _this.disposeInstance(instance);
-                            delete _cache[id];
-                            cancel();
+                    var cancel = context.onEnded(function () {
+                        if ($isFunction(instance.setContext)) {
+                            instance.setContext(null);
                         }
+                        _this.disposeInstance(instance);
+                        delete _cache[id];
+                        cancel();
                     });
                 },
                 disposeInstance: function (instance, disposing) {

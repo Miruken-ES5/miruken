@@ -71,26 +71,7 @@ new function () { // closure
      * @class Directive
      * @extends Base     
      */
-    var Directive = Base.extend(null, {
-        /**
-         * Gets the nearest {{#crossLink "miruken.mvc.Controller"}}{{/crossLink}} in the scope chain.
-         * @method getNearestController
-         * @static
-         * @param   {Scope}    scope      -   angular scope
-         * @returns {miruken.mvc.Controller} nearest controller.
-         */                                
-        getNearestController: function (scope) {
-            while (scope) {
-                for (var key in scope) {
-                    var value = scope[key];
-                    if (value instanceof Controller) {
-                        return value;
-                    }
-                }
-                scope = scope.$parent;
-            }
-        }
-    });
+    var Directive = Base.extend();
 
     /**
      * Marks a class as an
@@ -178,19 +159,16 @@ new function () { // closure
                             var provider = modalPolicy.style || ModalProviding;
                             partialContext = provider(composer).showModal(container, content, modalPolicy, partialContext);
                         } else {
-                            var cancel = partialContext.observe({
-                                contextEnding: function (context) {
-                                    if (context === partialScope.context) {
-                                        if (content) {
-                                            content.remove();
-                                            content = null;
-                                        }
-                                        _controller = null;
+                            var cancel = partialContext.onEnding(function (context) {
+                                if (context === partialScope.context) {
+                                    if (content) {
+                                        content.remove();
+                                        content = null;
                                     }
-                                    cancel();
+                                    _controller = null;
                                 }
-                            });
-                            
+                                    cancel();
+                            });                            
                             if (oldContent) {
                                 oldContent.remove();
                             }
@@ -234,7 +212,7 @@ new function () { // closure
                         scope.context.addHandlers(partial);
                         
                         if (name) {
-                            var owningController = Directive.getNearestController(scope);
+                            var owningController = scope.context.resolve(Controller);
                             if (owningController) {
                                 owningController[name] = partial;
                             }
@@ -378,11 +356,9 @@ new function () { // closure
             childScope.context = parentScope && parentScope.context
                                ? parentScope.context.newChild()
                                : new Context;
-            var cancel = childScope.context.observe({
-                contextEnded: function (context) {
-                    childScope.$destroy();
-                    cancel();
-                }
+            var cancel = childScope.context.onEnded(function (context) {
+                childScope.$destroy();
+                cancel();
             });
             return childScope;
         };
@@ -572,7 +548,7 @@ new function () { // closure
 }
 
 }).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
-},{"../ioc":10,"../miruken":12,"../mvc":15}],3:[function(require,module,exports){
+},{"../ioc":10,"../miruken":12,"../mvc":16}],3:[function(require,module,exports){
 /*
   base2 - copyright 2007-2009, Dean Edwards
   http://code.google.com/p/base2/
@@ -4220,6 +4196,60 @@ new function () { // closure
             return childContext;
         }
     });
+
+    Context.implement({
+        /**
+         * Observes 'contextEnding' notification.
+         * @method onEnding
+         * @param   {Function}  observer  -  receives notification
+         * @returns {Function}  unsubscribes from 'contextEnding' notification.
+         * @for miruken.context.Context
+         */
+        onEnding: function (observer) {
+            return this.observe({
+                contextEnding: observer
+            });
+        },
+        /**
+         * Observes 'contextEnded' notification.
+         * @method onEnded
+         * @param   {Function}  observer  -  receives notification
+         * @returns {Function}  unsubscribes from 'contextEnded' notification.
+         * @for miruken.context.Context
+         * @chainable
+         */        
+        onEnded: function (observer) {
+            return this.observe({
+                contextEnded: observer
+            });
+        },
+        /**
+         * Observes 'childContextEnding' notification.
+         * @method onChildEnding
+         * @param   {Function}  observer  -  receives notification
+         * @returns {Function}  unsubscribes from 'childContextEnding' notification.
+         * @for miruken.context.Context
+         * @chainable
+         */                
+        onChildEnding: function (observer) {
+            return this.observe({
+                childContextEnding: observer
+            });
+        },
+        /**
+         * Observes 'childContextEnded' notification.
+         * @method onChildEnded
+         * @param   {Function}  observer  -  receives notification
+         * @returns {Function}  unsubscribes from 'childContextEnded' notification.
+         * @for miruken.context.Context
+         * @chainable
+         */                        
+        onChildEnded: function (observer) {
+            return this.observe({
+                childContextEnded: observer
+            });            
+        }        
+    });
     
    /**
      * Context traversal
@@ -6017,15 +6047,13 @@ new function () { // closure
                         ContextualHelper.bindContext(instance, context);
                     }
                     this.trackInstance(instance);
-                    var cancel = context.observe({
-                        contextEnded: function () {
-                            if ($isFunction(instance.setContext)) {
-                                instance.setContext(null);
-                            }
-                            _this.disposeInstance(instance);
-                            delete _cache[id];
-                            cancel();
+                    var cancel = context.onEnded(function () {
+                        if ($isFunction(instance.setContext)) {
+                            instance.setContext(null);
                         }
+                        _this.disposeInstance(instance);
+                        delete _cache[id];
+                        cancel();
                     });
                 },
                 disposeInstance: function (instance, disposing) {
@@ -8789,11 +8817,9 @@ new function () { // closure
                 }
                 
                 if (context) {
-                    var cancel = context.observe({
-                        contextEnding: function () {
-                            close();
-                            cancel();
-                        }
+                    var cancel = context.onEnding(function () {
+                        close();
+                        cancel();
                     });
                 }
                 
@@ -8884,6 +8910,81 @@ new function () { // closure
 }
 
 },{"../miruken.js":12,"../mvc/view.js":18,"bluebird":22}],14:[function(require,module,exports){
+var miruken = require('../miruken.js');
+              require('../mvc/controller.js');
+
+new function () { // closure
+
+    var mvc = new base2.Package(this, {
+        name:    "mvc",
+        version: miruken.version,
+        parent:  miruken,
+        imports: "miruken,miruken.callback",
+        exports: "TabController,ModalPolicy,ModalProviding"
+    });
+
+    eval(this.imports);
+    
+    var TabController = Controller.extend({
+        getTab: function (name) {
+        },
+        addTab: function (name, index) {
+        }
+    });
+
+    /**
+     * Policy for describing modal presentation.
+     * @class ModalPolicy
+     * @extends miruken.mvc.PresentationPolicy
+     */
+    var ModalPolicy = PresentationPolicy.extend({
+        $properties: {
+            title:      '',
+            style:      null,
+            chrome:     true,
+            header:     false,
+            footer:     false,
+            forceClose: false,
+            buttons:    null
+        }
+    });
+
+    /**
+     * Protocol for interacting with a modal provider.
+     * @class ModalProviding
+     * @extends StrictProtocol
+     */
+    var ModalProviding = StrictProtocol.extend({
+        /**
+         * Presents the content in a modal dialog.
+         * @method showModal
+         * @param   {Element}                  container  -  element modal bound to
+         * @param   {Element}                  content    -  modal content element
+         * @param   {miruken.mvc.ModalPolicy}  policy     -  modal policy options
+         * @param   {miruken.context.Context}  context    -  modal context
+         * @returns {Promise} promise representing the modal result.
+         */
+        showModal: function (container, content, policy, context) {}
+    });
+
+    CallbackHandler.implement({
+        /**
+         * Configures modal presentation options.
+         * @method modal
+         * @param {Object}  options  -  modal options
+         * @returns {miruken.callback.CallbackHandler} modal handler.
+         * @for miruken.callback.CallbackHandler
+         */                                                                
+        modal: function (options) {
+            return this.presenting(new ModalPolicy(options));
+        }
+    });
+    
+    eval(this.exports);
+    
+}
+
+},{"../miruken.js":12,"../mvc/controller.js":15}],15:[function(require,module,exports){
 var miruken = require('../miruken.js');
               require('../callback.js');
               require('../context.js');
@@ -9074,14 +9175,14 @@ new function () { // closure
     
 }
 
-},{"../callback.js":4,"../context.js":5,"../miruken.js":12,"../validate":19}],15:[function(require,module,exports){
+},{"../callback.js":4,"../context.js":5,"../miruken.js":12,"../validate":19}],16:[function(require,module,exports){
 module.exports = require('./model.js');
 require('./view.js');
 require('./controller.js');
-require('./tabController.js');
+require('./components.js');
 require('./bootstrap.js');
 
-},{"./bootstrap.js":13,"./controller.js":14,"./model.js":16,"./tabController.js":17,"./view.js":18}],16:[function(require,module,exports){
+},{"./bootstrap.js":13,"./components.js":14,"./controller.js":15,"./model.js":17,"./view.js":18}],17:[function(require,module,exports){
 var miruken = require('../miruken.js');
               require('../callback.js');
               require('../context.js');
@@ -9264,34 +9365,7 @@ new function () { // closure
     
 }
 
-},{"../callback.js":4,"../context.js":5,"../miruken.js":12,"../validate":19}],17:[function(require,module,exports){
-var miruken = require('../miruken.js');
-              require('../mvc/controller.js');
-
-new function () { // closure
-
-    var mvc = new base2.Package(this, {
-        name:    "mvc",
-        version: miruken.version,
-        parent:  miruken,
-        imports: "miruken.mvc",
-        exports: "TabController"
-    });
-
-    eval(this.imports);
-
-    var TabController = Controller.extend({
-        getTab: function (name) {
-        },
-        addTab: function (name, index) {
-        }
-    });
-    
-    eval(this.exports);
-    
-}
-
-},{"../miruken.js":12,"../mvc/controller.js":14}],18:[function(require,module,exports){
+},{"../callback.js":4,"../context.js":5,"../miruken.js":12,"../validate":19}],18:[function(require,module,exports){
 var miruken = require('../miruken.js');
               require('../callback.js');
               require('../context.js');
@@ -9315,10 +9389,17 @@ new function () { // closure
         version: miruken.version,
         parent:  miruken,
         imports: "miruken,miruken.callback,miruken.context",
-        exports: "ViewRegion,PartialRegion,PresentationPolicy,ModalPolicy,ModalProviding,ButtonClicked"
+        exports: "PresentationPolicy,ViewRegion,PartialRegion,ButtonClicked"
     });
 
     eval(this.imports);
+
+    /**
+     * Base class for presentation policies.
+     * @class PresentationPolicy
+     * @extends miruken.mvc.Model
+     */
+    var PresentationPolicy = Model.extend();
 
     /**
      * Protocol for rendering a view on the screen.
@@ -9363,30 +9444,6 @@ new function () { // closure
     });
 
     /**
-     * Base class for representing presentation policies.
-     * @class PresentationPolicy
-     * @extends miruken.mvc.Model
-     */
-    var PresentationPolicy = Model.extend();
-
-    /**
-     * Policy for describing modal presentation.
-     * @class ModalPolicy
-     * @extends miruken.mvc.PresentationPolicy
-     */
-    var ModalPolicy = PresentationPolicy.extend({
-        $properties: {
-            title:      '',
-            style:      null,
-            chrome:     true,
-            header:     false,
-            footer:     false,
-            forceClose: false,
-            buttons:    null
-        }
-    });
-
-    /**
      * Represents the clicking of a button.
      * @class ButtonClicked
      * @constructor
@@ -9410,36 +9467,8 @@ new function () { // closure
             });
         }
     });
-    
-    /**
-     * Protocol for interacting with a modal provider.
-     * @class ModalProviding
-     * @extends StrictProtocol
-     */
-    var ModalProviding = StrictProtocol.extend({
-        /**
-         * Presents the content in a modal dialog.
-         * @method showModal
-         * @param   {Element}                  container  -  element modal bound to
-         * @param   {Element}                  content    -  modal content element
-         * @param   {miruken.mvc.ModalPolicy}  policy     -  modal policy options
-         * @param   {miruken.context.Context}  context    -  modal context
-         * @returns {Promise} promise representing the modal result.
-         */
-        showModal: function (container, content, policy, context) {}
-    });
-    
+        
     CallbackHandler.implement({
-        /**
-         * Configures modal presentation options.
-         * @method modal
-         * @param {Object}  options  -  modal options
-         * @returns {miruken.callback.CallbackHandler} modal handler.
-         * @for miruken.callback.CallbackHandler
-         */                                                                
-        modal: function (options) {
-            return this.presenting(new ModalPolicy(options));
-        },
         /**
          * Applies the presentation policy to the handler.
          * @method presenting
@@ -9459,7 +9488,7 @@ new function () { // closure
     
 }
 
-},{"../callback.js":4,"../context.js":5,"../miruken.js":12,"../validate":19,"./model.js":16}],19:[function(require,module,exports){
+},{"../callback.js":4,"../context.js":5,"../miruken.js":12,"../validate":19,"./model.js":17}],19:[function(require,module,exports){
 module.exports = require('./validate.js');
 require('./validatejs.js');
 
@@ -16017,4 +16046,4 @@ process.umask = function() { return 0; };
         typeof module !== 'undefined' ? /* istanbul ignore next */ module : null,
         typeof define !== 'undefined' ? /* istanbul ignore next */ define : null);
 
-},{}]},{},[8,15,1]);
+},{}]},{},[8,16,1]);
