@@ -8378,7 +8378,7 @@ new function () { // closure
     var TabController = Controller.extend({
         getTab: function (name) {
         },
-        addTab: function (name, index) {
+        addTab: function (name) {
         }
     });
 
@@ -8431,7 +8431,7 @@ new function () { // closure
     });
     
     eval(this.exports);
-    
+
 }
 
 },{"../miruken.js":10,"../mvc/controller.js":13}],13:[function(require,module,exports){
