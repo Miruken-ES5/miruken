@@ -185,29 +185,23 @@ new function () { // closure
      * @extends miruken.ng.Directive     
      */
     var RegionDirective = Directive.extend({
-        scope:      true,
         restrict:   'A',
-        priority:   1200,
+        scope:      true,        
+        priority:   100,
         $inject:    ['$templateRequest', '$controller', '$compile', '$q'],
         constructor: function ($templates, $controller, $compile, $q) {
             this.extend({
-                link: function (scope, element, attr, ctrl, transclude) {
+                link: function (scope, element, attr) {
                     var name    = attr.region,
-                        onload  = attr.onload,
-                        partial = new PartialView(element, scope, $templates, $controller, $compile, $q);
-                    scope.context.addHandlers(partial);
-                    
+                        partial = new PartialView(element, scope, $templates, $controller, $compile, $q);                    
                     if (name) {
-                        name = scope.$eval(name) || name;
                         var owningController = scope.context.resolve(Controller);
                         if (owningController) {
+                            name = scope.$eval(name) || name;
                             owningController[name] = partial;
                         }
                     }
-                    
-                    if (onload) {
-                        scope.$eval(onload);
-                    }
+                    scope.context.addHandlers(partial);                    
                 }
             });
         }
@@ -371,6 +365,7 @@ new function () { // closure
                 return;
             }
             var memberProto = member.prototype;
+            name = memberProto.name || name;
             if (memberProto instanceof Directive) {
                 var directive = new ComponentModel;
                 directive.setKey(member);
@@ -8772,7 +8767,7 @@ new function () { // closure
      * @class Bootstrap
      * @extends miruken.mvc.ModalProviding
      */    
-    var Bootstrap = ModalProviding.extend();
+    var Bootstrap = ModalProviding.extend(TabProviding);
     
     /**
      * Bootstrap modal provider.
@@ -8781,6 +8776,9 @@ new function () { // closure
      * @uses miruken.mvc.Bootstrap
      */    
     var BootstrapModal = Base.extend(Bootstrap, {
+        tabContent: function () {
+            return "<div>Hello</div>";
+        },
         showModal: function (container, content, policy, context) {
             var promise = new Promise(function (resolve, reject) {
                 if (policy.chrome) {    
@@ -8902,11 +8900,25 @@ new function () { // closure
         version: miruken.version,
         parent:  miruken,
         imports: "miruken,miruken.callback",
-        exports: "TabController,ModalPolicy,ModalProviding"
+        exports: "TabProviding,TabController,ModalPolicy,ModalProviding"
     });
 
     eval(this.imports);
-    
+
+    /**
+     * Protocol for interacting with a tab provider.
+     * @class TabProviding
+     * @extends StrictProtocol
+     */    
+    var TabProviding = StrictProtocol.extend({
+        tabContent: function () {}
+    });
+
+    /**
+     * Controller for managing a set of named tabs.
+     * @class TabController
+     * @extends miruken.mvc.Controller
+     */    
     var TabController = Controller.extend({
         getTab: function (name) {
         },

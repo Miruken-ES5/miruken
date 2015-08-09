@@ -3,41 +3,28 @@ new function() {
 	var sampleApp = new base2.Package(this, {
 		name:    'sampleApp',
 		imports: 'miruken.ng,miruken.mvc',
-		exports: 'Tab,TabRegion'
+		exports: 'TabRegion,TabController'
 	});
 
 	eval(this.imports);
 
-	var Tab = Model.extend({
-		name:   null,
-		view:   null,
-		active: false
-	});
-
 	var TabRegion = Directive.extend({
         restrict: 'E',
 		scope:    true,
-		controller: ['$attrs', '$scope', Controller.extend({
-            constructor: function ($attrs, $scope) {
-                debugger;
-            },
-			load: function (tab) {
-                debugger;
-				for (var i = 0; i < this.tabs.length; i++) {
-					this.tabs[i].active = false;
-				};
-				tab.active = true;	
-				//ViewRegion(this.context).present(tab.view);
-			},
-			getDefault: function () {
-				if(this.tabs.length){
-					return this.tabs[0];
-				}
-			}
-		})],
-		controllerAs: 'vm',
-		bindToController: true,
-		template: 	'<div>' +
+        constructor: function () {
+            this.extend({
+                link: function (scope, element, attr) {
+                    var style         = attr.style,
+                        context       = scope.context,
+                        tabController = context.resolve(TabController);
+                    style = style ? eval(style) : TabProviding;
+                    var provider = style || TabProviding,
+                        template = provider(context).tabContent();
+                    
+                }
+            });
+        },
+		templatez: 	'<div>' +
 						'<ul class="nav" ng-class="{\'nav-tabs\': !vm.pills, \'nav-pills\': vm.pills}">' +
 						  '<li role="presentation" ng-repeat="tab in vm.tabs" ng-click="vm.load(tab)" ng-class="{\'active\': tab.active}">' +
 						  	'<a href="">{{ tab.name }}</a>' +

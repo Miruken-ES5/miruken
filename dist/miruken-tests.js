@@ -8240,7 +8240,7 @@ new function () { // closure
      * @class Bootstrap
      * @extends miruken.mvc.ModalProviding
      */    
-    var Bootstrap = ModalProviding.extend();
+    var Bootstrap = ModalProviding.extend(TabProviding);
     
     /**
      * Bootstrap modal provider.
@@ -8249,6 +8249,9 @@ new function () { // closure
      * @uses miruken.mvc.Bootstrap
      */    
     var BootstrapModal = Base.extend(Bootstrap, {
+        tabContent: function () {
+            return "<div>Hello</div>";
+        },
         showModal: function (container, content, policy, context) {
             var promise = new Promise(function (resolve, reject) {
                 if (policy.chrome) {    
@@ -8370,11 +8373,25 @@ new function () { // closure
         version: miruken.version,
         parent:  miruken,
         imports: "miruken,miruken.callback",
-        exports: "TabController,ModalPolicy,ModalProviding"
+        exports: "TabProviding,TabController,ModalPolicy,ModalProviding"
     });
 
     eval(this.imports);
-    
+
+    /**
+     * Protocol for interacting with a tab provider.
+     * @class TabProviding
+     * @extends StrictProtocol
+     */    
+    var TabProviding = StrictProtocol.extend({
+        tabContent: function () {}
+    });
+
+    /**
+     * Controller for managing a set of named tabs.
+     * @class TabController
+     * @extends miruken.mvc.Controller
+     */    
     var TabController = Controller.extend({
         getTab: function (name) {
         },
