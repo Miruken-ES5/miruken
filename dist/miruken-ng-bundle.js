@@ -187,17 +187,16 @@ new function () { // closure
     var RegionDirective = Directive.extend({
         restrict:   'A',
         scope:      true,        
-        priority:   100,
+        priority:   -1000,
         $inject:    ['$templateRequest', '$controller', '$compile', '$q'],
         constructor: function ($templates, $controller, $compile, $q) {
             this.extend({
                 link: function (scope, element, attr) {
-                    var name    = attr.region,
+                    var name    = scope.$eval(attr.region),
                         partial = new PartialView(element, scope, $templates, $controller, $compile, $q);                    
                     if (name) {
                         var owningController = scope.context.resolve(Controller);
                         if (owningController) {
-                            name = scope.$eval(name) || name;
                             owningController[name] = partial;
                         }
                     }

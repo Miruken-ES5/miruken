@@ -19,7 +19,7 @@ new function() {
                         tabController = context.resolve(TabController);
                     style = style ? eval(style) : TabProviding;
                     var provider = style || TabProviding,
-                        template = provider(context).tabContent();
+                        template = provider(context).tabContainer();
                     
                 }
             });

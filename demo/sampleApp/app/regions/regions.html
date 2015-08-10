@@ -5,7 +5,7 @@
       <button class="btn btn-primary" ng-click="vm.partialOne()">Partial One</button>
     </div>
 
-	<div region="content" class="bg-danger">
+	<div region="'content'" class="bg-danger">
 		<h4>This is some default content in the region.</h4>
 		<p>Click the button above load a new partial view.</p>
 	</div>
@@ -18,6 +18,9 @@
 
     <div ng-repeat="x in [1, 2, 3]" ng-class="$index % 2 == 0 ? 'bg-success' : 'bg-info'">
       <h3>Index {{$index}}</h3>
-      <ng-include src="'app/regions/partialThree.html'" region></ng-include>      
+      <div ng-if="x == 2">
+        <button class="btn btn-primary" ng-click="vm.partialOne()">Partial One</button>
+      </div>      
+      <ng-include src="'app/regions/partialThree.html'" region></ng-include>
     </div>
 </div>
