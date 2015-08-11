@@ -342,9 +342,8 @@ new function () { // closure
                                ? parentScope.context.newChild()
                                : new Context;
             $provide(childScope.context, '$scope', childScope);
-            var cancel = childScope.context.onEnded(function (context) {
+            childScope.context.onEnded(function (context) {
                 childScope.$destroy();
-                cancel();
             });
             return childScope;
         };
@@ -6034,13 +6033,12 @@ new function () { // closure
                         ContextualHelper.bindContext(instance, context);
                     }
                     this.trackInstance(instance);
-                    var cancel = context.onEnded(function () {
+                    context.onEnded(function () {
                         if ($isFunction(instance.setContext)) {
                             instance.setContext(null);
                         }
                         _this.disposeInstance(instance);
                         delete _cache[id];
-                        cancel();
                     });
                 },
                 disposeInstance: function (instance, disposing) {
@@ -8807,10 +8805,7 @@ new function () { // closure
                 }
                 
                 if (context) {
-                    var cancel = context.onEnding(function () {
-                        close();
-                        cancel();
-                    });
+                    context.onEnding(close);
                 }
                 
                 var modal = $('.modal').modal()

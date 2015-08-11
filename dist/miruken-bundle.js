@@ -5497,13 +5497,12 @@ new function () { // closure
                         ContextualHelper.bindContext(instance, context);
                     }
                     this.trackInstance(instance);
-                    var cancel = context.onEnded(function () {
+                    context.onEnded(function () {
                         if ($isFunction(instance.setContext)) {
                             instance.setContext(null);
                         }
                         _this.disposeInstance(instance);
                         delete _cache[id];
-                        cancel();
                     });
                 },
                 disposeInstance: function (instance, disposing) {
