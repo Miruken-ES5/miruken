@@ -8384,7 +8384,12 @@ new function () { // closure
      * @extends StrictProtocol
      */    
     var TabProviding = StrictProtocol.extend({
-        tabContent: function () {}
+        /**
+         * Creates the DOM container for the tabs.
+         * @method tabContainer
+         * @returns {Element} DOM element representing the tab container.
+         */        
+        tabContainer: function () {}
     });
 
     /**

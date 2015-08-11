@@ -113,14 +113,16 @@ new function () { // closure
                 getControllerContext: function () { return _controller && _controller.context; },
                 present: function (presentation) {
                     var composer = $composer,
-                        template, templateUrl, controller;
+                        template,   templateUrl,
+                        controller, controllerAs;
                     
                     if ($isString(presentation)) {
                         templateUrl = presentation;
                     } else if (presentation) {
-                        template    = presentation.template,
-                        templateUrl = presentation.templateUrl,
-                        controller  = presentation.controller;
+                        template     = presentation.template,
+                        templateUrl  = presentation.templateUrl,
+                        controller   = presentation.controller;
+                        controllerAs = presentation.controllerAs || 'ctrl';
                     }
                     
                     if (template) {
@@ -141,15 +143,23 @@ new function () { // closure
                         _partialScope      = (parentScope || scope).$new();
                         var partialContext = _partialScope.context;
                         _controller        = null;
-                        
+
                         if (controller) {
-                            var parts   = controller.split(' ');
-                            controller  = parts[0];
-                            _controller = $controller(controller, { $scope: _partialScope });
-                            var controllerAs = parts.length > 1 ?  parts[parts.length - 1] : 'ctrl';
-                            _partialScope[controllerAs] = _controller;
+                            if (controller.prototype instanceof Controller) {
+                                _controller = partialContext.resolve(controller);                                
+                            } else {
+                                var parts   = controller.split(' ');
+                                _controller = $controller(parts[0], { $scope: _partialScope });
+                                if (parts.length > 1) {
+                                    controllerAs = parts[parts.length - 1];
+                                }
+                            }
                         }
 
+                        if (_controller) {
+                            _partialScope[controllerAs] = _controller;                            
+                        }
+                        
                         var content = $compile(template)(_partialScope);
 
                         if (isModal) {
@@ -331,6 +341,7 @@ new function () { // closure
             childScope.context = parentScope && parentScope.context
                                ? parentScope.context.newChild()
                                : new Context;
+            $provide(childScope.context, '$scope', childScope);
             var cancel = childScope.context.onEnded(function (context) {
                 childScope.$destroy();
                 cancel();
@@ -8910,7 +8921,12 @@ new function () { // closure
      * @extends StrictProtocol
      */    
     var TabProviding = StrictProtocol.extend({
-        tabContent: function () {}
+        /**
+         * Creates the DOM container for the tabs.
+         * @method tabContainer
+         * @returns {Element} DOM element representing the tab container.
+         */        
+        tabContainer: function () {}
     });
 
     /**

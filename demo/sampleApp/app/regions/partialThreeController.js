@@ -12,7 +12,8 @@
         constructor: function () {
             var viewOne = {
                 templateUrl:  'app/regions/partialOne.html',
-                controller:   'PartialOneController as vm'
+                controller:   PartialOneController,
+                controllerAs: 'vm'
             };
             setTimeout(function () {
                 ViewRegion(this.context).present(viewOne);
