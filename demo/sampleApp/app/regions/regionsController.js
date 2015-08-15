@@ -19,6 +19,20 @@ new function() {
                 controller:   'PartialOneController as vm'
             };
             ViewRegion(this.content.context).present(viewOne);
+        },
+        partialTwo: function () {
+            var viewOne = {
+                templateUrl:  'app/regions/partialTwo.html',
+                controller:   'PartialTwoController as vm'
+            };
+            ViewRegion(this.content.context).present(viewOne);
+        },
+        partialThree: function () {
+            var viewOne = {
+                templateUrl:  'app/regions/partialThree.html',
+                controller:   'PartialThreeController as vm'
+            };
+            ViewRegion(this.content.context).present(viewOne);
         }
 	});
 
