@@ -174,7 +174,7 @@ new function () { // closure
                                 cancel();
                             });
 
-                            container.html(content);
+                            animateContent(container, content);
                             
                             if (oldScope) {
                                 oldScope.$destroy();
@@ -182,6 +182,21 @@ new function () { // closure
                         }
                         
                         return $q.when(partialContext);
+                    }
+
+                    function animateContent (container, content) {
+                        var animationPolicy = new AnimationPolicy,
+                            animate         = composer.handle(animationPolicy, true);
+
+                        if(!animate){
+                            container.html(content);
+                            return Promise.resolve();
+                        }
+
+                        if(animation.fade){
+                            return AnimationProviding(composer).fade(container[0].firstChild, content);
+                        }
+                        
                     }
                 }
             });
@@ -8907,7 +8922,7 @@ new function () { // closure
         version: miruken.version,
         parent:  miruken,
         imports: "miruken,miruken.callback",
-        exports: "TabProviding,TabController,ModalPolicy,ModalProviding"
+        exports: "TabProviding,TabController,ModalPolicy,ModalProviding,AnimationPolicy,AnimationProviding"
     });
 
     eval(this.imports);
@@ -8973,6 +8988,16 @@ new function () { // closure
         showModal: function (container, content, policy, context) {}
     });
 
+    var AnimationPolicy = PresentationPolicy.extend({
+        $properties: {
+            fade: false
+        }
+    });
+
+    var AnimationProviding = StrictProtocol.extend({
+        fade: function(from, to) {}
+    });
+
     CallbackHandler.implement({
         /**
          * Configures modal presentation options.
@@ -8983,6 +9008,10 @@ new function () { // closure
          */                                                                
         modal: function (options) {
             return this.presenting(new ModalPolicy(options));
+        },
+
+        fade: function(options){
+            return this.presenting(new AnimationPolicy(options));
         }
     });
     

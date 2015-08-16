@@ -5,7 +5,7 @@ module.exports = function(grunt) {
     watch: {
       js: {
         files: ['lib/**/*.js'],
-        tasks: ['build'],
+        tasks: ['default'],
         options: {
             spawn: false
             //livereload: true,
