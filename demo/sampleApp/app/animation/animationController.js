@@ -14,21 +14,21 @@ new function() {
 			message: 'Hello, Animations!'
 		},
         partialOne: function () {
-            ViewRegion(this.content.context).present({
+            ViewRegion(this.content.context.animate({ fade: true })).present({
                 templateUrl:  'app/animation/animationOne.html',
-                controller:   'PartialOneController as vm'
+                controller:   'AnimationOneController as vm'
             });
         },
         partialTwo: function () {
-            ViewRegion(this.content.context).present({
+            ViewRegion(this.content.context.animate({ fade: true })).present({
                 templateUrl:  'app/animation/animationTwo.html',
-                controller:   'PartialTwoController as vm'
+                controller:   'AnimationTwoController as vm'
             });
         },
         partialThree: function () {
-            ViewRegion(this.content.context).present({
+            ViewRegion(this.content.context.animate({ fade: true })).present({
                 templateUrl:  'app/animation/animationThree.html',
-                controller:   'PartialThreeController as vm'
+                controller:   'AnimationThreeController as vm'
             });
         }
 	});
