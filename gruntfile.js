@@ -2,9 +2,25 @@ module.exports = function(grunt) {
   // Project Configuration
   grunt.initConfig({
     pkg: grunt.file.readJSON('package.json'),
+    app:{
+      scripts: [
+        'bower_components/gsap/src/minified/TweenMax.min.js',
+        'bower_components/jquery/dist/jquery.min.js',
+        'bower_components/bootstrap/dist/js/bootstrap.min.js',
+        'bower_components/angular/angular.js',
+        'bower_components/angular-route/angular-route.js',
+        '../../dist/miruken-ng-bundle.js',
+        'app/sampleAppSetup.js',
+        'app/domain/person.js',
+        'app/**/*.js'
+      ]
+    },
     watch: {
       js: {
-        files: ['lib/**/*.js'],
+        files: [
+          'lib/**/*.js',
+          'demo/sampleApp//app/**/*.js'
+        ],
         tasks: ['default'],
         options: {
             spawn: false
@@ -87,7 +103,17 @@ module.exports = function(grunt) {
                 themedir:     './documentation/theme'
             }
         }
-    }
+    },
+    includeSource: {
+      options: {
+        basePath: 'demo/sampleApp'
+      },
+      app: {
+        files: {
+          'demo/sampleApp/index.html': 'demo/sampleApp/index.template.html'
+        }
+      },
+    },
   });
 
   grunt.loadNpmTasks('grunt-contrib-watch');
@@ -101,14 +127,15 @@ module.exports = function(grunt) {
   grunt.loadNpmTasks('grunt-contrib-copy');
   grunt.loadNpmTasks('grunt-karma');
   grunt.loadNpmTasks('grunt-contrib-yuidoc');
+  grunt.loadNpmTasks('grunt-include-source');
 
   //Making grunt default to force in order not to break the project.
   grunt.option('force', true);
 
   //Test task.
-  grunt.registerTask('default',  ['browserify:dist','copy:main']);
+  grunt.registerTask('default', ['browserify:dist','copy:main', 'includeSource']);
   grunt.registerTask('test',   ['concurrent:test']);
-  grunt.registerTask('build',  ['minify','copy:main', 'karma:dist', 'yuidoc']);
+  grunt.registerTask('build',  ['minify','copy:main', 'karma:dist', 'includeSource', 'yuidoc']);
   grunt.registerTask('debug',  ['browserify:debug','karma:debug']);
   grunt.registerTask("minify", ['browserify:dist', 'uglify']);
   grunt.registerTask("docs",   ['yuidoc']);

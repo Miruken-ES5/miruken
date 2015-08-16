@@ -1,0 +1,37 @@
+<div class="region-demo">
+  <div class="row">
+    
+    <h1>Animation Demo</h1>
+
+    <div class="col-sm-6">
+      <h2>Region with default content</h2>
+      <div class="btn-group" role="group">
+        <button class="btn btn-default" ng-click="vm.partialOne()">Partial One</button>
+        <button class="btn btn-default" ng-click="vm.partialTwo()">Partial Two</button>
+        <button class="btn btn-default" ng-click="vm.partialThree()">Partial Three</button>
+      </div>
+
+      <div region="'content'">
+        <h4>This is some default content in the region.</h4>
+        <p>Click the buttons above load a new partial view.</p>
+      </div>
+    </div>
+
+    <div class="col-sm-6">
+      <h2>Region with ng-include</h2>
+      <ng-include src="'app/regions/partialThree.html'" region="'region' + $index"></ng-include>
+    </div>
+
+    <div class="clearfix"></div>
+    
+    <h2 class="col-sm-12">Region inside ng-repeat</h2>
+    
+    <div ng-repeat="x in [1, 2, 3]">
+      <div class="col-sm-4">
+          <ng-include src="'app/regions/partialThree.html'" region></ng-include>
+      </div>
+    </div>
+
+  </div>
+
+</div>

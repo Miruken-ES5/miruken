@@ -3,31 +3,31 @@ new function() {
 	var sampleApp = new base2.Package(this, {
 		name:    'sampleApp',
 		imports: 'miruken.mvc',
-		exports: 'RegionsController'
+		exports: 'AnimationController'
 	});
 
 	eval(this.imports);
 
-	var RegionsController = Controller.extend({
+	var AnimationController = Controller.extend({
 		$properties:{
             content: null,
-			message: 'Hello, Regions!'
+			message: 'Hello, Animations!'
 		},
         partialOne: function () {
             ViewRegion(this.content.context).present({
-                templateUrl:  'app/regions/partialOne.html',
+                templateUrl:  'app/animation/animationOne.html',
                 controller:   'PartialOneController as vm'
             });
         },
         partialTwo: function () {
             ViewRegion(this.content.context).present({
-                templateUrl:  'app/regions/partialTwo.html',
+                templateUrl:  'app/animation/animationTwo.html',
                 controller:   'PartialTwoController as vm'
             });
         },
         partialThree: function () {
             ViewRegion(this.content.context).present({
-                templateUrl:  'app/regions/partialThree.html',
+                templateUrl:  'app/animation/animationThree.html',
                 controller:   'PartialThreeController as vm'
             });
         }
