@@ -13,22 +13,37 @@ new function() {
             content: null,
 			message: 'Hello, Animations!'
 		},
-        partialOne: function () {
+        animationOne: function () {
             ViewRegion(this.content.context.animate({ fade: true })).present({
                 templateUrl:  'app/animation/animationOne.html',
                 controller:   'AnimationOneController as vm'
             });
         },
-        partialTwo: function () {
+        animationTwo: function () {
             ViewRegion(this.content.context.animate({ fade: true })).present({
                 templateUrl:  'app/animation/animationTwo.html',
                 controller:   'AnimationTwoController as vm'
             });
         },
-        partialThree: function () {
+        animationThree: function () {
             ViewRegion(this.content.context.animate({ fade: true })).present({
                 templateUrl:  'app/animation/animationThree.html',
                 controller:   'AnimationThreeController as vm'
+            });
+        },
+        pictureOne: function () {
+            ViewRegion(this.pictures.context.animate({ fade: true })).present({
+                templateUrl:  'app/animation/pictureOne.html'
+            });
+        },
+        pictureTwo: function () {
+            ViewRegion(this.pictures.context.animate({ fade: true })).present({
+                templateUrl:  'app/animation/pictureTwo.html'
+            });
+        },
+        pictureThree: function () {
+            ViewRegion(this.pictures.context.animate({ fade: true })).present({
+                templateUrl:  'app/animation/pictureThree.html'
             });
         }
 	});

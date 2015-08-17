@@ -1,3 +1,4 @@
 [region] {
-	opacity: 1
+	opacity: 1;
+	overflow: hidden;
 }
