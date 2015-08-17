@@ -47,7 +47,7 @@ new function () { // closure
         function ($rootElement, $rootScope, $injector, $templates, $controller, $compile, $q) {
             _instrumentScopes($rootScope, $injector);
             var rootRegion = new PartialView($rootElement, $rootScope, $templates, $controller, $compile, $q);
-            $rootContext.addHandlers(rootRegion, new BootstrapModal);
+            $rootContext.addHandlers(rootRegion, new BootstrapProvider);
     }]);
     
     /**
@@ -336,15 +336,17 @@ new function () { // closure
             newScope     = scopeProto.$new,
             destroyScope = scopeProto.$destroy;
         scopeProto.$new = function (isolate, parent) {
-            var childScope  = newScope.call(this, isolate, parent),
-                parentScope = childScope.$parent;
-            childScope.context = parentScope && parentScope.context
-                               ? parentScope.context.newChild()
-                               : new Context;
-            $provide(childScope.context, '$scope', childScope);
-            childScope.context.onEnded(function (context) {
+            var childScope   = newScope.call(this, isolate, parent),
+                parentScope  = childScope.$parent,
+                childContext = parentScope && parentScope.context
+                             ? parentScope.context.newChild()
+                             : new Context;
+            var cancel = $provide(childContext, '$scope', childScope);
+            childContext.onEnded(function (context) {
                 childScope.$destroy();
+                cancel();
             });
+            childScope.context = childContext;            
             return childScope;
         };
         scopeProto.$destroy = function () {
@@ -370,7 +372,7 @@ new function () { // closure
         var container = Container($rootContext);
         Array2.forEach(exports, function (name) {
             var member = package[name];
-            if (!member) {
+            if (!member || !member.prototype) {
                 return;
             }
             var memberProto = member.prototype;
@@ -7006,7 +7008,7 @@ new function () { // closure
          * @method isActive
          * @returns {boolean} false
          */
-        isActive: False,
+        isActive: False
     }, {
         coerce: function () { return this.new.apply(this, arguments); }
     });
@@ -7930,7 +7932,7 @@ new function () { // closure
         return (source instanceof Modifier) 
              ? Modifier.unwrap(source.getSource())
              : source;
-    }
+    };
     function $createModifier() {
         var allowNew;
         function modifier(source) {
@@ -8765,7 +8767,7 @@ new function () { // closure
         version: miruken.version,
         parent:  miruken,
         imports: "miruken,miruken.mvc",
-        exports: "Bootstrap,BootstrapModal"
+        exports: "Bootstrap,BootstrapProvider"
     });
 
     eval(this.imports);
@@ -8778,12 +8780,12 @@ new function () { // closure
     var Bootstrap = ModalProviding.extend(TabProviding);
     
     /**
-     * Bootstrap modal provider.
-     * @class BootstrapModal
+     * Bootstrap provider.
+     * @class BootstrapProvider
      * @extends Base
      * @uses miruken.mvc.Bootstrap
      */    
-    var BootstrapModal = Base.extend(Bootstrap, {
+    var BootstrapProvider = Base.extend(Bootstrap, {
         tabContent: function () {
             return "<div>Hello</div>";
         },

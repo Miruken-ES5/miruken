@@ -6470,7 +6470,7 @@ new function () { // closure
          * @method isActive
          * @returns {boolean} false
          */
-        isActive: False,
+        isActive: False
     }, {
         coerce: function () { return this.new.apply(this, arguments); }
     });
@@ -7394,7 +7394,7 @@ new function () { // closure
         return (source instanceof Modifier) 
              ? Modifier.unwrap(source.getSource())
              : source;
-    }
+    };
     function $createModifier() {
         var allowNew;
         function modifier(source) {

@@ -6470,7 +6470,7 @@ new function () { // closure
          * @method isActive
          * @returns {boolean} false
          */
-        isActive: False,
+        isActive: False
     }, {
         coerce: function () { return this.new.apply(this, arguments); }
     });
@@ -7394,7 +7394,7 @@ new function () { // closure
         return (source instanceof Modifier) 
              ? Modifier.unwrap(source.getSource())
              : source;
-    }
+    };
     function $createModifier() {
         var allowNew;
         function modifier(source) {
@@ -8229,7 +8229,7 @@ new function () { // closure
         version: miruken.version,
         parent:  miruken,
         imports: "miruken,miruken.mvc",
-        exports: "Bootstrap,BootstrapModal"
+        exports: "Bootstrap,BootstrapProvider"
     });
 
     eval(this.imports);
@@ -8242,12 +8242,12 @@ new function () { // closure
     var Bootstrap = ModalProviding.extend(TabProviding);
     
     /**
-     * Bootstrap modal provider.
-     * @class BootstrapModal
+     * Bootstrap provider.
+     * @class BootstrapProvider
      * @extends Base
      * @uses miruken.mvc.Bootstrap
      */    
-    var BootstrapModal = Base.extend(Bootstrap, {
+    var BootstrapProvider = Base.extend(Bootstrap, {
         tabContent: function () {
             return "<div>Hello</div>";
         },
