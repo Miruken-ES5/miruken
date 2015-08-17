@@ -8442,7 +8442,7 @@ new function () { // closure
     });
 
     var AnimationProviding = StrictProtocol.extend({
-        fade: function(container, content) {}
+        fade: function (container, content) {}
     });
 
     CallbackHandler.implement({
@@ -8457,8 +8457,8 @@ new function () { // closure
             return this.presenting(new ModalPolicy(options));
         },
 
-        animate: function(options){
-            return this.presenting(new AnimationPolicy(options));
+        fade: function (options) {
+            return this.presenting(new AnimationPolicy({ fade: true }));
         }
     });
     

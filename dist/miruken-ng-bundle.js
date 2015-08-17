@@ -174,29 +174,27 @@ new function () { // closure
                                 cancel();
                             });
 
-                            animateContent(container, content).then(function(){
+                            return animateContent(container, content, partialContext, $q).then(function(){
                                 if (oldScope) {
                                     oldScope.$destroy();
                                 }    
                             });
                         }
-                        
-                        return $q.when(partialContext);
                     }
 
-                    function animateContent (container, content) {
+                    function animateContent (container, content, partialContext, $q) {
                         var animationPolicy = new AnimationPolicy,
                             animate         = composer.handle(animationPolicy, true);
 
-                        if(!animate){
-                            container.html(content);
-                            return Promise.resolve();
+                            if (animate) {   
+                            if (animationPolicy.fade) {
+                              return AnimationProviding(composer).fade(container, content)
+                                .then(function () { return partialContext; });
+                            }
                         }
 
-                        if(animationPolicy.fade){
-                            return AnimationProviding(composer).fade(container, content);
-                        }
-                        
+                        container.html(content);
+                        return $q.when(partialContext);
                     }
                 }
             });
@@ -8995,7 +8993,7 @@ new function () { // closure
     });
 
     var AnimationProviding = StrictProtocol.extend({
-        fade: function(container, content) {}
+        fade: function (container, content) {}
     });
 
     CallbackHandler.implement({
@@ -9010,8 +9008,8 @@ new function () { // closure
             return this.presenting(new ModalPolicy(options));
         },
 
-        animate: function(options){
-            return this.presenting(new AnimationPolicy(options));
+        fade: function (options) {
+            return this.presenting(new AnimationPolicy({ fade: true }));
         }
     });
     

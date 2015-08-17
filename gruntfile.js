@@ -2,7 +2,7 @@ module.exports = function(grunt) {
   // Project Configuration
   grunt.initConfig({
     pkg: grunt.file.readJSON('package.json'),
-    app:{
+    app: {
       scripts: [
         'bower_components/gsap/src/minified/TweenMax.min.js',
         'bower_components/jquery/dist/jquery.min.js',
@@ -19,7 +19,7 @@ module.exports = function(grunt) {
       js: {
         files: [
           'lib/**/*.js',
-          'demo/sampleApp//app/**/*.js'
+          'demo/sampleApp/app/**/*.js'
         ],
         tasks: ['default'],
         options: {
