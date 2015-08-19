@@ -18,21 +18,21 @@ new function() {
                 templateUrl:  'app/regions/partialOne.html',
                 controller:   'PartialOneController as vm'
             };
-            ViewRegion(this.content.context).present(viewOne);
+            ViewRegion(this.content).present(viewOne);
         },
         partialTwo: function () {
             var viewOne = {
                 templateUrl:  'app/regions/partialTwo.html',
                 controller:   'PartialTwoController as vm'
             };
-            ViewRegion(this.content.context).present(viewOne);
+            ViewRegion(this.content).present(viewOne);
         },
         partialThree: function () {
             var viewOne = {
                 templateUrl:  'app/regions/partialThree.html',
                 controller:   'PartialThreeController as vm'
             };
-            ViewRegion(this.content.context).present(viewOne);
+            ViewRegion(this.content).present(viewOne);
         }
 	});
 
