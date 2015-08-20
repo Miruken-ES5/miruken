@@ -1,0 +1,29 @@
+<div class="region-demo">
+  <div class="row">
+    
+      <div class="col-sm-4">
+        
+        <div class="btn-group" role="group">
+            <button class="btn btn-default" ng-click="vm.animationOne()">One</button>
+            <button class="btn btn-default" ng-click="vm.animationTwo()">Two</button>
+            <button class="btn btn-default" ng-click="vm.animationThree()">Three</button>
+          </div>
+
+        <div region="'content'">
+          <h3>Default Content</h3>
+          <p>Click the buttons above load a new partial view.</p>
+        </div>  
+      </div>
+
+      <div class="col-sm-4">
+          <div class="btn-group" role="group">
+            <button class="btn btn-default" ng-click="vm.pictureOne()">One</button>
+            <button class="btn btn-default" ng-click="vm.pictureTwo()">Two</button>
+            <button class="btn btn-default" ng-click="vm.pictureThree()">Three</button>
+          </div>
+          <div region="'pictures'">
+          </div>  
+      </div>
+
+  </div>  
+</div>
