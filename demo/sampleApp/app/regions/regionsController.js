@@ -23,6 +23,7 @@ new function() {
             ViewRegion(this.content.context).present({
                 templateUrl:  'app/regions/partialTwo.html',
                 controller:   'PartialTwoController as vm'
+            });
         },
         partialThree: function () {
             ViewRegion(this.content.context).present({
