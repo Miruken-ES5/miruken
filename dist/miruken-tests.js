@@ -5368,13 +5368,13 @@ new function () { // closure
         resolve: function (factory) {
             var instance = factory();
             if ($isPromise(instance)) {
-                return Promise.resolve(instance).then(function (instance) {
+                return instance.then(function (instance) {
                     if ($isFunction(instance.initialize)) {
                         instance.initialize();
                     }                    
                     return instance;
                 });                
-            }  else if ($isFunction(instance.initialize)) {
+            } else if ($isFunction(instance.initialize)) {
                 instance.initialize();
             }
             return instance;            
@@ -5436,7 +5436,7 @@ new function () { // closure
                         var object = this.base(factory);
                         if ($isPromise(object)) {
                             var _this = this;
-                            return Promise.resolve(object).then(function (object) {
+                            return object.then(function (object) {
                                 // Only cache fulfilled instances
                                 if (!instance && object) {
                                     instance = object;
@@ -5487,7 +5487,7 @@ new function () { // closure
                             var object = factory();
                             if ($isPromise(object)) {
                                 var _this = this;
-                                return Promise.resolve(object).then(function (object) {
+                                return object.then(function (object) {
                                     // Only cache fulfilled instances
                                     if (object && !(instance = _cache[id])) {
                                         instance = object;
