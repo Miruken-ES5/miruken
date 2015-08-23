@@ -55,7 +55,10 @@ new function () { // closure
                 getDiagnostics: function () { return diagnostics; }
             });
         },
-        getNumberOfCylinders: function () { return 12; },
+        initialize: function () {
+            Object.defineProperty(this, "calibrated", { value: true });
+        },
+        getNumberOfCylinders: function () { return 12; }
     });
  
     var RebuiltV12 = V12.extend(Engine, Disposing, $inferProperties, {
@@ -479,10 +482,11 @@ describe("ComponentBuilder", function () {
 
 describe("SingletonLifestyle", function () {
     describe("#resolve", function () {
+        var context   = new Context,
+            container = Container(context);
+        context.addHandlers(new IoContainer, new ValidationCallbackHandler);
+        
         it("should resolve same instance for SingletonLifestyle", function (done) {
-            var context   = new Context,
-                container = Container(context);
-            context.addHandlers(new IoContainer, new ValidationCallbackHandler);
             container.register($component(V12).singleton());
             Promise.all([container.resolve(Engine), container.resolve(Engine)])
                 .spread(function (engine1, engine2) {
@@ -490,6 +494,15 @@ describe("SingletonLifestyle", function () {
                     done();
                 });
         });
+        
+        it("should call initialize", function (done) {
+            container.register($component(V12).transient());
+            Promise.resolve(container.resolve(Engine)).then(function (engine) {
+                expect(engine.calibrated).to.be.true;
+                done();
+            });
+        });
+        
     });
 
     describe("#dispose", function () {
@@ -526,10 +539,11 @@ describe("SingletonLifestyle", function () {
 
 describe("TransientLifestyle", function () {
     describe("#resolve", function () {
+        var context   = new Context,
+            container = Container(context);
+        context.addHandlers(new IoContainer, new ValidationCallbackHandler);
+        
         it("should resolve diferent instance for TransientLifestyle", function (done) {
-            var context   = new Context,
-                container = Container(context);
-            context.addHandlers(new IoContainer, new ValidationCallbackHandler);
             container.register($component(V12).transient());
             Promise.all([container.resolve(Engine), container.resolve(Engine)])
                 .spread(function (engine1, engine2) {
@@ -537,16 +551,28 @@ describe("TransientLifestyle", function () {
                     done();
                 });
         });
+
+        it("should call initialize", function (done) {
+            container.register($component(V12).transient());
+            Promise.resolve(container.resolve(Engine)).then(function (engine) {
+                expect(engine.calibrated).to.be.true;
+                done();
+            });
+        });
+        
     });
 });
 
 describe("ContextualLifestyle", function () {
     var Controller = Base.extend($inferProperties, $contextual, {
-            $inject: [$optional(Context)],
-            constructor: function (context) {
-                this.setContext(context);
-            }
-        });
+        $inject: [$optional(Context)],
+        constructor: function (context) {
+            this.setContext(context);
+        },
+        initialize: function () {
+            Object.defineProperty(this, "initialized", { value: !!this.context });
+        }
+    });
     describe("#resolve", function () {
         it("should resolve diferent instance per context for ContextualLifestyle", function (done) {
             var context   = new Context,
@@ -622,6 +648,17 @@ describe("ContextualLifestyle", function () {
             var container = (new ValidationCallbackHandler).next(new IoContainer);
             Container(container).register($component(Controller).dependsOn($optional($child(Context))));
             Promise.resolve(Container(container).resolve(Controller)).then(function (controller) {
+                done();
+            });
+        });
+
+        it("should call initialize", function (done) {
+            var context   = new Context,
+                container = Container(context);
+            context.addHandlers(new IoContainer, new ValidationCallbackHandler);
+            container.register($component(Controller).dependsOn($child(Context)));
+            Promise.resolve(container.resolve(Controller)).then(function (controller) {
+                expect(controller.initialized).to.be.true;
                 done();
             });
         });

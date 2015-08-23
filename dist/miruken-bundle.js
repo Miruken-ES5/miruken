@@ -5365,7 +5365,20 @@ new function () { // closure
          * @method resolve
          * @returns {Object} component instance.
          */
-        resolve: function (factory) { return factory(); },
+        resolve: function (factory) {
+            var instance = factory();
+            if ($isPromise(instance)) {
+                return Promise.resolve(instance).then(function (instance) {
+                    if ($isFunction(instance.initialize)) {
+                        instance.initialize();
+                    }                    
+                    return instance;
+                });                
+            }  else if ($isFunction(instance.initialize)) {
+                instance.initialize();
+            }
+            return instance;            
+        },
         /**
          * Tracks the component instance for disposal.
          * @method trackInstance
@@ -5420,7 +5433,7 @@ new function () { // closure
             this.extend({
                 resolve: function (factory) {
                     if (!instance) {
-                        var object = factory();
+                        var object = this.base(factory);
                         if ($isPromise(object)) {
                             var _this = this;
                             return Promise.resolve(object).then(function (object) {
@@ -5496,6 +5509,9 @@ new function () { // closure
                     if (Contextual.adoptedBy(instance) || $isFunction(instance.setContext)) {
                         ContextualHelper.bindContext(instance, context);
                     }
+                    if ($isFunction(instance.initialize)) {
+                        instance.initialize();
+                    }                                        
                     this.trackInstance(instance);
                     context.onEnded(function () {
                         if ($isFunction(instance.setContext)) {
@@ -6141,7 +6157,7 @@ new function () { // closure
     var miruken = new base2.Package(this, {
         name:    "miruken",
         version: "1.0",
-        exports: "Enum,Variance,Protocol,StrictProtocol,Delegate,Miruken,MetaStep,MetaMacro,Disposing,DisposingMixin,Invoking,Parenting,Starting,Startup,Facet,Interceptor,InterceptorSelector,ProxyBuilder,Modifier,ArrayManager,IndexedList,$isProtocol,$isClass,$classOf,$ancestorOf,$isString,$isFunction,$isObject,$isPromise,$isNothing,$isSomething,$using,$lift,$equals,$decorator,$decorate,$decorated,$debounce,$eq,$use,$copy,$lazy,$eval,$every,$child,$optional,$promise,$instant,$createModifier,$properties,$inferProperties,$inheritStatic"
+        exports: "Enum,Variance,Protocol,StrictProtocol,Delegate,Miruken,MetaStep,MetaMacro,Initializing,Disposing,DisposingMixin,Invoking,Parenting,Starting,Startup,Facet,Interceptor,InterceptorSelector,ProxyBuilder,Modifier,ArrayManager,IndexedList,$isProtocol,$isClass,$classOf,$ancestorOf,$isString,$isFunction,$isObject,$isPromise,$isNothing,$isSomething,$using,$lift,$equals,$decorator,$decorate,$decorated,$debounce,$eq,$use,$copy,$lazy,$eval,$every,$child,$optional,$promise,$instant,$createModifier,$properties,$inferProperties,$inheritStatic"
     });
 
     eval(this.imports);
@@ -7266,6 +7282,18 @@ new function () { // closure
      */
     var Miruken = Base.extend(null, {
         coerce: function () { return this.new.apply(this, arguments); }
+    });
+
+    /**
+     * Protocol for targets that manage initialization.
+     * @class Initializing
+     * @extends miruken.Protocol
+     */
+    var Initializing = Protocol.extend({
+        /**
+         * Perform any initialization after construction..
+         */
+        initialize: function () {}
     });
 
     /**

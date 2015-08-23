@@ -5365,7 +5365,20 @@ new function () { // closure
          * @method resolve
          * @returns {Object} component instance.
          */
-        resolve: function (factory) { return factory(); },
+        resolve: function (factory) {
+            var instance = factory();
+            if ($isPromise(instance)) {
+                return Promise.resolve(instance).then(function (instance) {
+                    if ($isFunction(instance.initialize)) {
+                        instance.initialize();
+                    }                    
+                    return instance;
+                });                
+            }  else if ($isFunction(instance.initialize)) {
+                instance.initialize();
+            }
+            return instance;            
+        },
         /**
          * Tracks the component instance for disposal.
          * @method trackInstance
@@ -5420,7 +5433,7 @@ new function () { // closure
             this.extend({
                 resolve: function (factory) {
                     if (!instance) {
-                        var object = factory();
+                        var object = this.base(factory);
                         if ($isPromise(object)) {
                             var _this = this;
                             return Promise.resolve(object).then(function (object) {
@@ -5496,6 +5509,9 @@ new function () { // closure
                     if (Contextual.adoptedBy(instance) || $isFunction(instance.setContext)) {
                         ContextualHelper.bindContext(instance, context);
                     }
+                    if ($isFunction(instance.initialize)) {
+                        instance.initialize();
+                    }                                        
                     this.trackInstance(instance);
                     context.onEnded(function () {
                         if ($isFunction(instance.setContext)) {
@@ -6141,7 +6157,7 @@ new function () { // closure
     var miruken = new base2.Package(this, {
         name:    "miruken",
         version: "1.0",
-        exports: "Enum,Variance,Protocol,StrictProtocol,Delegate,Miruken,MetaStep,MetaMacro,Disposing,DisposingMixin,Invoking,Parenting,Starting,Startup,Facet,Interceptor,InterceptorSelector,ProxyBuilder,Modifier,ArrayManager,IndexedList,$isProtocol,$isClass,$classOf,$ancestorOf,$isString,$isFunction,$isObject,$isPromise,$isNothing,$isSomething,$using,$lift,$equals,$decorator,$decorate,$decorated,$debounce,$eq,$use,$copy,$lazy,$eval,$every,$child,$optional,$promise,$instant,$createModifier,$properties,$inferProperties,$inheritStatic"
+        exports: "Enum,Variance,Protocol,StrictProtocol,Delegate,Miruken,MetaStep,MetaMacro,Initializing,Disposing,DisposingMixin,Invoking,Parenting,Starting,Startup,Facet,Interceptor,InterceptorSelector,ProxyBuilder,Modifier,ArrayManager,IndexedList,$isProtocol,$isClass,$classOf,$ancestorOf,$isString,$isFunction,$isObject,$isPromise,$isNothing,$isSomething,$using,$lift,$equals,$decorator,$decorate,$decorated,$debounce,$eq,$use,$copy,$lazy,$eval,$every,$child,$optional,$promise,$instant,$createModifier,$properties,$inferProperties,$inheritStatic"
     });
 
     eval(this.imports);
@@ -7266,6 +7282,18 @@ new function () { // closure
      */
     var Miruken = Base.extend(null, {
         coerce: function () { return this.new.apply(this, arguments); }
+    });
+
+    /**
+     * Protocol for targets that manage initialization.
+     * @class Initializing
+     * @extends miruken.Protocol
+     */
+    var Initializing = Protocol.extend({
+        /**
+         * Perform any initialization after construction..
+         */
+        initialize: function () {}
     });
 
     /**
@@ -8674,16 +8702,16 @@ new function () {
 	eval(this.imports);
 
 	var GreenSock = Base.extend(AnimationProviding, {
-		fade: function(container, content){
-			return new Promise(function(resolve){
+		fade: function (container, content) {
+			return new Promise(function (resolve){
 				var current = container.children(),
 				    outTime = current.length ? .4 : 0,
 				    inTime  = .8,
-				    tl =      new TimelineMax({ onComplete: resolve });
+				    tl      = new TimelineMax({ onComplete: resolve });
 
 					tl.to(current, outTime, {
 		            	opacity: 0,
-		            	onComplete: function(){
+		            	onComplete: function () {
 	            			content.css('opacity', 0);
 		            		container.html(content);
 		            	}
@@ -8699,6 +8727,7 @@ new function () {
 	eval(this.exports);
 
 }
+
 },{"../miruken.js":10,"bluebird":21}],15:[function(require,module,exports){
 module.exports = require('./model.js');
 require('./view.js');
@@ -24744,7 +24773,10 @@ new function () { // closure
                 getDiagnostics: function () { return diagnostics; }
             });
         },
-        getNumberOfCylinders: function () { return 12; },
+        initialize: function () {
+            Object.defineProperty(this, "calibrated", { value: true });
+        },
+        getNumberOfCylinders: function () { return 12; }
     });
  
     var RebuiltV12 = V12.extend(Engine, Disposing, $inferProperties, {
@@ -25168,10 +25200,11 @@ describe("ComponentBuilder", function () {
 
 describe("SingletonLifestyle", function () {
     describe("#resolve", function () {
+        var context   = new Context,
+            container = Container(context);
+        context.addHandlers(new IoContainer, new ValidationCallbackHandler);
+        
         it("should resolve same instance for SingletonLifestyle", function (done) {
-            var context   = new Context,
-                container = Container(context);
-            context.addHandlers(new IoContainer, new ValidationCallbackHandler);
             container.register($component(V12).singleton());
             Promise.all([container.resolve(Engine), container.resolve(Engine)])
                 .spread(function (engine1, engine2) {
@@ -25179,6 +25212,15 @@ describe("SingletonLifestyle", function () {
                     done();
                 });
         });
+        
+        it("should call initialize", function (done) {
+            container.register($component(V12).transient());
+            Promise.resolve(container.resolve(Engine)).then(function (engine) {
+                expect(engine.calibrated).to.be.true;
+                done();
+            });
+        });
+        
     });
 
     describe("#dispose", function () {
@@ -25215,10 +25257,11 @@ describe("SingletonLifestyle", function () {
 
 describe("TransientLifestyle", function () {
     describe("#resolve", function () {
+        var context   = new Context,
+            container = Container(context);
+        context.addHandlers(new IoContainer, new ValidationCallbackHandler);
+        
         it("should resolve diferent instance for TransientLifestyle", function (done) {
-            var context   = new Context,
-                container = Container(context);
-            context.addHandlers(new IoContainer, new ValidationCallbackHandler);
             container.register($component(V12).transient());
             Promise.all([container.resolve(Engine), container.resolve(Engine)])
                 .spread(function (engine1, engine2) {
@@ -25226,16 +25269,28 @@ describe("TransientLifestyle", function () {
                     done();
                 });
         });
+
+        it("should call initialize", function (done) {
+            container.register($component(V12).transient());
+            Promise.resolve(container.resolve(Engine)).then(function (engine) {
+                expect(engine.calibrated).to.be.true;
+                done();
+            });
+        });
+        
     });
 });
 
 describe("ContextualLifestyle", function () {
     var Controller = Base.extend($inferProperties, $contextual, {
-            $inject: [$optional(Context)],
-            constructor: function (context) {
-                this.setContext(context);
-            }
-        });
+        $inject: [$optional(Context)],
+        constructor: function (context) {
+            this.setContext(context);
+        },
+        initialize: function () {
+            Object.defineProperty(this, "initialized", { value: !!this.context });
+        }
+    });
     describe("#resolve", function () {
         it("should resolve diferent instance per context for ContextualLifestyle", function (done) {
             var context   = new Context,
@@ -25311,6 +25366,17 @@ describe("ContextualLifestyle", function () {
             var container = (new ValidationCallbackHandler).next(new IoContainer);
             Container(container).register($component(Controller).dependsOn($optional($child(Context))));
             Promise.resolve(Container(container).resolve(Controller)).then(function (controller) {
+                done();
+            });
+        });
+
+        it("should call initialize", function (done) {
+            var context   = new Context,
+                container = Container(context);
+            context.addHandlers(new IoContainer, new ValidationCallbackHandler);
+            container.register($component(Controller).dependsOn($child(Context)));
+            Promise.resolve(container.resolve(Controller)).then(function (controller) {
+                expect(controller.initialized).to.be.true;
                 done();
             });
         });
