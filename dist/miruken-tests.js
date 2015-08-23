@@ -8786,11 +8786,12 @@ new function () {
 		version: miruken.version,
 		parent:  miruken,
 		imports: 'miruken',
-		exports: 'GreenSock'
+		exports: 'GreenSockFadeProvider'
 	});
 
 	eval(this.imports);
 
+<<<<<<< HEAD
 <<<<<<< HEAD
 	var GreenSock = Base.extend(AnimationProviding, {
 		fade: function (container, content) {
@@ -8814,52 +8815,50 @@ new function () {
 			});
 =======
 	var GreenSock = Base.extend(FadeProviding, {
+=======
+	var outTime = .4,
+		inTime  = .8;
+
+	var BaseAnimationProvider = Base.extend(FadeProviding, {
+>>>>>>> Extracted out a base animation provider
 		handle: function(container, content, context){
 				
 			var _current = container.children(),
-			    outTime = .4,
-			    inTime  = .8,
 			    _removed = false;
 
 				if (context) {
                 	context.onEnding(function(_context){
                 		if(context === _context && !_removed){
                 			_removed = true;
-                			animateOut(content).then(function(){
+                			this.animateOut(content, container).then(function(){
                 				content.remove();
                 			});
                 		}
-            		});
+            		}.bind(this));
 				}
 
 			    if(!container.__miruken_animate_out){
 			    	if(_current.length){
-			    		return animateOut(_current).then(function(){
-				    		return animateIn(content);
-				    	});	
+			    		return this.animateOut(_current, container).then(function(){
+				    		return this.animateIn(content, container);
+				    	}.bind(this));	
 			    	} else {
-			    		return animateIn(content);
+			    		return this.animateIn(content, container);
 			    	}
 			    } else {
-			    	return container.__miruken_animate_out().then(function(){
+			    	return container.__miruken_animate_out(content, container).then(function(){
 			    		_removed = true;
-			    		return animateIn().then(function(){
-			    			container.__miruken_animate_out = animateOut;	
-			    		});
-			    	});
+			    		return this.animateIn(content, container).then(function(){
+			    			return container.__miruken_animate_out = function(){
+			    				this.animateOut(content, container);
+			    			}	
+			    		}.bind(this));
+			    	}.bind(this));
 			    }
+		}
+	});
 
-			    function animateIn(content){
-			    	return new Promise(function(resolve){
-			    		content.css('opacity', 0);
-            			container.html(content);
-					    TweenMax.to(content, inTime, {
-		                	opacity: 1,
-		                	onComplete: resolve
-	                	})
-			    	});
-			    }
-
+<<<<<<< HEAD
 			    function animateOut(content){
 			    	return new Promise(function(resolve){
 			    		TweenMax.to(content, outTime, {
@@ -8869,6 +8868,26 @@ new function () {
 			    	});
 			    }
 >>>>>>> Moving from AnimationPolicy to FadePolicy
+=======
+	var GreenSockFadeProvider = BaseAnimationProvider.extend(FadeProviding, {
+		animateIn: function(content, container){
+			return new Promise(function(resolve){
+	    		content.css('opacity', 0);
+    			container.html(content);
+			    TweenMax.to(content, inTime, {
+                	opacity: 1,
+                	onComplete: resolve
+            	})
+	    	});
+		},
+		animateOut: function(content, container){
+			return new Promise(function(resolve){
+	    		TweenMax.to(content, outTime, {
+	    			opacity: 0,
+	    			onComplete: resolve
+	    		});
+	    	});
+>>>>>>> Extracted out a base animation provider
 		}
 	});
 
