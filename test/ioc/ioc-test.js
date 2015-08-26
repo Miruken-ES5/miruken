@@ -26,7 +26,9 @@ new function () { // closure
         $inferProperties, {
         getNumberOfCylinders: function () {},
         getHorsepower: function () {},
-        getDisplacement: function () {}
+        getDisplacement: function () {},
+        getRpm: function () {},
+        rev: function (rpm) {}
     });
 
     var Car = Protocol.extend(
@@ -49,10 +51,19 @@ new function () { // closure
     var V12 = Base.extend(Engine, $inferProperties, {
         $inject: [,,$optional(Diagnostics)],
         constructor: function (horsepower, displacement, diagnostics) {
+            var _rpm;
             this.extend({
                 getHorsepower: function () { return horsepower; },
                 getDisplacement: function () { return displacement; },
-                getDiagnostics: function () { return diagnostics; }
+                getDiagnostics: function () { return diagnostics; },
+                getRpm: function () { return _rpm; },
+                rev: function (rpm) {
+                    if (rpm <= 8000) {
+                        _rpm = rpm;
+                        return true;
+                    }
+                    return false;
+                }
             });
         },
         initialize: function () {
@@ -1199,6 +1210,21 @@ describe("IoContainer", function () {
                 done();
             });
         });
+
+        it("should resolve from container for invocation", function (done) {
+            container.register($component(V12));
+            expect(Engine(context.$resolve()).rev(4000)).to.be.true;
+            Promise.resolve(container.resolve(Engine)).then(function (engine) {
+                expect(engine.rpm).to.equal(4000);
+                done();
+            });
+        });
+
+        it("should fail invocation if component not found", function () {
+            expect(function () {
+                Engine(context.$resolve()).rev(4000);                
+            }).to.throw(Error, /has no method 'rev'/);
+        });       
     });
 
     describe("#resolveAll", function () {
@@ -1222,7 +1248,7 @@ describe("IoContainer", function () {
                 done();
             });
         });
-    })
+    });
 
     describe("#invoke", function () {
         var context, container;

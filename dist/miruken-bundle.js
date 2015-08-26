@@ -1722,7 +1722,7 @@ new function () { // closure
         version: miruken.version,
         parent:  miruken,
         imports: "miruken",
-        exports: "CallbackHandler,CascadeCallbackHandler,CompositeCallbackHandler,InvocationOptions,Resolution,Composition,HandleMethod,RejectedError,getEffectivePromise,$handle,$callbacks,$define,$provide,$lookup,$NOT_HANDLED"
+        exports: "CallbackHandler,CascadeCallbackHandler,CompositeCallbackHandler,InvocationOptions,Resolution,Composition,HandleMethod,ResolveMethod,RejectedError,getEffectivePromise,$handle,$callbacks,$define,$provide,$lookup,$NOT_HANDLED"
     });
 
     eval(this.imports);
@@ -1888,7 +1888,8 @@ new function () { // closure
                  * During invocation, the receiver will have access to a global **$composer** property
                  * representing the initiating {{#crossLink "miruken.callback.CallbackHandler"}}{{/crossLink}}.
                  * @method invokeOn
-                 * @param   {Object}  target  - method receiver
+                 * @param   {Object}                            target  - method receiver
+                 * @param   {miruken.callback.CallbackHandler}  composer  - composition handler
                  * @returns {boolean} true if the method was accepted.
                  */
                 invokeOn: function (target, composer) {
@@ -1955,6 +1956,60 @@ new function () { // closure
         Invoke: 3
     });
 
+    /**
+     * Captures the invocation of a method using resolution to determine the targets.
+     * @class ResolveMethod
+     * @extends HandleMethod
+     */
+    var ResolveMethod = HandleMethod.extend({
+        constructor: function (type, protocol, methodName, args, strict, all, required) {
+            this.base(type, protocol, methodName, args, strict);
+            this.extend({
+                /**
+                 * Attempts to invoke the method on resolved targets.
+                 * @method invokeResolve
+                 * @param   {miruken.callback.CallbackHandler}  composer  - composition handler
+                 * @returns {boolean} true if the method was accepted.
+                 */
+                invokeResolve: function (composer) {
+                    var handled = false,
+                        targets = composer.resolveAll(protocol);
+                    
+                    function invokeTargets(targets) {
+                        for (var i = 0; i < targets.length; ++i) {
+                            handled = handled | this.invokeOn(targets[i], composer);
+                            if (handled && !all) {
+                                break;
+                            }
+                        }
+                    }
+                    
+                    if ($isPromise(targets)) {
+                        var that = this;
+                        this.setReturnValue(new Promise(function (resolve, reject) {
+                            targets.then(function (targets) {
+                                invokeTargets.call(that, targets);
+                                if (that.execption) {
+                                    reject(that.exeception);
+                                } else if (handled) {
+                                    resolve(that.getReturnValue());
+                                } else if (required) {
+                                    reject(new TypeError(format("Object %1 has no method '%2'", composer, methodName)));
+                                } else {
+                                    resolve();
+                                }
+                            });
+                        }));
+                        return true;
+                    }
+                    
+                    invokeTargets.call(this, targets);
+                    return handled;
+                }
+            });
+        }
+    });
+    
     /**
      * Callback representing the invariant lookup of a key.
      * @class Lookup
@@ -2062,6 +2117,7 @@ new function () { // closure
             }
             many = !!many;
             var _resolutions = [],
+                _promised    = false,
                 _instant     = $instant.test(key);
             this.extend({
                 /**
@@ -2075,6 +2131,11 @@ new function () { // closure
                  */                
                 isMany: function () { return many; },
                 /**
+                 * true if resolve all is instant.  Otherwise a promise.
+                 * @property {boolean} isInstant
+                 */
+                isInstant: function () { return !_promised; },
+                /**
                  * Gets the resolutions.
                  * @property {Array} resolutions
                  */                
@@ -2084,7 +2145,9 @@ new function () { // closure
                  * @param {Any} resolution  -  resolution
                  */
                 resolve: function (resolution) {
-                    if (!(_instant && $isPromise(resolution))) {
+                    var promised = $isPromise(resolution);
+                    if (!_instant || !promised) {
+                        _promised = _promised || promised;
                         _resolutions.push(resolution);
                     }
                 }
@@ -2116,7 +2179,7 @@ new function () { // closure
 
     var compositionScope = $decorator({
         handleCallback: function (callback, greedy, composer) {
-            if (!(callback instanceof Composition)) {
+            if ($classOf(callback) !== Composition) {
                 callback = new Composition(callback);
             }
             return this.base(callback, greedy, composer);
@@ -2170,7 +2233,9 @@ new function () { // closure
          * @returns {boolean} true if the callback was handled, false otherwise.
          */
         handleCallback: function (callback, greedy, composer) {
-            return $handle.dispatch(this, callback, null, composer, greedy);
+            return callback instanceof ResolveMethod
+                ? callback.invokeResolve(composer)
+                : $handle.dispatch(this, callback, null, composer, greedy);
         },
         $handle:[
             Lookup, function (lookup, composer) {
@@ -2449,6 +2514,11 @@ new function () { // closure
          * @property {number} Strict
          */                
         Strict: 1 << 2,
+        /**
+         * Uses Resolve to determine instances to invoke.
+         * @property {number} Resolve
+         */                
+        Resolve: 1 << 3        
     };
     /**
      * Publishes invocation to all handlers.
@@ -2509,7 +2579,7 @@ new function () { // closure
          * @param   {miruken.callback.InvocationSemantics}  semantics  -  receives invocation semantics
          */                
         mergeInto: function (semantics) {
-            for (var index = 0; index <= 2; ++index) {
+            for (var index = 0; index <= 3; ++index) {
                 var option = (1 << index);
                 if (this.isSpecified(option) && !semantics.isSpecified(option)) {
                     semantics.setOption(option, this.getOption(option));
@@ -2551,14 +2621,17 @@ new function () { // closure
     });
 
     function _delegateInvocation(delegate, type, protocol, methodName, args, strict) {
-        var handler   = delegate.handler, 
+        var handler   = delegate.handler,
             semantics = new InvocationSemantics;
         handler.handle(semantics, true);
-        strict  = !!(strict | semantics.getOption(InvocationOptions.Strict));
+        strict = !!(strict | semantics.getOption(InvocationOptions.Strict));
         var broadcast    = semantics.getOption(InvocationOptions.Broadcast),
             bestEffort   = semantics.getOption(InvocationOptions.BestEffort),
-            handleMethod = new HandleMethod(type, protocol, methodName, args, strict);
-        if (handler.handle(handleMethod, !!broadcast) === false && !bestEffort) {
+            useResolve   = semantics.getOption(InvocationOptions.Resolve),
+            handleMethod = useResolve
+                         ? new ResolveMethod(type, protocol, methodName, args, strict, broadcast, !bestEffort)
+                         : new HandleMethod(type, protocol, methodName, args, strict);
+        if (!handler.handle(handleMethod, broadcast && !useResolve) && !bestEffort) {
             throw new TypeError(format("Object %1 has no method '%2'", handler, methodName));
         }
         return handleMethod.getReturnValue();
@@ -2591,8 +2664,15 @@ new function () { // closure
          * @method $notify
          * @returns {miruken.callback.InvocationOptionsHandler} notification semanics.
          * @for miruken.callback.CallbackHandler
-         */                        
+         */
         $notify: function () { return this.$callOptions(InvocationOptions.Notify); },
+        /**
+         * Establishes resolve invocation semantics.
+         * @method $resolve
+         * @returns {miruken.callback.CallbackHandler} resolved semantics.
+         * @for miruken.callback.CallbackHandler
+         */
+        $resolve: function () { return this.$callOptions(InvocationOptions.Resolve); },        
         /**
          * Establishes custom invocation semantics.
          * @method $callOptions
@@ -2604,11 +2684,15 @@ new function () { // closure
             var semantics = new InvocationSemantics(options);
             return this.decorate({
                 handleCallback: function (callback, greedy, composer) {
+                    var handled = false;
                     if (callback instanceof InvocationSemantics) {
                         semantics.mergeInto(callback);
-                        return true;
+                        handled = true;
                     }
-                    return this.base(callback, greedy, composer);
+                    if (greedy || !handled) {
+                        handled = handled | this.base(callback, greedy, composer);
+                    }
+                    return !!handled;
                 }
             });
         }
@@ -2673,7 +2757,7 @@ new function () { // closure
             if (this.handle(resolution, true, global.$composer)) {
                 var resolutions = resolution.getResolutions();
                 if (resolutions.length > 0) {
-                    return $instant.test(key)
+                    return resolution.instant
                          ? Array2.flatten(resolutions)
                          : Promise.all(resolutions).then(Array2.flatten);
                 }
@@ -4862,10 +4946,10 @@ new function () { // closure
 
 },{"../miruken.js":10,"./ioc.js":9,"bluebird":14}],8:[function(require,module,exports){
 module.exports = require('./ioc.js');
-require('./config.js');
+require('./fluent.js');
 
 
-},{"./config.js":7,"./ioc.js":9}],9:[function(require,module,exports){
+},{"./fluent.js":7,"./ioc.js":9}],9:[function(require,module,exports){
 var miruken = require('../miruken.js'),
     Promise = require('bluebird');
               require('../callback.js'),

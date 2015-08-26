@@ -1540,7 +1540,7 @@ describe("InvocationCallbackHandler", function () {
             }).to.throw(Error, /has no method 'trackActivity'/);
         });
 
-        it("can ignore missing methods", function () {
+        it("should ignore missing methods", function () {
             var letItRide = new Activity('Let It Ride'),
                 level1    = new Level1Security,
                 casino    = new Casino('Treasure Island')
@@ -1564,7 +1564,7 @@ describe("InvocationCallbackHandler", function () {
             }).to.throw(Error, /has no method 'admit'/);
         });
 
-        it("can broadcast invocations", function () {
+        it("should broadcast invocations", function () {
             var letItRide = new Activity('Let It Ride'),
                 level1    = new Level1Security,
                 level2    = new Level2Security,
@@ -1573,12 +1573,175 @@ describe("InvocationCallbackHandler", function () {
             Security(casino.$broadcast()).trackActivity(letItRide);
         });
 
-        it("can notify invocations", function () {
+        it("should notify invocations", function () {
             var letItRide = new Activity('Let It Ride'),
                 level1    = new Level1Security,
                 casino    = new Casino('Treasure Island')
                 .addHandlers(level1, letItRide);
             Security(casino.$notify()).trackActivity(letItRide);
+        });
+
+        it("should notify invocations", function () {
+            var letItRide = new Activity('Let It Ride'),
+                level1    = new Level1Security,
+                casino    = new Casino('Treasure Island')
+                .addHandlers(level1, letItRide);
+            Security(casino.$notify()).trackActivity(letItRide);
+        });
+
+        it("should resolve target for invocation", function () {
+            var Poker = Base.extend(Game, {
+                    open: function (numPlayers) {
+                        return "poker" + numPlayers;
+                    }
+                }),
+                handler = new CallbackHandler(new Poker),
+                id      = Game(handler.$resolve()).open(5);
+            expect(id).to.equal("poker5");
+        });
+
+        it("should resolve target for invocation using promise", function (done) {
+            var Poker = Base.extend(Game, {
+                    open: function (numPlayers) {
+                        return "poker" + numPlayers;
+                    }
+                }),
+                handler = new (CallbackHandler.extend({
+                    $provide: [
+                        Game, function () {
+                            return Promise.delay(new Poker, 10);
+                        }]
+                }));
+            Game(handler.$resolve()).open(5).then(function (id) {
+                expect(id).to.equal("poker5");
+                done();
+            });
+        });
+        
+        it("should fail invocation if unable to resolve", function () {
+            var handler = new CallbackHandler;
+            expect(function () {
+                Game(handler.$resolve()).open(4);
+            }).to.throw(TypeError, /has no method 'open'/);
+        });
+
+        it("should fail invocation if method not found", function () {
+            var Poker   = Base.extend(Game),
+                handler = new CallbackHandler(new Poker);
+            expect(function () {
+                Game(handler.$resolve()).open(4);
+            }).to.throw(TypeError, /has no method 'open'/);
+        });
+
+        it("should fail invocation promise if method not found", function (done) {
+            var Poker   = Base.extend(Game),
+                handler = new (CallbackHandler.extend({
+                    $provide: [
+                        Game, function () {
+                            return Promise.delay(new Poker, 10);
+                        }]
+                }));
+            Game(handler.$resolve()).open(5).catch(function (error) {
+                expect(error).to.be.instanceOf(TypeError);
+                expect(error.message).to.match(/has no method 'open'/)
+                done();
+            });            
+        });
+
+        it("should ignore invocation if unable to resolve", function () {
+            var handler = new CallbackHandler,
+                id      = Game(handler.$resolve().$bestEffort()).open(4);
+            expect(id).to.be.undefined;
+        });
+
+        it("should ignore invocation if unable to resolve promise", function (done) {
+            var handler = new (CallbackHandler.extend({
+                    $provide: [
+                        Game, function () {
+                            return Promise.delay($NOT_HANDLED, 10);
+                        }]
+            }));
+            Game(handler.$resolve().$bestEffort()).open(5).then(function (id) {
+                expect(id).to.be.undefiend;
+                done();
+            });            
+        });
+        
+        it("should resolve all targets or invocation", function () {
+            var count = 0,
+                Poker = Base.extend(Game, {
+                    open: function (numPlayers) {
+                        ++count;
+                        return "poker" + numPlayers;
+                    }
+                }),
+                Slots = Base.extend(Game, {
+                    open: function (numPlayers) {
+                        ++count;
+                        return "poker" + numPlayers;
+                    }
+                }),                
+                handler = new CascadeCallbackHandler(new Poker, new Slots),
+                id      = Game(handler.$resolve().$broadcast()).open(5);
+            expect(id).to.equal("poker5");
+            expect(count).to.equal(2);
+        });
+
+        it("should resolve all targets or invocation using promise", function (done) {
+            var count = 0,
+                Poker = Base.extend(Game, {
+                    open: function (numPlayers) {
+                        ++count;
+                        return "poker" + numPlayers;
+                    }
+                }),
+                Slots = Base.extend(Game, {
+                    open: function (numPlayers) {
+                        ++count;
+                        return "poker" + numPlayers;
+                    }
+                }),                
+                handler = new CascadeCallbackHandler(
+                    new (CallbackHandler.extend({
+                        $provide: [
+                            Game, function () {
+                                return Promise.delay(new Poker, 10);
+                            }]
+                    })),
+                    new (CallbackHandler.extend({
+                        $provide: [
+                            Game, function () {
+                                return Promise.delay(new Slots, 5);
+                            }]
+                    }))
+                );
+            Game(handler.$resolve().$broadcast()).open(5).then(function (id) {
+                expect(id).to.equal("poker5");
+                expect(count).to.equal(2);                
+                done();
+            });
+        });
+        
+        it("should fail invocation if unable to resolve all", function () {
+            var handler = new CallbackHandler;
+            expect(function () {
+                Game(handler.$resolve().$broadcast()).open(4);
+            }).to.throw(Error, /has no method 'open'/);
+        });
+
+        it("should apply filters to resolved invocations", function () {
+            var Poker = Base.extend(Game, {
+                    open: function (numPlayers) {
+                        return "poker" + numPlayers;
+                    }
+                }),
+                handler = new CallbackHandler(new Poker);
+            expect(Game(handler.$resolve().filter(
+                function (cb, cm, proceed) { return proceed(); })).open(5))
+                .to.equal("poker5");
+            expect(function () {
+                Game(handler.$resolve().filter(False)).open(5);
+            }).to.throw(Error, /has no method 'open'/);
         });
     })
 });

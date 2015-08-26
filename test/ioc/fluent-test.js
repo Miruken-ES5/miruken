@@ -1,5 +1,5 @@
 var miruken  = require('../../lib/miruken.js'),
-    config   = require('../../lib/ioc'),
+    ioc      = require('../../lib/ioc'),
     Promise  = require('bluebird'),
     chai     = require("chai"),
     expect   = chai.expect;
@@ -9,12 +9,11 @@ eval(miruken.namespace);
 eval(miruken.context.namespace);
 eval(miruken.validate.namespace);
 eval(miruken.ioc.namespace);
-eval(config.namespace);
 
 new function () { // closure
 
-    var ioc_config_test = new base2.Package(this, {
-        name:    "ioc_config_test",
+    var ioc_fluent_test = new base2.Package(this, {
+        name:    "ioc_fluent_test",
         exports: "Service,Authentication,Controller,Credentials,LoginController,SomeService,InMemoryAuthenticator,PackageInstaller"
     });
 
@@ -59,7 +58,7 @@ new function () { // closure
     var PackageInstaller = Installer.extend({
         register: function(container, composer) {
             container.register(
-                $classes.fromPackage(ioc_config_test).basedOn(Service)
+                $classes.fromPackage(ioc_fluent_test).basedOn(Service)
                         .withKeys.mostSpecificService()
             );
         }
@@ -68,7 +67,7 @@ new function () { // closure
     eval(this.exports);
 };
 
-eval(base2.ioc_config_test.namespace);
+eval(base2.ioc_fluent_test.namespace);
 
 describe("$classes", function () {
     var context, container;
@@ -82,7 +81,7 @@ describe("$classes", function () {
         it("should select classes from package", function (done) {
             container.register(
                 $component(Authentication).boundTo(InMemoryAuthenticator),
-                $classes.fromPackage(ioc_config_test).basedOn(Controller)
+                $classes.fromPackage(ioc_fluent_test).basedOn(Controller)
             );
             Promise.resolve(container.resolve(LoginController)).then(function (loginController) {
                 expect(loginController).to.be.instanceOf(LoginController);
@@ -93,7 +92,7 @@ describe("$classes", function () {
         it("should select classes from package using shortcut", function (done) {
             container.register(
                 $component(Authentication).boundTo(InMemoryAuthenticator),
-                $classes(ioc_config_test).basedOn(Controller)
+                $classes(ioc_fluent_test).basedOn(Controller)
             );
             Promise.resolve(container.resolve(LoginController)).then(function (loginController) {
                 expect(loginController).to.be.instanceOf(LoginController);
@@ -102,7 +101,7 @@ describe("$classes", function () {
         });
 
         it("should register installers if no based on criteria", function (done) {
-            container.register($classes.fromPackage(ioc_config_test));
+            container.register($classes.fromPackage(ioc_fluent_test));
             Promise.all([container.resolve($eq(Service)),
                          container.resolve($eq(Authentication)),
                          container.resolve($eq(InMemoryAuthenticator))])
@@ -124,7 +123,7 @@ describe("$classes", function () {
     describe("#withKeys", function () {
         describe("#self", function () {
             it("should select class as key", function (done) {
-                container.register($classes.fromPackage(ioc_config_test)
+                container.register($classes.fromPackage(ioc_fluent_test)
                                            .basedOn(Authentication)
                                            .withKeys.self()
                 );
@@ -140,7 +139,7 @@ describe("$classes", function () {
 
         describe("#basedOn", function () {
             it("should select basedOn as keys", function (done) {
-                container.register($classes.fromPackage(ioc_config_test)
+                container.register($classes.fromPackage(ioc_fluent_test)
                                            .basedOn(Authentication)
                                            .withKeys.basedOn()
                 );
@@ -156,7 +155,7 @@ describe("$classes", function () {
 
         describe("#anyService", function () {
             it("should select any service as key", function (done) {
-                container.register($classes.fromPackage(ioc_config_test)
+                container.register($classes.fromPackage(ioc_fluent_test)
                                            .basedOn(Service)
                                            .withKeys.anyService()
                 );
@@ -172,7 +171,7 @@ describe("$classes", function () {
 
         describe("#allServices", function () {
             it("should select all services as keys", function (done) {
-                container.register($classes.fromPackage(ioc_config_test)
+                container.register($classes.fromPackage(ioc_fluent_test)
                                            .basedOn(Authentication)
                                            .withKeys.allServices()
                 );
@@ -190,7 +189,7 @@ describe("$classes", function () {
 
         describe("#mostSpecificService", function () {
             it("should select most specific service as key", function (done) {
-                container.register($classes.fromPackage(ioc_config_test)
+                container.register($classes.fromPackage(ioc_fluent_test)
                                            .basedOn(Service)
                                            .withKeys.mostSpecificService(Service)
                 );
@@ -206,7 +205,7 @@ describe("$classes", function () {
             });
 
             it("should select most specific service form basedOn as key", function (done) {
-                container.register($classes.fromPackage(ioc_config_test)
+                container.register($classes.fromPackage(ioc_fluent_test)
                                            .basedOn(Service)
                                            .withKeys.mostSpecificService()
                 );
@@ -223,7 +222,7 @@ describe("$classes", function () {
 
             it("should select basedOn as key if no services match", function (done) {
                 container.register($component(Authentication).boundTo(InMemoryAuthenticator),
-                                   $classes.fromPackage(ioc_config_test).basedOn(Controller)
+                                   $classes.fromPackage(ioc_fluent_test).basedOn(Controller)
                                            .withKeys.mostSpecificService()
                 );
                 Promise.all([container.resolve($eq(Controller)),
@@ -238,7 +237,7 @@ describe("$classes", function () {
 
         describe("#name", function () {
             it("should specify name as key", function (done) {
-                container.register($classes.fromPackage(ioc_config_test)
+                container.register($classes.fromPackage(ioc_fluent_test)
                                            .basedOn(Controller)
                                            .withKeys.name("Login")
                 );
@@ -249,7 +248,7 @@ describe("$classes", function () {
             });
 
             it("should infer name as key", function (done) {
-                container.register($classes.fromPackage(ioc_config_test)
+                container.register($classes.fromPackage(ioc_fluent_test)
                                            .basedOn(Controller)
                                            .withKeys.name()
                 );
@@ -260,7 +259,7 @@ describe("$classes", function () {
             });
 
             it("should evaluate name as key", function (done) {
-                container.register($classes.fromPackage(ioc_config_test)
+                container.register($classes.fromPackage(ioc_fluent_test)
                                             .basedOn(Controller)
                                             .withKeys.name(function (name) { 
                                                 return name.replace("Controller", "");
@@ -276,7 +275,7 @@ describe("$classes", function () {
 
     describe("#configure", function () {
         it("should customize component configuration", function (done) {
-            container.register($classes.fromPackage(ioc_config_test)
+            container.register($classes.fromPackage(ioc_fluent_test)
                                        .basedOn(Service)
                                        .withKeys.mostSpecificService()
                                        .configure(function (component) {
