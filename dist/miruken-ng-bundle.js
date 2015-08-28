@@ -2280,7 +2280,7 @@ new function () { // closure
         version: miruken.version,
         parent:  miruken,
         imports: "miruken",
-        exports: "CallbackHandler,CascadeCallbackHandler,CompositeCallbackHandler,InvocationOptions,Resolution,Composition,HandleMethod,ResolveMethod,RejectedError,getEffectivePromise,$handle,$callbacks,$define,$provide,$lookup,$NOT_HANDLED"
+        exports: "CallbackHandler,CascadeCallbackHandler,CompositeCallbackHandler,InvocationOptions,Resolving,Resolution,Composition,HandleMethod,ResolveMethod,RejectedError,getEffectivePromise,$handle,$callbacks,$define,$provide,$lookup,$NOT_HANDLED"
     });
 
     eval(this.imports);
@@ -2309,7 +2309,7 @@ new function () { // closure
          * @property {Object} $NOT_HANDLED
          * @for miruken.callback.$
          */                
-        $NOT_HANDLED = {};
+        $NOT_HANDLED = Object.freeze({});
 
     /**
      * Metamacro to process callback handler definitions.
@@ -2517,6 +2517,14 @@ new function () { // closure
     /**
      * Captures the invocation of a method using resolution to determine the targets.
      * @class ResolveMethod
+     * @constructor
+     * @param  {number}            type        -  get, set or invoke
+     * @param  {miruken.Protocol}  protocol    -  initiating protocol
+     * @param  {string}            methodName  -  method name
+     * @param  {Array}             [...args]   -  method arguments
+     * @param  {boolean}           strict      -  true if strict, false otherwise
+     * @param  {boolean}           all         -  true if invoke all targets
+     * @param  {boolean}           required    -  true if at least one target accepts
      * @extends HandleMethod
      */
     var ResolveMethod = HandleMethod.extend({
@@ -3046,7 +3054,7 @@ new function () { // closure
             }
         });
     };
-
+    
     /**
      * InvocationOptions flags enum
      * @class InvocationOptions
@@ -3147,6 +3155,13 @@ new function () { // closure
     });
 
     /**
+     * Protocol marking {{#crossLink "miruken.callback.InvocationOptions/Resolve:property"}}{{/crossLink}} semantics.
+     * @class Resolving
+     * @extends miruken.Protocol
+     */
+    var Resolving = Protocol.extend();
+    
+    /**
      * Delegates properties and methods to a callback handler using 
      * {{#crossLink "miruken.callback.HandleMethod"}}{{/crossLink}}.
      * @class InvocationDelegate
@@ -3185,7 +3200,8 @@ new function () { // closure
         strict = !!(strict | semantics.getOption(InvocationOptions.Strict));
         var broadcast    = semantics.getOption(InvocationOptions.Broadcast),
             bestEffort   = semantics.getOption(InvocationOptions.BestEffort),
-            useResolve   = semantics.getOption(InvocationOptions.Resolve),
+            useResolve   = semantics.getOption(InvocationOptions.Resolve)
+                        || protocol.conformsTo(Resolving),
             handleMethod = useResolve
                          ? new ResolveMethod(type, protocol, methodName, args, strict, broadcast, !bestEffort)
                          : new HandleMethod(type, protocol, methodName, args, strict);

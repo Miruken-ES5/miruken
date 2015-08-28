@@ -22,7 +22,7 @@ new function () { // closure
 
     eval(this.imports);
 
-    var Engine = Protocol.extend(
+    var Engine = Resolving.extend(
         $inferProperties, {
         getNumberOfCylinders: function () {},
         getHorsepower: function () {},
@@ -1212,9 +1212,11 @@ describe("IoContainer", function () {
         });
 
         it("should resolve from container for invocation", function (done) {
-            container.register($component(V12));
-            expect(Engine(context.$resolve()).rev(4000)).to.be.true;
+            container.register($component(V12).dependsOn($use(917), $use(6.3)));
+            expect(Engine(context).rev(4000)).to.be.true;
             Promise.resolve(container.resolve(Engine)).then(function (engine) {
+                expect(engine.horsepower).to.equal(917);
+                expect(engine.displacement).to.equal(6.3);                
                 expect(engine.rpm).to.equal(4000);
                 done();
             });
@@ -1222,7 +1224,7 @@ describe("IoContainer", function () {
 
         it("should fail invocation if component not found", function () {
             expect(function () {
-                Engine(context.$resolve()).rev(4000);                
+                Engine(context).rev(4000);                
             }).to.throw(Error, /has no method 'rev'/);
         });       
     });

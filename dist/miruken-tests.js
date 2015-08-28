@@ -1722,7 +1722,7 @@ new function () { // closure
         version: miruken.version,
         parent:  miruken,
         imports: "miruken",
-        exports: "CallbackHandler,CascadeCallbackHandler,CompositeCallbackHandler,InvocationOptions,Resolution,Composition,HandleMethod,ResolveMethod,RejectedError,getEffectivePromise,$handle,$callbacks,$define,$provide,$lookup,$NOT_HANDLED"
+        exports: "CallbackHandler,CascadeCallbackHandler,CompositeCallbackHandler,InvocationOptions,Resolving,Resolution,Composition,HandleMethod,ResolveMethod,RejectedError,getEffectivePromise,$handle,$callbacks,$define,$provide,$lookup,$NOT_HANDLED"
     });
 
     eval(this.imports);
@@ -1751,7 +1751,7 @@ new function () { // closure
          * @property {Object} $NOT_HANDLED
          * @for miruken.callback.$
          */                
-        $NOT_HANDLED = {};
+        $NOT_HANDLED = Object.freeze({});
 
     /**
      * Metamacro to process callback handler definitions.
@@ -1959,6 +1959,14 @@ new function () { // closure
     /**
      * Captures the invocation of a method using resolution to determine the targets.
      * @class ResolveMethod
+     * @constructor
+     * @param  {number}            type        -  get, set or invoke
+     * @param  {miruken.Protocol}  protocol    -  initiating protocol
+     * @param  {string}            methodName  -  method name
+     * @param  {Array}             [...args]   -  method arguments
+     * @param  {boolean}           strict      -  true if strict, false otherwise
+     * @param  {boolean}           all         -  true if invoke all targets
+     * @param  {boolean}           required    -  true if at least one target accepts
      * @extends HandleMethod
      */
     var ResolveMethod = HandleMethod.extend({
@@ -2488,7 +2496,7 @@ new function () { // closure
             }
         });
     };
-
+    
     /**
      * InvocationOptions flags enum
      * @class InvocationOptions
@@ -2589,6 +2597,13 @@ new function () { // closure
     });
 
     /**
+     * Protocol marking {{#crossLink "miruken.callback.InvocationOptions/Resolve:property"}}{{/crossLink}} semantics.
+     * @class Resolving
+     * @extends miruken.Protocol
+     */
+    var Resolving = Protocol.extend();
+    
+    /**
      * Delegates properties and methods to a callback handler using 
      * {{#crossLink "miruken.callback.HandleMethod"}}{{/crossLink}}.
      * @class InvocationDelegate
@@ -2627,7 +2642,8 @@ new function () { // closure
         strict = !!(strict | semantics.getOption(InvocationOptions.Strict));
         var broadcast    = semantics.getOption(InvocationOptions.Broadcast),
             bestEffort   = semantics.getOption(InvocationOptions.BestEffort),
-            useResolve   = semantics.getOption(InvocationOptions.Resolve),
+            useResolve   = semantics.getOption(InvocationOptions.Resolve)
+                        || protocol.conformsTo(Resolving),
             handleMethod = useResolve
                          ? new ResolveMethod(type, protocol, methodName, args, strict, broadcast, !bestEffort)
                          : new HandleMethod(type, protocol, methodName, args, strict);
@@ -23588,6 +23604,18 @@ describe("InvocationCallbackHandler", function () {
                 done();
             });
         });
+
+        it("should resolve target for invocation implicitly", function () {
+            var Pumping = Resolving.extend({
+                    pump: function () {}
+                }),
+                Pump = Base.extend(Pumping, {
+                    pump: function () { return 5; }
+                }),
+                handler = new CallbackHandler;
+            $provide(handler, new Pump);
+            expect(Pumping(handler).pump()).to.equal(5);
+        });
         
         it("should fail invocation if unable to resolve", function () {
             var handler = new CallbackHandler;
@@ -24985,7 +25013,7 @@ new function () { // closure
 
     eval(this.imports);
 
-    var Engine = Protocol.extend(
+    var Engine = Resolving.extend(
         $inferProperties, {
         getNumberOfCylinders: function () {},
         getHorsepower: function () {},
@@ -26175,9 +26203,11 @@ describe("IoContainer", function () {
         });
 
         it("should resolve from container for invocation", function (done) {
-            container.register($component(V12));
-            expect(Engine(context.$resolve()).rev(4000)).to.be.true;
+            container.register($component(V12).dependsOn($use(917), $use(6.3)));
+            expect(Engine(context).rev(4000)).to.be.true;
             Promise.resolve(container.resolve(Engine)).then(function (engine) {
+                expect(engine.horsepower).to.equal(917);
+                expect(engine.displacement).to.equal(6.3);                
                 expect(engine.rpm).to.equal(4000);
                 done();
             });
@@ -26185,7 +26215,7 @@ describe("IoContainer", function () {
 
         it("should fail invocation if component not found", function () {
             expect(function () {
-                Engine(context.$resolve()).rev(4000);                
+                Engine(context).rev(4000);                
             }).to.throw(Error, /has no method 'rev'/);
         });       
     });

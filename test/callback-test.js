@@ -1617,6 +1617,18 @@ describe("InvocationCallbackHandler", function () {
                 done();
             });
         });
+
+        it("should resolve target for invocation implicitly", function () {
+            var Pumping = Resolving.extend({
+                    pump: function () {}
+                }),
+                Pump = Base.extend(Pumping, {
+                    pump: function () { return 5; }
+                }),
+                handler = new CallbackHandler;
+            $provide(handler, new Pump);
+            expect(Pumping(handler).pump()).to.equal(5);
+        });
         
         it("should fail invocation if unable to resolve", function () {
             var handler = new CallbackHandler;
