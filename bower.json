@@ -1,0 +1,28 @@
+{
+  "name": "MirukenJS",
+  "version": "0.0.1",
+  "homepage": "http://miruken.com",
+  "authors": [
+    "Craig Neuwirt",
+    "Michael Dudley"
+  ],
+  "description": "Miruken focuses on convention, composition, and aspect-oriented programming.",
+  "main": "miruken-bundle.js",
+  "ignore": [
+    "demo",
+    "documentation",
+    "node_modules",
+    "test",
+    ".gitignore",
+    ".jshintrc",
+    "bower.json",
+    "gruntfile.js",
+    "karma.conf.js",
+    "mirukendocs.bat",
+    "README.md"
+  ]
+  "keywords": [
+    "javascript"
+  ],
+  "license": "MIT"
+}
