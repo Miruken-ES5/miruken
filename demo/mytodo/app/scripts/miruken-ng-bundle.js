@@ -3403,8 +3403,9 @@ new function () { // closure
                     if (!reentrant && (callback instanceof Composition)) {
                         return this.base(callback, greedy, composer);
                     }
+                    var base = this.base;
                     return filter(callback, composer, function () {
-                        return this.base(callback, greedy, composer);
+                        return base.call(this, callback, greedy, composer);
                     }.bind(this));
                 }
             });
