@@ -3321,7 +3321,7 @@ new function () { // closure
      * @class ContextObserver
      * @extends miruken.Protocol
      */
-    var ContextObserver = Protocol.extend({
+    var ContextObserver = Base.extend({
         /**
          * Called when a context is in the process of ending.
          * @method contextEnding
@@ -3498,7 +3498,9 @@ new function () { // closure
                     if (observer === null || observer === undefined) {
                         return;
                     }
-                    observer = ContextObserver(observer);
+                    if (!(observer instanceof ContextObserver)) {
+                        observer = (new ContextObserver).extend(observer);
+                    }
                     (_observers || (_observers = new Array2)).push(observer);
                     return function () { _observers.remove(observer); };
                 },
@@ -3756,9 +3758,7 @@ new function () { // closure
          * @for miruken.context.Context
          */
         onEnding: function (observer) {
-            return this.observe({
-                contextEnding: observer
-            });
+            return this.observe({contextEnding: observer});
         },
         /**
          * Observes 'contextEnded' notification.
@@ -3769,9 +3769,7 @@ new function () { // closure
          * @chainable
          */        
         onEnded: function (observer) {
-            return this.observe({
-                contextEnded: observer
-            });
+            return this.observe({contextEnded: observer});
         },
         /**
          * Observes 'childContextEnding' notification.
@@ -3782,9 +3780,7 @@ new function () { // closure
          * @chainable
          */                
         onChildEnding: function (observer) {
-            return this.observe({
-                childContextEnding: observer
-            });
+            return this.observe({childContextEnding: observer});
         },
         /**
          * Observes 'childContextEnded' notification.
@@ -3795,9 +3791,7 @@ new function () { // closure
          * @chainable
          */                        
         onChildEnded: function (observer) {
-            return this.observe({
-                childContextEnded: observer
-            });            
+            return this.observe({childContextEnded: observer});            
         }        
     });
     
