@@ -9352,36 +9352,10 @@ new function () {
 
 	eval(this.imports);
 
-<<<<<<< HEAD
-<<<<<<< HEAD
-	var GreenSock = Base.extend(AnimationProviding, {
-		fade: function (container, content) {
-			return new Promise(function (resolve){
-				var current = container.children(),
-				    outTime = current.length ? .4 : 0,
-				    inTime  = .8,
-				    tl      = new TimelineMax({ onComplete: resolve });
-
-					tl.to(current, outTime, {
-		            	opacity: 0,
-		            	onComplete: function () {
-	            			content.css('opacity', 0);
-		            		container.html(content);
-		            	}
-	                })
-					.to(content, inTime, {
-	                	opacity: 1,
-	                	onComplete: resolve
-                	});	                
-			});
-=======
-	var GreenSock = Base.extend(FadeProviding, {
-=======
 	var outTime = .4,
 		inTime  = .8;
 
 	var BaseAnimationProvider = Base.extend(FadeProviding, {
->>>>>>> Extracted out a base animation provider
 		handle: function(container, content, context){
 				
 			var _current = container.children(),
@@ -9419,17 +9393,6 @@ new function () {
 		}
 	});
 
-<<<<<<< HEAD
-			    function animateOut(content){
-			    	return new Promise(function(resolve){
-			    		TweenMax.to(content, outTime, {
-			    			opacity: 0,
-			    			onComplete: resolve
-			    		});
-			    	});
-			    }
->>>>>>> Moving from AnimationPolicy to FadePolicy
-=======
 	var GreenSockFadeProvider = BaseAnimationProvider.extend(FadeProviding, {
 		animateIn: function(content, container){
 			return new Promise(function(resolve){
@@ -9448,7 +9411,6 @@ new function () {
 	    			onComplete: resolve
 	    		});
 	    	});
->>>>>>> Extracted out a base animation provider
 		}
 	});
 
