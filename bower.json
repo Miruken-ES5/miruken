@@ -1,6 +1,6 @@
 {
   "name": "miruken",
-  "version": "0.0.4",
+  "version": "0.0.5",
   "homepage": "http://miruken.com",
   "authors": [
     "Craig Neuwirt",
@@ -10,7 +10,6 @@
   "main": "miruken-bundle.js",
   "ignore": [
     "demo",
-    "documentation",
     "node_modules",
     "test",
     ".gitignore",
