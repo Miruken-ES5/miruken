@@ -16,8 +16,6 @@
     ".gitignore",
     ".jshintrc",
     "bower.json",
-    "gruntfile.js",
-    "karma.conf.js",
     "mirukendocs.bat",
     "README.md"
   ],
