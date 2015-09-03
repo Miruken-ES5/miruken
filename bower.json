@@ -10,12 +10,17 @@
   "main": "miruken-bundle.js",
   "ignore": [
     "demo",
+    "documentation",
+    "lib",
     "node_modules",
     "test",
     ".gitignore",
     ".jshintrc",
     "bower.json",
+    "gruntfile.js",
+    "karma.conf.js",
     "mirukendocs.bat",
+    "package.json",
     "README.md"
   ],
   "keywords": [
