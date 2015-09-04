@@ -29,7 +29,7 @@ new function () { // closure
         version: miruken.version,   
         parent:  miruken,
         imports: "miruken,miruken.callback,miruken.context,miruken.validate,miruken.ioc,miruken.mvc",
-        exports: "Runner,Directive,Filter,RegionDirective,PartialView,UseModelValidation,$rootContext"
+        exports: "Runner,Directive,Filter,RegionDirective,PartialView,UseModelValidation,DigitsOnly,$rootContext"
     });
 
     eval(this.imports);
@@ -253,6 +253,33 @@ new function () { // closure
                     .finally(scope.$apply.bind(scope));
                 return true;
             }, 100, false, true);
+        }
+    });
+
+    /**
+     * Angular directive restricting digit input.
+     * @class DigitsOnly
+     * @constructor
+     * @extends miruken.ng.Directive     
+     */
+    var DigitsOnly = Directive.extend({
+        restrict: 'A',
+        require:  '?ngModel',
+        link: function (scope, elm, attrs, modelCtrl) {
+            modelCtrl.$parsers.push(function (inputValue) {
+                if (!modelCtrl) {
+                    return;
+                }
+                if (inputValue == undefined) {
+                    return '';
+                }
+                var strippedInput = inputValue.replace(/[^0-9]/g, '');
+                if (strippedInput != inputValue) {
+                    modelCtrl.$setViewValue(strippedInput);
+                    modelCtrl.$render();
+                }
+                return strippedInput;
+            });
         }
     });
 
@@ -3400,10 +3427,10 @@ new function () { // closure
                     if (!reentrant && (callback instanceof Composition)) {
                         return this.base(callback, greedy, composer);
                     }
-                    var base = this.base;
+                    var that = this, base = this.base;
                     return filter(callback, composer, function () {
-                        return base.call(this, callback, greedy, composer);
-                    }.bind(this));
+                        return base.call(that, callback, greedy, composer);
+                    });
                 }
             });
         },
