@@ -1047,6 +1047,15 @@ describe("Package", function () {
             });
             expect(protocols).to.have.members([Animal, Tricks, CircusAnimal, Tracked]);
         });
+
+        it("should expose filtered protocol definitions", function () {
+            var protocols = [];
+            miruken_test.getProtocols(["Tricks", "Tracked"], function (protocol) {
+                protocols.push(protocol.member);
+            });
+            expect(protocols).to.have.members([Tricks, Tracked]);
+        });
+        
     });
 
     describe("#getClasses", function () {
@@ -1057,6 +1066,15 @@ describe("Package", function () {
             });
             expect(classes).to.have.members([Dog, Elephant, AsianElephant, ShoppingCart, LogInterceptor]);
         });
+
+        it("should expose filtered class definitions", function () {
+            var classes = [];
+            miruken_test.getClasses(["Elephant", "AsianElephant"], function (cls) {
+                classes.push(cls.member);
+            });
+            expect(classes).to.have.length(2);
+            expect(classes).to.have.members([Elephant, AsianElephant]);
+        });        
     });
 
     describe("#getPackages", function () {
@@ -1067,6 +1085,15 @@ describe("Package", function () {
             });
             expect(packages).to.contain(miruken_test);
         });
+
+        it("should expose filterd package definitions", function () {
+            var packages = [];
+            base2.getPackages("foo", function (package) {
+                packages.push(package.member);
+            });
+            expect(packages).to.have.length(0);
+        });
+        
     });
 });
 

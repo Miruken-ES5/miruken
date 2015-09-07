@@ -325,7 +325,7 @@ new function () { // closure
                     runners   = [], starters = [];
                 _registerContents(this, module, exports);
                 module.config(['$injector', function ($injector) {
-                            _installPackage(package, module, exports, $injector, runners, starters);
+                    _installPackage(package, module, exports, $injector, runners, starters);
                 }]);
                 module.run(['$injector', '$q', '$log', function ($injector, $q, $log) {
                    _provideInjector(rootContainer, $injector);
@@ -412,10 +412,11 @@ new function () { // closure
 
     /**
      * @function _registerContents
-     * Registers the package controllers, filters and directives.
-     * @param  {Package}   package  - module package
-     * @param  {Module}    module   - angular module
-     * @param  {Array}     exports  - exported members
+     * Registers the package controllers, filters, directives and any conforming
+     * {{#crossLink "miruken.callback.Resolving"}}{{/crossLink}} comoponent.
+     * @param  {Package}  package  - module package
+     * @param  {Module}   module   - angular module
+     * @param  {Array}    exports  - exported members
      */
     function _registerContents(package, module, exports) {
         var container = Container($rootContext);
@@ -465,6 +466,10 @@ new function () { // closure
                 module.filter(name, deps);
             }
         });
+        container.register(
+            $classes.fromPackage(package, exports).basedOn(Resolving)
+                .withKeys.mostSpecificService()
+        );             
     }
 
     /**
@@ -5205,16 +5210,17 @@ new function () { // closure
      * Fluent builder for specifying a Package as a source of components.
      * @class FromPackageBuilder
      * @constructor
-     * @param {Package} package  -  package containing components
+     * @param {Package} package     -  package containing components
+     * @param {Array}   [...names]  -  optional member name filter
      * @extends miruken.ioc.FromBuilder
      */        
     var FromPackageBuilder = FromBuilder.extend({
-        constructor: function (package) {
+        constructor: function (package, names) {
             this.base();
             this.extend({
                 getClasses: function () {
                     var classes = [];
-                    package.getClasses(function (clazz) {
+                    package.getClasses(names, function (clazz) {
                         classes.push(clazz);
                     });
                     return classes;
@@ -5481,13 +5487,14 @@ new function () { // closure
     /**
      * Shortcut for creating a {{#crossLink "miruken.ioc.FromBuilder"}}{{/crossLink}}.
      * @method $classes
-     * @param   {Any}  from  -  any source of classes.  Only Package is currently supported. 
-     * @return  {miruken.ioc.FromBuilder} from builder.
+     * @param  {Any}    from        -  any source of classes.  Only Package is currently supported.
+     * @param  {Array}  [...names]  -  optional member name filter
+     * @return {miruken.ioc.FromBuilder} from builder.
      * @for miruken.ioc.$
      */        
-    function $classes(from) {
+    function $classes(from, names) {
         if (from instanceof Package) {
-            return new FromPackageBuilder(from);
+            return new FromPackageBuilder(from, names);
         }
         throw new TypeError(format("Unrecognized $classes from %1.", hint));
     }
@@ -5496,14 +5503,15 @@ new function () { // closure
      * Creates a {{#crossLink "miruken.ioc.FromBuilder"}}{{/crossLink}} using a Package source.
      * @method $classes.fromPackage
      * @param  {Package}  package
+     * @param  {Array}    [...names]  -  optional member name filter
      * @for miruken.ioc.$
      */    
-    $classes.fromPackage = function (package) {
+    $classes.fromPackage = function (package, names) {
         if (!(package instanceof Package)) {
             throw new TypeError(
                 format("$classes expected a Package, but received %1 instead.", package));
         }
-        return new FromPackageBuilder(package);
+        return new FromPackageBuilder(package, names);
     };
 
     function _unregisterBatch(registrations) {
@@ -6839,7 +6847,7 @@ new function () { // closure
      */
     var miruken = new base2.Package(this, {
         name:    "miruken",
-        version: "1.0",
+        version: "0.0.8",
         exports: "Enum,Variance,Protocol,StrictProtocol,Delegate,Miruken,MetaStep,MetaMacro,Initializing,Disposing,DisposingMixin,Invoking,Parenting,Starting,Startup,Facet,Interceptor,InterceptorSelector,ProxyBuilder,Modifier,ArrayManager,IndexedList,$isProtocol,$isClass,$classOf,$ancestorOf,$isString,$isFunction,$isObject,$isPromise,$isNothing,$isSomething,$using,$lift,$equals,$decorator,$decorate,$decorated,$debounce,$eq,$use,$copy,$lazy,$eval,$every,$child,$optional,$promise,$instant,$createModifier,$properties,$inferProperties,$inheritStatic"
     });
 
@@ -8651,27 +8659,30 @@ new function () { // closure
         export: function (name, member) {
             this.addName(name, member);
         },
-        getProtocols: function (cb) {
-            _listContents(this, cb, $isProtocol);
+        getProtocols: function () {
+            _listContents(this, arguments, $isProtocol);
         },
-        getClasses: function (cb) {
-            _listContents(this, cb, function (member, memberName) {
+        getClasses: function () {
+            _listContents(this, arguments, function (member, memberName) {
                 return $isClass(member) && (memberName != "constructor");
             });
         },
-        getPackages: function (cb) {
-            _listContents(this, cb, function (member, memberName) {
+        getPackages: function () {
+            _listContents(this, arguments, function (member, memberName) {
                 return (member instanceof Package) && (memberName != "parent");
             });
         }
     });
 
-    function _listContents(package, cb, filter) {
+    function _listContents(package, args, filter) {
+        var cb  = Array.prototype.pop.call(args);
         if ($isFunction(cb)) {
-            for (memberName in package) {
-                var member = package[memberName];
-                if (!filter || filter(member, memberName)) {
-                    cb({ member: member, name: memberName});
+            var names = Array.prototype.pop.call(args) || Object.keys(package);
+            for (var i = 0; i < names.length; ++i) {
+                var name   = names[i],
+                    member = package[name];
+                if (member && (!filter || filter(member, name))) {
+                    cb({ member: member, name: name});
                 }
             }
         }
