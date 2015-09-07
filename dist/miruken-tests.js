@@ -4617,16 +4617,17 @@ new function () { // closure
      * Fluent builder for specifying a Package as a source of components.
      * @class FromPackageBuilder
      * @constructor
-     * @param {Package} package  -  package containing components
+     * @param {Package} package     -  package containing components
+     * @param {Array}   [...names]  -  optional member name filter
      * @extends miruken.ioc.FromBuilder
      */        
     var FromPackageBuilder = FromBuilder.extend({
-        constructor: function (package) {
+        constructor: function (package, names) {
             this.base();
             this.extend({
                 getClasses: function () {
                     var classes = [];
-                    package.getClasses(function (clazz) {
+                    package.getClasses(names, function (clazz) {
                         classes.push(clazz);
                     });
                     return classes;
@@ -4893,13 +4894,14 @@ new function () { // closure
     /**
      * Shortcut for creating a {{#crossLink "miruken.ioc.FromBuilder"}}{{/crossLink}}.
      * @method $classes
-     * @param   {Any}  from  -  any source of classes.  Only Package is currently supported. 
-     * @return  {miruken.ioc.FromBuilder} from builder.
+     * @param  {Any}    from        -  any source of classes.  Only Package is currently supported.
+     * @param  {Array}  [...names]  -  optional member name filter
+     * @return {miruken.ioc.FromBuilder} from builder.
      * @for miruken.ioc.$
      */        
-    function $classes(from) {
+    function $classes(from, names) {
         if (from instanceof Package) {
-            return new FromPackageBuilder(from);
+            return new FromPackageBuilder(from, names);
         }
         throw new TypeError(format("Unrecognized $classes from %1.", hint));
     }
@@ -4908,14 +4910,15 @@ new function () { // closure
      * Creates a {{#crossLink "miruken.ioc.FromBuilder"}}{{/crossLink}} using a Package source.
      * @method $classes.fromPackage
      * @param  {Package}  package
+     * @param  {Array}    [...names]  -  optional member name filter
      * @for miruken.ioc.$
      */    
-    $classes.fromPackage = function (package) {
+    $classes.fromPackage = function (package, names) {
         if (!(package instanceof Package)) {
             throw new TypeError(
                 format("$classes expected a Package, but received %1 instead.", package));
         }
-        return new FromPackageBuilder(package);
+        return new FromPackageBuilder(package, names);
     };
 
     function _unregisterBatch(registrations) {
@@ -6251,7 +6254,7 @@ new function () { // closure
      */
     var miruken = new base2.Package(this, {
         name:    "miruken",
-        version: "1.0",
+        version: "0.0.8",
         exports: "Enum,Variance,Protocol,StrictProtocol,Delegate,Miruken,MetaStep,MetaMacro,Initializing,Disposing,DisposingMixin,Invoking,Parenting,Starting,Startup,Facet,Interceptor,InterceptorSelector,ProxyBuilder,Modifier,ArrayManager,IndexedList,$isProtocol,$isClass,$classOf,$ancestorOf,$isString,$isFunction,$isObject,$isPromise,$isNothing,$isSomething,$using,$lift,$equals,$decorator,$decorate,$decorated,$debounce,$eq,$use,$copy,$lazy,$eval,$every,$child,$optional,$promise,$instant,$createModifier,$properties,$inferProperties,$inheritStatic"
     });
 
@@ -8063,27 +8066,30 @@ new function () { // closure
         export: function (name, member) {
             this.addName(name, member);
         },
-        getProtocols: function (cb) {
-            _listContents(this, cb, $isProtocol);
+        getProtocols: function () {
+            _listContents(this, arguments, $isProtocol);
         },
-        getClasses: function (cb) {
-            _listContents(this, cb, function (member, memberName) {
+        getClasses: function () {
+            _listContents(this, arguments, function (member, memberName) {
                 return $isClass(member) && (memberName != "constructor");
             });
         },
-        getPackages: function (cb) {
-            _listContents(this, cb, function (member, memberName) {
+        getPackages: function () {
+            _listContents(this, arguments, function (member, memberName) {
                 return (member instanceof Package) && (memberName != "parent");
             });
         }
     });
 
-    function _listContents(package, cb, filter) {
+    function _listContents(package, args, filter) {
+        var cb  = Array.prototype.pop.call(args);
         if ($isFunction(cb)) {
-            for (memberName in package) {
-                var member = package[memberName];
-                if (!filter || filter(member, memberName)) {
-                    cb({ member: member, name: memberName});
+            var names = Array.prototype.pop.call(args) || Object.keys(package);
+            for (var i = 0; i < names.length; ++i) {
+                var name   = names[i],
+                    member = package[name];
+                if (member && (!filter || filter(member, name))) {
+                    cb({ member: member, name: name});
                 }
             }
         }
@@ -8492,7 +8498,7 @@ new function () { // closure
         version: miruken.version,
         parent:  miruken,
         imports: "miruken,miruken.callback",
-        exports: "TabProviding,TabController,ModalPolicy,ModalProviding,AnimationPolicy,AnimationProviding"
+        exports: "TabProviding,TabController,ModalPolicy,ModalProviding,FadePolicy,FadeProviding"
     });
 
     eval(this.imports);
@@ -8558,14 +8564,10 @@ new function () { // closure
         showModal: function (container, content, policy, context) {}
     });
 
-    var AnimationPolicy = PresentationPolicy.extend({
-        $properties: {
-            fade: false
-        }
-    });
+    var FadePolicy = PresentationPolicy.extend();
 
-    var AnimationProviding = StrictProtocol.extend({
-        fade: function (container, content) {}
+    var FadeProviding = StrictProtocol.extend({
+        handle: function (container, content, context) {}
     });
 
     CallbackHandler.implement({
@@ -8581,7 +8583,7 @@ new function () { // closure
         },
 
         fade: function (options) {
-            return this.presenting(new AnimationPolicy({ fade: true }));
+            return this.presenting(new FadePolicy(options));
         }
     });
     
@@ -8791,31 +8793,70 @@ new function () {
 		version: miruken.version,
 		parent:  miruken,
 		imports: 'miruken',
-		exports: 'GreenSock'
+		exports: 'GreenSockFadeProvider'
 	});
 
 	eval(this.imports);
 
-	var GreenSock = Base.extend(AnimationProviding, {
-		fade: function (container, content) {
-			return new Promise(function (resolve){
-				var current = container.children(),
-				    outTime = current.length ? .4 : 0,
-				    inTime  = .8,
-				    tl      = new TimelineMax({ onComplete: resolve });
+	var outTime = .4,
+		inTime  = .8;
 
-					tl.to(current, outTime, {
-		            	opacity: 0,
-		            	onComplete: function () {
-	            			content.css('opacity', 0);
-		            		container.html(content);
-		            	}
-	                })
-					.to(content, inTime, {
-	                	opacity: 1,
-	                	onComplete: resolve
-                	});	                
-			});
+	var BaseAnimationProvider = Base.extend(FadeProviding, {
+		handle: function(container, content, context){
+				
+			var _current = container.children(),
+			    _removed = false;
+
+				if (context) {
+                	context.onEnding(function(_context){
+                		if(context === _context && !_removed){
+                			_removed = true;
+                			this.animateOut(content, container).then(function(){
+                				content.remove();
+                			});
+                		}
+            		}.bind(this));
+				}
+
+			    if(!container.__miruken_animate_out){
+			    	if(_current.length){
+			    		return this.animateOut(_current, container).then(function(){
+				    		return this.animateIn(content, container);
+				    	}.bind(this));	
+			    	} else {
+			    		return this.animateIn(content, container);
+			    	}
+			    } else {
+			    	return container.__miruken_animate_out(content, container).then(function(){
+			    		_removed = true;
+			    		return this.animateIn(content, container).then(function(){
+			    			return container.__miruken_animate_out = function(){
+			    				this.animateOut(content, container);
+			    			}	
+			    		}.bind(this));
+			    	}.bind(this));
+			    }
+		}
+	});
+
+	var GreenSockFadeProvider = BaseAnimationProvider.extend(FadeProviding, {
+		animateIn: function(content, container){
+			return new Promise(function(resolve){
+	    		content.css('opacity', 0);
+    			container.html(content);
+			    TweenMax.to(content, inTime, {
+                	opacity: 1,
+                	onComplete: resolve
+            	})
+	    	});
+		},
+		animateOut: function(content, container){
+			return new Promise(function(resolve){
+	    		TweenMax.to(content, outTime, {
+	    			opacity: 0,
+	    			onComplete: resolve
+	    		});
+	    	});
 		}
 	});
 
@@ -27347,6 +27388,15 @@ describe("Package", function () {
             });
             expect(protocols).to.have.members([Animal, Tricks, CircusAnimal, Tracked]);
         });
+
+        it("should expose filtered protocol definitions", function () {
+            var protocols = [];
+            miruken_test.getProtocols(["Tricks", "Tracked"], function (protocol) {
+                protocols.push(protocol.member);
+            });
+            expect(protocols).to.have.members([Tricks, Tracked]);
+        });
+        
     });
 
     describe("#getClasses", function () {
@@ -27357,6 +27407,15 @@ describe("Package", function () {
             });
             expect(classes).to.have.members([Dog, Elephant, AsianElephant, ShoppingCart, LogInterceptor]);
         });
+
+        it("should expose filtered class definitions", function () {
+            var classes = [];
+            miruken_test.getClasses(["Elephant", "AsianElephant"], function (cls) {
+                classes.push(cls.member);
+            });
+            expect(classes).to.have.length(2);
+            expect(classes).to.have.members([Elephant, AsianElephant]);
+        });        
     });
 
     describe("#getPackages", function () {
@@ -27367,6 +27426,15 @@ describe("Package", function () {
             });
             expect(packages).to.contain(miruken_test);
         });
+
+        it("should expose filterd package definitions", function () {
+            var packages = [];
+            base2.getPackages("foo", function (package) {
+                packages.push(package.member);
+            });
+            expect(packages).to.have.length(0);
+        });
+        
     });
 });
 
