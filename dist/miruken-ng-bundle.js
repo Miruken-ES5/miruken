@@ -3915,7 +3915,7 @@ new function () { // closure
      * @class ContextObserver
      * @extends miruken.Protocol
      */
-    var ContextObserver = Base.extend({
+    var ContextObserver = Protocol.extend({
         /**
          * Called when a context is in the process of ending.
          * @method contextEnding
@@ -4018,15 +4018,11 @@ new function () { // closure
                     _ensureActive();
                     var childContext = new ($classOf(this))(this).extend({
                         end: function () {
-                            var observers = _observers ? _observers.copy() : null;
-                            if (observers) {
-                                observers.invoke('childContextEnding', childContext);
-                            }
+                            var notifier = _notifier();
+                            notifier.childContextEnding(childContext);
                             _children.remove(childContext);
                             this.base();
-                            if (observers) {
-                                observers.invoke('childContextEnded', childContext);
-                            }
+                            notifier.childContextEnded(childContext);                            
                         }
                     });
                     _children.push(childContext);
@@ -4092,9 +4088,6 @@ new function () { // closure
                     if (observer === null || observer === undefined) {
                         return;
                     }
-                    if (!(observer instanceof ContextObserver)) {
-                        observer = (new ContextObserver).extend(observer);
-                    }
                     (_observers || (_observers = new Array2)).push(observer);
                     return function () { _observers.remove(observer); };
                 },
@@ -4132,16 +4125,12 @@ new function () { // closure
                  */                                                                
                 end: function () { 
                     if (_state == ContextState.Active) {
-                        var observers = _observers ? _observers.copy() : null;
+                        var notifier = _notifier();
                         _state = ContextState.Ending;
-                        if (observers) {
-                            observers.invoke('contextEnding', this);
-                        }
+                        notifier.contextEnding(this);
                         this.unwind();
                         _state = ContextState.Ended;
-                        if (observers) {
-                            observers.invoke('contextEnded', this);
-                        }
+                        notifier.contextEnded(this);                        
                         _observers = null;
                     }
                 },
@@ -4152,6 +4141,10 @@ new function () { // closure
                 if (_state != ContextState.Active) {
                     throw new Error("The context has already ended.");
                 }
+            }
+
+            function _notifier() {
+                return new ContextObserver(_observers ? _observers.copy() : null);
             }
         }
     });
@@ -7021,21 +7014,21 @@ new function () { // closure
         },
         get: function (protocol, propertyName, strict) {
             var object = this.object;
-            if (!strict || protocol.adoptedBy(object)) {
+            if (object && (!strict || protocol.adoptedBy(object))) {
                 return object[propertyName];
             }
         },
         set: function (protocol, propertyName, propertyValue, strict) {
             var object = this.object;
-            if (!strict || protocol.adoptedBy(object)) {
+            if (object && (!strict || protocol.adoptedBy(object))) {
                 return object[propertyName] = propertyValue;
             }
         },
         invoke: function (protocol, methodName, args, strict) {
-            var object = this.object,
-                method = object[methodName];
-            if (method && (!strict || protocol.adoptedBy(object))) {
-                return method.apply(object, args);
+            var object = this.object;
+            if (object && (!strict || protocol.adoptedBy(object))) {
+                method = object[methodName];                
+                return method && method.apply(object, args);
             }
         }
     });
@@ -7052,21 +7045,24 @@ new function () { // closure
             Object.defineProperty(this, 'array', { value: array });
         },
         get: function (protocol, propertyName, strict) {
-            return Array2.reduce(this.array, function (result, object) {
+            var array = this.array;
+            return array && Array2.reduce(array, function (result, object) {
                 return !strict || protocol.adoptedBy(object)
                      ? object[propertyName]
                      : result;
             }, undefined);  
         },
         set: function (protocol, propertyName, propertyValue, strict) {
-            return Array2.reduce(this.array, function (result, object) {
+            var array = this.array;
+            return array && Array2.reduce(array, function (result, object) {
                 return !strict || protocol.adoptedBy(object)
                      ? object[propertyName] = propertyValue
                      : result;
             }, undefined);  
         },
         invoke: function (protocol, methodName, args, strict) {
-            return Array2.reduce(this.array, function (result, object) {
+            var array = this.array;
+            return array && Array2.reduce(array, function (result, object) {
                 var method = object[methodName];
                 return method && (!strict || protocol.adoptedBy(object))
                      ? method.apply(object, args)
