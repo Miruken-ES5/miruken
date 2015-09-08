@@ -2983,7 +2983,7 @@ new function () { // closure
         }
 
         function definition(owner, constraint, handler, removed) {
-            if (constraint instanceof Array) {
+            if ($isArray(constraint)) {
                 return Array2.reduce(constraint, function (result, c) {
                     var undefine = _definition(owner, c, handler, removed);
                     return function (notifyRemoved) {
@@ -5384,7 +5384,7 @@ new function () { // closure
                     if (arguments.length === 1) {
                         value = key, key = Facet.Parameters;
                     }
-                    if ($isSomething(value) && !(value instanceof Array)) {
+                    if ($isSomething(value) && !$isArray(value)) {
                         throw new TypeError(format("%1 is not an array.", value));
                     }
                     _burden[key] = Array2.map(value, DependencyModel);
@@ -5685,7 +5685,7 @@ new function () { // closure
                  */                                
                 dependsOn: function (/* dependencies */) {
                     var dependencies;
-                    if (arguments.length === 1 && (arguments[0] instanceof Array)) {
+                    if (arguments.length === 1 && $isArray(arguments[0])) {
                         dependencies = arguments[0];
                     } else if (arguments.length > 0) {
                         dependencies = Array.prototype.slice.call(arguments);
@@ -5775,8 +5775,7 @@ new function () { // closure
                  * @chainable
                  */                                                
                 interceptors: function (/* interceptors */) {
-                    var interceptors = (arguments.length === 1 
-                                    && (arguments[0] instanceof Array))
+                    var interceptors = (arguments.length === 1 && $isArray(arguments[0]))
                                      ? arguments[0]
                                      : Array.prototype.slice.call(arguments);
                     return new InterceptorBuilder(this, _componentModel, interceptors);
@@ -6255,7 +6254,7 @@ new function () { // closure
     var miruken = new base2.Package(this, {
         name:    "miruken",
         version: "0.0.8",
-        exports: "Enum,Variance,Protocol,StrictProtocol,Delegate,Miruken,MetaStep,MetaMacro,Initializing,Disposing,DisposingMixin,Invoking,Parenting,Starting,Startup,Facet,Interceptor,InterceptorSelector,ProxyBuilder,Modifier,ArrayManager,IndexedList,$isProtocol,$isClass,$classOf,$ancestorOf,$isString,$isFunction,$isObject,$isPromise,$isNothing,$isSomething,$using,$lift,$equals,$decorator,$decorate,$decorated,$debounce,$eq,$use,$copy,$lazy,$eval,$every,$child,$optional,$promise,$instant,$createModifier,$properties,$inferProperties,$inheritStatic"
+        exports: "Enum,Variance,Protocol,StrictProtocol,Delegate,Miruken,MetaStep,MetaMacro,Initializing,Disposing,DisposingMixin,Invoking,Parenting,Starting,Startup,Facet,Interceptor,InterceptorSelector,ProxyBuilder,Modifier,ArrayManager,IndexedList,$isProtocol,$isClass,$classOf,$ancestorOf,$isString,$isFunction,$isObject,$isArray,$isPromise,$isNothing,$isSomething,$using,$lift,$equals,$decorator,$decorate,$decorated,$debounce,$eq,$use,$copy,$lazy,$eval,$every,$child,$optional,$promise,$instant,$createModifier,$properties,$inferProperties,$inheritStatic"
     });
 
     eval(this.imports);
@@ -6417,7 +6416,7 @@ new function () { // closure
     });
 
     /**
-     * Delegates properties and methods to an obejct.
+     * Delegates properties and methods to an object.
      * @class ObjectDelegate
      * @constructor
      * @param   {Object}  object  - receiving object
@@ -6425,9 +6424,6 @@ new function () { // closure
      */
     var ObjectDelegate = Delegate.extend({
         constructor: function (object) {
-            if ($isNothing(object)) {
-                throw new TypeError("No object specified.");
-            }
             Object.defineProperty(this, 'object', { value: object });
         },
         get: function (protocol, propertyName, strict) {
@@ -6450,6 +6446,41 @@ new function () { // closure
             }
         }
     });
+
+    /**
+     * Delegates properties and methods to an array.
+     * @class ArrayDelegate
+     * @constructor
+     * @param   {Array}  array  - receiving array
+     * @extends miruken.Delegate
+     */
+    var ArrayDelegate = Delegate.extend({
+        constructor: function (array) {
+            Object.defineProperty(this, 'array', { value: array });
+        },
+        get: function (protocol, propertyName, strict) {
+            return Array2.reduce(this.array, function (result, object) {
+                return !strict || protocol.adoptedBy(object)
+                     ? object[propertyName]
+                     : result;
+            }, undefined);  
+        },
+        set: function (protocol, propertyName, propertyValue, strict) {
+            return Array2.reduce(this.array, function (result, object) {
+                return !strict || protocol.adoptedBy(object)
+                     ? object[propertyName] = propertyValue
+                     : result;
+            }, undefined);  
+        },
+        invoke: function (protocol, methodName, args, strict) {
+            return Array2.reduce(this.array, function (result, object) {
+                var method = object[methodName];
+                return method && (!strict || protocol.adoptedBy(object))
+                     ? method.apply(object, args)
+                     : result;
+            }, undefined);
+        }
+    });
     
     /**
      * Declares methods and properties independent of a class.
@@ -6464,7 +6495,7 @@ new function () { // closure
      * @class Protocol
      * @constructor
      * @param   {miruken.Delegate}  delegate        -  delegate
-     * @param   {boolean}           [strict=false]  -  true ifstrict, false otherwise
+     * @param   {boolean}           [strict=false]  -  true if strict, false otherwise
      * @extends Base
      */
     var Protocol = Base.extend({
@@ -6478,6 +6509,8 @@ new function () { // closure
                         throw new TypeError(format(
                             "Invalid delegate: %1 is not a Delegate nor does it have a 'toDelegate' method that returned one.", delegate));
                     }
+                } else if ($isArray(delegate)) {
+                    delegate = new ArrayDelegate(delegate);
                 } else {
                     delegate = new ObjectDelegate(delegate);
                 }
@@ -6489,7 +6522,7 @@ new function () { // closure
             return this.delegate.get(this.constructor, propertyName, this.strict);
         },
         __set: function (propertyName, propertyValue) {                
-            return this.delegste.set(this.constructor, propertyName, propertyValue, this.strict);
+            return this.delegate.set(this.constructor, propertyName, propertyValue, this.strict);
         },
         __invoke: function (methodName, args) {
             return this.delegate.invoke(this.constructor, methodName, args, this.strict);
@@ -6640,7 +6673,7 @@ new function () { // closure
                     if ($isNothing(protocols)) {
                         return;
                     }
-                    if (!(protocols instanceof Array)) {
+                    if (!$isArray(protocols)) {
                         protocols = Array.prototype.slice.call(arguments);
                     }
                     for (var i = 0; i < protocols.length; ++i) {
@@ -6756,8 +6789,8 @@ new function () { // closure
                             }
                         } else {
                             var value = descriptor[key];
-                            if (match instanceof Array) {
-                                if (!(value instanceof Array)) {
+                            if ($isArray(match)) {
+                                if (!($isArray(value))) {
                                     return false;
                                 }
                                 for (var i = 0; i < match.length; ++i) {
@@ -6929,7 +6962,7 @@ new function () { // closure
             if (base.prototype instanceof Protocol) {
                 (protocols = []).push(base);
             }
-            if (args.length > 0 && (args[0] instanceof Array)) {
+            if (args.length > 0 && $isArray(args[0])) {
                 constraints = args.shift();
             }
             while (constraints.length > 0) {
@@ -7641,7 +7674,7 @@ new function () { // closure
                  */
                 append: function (/* items */) {
                     var newItems;
-                    if (arguments.length === 1 && (arguments[0] instanceof Array)) {
+                    if (arguments.length === 1 && $isArray(arguments[0])) {
                         newItems = arguments[0];
                     } else if (arguments.length > 0) {
                         newItems = arguments;
@@ -7867,7 +7900,7 @@ new function () { // closure
          * @returns  {Function}  proxy class.
          */
         buildProxy: function(types, options) {
-            if (!(types instanceof Array)) {
+            if (!$isArray(types)) {
                 throw new TypeError("ProxyBuilder requires an array of types to proxy.");
             }
             var classes   = Array2.filter(types, $isClass),
@@ -8165,6 +8198,16 @@ new function () { // closure
     }
 
     /**
+     * Determines if target is an array.
+     * @method $isArray
+     * @param    {Any}     obj  - array to test
+     * @returns  {boolean} true if an array. 
+     */    
+    function $isArray(obj) {
+        return Object.prototype.toString.call(obj) === '[object Array]';
+    };
+    
+    /**
      * Determines if target is a promise.
      * @method $isPromise
      * @param    {Any}     promise  - promise to test
@@ -8173,7 +8216,7 @@ new function () { // closure
     function $isPromise(promise) {
         return promise && $isFunction(promise.then);
     }
-
+    
     /**
      * Determines if value is null or undefined.
      * @method $isNothing
@@ -9040,7 +9083,7 @@ new function () { // closure
          */                                
         map: function (value, mapper, options) {
             if (value) {
-                return value instanceof Array
+                return $isArray(value)
                      ? Array2.map(value, function (elem) {
                          return Model.map(elem, mapper, options)
                        })
@@ -9490,7 +9533,7 @@ new function () { // closure
                 var validators = {};
                 for (var name in validateThat) {
                     var validator = validateThat[name];
-                    if (validator instanceof Array) {
+                    if ($isArray(validator)) {
                         var dependencies = validator.slice(0);
                         validator = dependencies.pop();
                         if (!$isFunction(validator)) {
@@ -9646,7 +9689,7 @@ new function () { // closure
             if (step === MetaStep.Subclass || step === MetaStep.Implement) {
                 for (var name in definition) {
                     var validator = definition[name];
-                    if (validator instanceof Array) {
+                    if ($isArray(validator)) {
                         var dependencies = validator.slice(0);
                         validator = dependencies.pop();
                         if (!$isFunction(validator)) {
@@ -26350,6 +26393,9 @@ eval(miruken.namespace);
 
 Promise.onPossiblyUnhandledRejection(Undefined);
 
+var f = [1,2,3];
+console.log("DDD " + $isArray(f));
+
 new function () { // closure
 
     var miruken_test = new base2.Package(this, {
@@ -27130,27 +27176,78 @@ describe("Protocol", function () {
     })
 
     describe("#delegate", function () {
-        it("should delegate invocations", function () {
+        it("should delegate invocations to object", function () {
             var dog = new Dog('Fluffy');
             expect(Animal(dog).talk()).to.equal('Ruff Ruff');
         });
+
+        it("should delegate invocations to array", function () {
+            var count = 0,
+                Dog2  = Dog.extend({
+                    talk: function () {
+                        ++count;
+                        return this.base();
+                    }
+                }),
+                dogs = [new Dog2('Fluffy'), new Dog2('Max')];
+            expect(Animal(dogs).talk()).to.equal('Ruff Ruff');
+            expect(count).to.equal(2);
+        });        
     });
 
     describe("#delegateGet", function () {
-        it("should delegate property gets", function () {
+        it("should delegate property gets to object", function () {
             var dog  = new Dog('Franky');
             expect(Animal(dog).name).to.equal('Franky');
             expect(CircusAnimal(dog).name).to.equal('Franky');
         });
+
+        it("should delegate property gets to array", function () {
+            var count = 0,
+                Dog2  = Dog.extend({
+                    constructor: function (name) {
+                        this.base(name);
+                        this.extend({
+                            getName: function () {
+                                ++count;
+                                return this.base();
+                            }
+                        });
+                    }
+                }),            
+                dogs = [new Dog2('Franky'), new Dog2('Spot')];
+            expect(Animal(dogs).name).to.equal('Spot');
+            expect(count).to.equal(2);
+        });        
     });
 
     describe("#delegateSet", function () {
-        it("should delegate property sets", function () {
-            var dog  = new Dog('Franky');
-            dog.name = 'Ralphy'
-            expect(Animal(dog).name).to.equal('Ralphy');
+        it("should delegate property sets to object", function () {
+            var dog = new Dog('Franky');
+            Animal(dog).name = 'Ralphy';
+            expect(dog.name).to.equal('Ralphy');
         });
 
+        it("should delegate property sets to array", function () {
+            var count = 0,
+                Dog2  = Dog.extend({
+                    constructor: function (name) {
+                        this.base(name);
+                        this.extend({
+                            getName: function () {
+                                ++count;
+                                return this.base();
+                            }
+                        });
+                    }
+                }),
+                dogs = [new Dog2('Franky'), new Dog2('Pebbles')];
+            Animal(dogs).name = 'Ralphy';
+            expect(dogs[0].name).to.equal('Ralphy');
+            expect(dogs[1].name).to.equal('Ralphy');
+            expect(count).to.equal(2);            
+        });
+        
         it("should delegate extended property sets", function () {
             var dog  = new Dog('Franky');
             Animal.implement({
@@ -27163,8 +27260,8 @@ describe("Protocol", function () {
                     nickname: ''
                 }
             });
-            dog.nickname = 'HotDog';
-            expect(Animal(dog).nickname).to.equal('HotDog');
+            Animal(dog).nickname = 'HotDog';
+            expect(dog.nickname).to.equal('HotDog');
         });
     });
 });

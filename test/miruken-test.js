@@ -9,6 +9,9 @@ eval(miruken.namespace);
 
 Promise.onPossiblyUnhandledRejection(Undefined);
 
+var f = [1,2,3];
+console.log("DDD " + $isArray(f));
+
 new function () { // closure
 
     var miruken_test = new base2.Package(this, {
@@ -789,27 +792,78 @@ describe("Protocol", function () {
     })
 
     describe("#delegate", function () {
-        it("should delegate invocations", function () {
+        it("should delegate invocations to object", function () {
             var dog = new Dog('Fluffy');
             expect(Animal(dog).talk()).to.equal('Ruff Ruff');
         });
+
+        it("should delegate invocations to array", function () {
+            var count = 0,
+                Dog2  = Dog.extend({
+                    talk: function () {
+                        ++count;
+                        return this.base();
+                    }
+                }),
+                dogs = [new Dog2('Fluffy'), new Dog2('Max')];
+            expect(Animal(dogs).talk()).to.equal('Ruff Ruff');
+            expect(count).to.equal(2);
+        });        
     });
 
     describe("#delegateGet", function () {
-        it("should delegate property gets", function () {
+        it("should delegate property gets to object", function () {
             var dog  = new Dog('Franky');
             expect(Animal(dog).name).to.equal('Franky');
             expect(CircusAnimal(dog).name).to.equal('Franky');
         });
+
+        it("should delegate property gets to array", function () {
+            var count = 0,
+                Dog2  = Dog.extend({
+                    constructor: function (name) {
+                        this.base(name);
+                        this.extend({
+                            getName: function () {
+                                ++count;
+                                return this.base();
+                            }
+                        });
+                    }
+                }),            
+                dogs = [new Dog2('Franky'), new Dog2('Spot')];
+            expect(Animal(dogs).name).to.equal('Spot');
+            expect(count).to.equal(2);
+        });        
     });
 
     describe("#delegateSet", function () {
-        it("should delegate property sets", function () {
-            var dog  = new Dog('Franky');
-            dog.name = 'Ralphy'
-            expect(Animal(dog).name).to.equal('Ralphy');
+        it("should delegate property sets to object", function () {
+            var dog = new Dog('Franky');
+            Animal(dog).name = 'Ralphy';
+            expect(dog.name).to.equal('Ralphy');
         });
 
+        it("should delegate property sets to array", function () {
+            var count = 0,
+                Dog2  = Dog.extend({
+                    constructor: function (name) {
+                        this.base(name);
+                        this.extend({
+                            getName: function () {
+                                ++count;
+                                return this.base();
+                            }
+                        });
+                    }
+                }),
+                dogs = [new Dog2('Franky'), new Dog2('Pebbles')];
+            Animal(dogs).name = 'Ralphy';
+            expect(dogs[0].name).to.equal('Ralphy');
+            expect(dogs[1].name).to.equal('Ralphy');
+            expect(count).to.equal(2);            
+        });
+        
         it("should delegate extended property sets", function () {
             var dog  = new Dog('Franky');
             Animal.implement({
@@ -822,8 +876,8 @@ describe("Protocol", function () {
                     nickname: ''
                 }
             });
-            dog.nickname = 'HotDog';
-            expect(Animal(dog).nickname).to.equal('HotDog');
+            Animal(dog).nickname = 'HotDog';
+            expect(dog.nickname).to.equal('HotDog');
         });
     });
 });
