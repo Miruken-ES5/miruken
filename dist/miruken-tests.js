@@ -4007,7 +4007,7 @@ new function() { // closure
          * @param   {Any}          [context]  - scope of error
          * @returns {Promise} promise of handled error.
          */        
-        handleError:     function (error,     context) {},
+        handleError: function (error, context) {},
         /**
          * Handles an exception.
          * @method handlerException
@@ -4023,7 +4023,7 @@ new function() { // closure
          * @param   {Any}          [context]  - scope of error
          * @returns {Promise} of reported error.
          */        
-        reportError:     function (error,     context) {},
+        reportError: function (error, context) {},
         /**
          * Reports an excepion.
          * @method reportException
@@ -4031,7 +4031,13 @@ new function() { // closure
          * @param   {Any}          [context]  - scope of exception
          * @returns {Promise} of reported exception.
          */        
-        reportException: function (exception, context) {}
+        reportException: function (exception, context) {},
+        /**
+         * Clears any errors for the associated context.
+         * @method clearErrors
+         * @param   {Any}          [context]  - scope of errors
+         */
+        clearErrors: function (context) {}
     });
 
     /**
@@ -4060,7 +4066,8 @@ new function() { // closure
         reportException: function (exception, context) {
             console.error(exception);
             return Promise.resolve();
-        }
+        },
+        clearErrors: function (context) {} 
     });
 
     CallbackHandler.implement({

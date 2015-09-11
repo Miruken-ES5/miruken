@@ -29,7 +29,7 @@ new function () { // closure
         version: miruken.version,   
         parent:  miruken,
         imports: "miruken,miruken.callback,miruken.context,miruken.validate,miruken.ioc,miruken.mvc",
-        exports: "Runner,Directive,Filter,RegionDirective,PartialView,UseModelValidation,DigitsOnly,$rootContext"
+        exports: "Runner,Directive,Filter,RegionDirective,PartialView,UseModelValidation,DigitsOnly,InhibitFocus,$rootContext"
     });
 
     eval(this.imports);
@@ -286,6 +286,21 @@ new function () { // closure
         }
     });
 
+    /**
+     * Angular directive preventing an element from receiving focus.
+     * @class InhibitFocus
+     * @constructor
+     * @extends miruken.ng.Directive     
+     */    
+    var InhibitFocus = Directive.extend({
+        restrict: 'A',
+        link: function (scope, elm, attrs) {
+            elm.bind('click', function () {
+                elm.blur();
+            });
+        }
+    });
+    
     Package.implement({
         init: function () {
             this.base();
@@ -4600,7 +4615,7 @@ new function() { // closure
          * @param   {Any}          [context]  - scope of error
          * @returns {Promise} promise of handled error.
          */        
-        handleError:     function (error,     context) {},
+        handleError: function (error, context) {},
         /**
          * Handles an exception.
          * @method handlerException
@@ -4616,7 +4631,7 @@ new function() { // closure
          * @param   {Any}          [context]  - scope of error
          * @returns {Promise} of reported error.
          */        
-        reportError:     function (error,     context) {},
+        reportError: function (error, context) {},
         /**
          * Reports an excepion.
          * @method reportException
@@ -4624,7 +4639,13 @@ new function() { // closure
          * @param   {Any}          [context]  - scope of exception
          * @returns {Promise} of reported exception.
          */        
-        reportException: function (exception, context) {}
+        reportException: function (exception, context) {},
+        /**
+         * Clears any errors for the associated context.
+         * @method clearErrors
+         * @param   {Any}          [context]  - scope of errors
+         */
+        clearErrors: function (context) {}
     });
 
     /**
@@ -4653,7 +4674,8 @@ new function() { // closure
         reportException: function (exception, context) {
             console.error(exception);
             return Promise.resolve();
-        }
+        },
+        clearErrors: function (context) {} 
     });
 
     CallbackHandler.implement({
