@@ -7,7 +7,7 @@
     "Michael Dudley"
   ],
   "description": "Miruken focuses on convention, composition, and aspect-oriented programming.",
-  "main": "miruken-bundle.js",
+  "main": "dist/miruken-ng-bundle.js",
   "ignore": [
     "demo",
     "documentation",
