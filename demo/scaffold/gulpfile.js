@@ -12,9 +12,8 @@ gulp.task('wiredep', function () {
         .pipe(gulp.dest('./'));
 });
 
-gulp.task('index', function () {
+gulp.task('inject', function () {
     var target = gulp.src('./index.html');
-    // It's not necessary to read the files (will speed up things), we're only after their paths:
     var sources = gulp.src(['./app/**/*.js', './css/**/*.css'], {read: false});
 
     return target.pipe(inject(sources))
@@ -33,12 +32,13 @@ gulp.task('serve', function () {
     // watch for changes
     gulp.watch([
         './**/*.html',
-        'app/**/*.js'
+        'app/**/*.js',
+        'css/**/*.css'
     ]).on('change', reload);
 
-    //gulp.watch('app/styles/**/*.css', ['styles']);
-    //gulp.watch('app/fonts/**/*', ['fonts']);
-    //gulp.watch('bower.json', ['wiredep', 'fonts']);
+    //gulp.watch('css/**/*.css', ['styles']);
+    gulp.watch('app/**/*.js', ['inject']);
+    gulp.watch('bower.json', ['wiredep']);
 });
 
 gulp.task('jshint', function () {

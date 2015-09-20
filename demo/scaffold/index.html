@@ -20,17 +20,20 @@
     </div>
 </nav>
 
-<div class="container-fluid" ng-view></div>
+<div class="container-fluid" ui-view></div>
 
 <!-- bower:js -->
 <script src="bower_components/jquery/dist/jquery.js"></script>
 <script src="bower_components/angular/angular.js"></script>
+<script src="bower_components/angular-ui-router/release/angular-ui-router.js"></script>
 <script src="bower_components/bootstrap/dist/js/bootstrap.js"></script>
 <script src="bower_components/miruken/dist/miruken-ng-bundle.js"></script>
 <!-- endbower -->
 
 <!-- inject:js -->
 <script src="/app/scaffoldInstaller.js"></script>
+<script src="/app/home/homeController.js"></script>
+<script src="/app/home/homeInstaller.js"></script>
 <!-- endinject -->
 
 </body>
