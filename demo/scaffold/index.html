@@ -1,17 +1,21 @@
-<html ng-app="scafold">
+<html ng-app="scaffoldApp">
 <head>
-    <title>scafold</title>
+    <title>scaffold</title>
 
     <!-- bower:css -->
     <link rel="stylesheet" href="bower_components/bootstrap/dist/css/bootstrap.css" />
     <!-- endbower -->
+
+    <!-- inject:css -->
+    <link rel="stylesheet" href="/css/app.css">
+    <!-- endinject -->
 </head>
 <body>
 
 <nav class="navbar navbar-default navbar-fixed-top">
     <div class="container-fluid">
         <div class="navbar-header">
-            <a class="navbar-brand" href="#/">Sample App</a>
+            <a class="navbar-brand" href="#/">Scaffold App</a>
         </div>
     </div>
 </nav>
@@ -24,6 +28,10 @@
 <script src="bower_components/bootstrap/dist/js/bootstrap.js"></script>
 <script src="bower_components/miruken/dist/miruken-ng-bundle.js"></script>
 <!-- endbower -->
+
+<!-- inject:js -->
+<script src="/app/scaffoldInstaller.js"></script>
+<!-- endinject -->
 
 </body>
 </html>
