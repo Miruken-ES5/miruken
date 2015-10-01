@@ -4973,7 +4973,7 @@ var miruken = require('../miruken.js'),
 new function () { // closure
 
     /**
-     * Package providing Inversion-of-Control capabilities.<br/>
+     * Package providing dependency injection and inversion-of-control.<br/>
      * Requires the {{#crossLinkModule "miruken"}}{{/crossLinkModule}},
      * {{#crossLinkModule "callback"}}{{/crossLinkModule}},
      * {{#crossLinkModule "context"}}{{/crossLinkModule}} and 
@@ -6828,6 +6828,33 @@ new function () { // closure
                 }        
             });
         }
+    }, {
+        /**
+         * Normalizes the meta definition.<br/>
+         * Hijacks standard property definitions into $properties.
+         * @method normalize
+         * @param    {Object}  definition  -  meta definition
+         * @returns  {Object}  normalized meta defintion.
+         */
+        normalize: function (definition) {
+            var properties,
+                propertyNames = Object.getOwnPropertyNames(definition);
+            for (var i = 0; i < propertyNames.length; ++i) {
+                var propertyName = propertyNames[i],
+                    descriptor   = Object.getOwnPropertyDescriptor(definition, propertyName);
+                if (descriptor.get || descriptor.set) {
+                    properties = properties || definition[$properties.DEFAULT_TAG]
+                              || (definition[$properties.DEFAULT_TAG] = {});
+                    properties[propertyName] = {
+                        get: descriptor.get,
+                        set: descriptor.set
+                    };
+                    delete definition[propertyName];
+                }
+            }
+            
+            return definition;
+        }
     });
 
     /**
@@ -6986,7 +7013,7 @@ new function () { // closure
                 }
                 constraints.shift();
             }
-            var instanceDef = args.shift() || noDefinition,
+            var instanceDef = MetaBase.normalize(args.shift() || noDefinition),
                 staticDef   = args.shift() || noDefinition,
                 subclass    = baseExtend.call(base, instanceDef, staticDef),
                 metadata    = new ClassMeta(base, subclass, protocols, macros);
@@ -7033,19 +7060,24 @@ new function () { // closure
         if ($isFunction(source)) {
             source = source.prototype; 
         }
-        var metadata = this.$meta;
-        implement.call(this, source);
-        if (metadata) {
-            metadata.apply(MetaStep.Implement, metadata, this.prototype, source);
+        if ($isSomething(source)) {
+            var metadata = this.$meta;
+            implement.call(this, source);
+            if (metadata) {
+                metadata.apply(MetaStep.Implement, metadata, this.prototype, source);
+            }
         }
         return this;
     }
 
     var extendInstance = Base.prototype.extend;
     Base.prototype.extend = function (key, value) {
-        var definition = (arguments.length === 1) ? key : {};
-        if (arguments.length >= 2) {
+        var numArgs = arguments.length,
+            definition = (numArgs === 1) ? key : {};
+        if (numArgs >= 2) {
             definition[key] = value;
+        } else if (numArgs === 0) {
+            return this;
         }
         var metadata = this.$meta;
         extendInstance.call(this, definition);
@@ -7161,12 +7193,12 @@ new function () { // closure
      */
     var $properties = MetaMacro.extend({
         constructor: function _(tag) {
-            var spec = _.spec || (_.spec = {});
-            spec.value = tag || '$properties';
+            var spec   = _.spec || (_.spec = {});
+            spec.value = tag || $properties.DEFAULT_TAG;
             Object.defineProperty(this, 'tag', spec);
         },
         apply: function _(step, metadata, target, definition) {
-            if ($isNothing(definition) || !definition.hasOwnProperty(this.tag)) {
+            if (!definition.hasOwnProperty(this.tag)) {
                 return;
             }
             var properties = definition[this.tag];
@@ -7184,16 +7216,20 @@ new function () { // closure
                     property = { value: property };
                 }
                 if (target instanceof Protocol) {
-                    spec.get = function (get) {
-                        return function () {
-                            return this.__get(get);
-                        };
-                    }(name);
-                    spec.set = function (set) {
-                        return function (value) {
-                            return this.__set(set, value);
-                        };
-                    }(name);
+                    if (property.get || !property.set) {
+                        spec.get = function (get) {
+                            return function () {
+                                return this.__get(get);
+                            };
+                        }(name);
+                    }
+                    if (property.set || !property.get) {
+                        spec.set = function (set) {
+                            return function (value) {
+                                return this.__set(set, value);
+                            };
+                        }(name);
+                    }
                 } else {
                     spec.writable = true;
                     if (property.get || property.set) {
@@ -7241,6 +7277,8 @@ new function () { // closure
          * @returns {boolean} true
          */                
         isActive: True
+    }, {
+        DEFAULT_TAG: "$properties"
     });
 
     function _makeGetter(getMethodName) {
@@ -9161,22 +9199,19 @@ new function () { // closure
     var PartialRegion = ViewRegion.extend({
         /**
          * Gets the region's context.
-         * @method getContext
-         * @returns {miruken.context.Context} region context.
+         * @property {miruken.context.Context} context
          */
-        getContext: function () {},
+        get context() {},
         /**
          * Gets the region's controller.
-         * @method getController
-         * @return {miruken.mvc.Controller} region controller.
+         * @property {miruken.mvc.Controller} controller
          */            
-        getController: function () {},
+        get controller() {},
         /**
          * Gets the region's controller context.
-         * @method getControllerContext
-         * @return {miruken.context.Context} region controller context.
+         * @property {miruken.context.Context} controllerContext
          */            
-        getControllerContext: function () {}
+        get controllerContext() {}
     });
 
     /**
@@ -9186,20 +9221,19 @@ new function () { // closure
      * @param  {Object}  button  -  clicked button 
      * @extends Base
      */
-    var ButtonClicked = Base.extend(
-        $inferProperties, {
+    var ButtonClicked = Base.extend({
         constructor: function (button, buttonIndex) {
             this.extend({
                 /**
                  * Gets the clicked button.
                  * @property {Object} button
                  */                                
-                getButton: function () { return button; },
+                get button() { return button; },
                 /**
                  * Gets the clicked button index.
                  * @property {number} button index
                  */                                
-                getButtonIndex: function () { return buttonIndex; }
+                get buttonIndex() { return buttonIndex; }
             });
         }
     });
@@ -26425,10 +26459,12 @@ new function () { // closure
     
     var Dog = Base.extend(Animal, Tricks,
         $inferProperties, {
-        constructor: function (name) {
+        constructor: function (name, color) {
            this.extend({
                getName: function () { return name; },
-               setName: function (value) { name = value; }
+               setName: function (value) { name = value; },
+               get color() { return color; },
+               set color(value) { color = value; }
            });
         },
         talk: function () { return 'Ruff Ruff'; },
@@ -26517,7 +26553,6 @@ describe("$meta", function () {
         delete dog.$meta;
         expect(Dog.$meta).to.be.ok;
     });
-
 });
 
 describe("$isClass", function () {
@@ -26562,13 +26597,16 @@ describe("$properties", function () {
                     }
                 }
             },
-            age:       11,
-            pet:       { map: Animal}
-        }
+            pet:  { map: Animal}
+        },
+        get dob() { return this._dob; },
+        set dob(value) { this._dob = value; },
+        get age() { return ~~((Date.now() - +this.dob) / (31557600000)); }
     }), Doctor = Person.extend({
         $properties: {
-            patient:   { map: Person }
-        }
+            patient: { map: Person }
+        },
+        get age() { return this.base() + 10; }
     });
 
     it("should ignore empty properties", function () {
@@ -26582,7 +26620,6 @@ describe("$properties", function () {
             friend = new Person;
         expect(person.firstName).to.equal('');
         expect(person.lastName).to.equal('');
-        expect(person.age).to.equal(11);
         person.firstName = 'John';
         expect(person.firstName).to.equal('John');
         expect(person._firstName).to.be.undefined;
@@ -26611,6 +26648,19 @@ describe("$properties", function () {
         person.fullName  = 'Harry Potter';
         expect(person.firstName).to.equal('Harry');
         expect(person.lastName).to.equal('Potter');
+    });
+
+    it("should accept standard properties", function () {
+        var person = new Person;
+        person.dob = new Date(2003, 4, 9);
+        expect(person.dob).to.eql(new Date(2003, 4, 9));
+        expect(person.age).to.be.at.least(12);
+    });
+
+    it("should override standard properties", function () {
+        var doctor = new Doctor;
+        doctor.dob = new Date;
+        expect(doctor.age).to.be.at.least(10);
     });
 
     it("should retrieve property descriptor", function () {
@@ -26700,6 +26750,30 @@ describe("$properties", function () {
         expect(descriptor.map).to.equal(Person);
         expect(Person.$meta.getDescriptor('friend')).to.be.undefined;
     });
+
+    it("should synthesize protocol properties", function () {
+        var Employment = Protocol.extend({
+                get id() {},
+                get name() {},
+                set name(value) {}
+            }),
+            Manager = Base.extend(Employment, {
+                constructor: function (name) {
+                    this.extend({
+                        get name() { return name; },
+                        set name(value) { name = value; }
+                    });
+                },
+                get id() {
+                    return "Manager" + assignID(this);
+                }
+            }),
+            manager = new Manager("Bill Lumbergh");
+        expect(Employment(manager).name).to.equal("Bill Lumbergh");
+        expect(Employment(manager).id).to.equal("Manager" + assignID(manager));
+        expect(Employment(manager).name = "Joe Girardi").to.equal("Joe Girardi");
+        expect(Employment(manager).name).to.equal("Joe Girardi");
+    });    
 });
 
 describe("$inferProperties", function () {

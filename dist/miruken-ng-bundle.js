@@ -108,9 +108,9 @@ new function () { // closure
             var _controller, _partialScope;
 
             this.extend({
-                getContext: function () { return scope.context; },
-                getController: function () { return _controller; },
-                getControllerContext: function () { return _controller && _controller.context; },
+                get context() { return scope.context; },
+                get controller() { return _controller; },
+                get controllerContext() { return _controller && _controller.context; },
                 present: function (presentation) {
                     var composer = $composer,
                         template,   templateUrl,
@@ -202,7 +202,7 @@ new function () { // closure
             });
         },
         toDelegate: function () {
-            var context = this.getContext();
+            var context = this.context;
             return context ? context.toDelegate() : null;
         }
     });
@@ -5581,7 +5581,7 @@ var miruken = require('../miruken.js'),
 new function () { // closure
 
     /**
-     * Package providing Inversion-of-Control capabilities.<br/>
+     * Package providing dependency injection and inversion-of-control.<br/>
      * Requires the {{#crossLinkModule "miruken"}}{{/crossLinkModule}},
      * {{#crossLinkModule "callback"}}{{/crossLinkModule}},
      * {{#crossLinkModule "context"}}{{/crossLinkModule}} and 
@@ -7436,6 +7436,33 @@ new function () { // closure
                 }        
             });
         }
+    }, {
+        /**
+         * Normalizes the meta definition.<br/>
+         * Hijacks standard property definitions into $properties.
+         * @method normalize
+         * @param    {Object}  definition  -  meta definition
+         * @returns  {Object}  normalized meta defintion.
+         */
+        normalize: function (definition) {
+            var properties,
+                propertyNames = Object.getOwnPropertyNames(definition);
+            for (var i = 0; i < propertyNames.length; ++i) {
+                var propertyName = propertyNames[i],
+                    descriptor   = Object.getOwnPropertyDescriptor(definition, propertyName);
+                if (descriptor.get || descriptor.set) {
+                    properties = properties || definition[$properties.DEFAULT_TAG]
+                              || (definition[$properties.DEFAULT_TAG] = {});
+                    properties[propertyName] = {
+                        get: descriptor.get,
+                        set: descriptor.set
+                    };
+                    delete definition[propertyName];
+                }
+            }
+            
+            return definition;
+        }
     });
 
     /**
@@ -7594,7 +7621,7 @@ new function () { // closure
                 }
                 constraints.shift();
             }
-            var instanceDef = args.shift() || noDefinition,
+            var instanceDef = MetaBase.normalize(args.shift() || noDefinition),
                 staticDef   = args.shift() || noDefinition,
                 subclass    = baseExtend.call(base, instanceDef, staticDef),
                 metadata    = new ClassMeta(base, subclass, protocols, macros);
@@ -7641,19 +7668,24 @@ new function () { // closure
         if ($isFunction(source)) {
             source = source.prototype; 
         }
-        var metadata = this.$meta;
-        implement.call(this, source);
-        if (metadata) {
-            metadata.apply(MetaStep.Implement, metadata, this.prototype, source);
+        if ($isSomething(source)) {
+            var metadata = this.$meta;
+            implement.call(this, source);
+            if (metadata) {
+                metadata.apply(MetaStep.Implement, metadata, this.prototype, source);
+            }
         }
         return this;
     }
 
     var extendInstance = Base.prototype.extend;
     Base.prototype.extend = function (key, value) {
-        var definition = (arguments.length === 1) ? key : {};
-        if (arguments.length >= 2) {
+        var numArgs = arguments.length,
+            definition = (numArgs === 1) ? key : {};
+        if (numArgs >= 2) {
             definition[key] = value;
+        } else if (numArgs === 0) {
+            return this;
         }
         var metadata = this.$meta;
         extendInstance.call(this, definition);
@@ -7769,12 +7801,12 @@ new function () { // closure
      */
     var $properties = MetaMacro.extend({
         constructor: function _(tag) {
-            var spec = _.spec || (_.spec = {});
-            spec.value = tag || '$properties';
+            var spec   = _.spec || (_.spec = {});
+            spec.value = tag || $properties.DEFAULT_TAG;
             Object.defineProperty(this, 'tag', spec);
         },
         apply: function _(step, metadata, target, definition) {
-            if ($isNothing(definition) || !definition.hasOwnProperty(this.tag)) {
+            if (!definition.hasOwnProperty(this.tag)) {
                 return;
             }
             var properties = definition[this.tag];
@@ -7792,16 +7824,20 @@ new function () { // closure
                     property = { value: property };
                 }
                 if (target instanceof Protocol) {
-                    spec.get = function (get) {
-                        return function () {
-                            return this.__get(get);
-                        };
-                    }(name);
-                    spec.set = function (set) {
-                        return function (value) {
-                            return this.__set(set, value);
-                        };
-                    }(name);
+                    if (property.get || !property.set) {
+                        spec.get = function (get) {
+                            return function () {
+                                return this.__get(get);
+                            };
+                        }(name);
+                    }
+                    if (property.set || !property.get) {
+                        spec.set = function (set) {
+                            return function (value) {
+                                return this.__set(set, value);
+                            };
+                        }(name);
+                    }
                 } else {
                     spec.writable = true;
                     if (property.get || property.set) {
@@ -7849,6 +7885,8 @@ new function () { // closure
          * @returns {boolean} true
          */                
         isActive: True
+    }, {
+        DEFAULT_TAG: "$properties"
     });
 
     function _makeGetter(getMethodName) {
@@ -9769,22 +9807,19 @@ new function () { // closure
     var PartialRegion = ViewRegion.extend({
         /**
          * Gets the region's context.
-         * @method getContext
-         * @returns {miruken.context.Context} region context.
+         * @property {miruken.context.Context} context
          */
-        getContext: function () {},
+        get context() {},
         /**
          * Gets the region's controller.
-         * @method getController
-         * @return {miruken.mvc.Controller} region controller.
+         * @property {miruken.mvc.Controller} controller
          */            
-        getController: function () {},
+        get controller() {},
         /**
          * Gets the region's controller context.
-         * @method getControllerContext
-         * @return {miruken.context.Context} region controller context.
+         * @property {miruken.context.Context} controllerContext
          */            
-        getControllerContext: function () {}
+        get controllerContext() {}
     });
 
     /**
@@ -9794,20 +9829,19 @@ new function () { // closure
      * @param  {Object}  button  -  clicked button 
      * @extends Base
      */
-    var ButtonClicked = Base.extend(
-        $inferProperties, {
+    var ButtonClicked = Base.extend({
         constructor: function (button, buttonIndex) {
             this.extend({
                 /**
                  * Gets the clicked button.
                  * @property {Object} button
                  */                                
-                getButton: function () { return button; },
+                get button() { return button; },
                 /**
                  * Gets the clicked button index.
                  * @property {number} button index
                  */                                
-                getButtonIndex: function () { return buttonIndex; }
+                get buttonIndex() { return buttonIndex; }
             });
         }
     });

@@ -38,10 +38,12 @@ new function () { // closure
     
     var Dog = Base.extend(Animal, Tricks,
         $inferProperties, {
-        constructor: function (name) {
+        constructor: function (name, color) {
            this.extend({
                getName: function () { return name; },
-               setName: function (value) { name = value; }
+               setName: function (value) { name = value; },
+               get color() { return color; },
+               set color(value) { color = value; }
            });
         },
         talk: function () { return 'Ruff Ruff'; },
@@ -130,7 +132,6 @@ describe("$meta", function () {
         delete dog.$meta;
         expect(Dog.$meta).to.be.ok;
     });
-
 });
 
 describe("$isClass", function () {
@@ -175,13 +176,16 @@ describe("$properties", function () {
                     }
                 }
             },
-            age:       11,
-            pet:       { map: Animal}
-        }
+            pet:  { map: Animal}
+        },
+        get dob() { return this._dob; },
+        set dob(value) { this._dob = value; },
+        get age() { return ~~((Date.now() - +this.dob) / (31557600000)); }
     }), Doctor = Person.extend({
         $properties: {
-            patient:   { map: Person }
-        }
+            patient: { map: Person }
+        },
+        get age() { return this.base() + 10; }
     });
 
     it("should ignore empty properties", function () {
@@ -195,7 +199,6 @@ describe("$properties", function () {
             friend = new Person;
         expect(person.firstName).to.equal('');
         expect(person.lastName).to.equal('');
-        expect(person.age).to.equal(11);
         person.firstName = 'John';
         expect(person.firstName).to.equal('John');
         expect(person._firstName).to.be.undefined;
@@ -224,6 +227,19 @@ describe("$properties", function () {
         person.fullName  = 'Harry Potter';
         expect(person.firstName).to.equal('Harry');
         expect(person.lastName).to.equal('Potter');
+    });
+
+    it("should accept standard properties", function () {
+        var person = new Person;
+        person.dob = new Date(2003, 4, 9);
+        expect(person.dob).to.eql(new Date(2003, 4, 9));
+        expect(person.age).to.be.at.least(12);
+    });
+
+    it("should override standard properties", function () {
+        var doctor = new Doctor;
+        doctor.dob = new Date;
+        expect(doctor.age).to.be.at.least(10);
     });
 
     it("should retrieve property descriptor", function () {
@@ -313,6 +329,30 @@ describe("$properties", function () {
         expect(descriptor.map).to.equal(Person);
         expect(Person.$meta.getDescriptor('friend')).to.be.undefined;
     });
+
+    it("should synthesize protocol properties", function () {
+        var Employment = Protocol.extend({
+                get id() {},
+                get name() {},
+                set name(value) {}
+            }),
+            Manager = Base.extend(Employment, {
+                constructor: function (name) {
+                    this.extend({
+                        get name() { return name; },
+                        set name(value) { name = value; }
+                    });
+                },
+                get id() {
+                    return "Manager" + assignID(this);
+                }
+            }),
+            manager = new Manager("Bill Lumbergh");
+        expect(Employment(manager).name).to.equal("Bill Lumbergh");
+        expect(Employment(manager).id).to.equal("Manager" + assignID(manager));
+        expect(Employment(manager).name = "Joe Girardi").to.equal("Joe Girardi");
+        expect(Employment(manager).name).to.equal("Joe Girardi");
+    });    
 });
 
 describe("$inferProperties", function () {
