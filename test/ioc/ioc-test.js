@@ -578,7 +578,7 @@ describe("ContextualLifestyle", function () {
     var Controller = Base.extend($inferProperties, $contextual, {
         $inject: [$optional(Context)],
         constructor: function (context) {
-            this.setContext(context);
+            this.context = context;
         },
         initialize: function () {
             Object.defineProperty(this, "initialized", { value: !!this.context });
@@ -614,7 +614,7 @@ describe("ContextualLifestyle", function () {
             });
         });
 
-        it("should setContext if contextual object", function (done) {
+        it("should set context after resolved", function (done) {
             var context   = new Context,
                 container = Container(context);
             context.addHandlers(new IoContainer, new ValidationCallbackHandler);
@@ -1089,11 +1089,11 @@ describe("IoContainer", function () {
         });
 
         it("should resolve in new child context", function (done) {
-            var Workflow = Base.extend(ContextualMixin);
+            var Workflow = Base.extend($contextual);
             container.register($component(Workflow).newInContext());
             Promise.resolve(container.resolve(Workflow)).done(function (workflow) {
                 expect(workflow).to.be.instanceOf(Workflow);
-                expect(workflow.getContext()).to.equal(context);
+                expect(workflow.context).to.equal(context);
                 done();
             });
         });
@@ -1111,7 +1111,7 @@ describe("IoContainer", function () {
             Promise.resolve(container.resolve(AssemblyLine)).done(function (assembleEngine) {
                 expect(assembleEngine).to.be.instanceOf(AssemblyLine);
                 expect(assembleEngine.getEngine()).to.be.instanceOf(V12);
-                expect(assembleEngine.getContext().getParent()).to.equal(context);
+                expect(assembleEngine.context.getParent()).to.equal(context);
                 done();
             });
         });

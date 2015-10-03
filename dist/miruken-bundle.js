@@ -3288,7 +3288,7 @@ new function () { // closure
         version: miruken.version,
         parent:  miruken,
         imports: "miruken,miruken.graph,miruken.callback",
-        exports: "ContextState,ContextObserver,Context,Contextual,ContextualMixin,ContextualHelper,$contextual"
+        exports: "ContextState,ContextObserver,Context,ContextualHelper,$contextual"
     });
 
     eval(this.imports);
@@ -3557,72 +3557,53 @@ new function () { // closure
     });
 
     /**
-     * Protocol to provide the minimal functionality to support contextual based operations.<br/>
+     * Mixin to provide the minimal functionality to support contextual based operations.<br/>
      * This is an alternatve to the delegate model of communication, but with less coupling 
      * and ceremony.
-     * @class Contextual
-     * @extends miruken.Protocol
-     */
-    var Contextual = Protocol.extend({
-        /**
-         * Gets the context associated with the receiver.
-         * @method getContext
-         * @returns {miruken.context.Context} associated context.
-         */
-        getContext: function () {},
-        /**
-         * Sets the context associated with the receiver.
-         * @method setContext
-         * @param  {miruken.contet.Context} context  -  associated context
-         */
-        setContext: function (context) {}
-    });
-
-    /**
-     * Mixin for {{#crossLink "miruken.context.Contextual"}}{{/crossLink}} implementation.
      * @class ContextualMixin
-     * @uses miruken.context.Contextual
-     * @extends Module
+     * @private
      */
-    var ContextualMixin = Module.extend({
-        getContext: function (object) {
-            return object.__context;
+    var ContextualMixin = {
+        /**
+         * The context associated with the receiver.
+         * @property {miruken.context.Context} context
+         */        
+        get context() {
+            return this.__context;
         },
-        setContext: function (object, context) {
-            if (object.__context === context) {
+        set context(context) {
+            if (this.__context === context) {
                 return;
             }
-            if (object.__context)
-                object.__context.removeHandlers(object);
+            if (this.__context)
+                this.__context.removeHandlers(this);
             if (context) {
-                object.__context = context;
-                context.addHandlers(object);
+                this.__context = context;
+                context.addHandlers(this);
             } else {
-                delete object.__context;
+                delete this.__context;
             }
         },
         /**
          * Determines if the receivers context is active.
-         * @method isActiveContext
-         * @returns {boolean} true if the receivers context is active, false otherwise.
+         * @property {boolean} isActiveContext
          */        
-        isActiveContext: function (object) {
-            return object.__context && (object.__context.getState() === ContextState.Active);
+        get isActiveContext() {
+            return this.__context && (this.__context.getState() === ContextState.Active);
         },
         /**
          * Ends the receivers context.
          * @method endContext
          */                
-        endContext: function (object) {
-            if (object.__context) {
-                object.__context.end();
+        endContext: function () {
+            if (this.__context) {
+                this.__context.end();
             }
         }
-    });
+    };
 
     /**
      * Metamacro to make classes contextual.<br/>
-     * See {{#crossLink "miruken.context.ContextualMixin"}}{{/crossLink}}
      * <pre>
      *    var Controller = Base.extend($contextual, {
      *       action: function () {}
@@ -3637,7 +3618,6 @@ new function () { // closure
         apply: function (step, metadata) {
             if (step === MetaStep.Subclass) {
                 var clazz = metadata.getClass();
-                clazz.$meta.addProtocol(Contextual);
                 clazz.implement(ContextualMixin);
             }
         }
@@ -3652,13 +3632,12 @@ new function () { // closure
         /**
          * Resolves the receivers context.
          * @method resolveContext
-         * @returns {miruken.context.Context} receiver if a context or getContext of receiver. 
+         * @returns {miruken.context.Context} receiver if a context or the receiver context. 
          */                
         resolveContext: function (contextual) {
-            if (!contextual) return null;
-            if (contextual instanceof Context) return contextual;
-            return $isFunction(contextual.getContext)
-                 ? contextual.getContext() : null;
+            return $isNothing(contextual) || (contextual instanceof Context)
+                 ? contextual
+                 : contextual.context;
         },
         /**
          * Ensure the receiver is associated with a context.
@@ -3676,18 +3655,13 @@ new function () { // closure
          * @method clearContext
          */                                
         clearContext: function (contextual) {
-            if (!contextual ||
-                !$isFunction(contextual.getContext) || 
-                !$isFunction(contextual.setContext)) {
-                return;
-            }
-            var context = contextual.getContext();
+            var context = contextual.context;
             if (context) {
                 try {
                     context.end();
                 }
                 finally {
-                    contextual.setContext(null);
+                    contextual.context = null;
                 }
             }
         },
@@ -3700,17 +3674,9 @@ new function () { // closure
          * @throws {Error} an error if the context could be attached.
          */                                        
         bindContext: function (contextual, context, replace) {
-            if (!contextual ||
-                (!replace && $isFunction(contextual.getContext)
-                 && contextual.getContext())) {
-                return contextual;
+            if (contextual && (replace || !contextual.context)) {
+                contextual.context = ContextualHelper.resolveContext(context);
             }
-            if (contextual.setContext === undefined) {
-                contextual = ContextualMixin(contextual);
-            } else if (!$isFunction(contextual.setContext)) {
-                throw new Error("Unable to set the context on " + contextual + ".");
-            }
-            contextual.setContext(ContextualHelper.resolveContext(context));
             return contextual;
         },
         /**
@@ -3724,13 +3690,13 @@ new function () { // closure
         bindChildContext: function (contextual, child, replace) {
             var childContext;
             if (child) {
-                if (!replace && $isFunction(child.getContext)) {
-                    childContext = child.getContext();
+                if (!replace) {
+                    childContext = child.context;
                     if (childContext && childContext.getState() === ContextState.Active) {
                         return childContext;
                     }
                 }
-                var context  = ContextualHelper.requireContext(contextual);
+                var context = ContextualHelper.requireContext(contextual);
                 while (context && context.getState() !== ContextState.Active) {
                     context = context.getParent();
                 }
@@ -5604,17 +5570,13 @@ new function () { // closure
                 _recordInstance: function (id, instance, context) {
                     var _this  = this;
                     _cache[id] = instance;
-                    if (Contextual.adoptedBy(instance) || $isFunction(instance.setContext)) {
-                        ContextualHelper.bindContext(instance, context);
-                    }
+                    ContextualHelper.bindContext(instance, context);
                     if ($isFunction(instance.initialize)) {
                         instance.initialize();
                     }                                        
                     this.trackInstance(instance);
                     context.onEnded(function () {
-                        if ($isFunction(instance.setContext)) {
-                            instance.setContext(null);
-                        }
+                        instance.context = null;
                         _this.disposeInstance(instance);
                         delete _cache[id];
                     });
@@ -7059,6 +7021,8 @@ new function () { // closure
     Base.implement = Abstract.implement = function (source) {
         if ($isFunction(source)) {
             source = source.prototype; 
+        } else {
+            source = MetaBase.normalize(source);
         }
         if ($isSomething(source)) {
             var metadata = this.$meta;
@@ -7072,13 +7036,14 @@ new function () { // closure
 
     var extendInstance = Base.prototype.extend;
     Base.prototype.extend = function (key, value) {
-        var numArgs = arguments.length,
+        var numArgs    = arguments.length,
             definition = (numArgs === 1) ? key : {};
         if (numArgs >= 2) {
             definition[key] = value;
         } else if (numArgs === 0) {
             return this;
         }
+        definition = MetaBase.normalize(definition);
         var metadata = this.$meta;
         extendInstance.call(this, definition);
         if (metadata) {
@@ -7161,6 +7126,8 @@ new function () { // closure
         }
     });
 
+    var GETTER_CONVENTIONS = ['get', 'is'];
+    
     /**
      * Metamacro to define class properties.  This macro is automatically applied.
      * <pre>
@@ -7361,8 +7328,6 @@ new function () { // closure
          */               
         isActive: True
     });
-
-    var GETTER_CONVENTIONS = ['get', 'is'];
 
     function _inferProperty(key, value, definition, spec) {
         for (var i = 0; i < GETTER_CONVENTIONS.length; ++i) {

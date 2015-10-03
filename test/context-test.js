@@ -434,14 +434,14 @@ describe("Contextual", function() {
         it("should be able to set context", function() {
             var context    = new Context,
                 controller = new Controller;
-            controller.setContext(context);    
-            expect(controller.getContext()).to.equal(context);
+            controller.context = context;
+            expect(controller.context).to.equal(context);
         });
 
         it("should add handler when context set", function() {
             var context    = new Context,
                 controller = new Controller;
-            controller.setContext(context);    
+            controller.context = context;
             var resolve    = context.resolve(Controller);
             expect(resolve).to.equal(controller);
         });
@@ -449,10 +449,10 @@ describe("Contextual", function() {
         it("should remove handler when context cleared", function() {
             var context    = new Context,
                 controller = new Controller;
-            controller.setContext(context);    
+            controller.context = context;
             var resolve    = context.resolve(Controller);
             expect(resolve).to.equal(controller);
-            controller.setContext(null);
+            controller.context = null;
             expect(context.resolve(Controller)).to.be.undefined;
         });
     });
@@ -461,8 +461,8 @@ describe("Contextual", function() {
         it("should be able to test if context active", function() {
             var context    = new Context,
                 controller = new Controller;
-            controller.setContext(context);
-            expect(controller.isActiveContext()).to.be.true;
+            controller.context = context;
+            expect(controller.isActiveContext).to.be.true;
         });
     });
 
@@ -470,10 +470,10 @@ describe("Contextual", function() {
         it("should be able to end context", function() {
             var context    = new Context,
                 controller = new Controller;
-            controller.setContext(context);
+            controller.context = context;
             controller.endContext();
             expect(context.state).to.equal(ContextState.Ended);
-            expect(controller.isActiveContext()).to.be.false;
+            expect(controller.isActiveContext).to.be.false;
         });
     });
 });
