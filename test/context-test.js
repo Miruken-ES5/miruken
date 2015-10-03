@@ -13,17 +13,15 @@ describe("Context", function() {
     describe("#getState", function() {
         it("should start in the default state", function() {
             var context = new Context;
-            expect(context.getState()).to.equal(ContextState.Active);
-            expect(context.state).to.equal(context.getState());
-            expect(context.getChildren()).to.be.empty;
+            expect(context.state).to.equal(ContextState.Active);
+            expect(context.children).to.be.empty;
         });
     });
     
     describe("#getParent", function() {
         it("should not have a parent when root", function() {
             var context = new Context;
-            expect(context.getParent()).to.not.exist;
-            expect(context.parent).to.equal(context.getParent());
+            expect(context.parent).to.not.exist;
         });
         
         it("should have a parent when a child", function() {
@@ -38,35 +36,34 @@ describe("Context", function() {
             var context = new Context,
                 child1  = context.newChild(),
                 child2  = context.newChild();
-            expect(context.getChildren()).to.include(child1, child2);
-            expect(context.children).to.eql(context.getChildren());
+            expect(context.children).to.include(child1, child2);
         });
     });
     
     describe("#hasChildren", function() {
         it("should not have children by default", function() {
             var context = new Context;
-            expect(context.hasChildren()).to.be.false;
+            expect(context.hasChildren).to.be.false;
         });
         
         it("should have children when created", function() {
             var context = new Context,
                 child   = context.newChild();
-            expect(context.hasChildren()).to.be.true;
+            expect(context.hasChildren).to.be.true;
         });
     });
     
     describe("#getRoot", function() {
         it("should return self if no childern", function() {
             var context = new Context;
-            expect(context.getRoot()).to.equal(context);
+            expect(context.root).to.equal(context);
         });
         
         it("should return root context when descendant", function() {
             var context    = new Context,
                 child      = context.newChild(),
                 grandChild = child.newChild();
-            expect(grandChild.getRoot()).to.equal(context);
+            expect(grandChild.root).to.equal(context);
         });
     });
 
@@ -99,7 +96,7 @@ describe("Context", function() {
             var context    = new Context,
                 child      = context.newChild(),
                 grandChild = child.newChild();
-            expect(grandChild.getRoot()).to.equal(context);
+            expect(grandChild.root).to.equal(context);
         });
     });
     

@@ -28,7 +28,7 @@ new function () {
         constructor: function ($scope, $http, scheduling) {
             var _todos = [ 'Item 1', 'Item 2', 'Item 3' ];
             this.extend({
-                getTodos: function () { return _todos; },
+                get todos() { return _todos; },
                 addTodo: function (todo) { 
                     _todos.push(todo);
                     scheduling.schedule(todo);

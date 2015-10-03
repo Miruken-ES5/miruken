@@ -180,7 +180,7 @@ describe("ValidateJsCallbackHandler", function () {
             });
             order.lineItems = [new LineItem({plu: '12345', quantity: 2})];
             var results = Validator(context).validate(order);
-            expect(results.isValid()).to.be.true;
+            expect(results.valid).to.be.true;
         });
 
         it("should invalidate complex objects", function () {
@@ -290,7 +290,7 @@ describe("ValidateJsCallbackHandler", function () {
                 validate: function(value, options, key, attributes) {
                 }
             }));
-            expect(Validator(context).validate(new MissingValidator).isValid()).to.be.true;
+            expect(Validator(context).validate(new MissingValidator).valid).to.be.true;
         });
     });
 

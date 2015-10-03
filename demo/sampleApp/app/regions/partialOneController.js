@@ -23,9 +23,7 @@
         dispose: function () { ++disposed; },
         message: 'Hello',
         items: [1,2,3],
-        getDisposed: function(){
-            return disposed;
-        }
+        get disposed() { return disposed; }
     });
 
     eval(this.exports);

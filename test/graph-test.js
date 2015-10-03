@@ -20,13 +20,13 @@ new function () { // closure
         constructor: function (data) { 
             var _children = [];
             this.extend({
-                getParent:   function () { return null; },
-                getData:     function () { return data; },
-                getChildren: function () { return _children; },
-                addChild:    function (nodes) {
+                get parent() { return null; },
+                get children() { return _children; },                
+                get data() { return data; },
+                addChild: function (nodes) {
                     var parent = this;
                     Array2.forEach(arguments, function (node) {
-                        node.extend({getParent: function () { return parent; }});
+                        node.extend({get parent() { return parent; }});
                         _children.push(node);
                     });
                     return this;
@@ -226,16 +226,16 @@ describe("Traversing", function () {
             var CircularParent = Base.extend(TraversingMixin, {
                 constructor: function (data) { 
                     this.extend({
-                        getParent:   function () { return this; },
-                        getChildren: function () { return []; },
+                        get parent() { return this; },
+                        get children() { return []; },
                     });
                 }});
 
             var CircularChildren = Base.extend(TraversingMixin, {
                 constructor: function (data) { 
                     this.extend({
-                        getParent:   function () { return null; },
-                        getChildren: function () { return [this]; },
+                        get parent() { return null; },
+                        get children() { return [this]; },
                     });
                 }});
 

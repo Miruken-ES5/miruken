@@ -179,43 +179,43 @@ describe("HandleMethod", function () {
     describe("#getType", function () {
         it("should get the method type", function () {
             var method = new HandleMethod(HandleMethod.Invoke, undefined, "deal", [[1,3,8], 2]);
-            expect(method.getType()).to.equal(HandleMethod.Invoke);
+            expect(method.type).to.equal(HandleMethod.Invoke);
         });
     });
 
     describe("#getMethodName", function () {
         it("should get the method name", function () {
             var method = new HandleMethod(HandleMethod.Invoke, undefined, "deal", [[1,3,8], 2]);
-            expect(method.getMethodName()).to.equal("deal");
+            expect(method.methodName).to.equal("deal");
         });
     });
 
     describe("#getArguments", function () {
         it("should get the method arguments", function () {
             var method = new HandleMethod(HandleMethod.Invoke, undefined, "deal", [[1,3,8], 2]);
-            expect(method.getArguments()).to.eql([[1,3,8], 2]);
+            expect(method.arguments).to.eql([[1,3,8], 2]);
         });
 
         it("should be able to change arguments", function () {
             var method = new HandleMethod(HandleMethod.Invoke, undefined, "deal", [[1,3,8], 2]);
-            method.getArguments()[0] = [2,4,8];
-            expect(method.getArguments()).to.eql([[2,4,8], 2]);
+            method.arguments[0] = [2,4,8];
+            expect(method.arguments).to.eql([[2,4,8], 2]);
         });
     });
 
     describe("#getReturnValue", function () {
         it("should get the return value", function () {
             var method = new HandleMethod(HandleMethod.Invoke, undefined, "deal", [[1,3,8], 2]);
-            method.setReturnValue([1,8]);
-            expect(method.getReturnValue()).to.eql([1,8]);
+            method.returnValue = [1,8];
+            expect(method.returnValue).to.eql([1,8]);
         });
     });
 
     describe("#setReturnValue", function () {
         it("should set the return value", function () {
             var method = new HandleMethod(HandleMethod.Invoke, undefined, "deal", [[1,3,8], 2]);
-            method.setReturnValue([1,8]);
-            expect(method.getReturnValue()).to.eql([1,8]);
+            method.returnValue = [1,8];
+            expect(method.returnValue).to.eql([1,8]);
         });
     });
 
@@ -225,7 +225,7 @@ describe("HandleMethod", function () {
                 method  = new HandleMethod(HandleMethod.Invoke, undefined, "shuffle", [[22,19,9,14,29]]),
                 handled = method.invokeOn(dealer);
             expect(handled).to.be.true;
-            expect(method.getReturnValue()).to.have.members([22,19,9,14,29]);
+            expect(method.returnValue).to.have.members([22,19,9,14,29]);
         });
 
         it("should call getter on target", function () {
@@ -233,7 +233,7 @@ describe("HandleMethod", function () {
                 method  = new HandleMethod(HandleMethod.Get, undefined, "age"),
                 handled = method.invokeOn(guest);
             expect(handled).to.be.true;
-            expect(method.getReturnValue()).to.equal(12);
+            expect(method.returnValue).to.equal(12);
         });
 
         it("should call setter on target", function () {
@@ -241,7 +241,7 @@ describe("HandleMethod", function () {
                 method  = new HandleMethod(HandleMethod.Set, undefined, "age", 18),
                 handled = method.invokeOn(guest);
             expect(handled).to.be.true;
-            expect(method.getReturnValue()).to.equal(18);
+            expect(method.returnValue).to.equal(18);
             expect(guest.age).to.equal(18);
         });
     });
@@ -946,7 +946,7 @@ describe("CallbackHandler", function () {
                 settings  = new (CallbackHandler.extend({
                     $provide:[
                         Config, function (resolution) {
-                            var config = resolution.getKey(),
+                            var config = resolution.key,
                                 key    = config.getKey();
                             if (key == "url") {
                                 return "my.server.com";
@@ -965,7 +965,7 @@ describe("CallbackHandler", function () {
                 cardGames  = new (CallbackHandler.extend({
                     $provide:[
                         [CardTable, Cashier], function (resolution) {
-                            var key = resolution.getKey();
+                            var key = resolution.key;
                             if (key.conformsTo(Game)) {
                                 return blackjack;
                             } else if (key === Cashier) {
@@ -982,7 +982,7 @@ describe("CallbackHandler", function () {
                 cashier    = new Cashier(1000000.00),
                 cardGames  = new CallbackHandler,
                 unregister = $provide(cardGames, [CardTable, Cashier], function (resolution) {
-                    var key = resolution.getKey();
+                    var key = resolution.key;
                     if (key.conformsTo(Game)) {
                         return blackjack;
                     } else if (key === Cashier) {
@@ -1015,7 +1015,7 @@ describe("CallbackHandler", function () {
                 cardGames  = new (CallbackHandler.extend({
                     $provide:[
                         True, function (resolution) {
-                            if (resolution.getKey() === CardTable) {
+                            if (resolution.key === CardTable) {
                                 return blackjack;
                             }
                         }]
@@ -1093,19 +1093,19 @@ describe("CallbackHandler", function () {
                 stop3      = [ new PitBoss("Phil") ],
                 bus1       = new (CallbackHandler.extend({
                     $provide:[ PitBoss, function (resolution) {
-                        expect(resolution.isMany()).to.be.true;
+                        expect(resolution.isMany).to.be.true;
                         return Promise.delay(stop1, 75);
                     }]
                 })),
                 bus2       = new (CallbackHandler.extend({
                     $provide:[ PitBoss, function (resolution) {
-                        expect(resolution.isMany()).to.be.true;
+                        expect(resolution.isMany).to.be.true;
                         return Promise.delay(stop2, 100);
                     }]
                 })),
                 bus3       = new (CallbackHandler.extend({
                     $provide:[ PitBoss, function (resolution) {
-                        expect(resolution.isMany()).to.be.true;
+                        expect(resolution.isMany).to.be.true;
                         return Promise.delay(stop3, 50);
                     }]
                 })),

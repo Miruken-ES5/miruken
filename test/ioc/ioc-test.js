@@ -237,16 +237,16 @@ describe("ComponentModel", function () {
     describe("#getKey", function () {
         it("should return class if no key", function () {
             var componentModel = new ComponentModel;
-            componentModel.setClass(Ferrari);
+            componentModel.implementation = Ferrari;
             expect(componentModel.key).to.equal(Ferrari);
         });
     });
 
-    describe("#setClass", function () {
+    describe("#setImplementation", function () {
         it("should reject invalid class", function () {
             var componentModel = new ComponentModel;
             expect(function () {
-                componentModel.setClass(1);
+                componentModel.implementation = 1;
             }).to.throw(Error, "1 is not a class.");
         });
     });
@@ -254,7 +254,7 @@ describe("ComponentModel", function () {
     describe("#getFactory", function () {
         it("should return default factory", function () {
             var componentModel = new ComponentModel;
-            componentModel.setClass(Ferrari);
+            componentModel.implementation = Ferrari;
             expect(componentModel.factory).to.be.a('function');
         });
     });
@@ -631,7 +631,7 @@ describe("ContextualLifestyle", function () {
             context.addHandlers(new IoContainer, new ValidationCallbackHandler);
             container.register($component(Controller).dependsOn($child(Context)));
             Promise.resolve(container.resolve(Controller)).then(function (controller) {
-                expect(controller.context.getParent()).to.equal(context);
+                expect(controller.context.parent).to.equal(context);
                 done();
             });
         });
@@ -1111,7 +1111,7 @@ describe("IoContainer", function () {
             Promise.resolve(container.resolve(AssemblyLine)).done(function (assembleEngine) {
                 expect(assembleEngine).to.be.instanceOf(AssemblyLine);
                 expect(assembleEngine.getEngine()).to.be.instanceOf(V12);
-                expect(assembleEngine.context.getParent()).to.equal(context);
+                expect(assembleEngine.context.parent).to.equal(context);
                 done();
             });
         });
