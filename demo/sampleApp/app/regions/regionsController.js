@@ -10,7 +10,6 @@ new function() {
 
 	var RegionsController = Controller.extend({
 		$properties:{
-            content: null,
 			message: 'Hello, Regions!'
 		},
         partialOne: function () {
@@ -30,6 +29,11 @@ new function() {
                 templateUrl:  'app/regions/partialThree.html',
                 controller:   'PartialThreeController as vm'
             });
+        },
+        viewRegionCreated: function (region) {
+            if (region.name === 'content') {
+                this.content = region;
+            }
         }
 	});
 

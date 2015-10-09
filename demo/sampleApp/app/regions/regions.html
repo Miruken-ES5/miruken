@@ -17,7 +17,7 @@
 
     <div class="col-sm-6">
       <h2>Region with ng-include</h2>
-      <ng-include src="'app/regions/partialThree.html'" region="'region' + $index"></ng-include>
+      <ng-include src="'app/regions/partialThree.html'" region></ng-include>
     </div>
 
     <div class="clearfix"></div>
@@ -26,7 +26,7 @@
     
     <div ng-repeat="x in [1, 2, 3]">
       <div class="col-sm-4">
-          <ng-include src="'app/regions/partialThree.html'" region></ng-include>
+          <ng-include src="'app/regions/partialThree.html'" region="'region' + $index"></ng-include>
       </div>
     </div>
 

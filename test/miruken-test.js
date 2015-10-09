@@ -9,9 +9,6 @@ eval(miruken.namespace);
 
 Promise.onPossiblyUnhandledRejection(Undefined);
 
-var f = [1,2,3];
-console.log("DDD " + $isArray(f));
-
 new function () { // closure
 
     var miruken_test = new base2.Package(this, {
@@ -1133,6 +1130,26 @@ describe("ProxyBuilder", function () {
 });
 
 describe("Package", function () {
+    describe("#version", function () {
+        it("should inherit parent version", function () {
+            var foo = new base2.Package(this, {
+                name:    "foo",
+                version: "1.0.0"
+            });
+            var bar = new base2.Package(this, {
+                name:    "bar",
+                parent:  foo
+            });
+            var baz = new base2.Package(this, {
+                name:    "baz",
+                parent:  baz,
+                version: "2.0.0"
+            });            
+            expect(bar.version).to.equal("1.0.0");
+            expect(baz.version).to.equal("2.0.0");
+        });        
+    });
+    
     describe("#getProtocols", function () {
         it("should expose protocol definitions", function () {
             var protocols = [];
@@ -1149,7 +1166,6 @@ describe("Package", function () {
             });
             expect(protocols).to.have.members([Tricks, Tracked]);
         });
-        
     });
 
     describe("#getClasses", function () {
