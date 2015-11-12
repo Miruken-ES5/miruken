@@ -1774,7 +1774,7 @@ new function () { // closure
      * @extends miruken.MetaMacro
      */
     var $callbacks = MetaMacro.extend({
-        apply: function (step, metadata, target, definition) {
+        perform: function (step, metadata, target, definition) {
             if ($isNothing(definition)) {
                 return;
             }
@@ -3594,7 +3594,7 @@ new function () { // closure
      * @extends miruken.MetaMacro
      */    
     var $contextual = MetaMacro.extend({
-        apply: function (step, metadata) {
+        perform: function (step, metadata) {
             if (step === MetaStep.Subclass) {
                 var clazz = metadata.getClass();
                 clazz.implement(ContextualMixin);
@@ -6187,8 +6187,6 @@ new function () { // closure
 
     eval(this.imports);
 
-    var META = '$meta';
-
     /**
      * Annotates invariance.
      * @attribute $eq
@@ -6352,6 +6350,7 @@ new function () { // closure
             return this.delegate.invoke(this.constructor, methodName, args, this.strict);
         }
     }, {
+        conformsTo: False,        
         /**
          * Determines if the target is a {{#crossLink "miruken.Protocol"}}{{/crossLink}}.
          * @static
@@ -6362,7 +6361,6 @@ new function () { // closure
         isProtocol: function (target) {
             return target && (target.prototype instanceof Protocol);
         },
-        conformsTo: False,
         /**
          * Determines if the target conforms to this protocol.
          * @static
@@ -6415,19 +6413,27 @@ new function () { // closure
      */
     var MetaMacro = Base.extend({
         /**
-         * Executes the macro for the given step.
-         * @method apply
-         * @param  {miruken.MetaStep}  step        - meta step
-         * @param  {miruken.MetaBase}  metadata    - effective metadata
-         * @param  {Object}            target      - target macro applied to 
-         * @param  {Object}            definition  - updates to apply
+         * Prepares the macro for the given step.
+         * @method prepare
+         * @param  {miruken.MetaStep}  step        -  meta step
+         * @param  {Object}            definition  -  updates to apply
+         * @param  {Function}          expand      -  expanded definition
          */
-        apply: function (step, metadata, target, definition) {},
+        prepare: function (step, definition, expand) {},
+        /**
+         * Performs the macro for the given step.
+         * @method perform
+         * @param  {miruken.MetaStep}  step        -  meta step
+         * @param  {miruken.MetaBase}  metadata    -  effective metadata
+         * @param  {Object}            target      -  target macro applied to 
+         * @param  {Object}            definition  -  source to apply
+         */
+        perform: function (step, metadata, target, definition) {},
         /**
          * Triggered when a protocol is added to metadata.
          * @method protocolAdded
-         * @param {miruken.MetaBase}  metadata  - effective metadata
-         * @param {miruken.Protocol}  protocol  - protocol added
+         * @param {miruken.MetaBase}  metadata  -  effective metadata
+         * @param {miruken.Protocol}  protocol  -  protocol added
          */
         protocolAdded: function (metadata, protocol) {},
         /**
@@ -6439,14 +6445,10 @@ new function () { // closure
          * @returns  {Any} property value.
          */                
         extractProperty: function (property, target, source) {
-            if (!(source && source.hasOwnProperty(property))) {
-                return;
-            }
             var value = source[property];
             if ($isFunction(value)) {
                 value = value();
             }
-            delete source[property];
             delete target[property];            
             return value;
         },        
@@ -6552,11 +6554,18 @@ new function () { // closure
                     }
                     return false;
                 },
-                apply: function _(step, metadata, target, definition) {
+                prepare: function (step, definition, expand) {
                     if (parent) {
-                        parent.apply(step, metadata, target, definition);
+                        parent.prepare(step, definition, expand);
                     } else if ($properties) {
-                        (_.p || (_.p = new $properties)).apply(step, metadata, target, definition);
+                        $properties.shared.prepare(step, definition, expand)
+                    }
+                },
+                perform: function (step, metadata, target, definition) {
+                    if (parent) {
+                        parent.perform(step, metadata, target, definition);
+                    } else if ($properties) {
+                        $properties.shared.perform(step, metadata, target, definition);
                     }
                 },
                 /**
@@ -6588,7 +6597,8 @@ new function () { // closure
                             descriptors = extend(descriptors || {}, _descriptors);
                         }
                     } else if ($isString(filter)) {
-                        return _descriptors[filter] || (parent && parent.getDescriptor(filter));
+                        return (_descriptors && _descriptors[filter])
+                            || (parent && parent.getDescriptor(filter));
                     } else {
                         if (parent) {
                             descriptors = parent.getDescriptor(filter);
@@ -6666,37 +6676,8 @@ new function () { // closure
                         });
                     }
                     return this;
-                }        
-            });
-        }
-    }, {
-        /**
-         * Normalizes the meta definition.<br/>
-         * Hijacks standard property definitions into $properties.
-         * @method normalize
-         * @param    {Object}  definition  -  meta definition
-         * @returns  {Object}  normalized meta defintion.
-         */
-        normalize: function (definition) {
-            if (typeOf(definition) !== 'object') {
-                return definition;
-            }
-            var properties,
-                propertyNames = Object.getOwnPropertyNames(definition);
-            for (var i = 0; i < propertyNames.length; ++i) {
-                var propertyName = propertyNames[i],
-                    descriptor   = Object.getOwnPropertyDescriptor(definition, propertyName);
-                if (descriptor.get || descriptor.set) {
-                    properties = properties || definition[$properties.DEFAULT_TAG]
-                              || (definition[$properties.DEFAULT_TAG] = {});
-                    properties[propertyName] = {
-                        get: descriptor.get,
-                        set: descriptor.set
-                    };
-                    delete definition[propertyName];
                 }
-            }
-            return definition;
+            });
         }
     });
 
@@ -6704,27 +6685,21 @@ new function () { // closure
      * Represents metadata describing a class.
      * @class ClassMeta
      * @constructor
-     * @param   {Function}  baseClass  -  associated base class
-     * @param   {Function}  subClass   -  associated class
-     * @param   {Array}     protocols  -  conforming protocols
-     * @param   {Array}     macros     -  class macros
+     * @param   {miruken.MetaBase}  baseMeta   -  base meta data
+     * @param   {Function}          subClass   -  associated class
+     * @param   {Array}             protocols  -  conforming protocols
+     * @param   {Array}             macros     -  class macros
      * @extends miruken.MetaBase
      */
     var ClassMeta = MetaBase.extend({
-        constructor: function(baseClass, subClass, protocols, macros)  {
-            var _isProtocol = (subClass === Protocol)
-                           || (subClass.prototype instanceof Protocol),
-                _macros     = macros ? macros.slice(0) : undefined;
-            this.base(baseClass.$meta, protocols);
+        constructor: function(baseMeta, subClass, protocols, macros)  {
+            var _macros     = macros && macros.slice(0),
+                _isProtocol = (subClass === Protocol)
+                           || (subClass.prototype instanceof Protocol);
+            this.base(baseMeta);
             this.extend({
                 /**
-                 * Gets the associated base class.
-                 * @method getBase
-                 * @returns  {Function} base class.
-                 */                
-                getBase: function () { return baseClass; },
-                /**
-                 * Gets the associated class
+                 * Gets the associated class.
                  * @method getClass
                  * @returns  {Function} class.
                  */                                
@@ -6737,8 +6712,8 @@ new function () { // closure
                 isProtocol: function () { return _isProtocol; },
                 getAllProtocols: function () {
                     var protocols = this.base();
-                    if (!_isProtocol && baseClass.$meta) {
-                        var baseProtocols = baseClass.$meta.getAllProtocols();
+                    if (!_isProtocol && baseMeta) {
+                        var baseProtocols = baseMeta.getAllProtocols();
                         for (var i = 0; i < baseProtocols.length; ++i) {
                             var protocol = baseProtocols[i];
                             if (protocols.indexOf(protocol) < 0) {
@@ -6766,14 +6741,24 @@ new function () { // closure
                     } else if ((protocol === subClass) || (subClass.prototype instanceof protocol)) {
                         return true;
                     }
-                    if (this.base(protocol)) {
-                        return true;
-                    }
-                    return baseClass && (baseClass !== Protocol) && baseClass.conformsTo
-                         ? baseClass.conformsTo(protocol)
-                         : false;
+                    return this.base(protocol) ||
+                        !!(baseMeta && baseMeta.conformsTo(protocol));
                 },
-                apply: function (step, metadata, target, definition) {
+                prepare: function (step, definition, expand) {
+                    this.base(step, definition, expand);
+                    if (!_macros || _macros.length == 0) {
+                        return;
+                    }
+                    var active = (step !== MetaStep.Subclass);
+                    for (var i = 0; i < _macros.length; ++i) {
+                        var macro = _macros[i];
+                        if ($isFunction(macro.prepare) &&
+                            (!active || macro.isActive()) && macro.shouldInherit()) {
+                            macro.prepare(step, definition, expand);
+                        }
+                    }                    
+                },
+                perform: function (step, metadata, target, definition) {
                     this.base(step, metadata, target, definition);
                     if (!_macros || _macros.length == 0) {
                         return;
@@ -6784,12 +6769,112 @@ new function () { // closure
                         var macro = _macros[i];
                         if ((!active  || macro.isActive()) &&
                             (!inherit || macro.shouldInherit())) {
-                            macro.apply(step, metadata, target, definition);
+                            macro.perform(step, metadata, target, definition);
                         }
                     }
+                },
+                createSubclass: function _() {
+                    var args = Array.prototype.slice.call(arguments),
+                        constraints = args, protocols, mixins, macros;
+                    if (subClass.prototype instanceof Protocol) {
+                        (protocols = []).push(subClass);
+                    }
+                    if (args.length > 0 && $isArray(args[0])) {
+                        constraints = args.shift();
+                    }
+                    while (constraints.length > 0) {
+                        var constraint = constraints[0];
+                        if (!constraint) {
+                            break;
+                        } else if (constraint.prototype instanceof Protocol) {
+                            (protocols || (protocols = [])).push(constraint);
+                        } else if (constraint instanceof MetaMacro) {
+                            (macros || (macros = [])).push(constraint);
+                        } else if ($isFunction(constraint) && constraint.prototype instanceof MetaMacro) {
+                            (macros || (macros = [])).push(new constraint);
+                        } else if (constraint.prototype) {
+                            (mixins || (mixins = [])).push(constraint);
+                        } else {
+                            break;
+                        }
+                        constraints.shift();
+                    }
+                    var empty       = _.u || (_.u = {}),
+                        instanceDef = args.shift() || empty,
+                        staticDef   = args.shift() || empty;
+                    this.prepare(MetaStep.Subclass, instanceDef, expand);
+                    if (macros) {
+                        for (var i = 0; i < macros.length; ++i) {
+                            macros[i].prepare(MetaStep.Subclass, instanceDef, expand);
+                        }
+                    }
+                    instanceDef = expand.x || instanceDef;
+                    var derivedClass = ClassMeta.baseExtend.call(subClass, instanceDef, staticDef),
+                        metadata     = new ClassMeta(this, derivedClass, protocols, macros);
+                    Object.defineProperty(derivedClass, '$meta', {
+                        enumerable:   false,
+                        configurable: false,
+                        writable:     false,
+                        value:        metadata
+                    });
+                    Object.defineProperty(derivedClass.prototype, '$meta', {
+                        enumerable:   false,
+                        configurable: false,
+                        get:          ClassMeta.createInstanceMeta
+                    });
+                    derivedClass.conformsTo = metadata.conformsTo.bind(metadata);
+                    metadata.perform(MetaStep.Subclass, metadata, derivedClass.prototype, instanceDef);
+                    if (mixins) {
+                        Array2.forEach(mixins, derivedClass.implement, derivedClass);
+                    }
+                    function expand() {
+                        return expand.x || (expand.x = Object.create(instanceDef));
+                    }                    
+                    return derivedClass;                    
                 }
             });
             this.addProtocol(protocols);
+        }
+    }, {
+        init: function () {
+            this.baseExtend    = Base.extend;
+            this.baseImplement = Base.implement;
+            Base.$meta         = new this(undefined, Base);
+            Abstract.$meta     = new this(Base.$meta, Abstract);
+            Base.extend        = Abstract.extend = function () {
+                return this.$meta.createSubclass.apply(this.$meta, arguments);
+            };
+            Base.implement     = Abstract.implement = function (source) {
+                if ($isFunction(source)) {
+                    source = source.prototype; 
+                }
+                if ($isSomething(source)) {
+                    var metadata = this.$meta;
+                    metadata.prepare(MetaStep.Implement, source, expand);
+                    source = expand.x || source;
+                    ClassMeta.baseImplement.call(this, source);
+                    metadata.perform(MetaStep.Implement, metadata, this.prototype, source);
+                    function expand() {
+                        return expand.x || (expand.x = Object.create(source));
+                    };                    
+                }
+                return this;
+            }
+            Base.prototype.conformsTo = function (protocol) {
+                return this.constructor.$meta.conformsTo(protocol);
+            };
+        },
+        createInstanceMeta: function _(parent) {
+            var spec = _.spec || (_.spec = {
+                    enumerable:   false,
+                    configurable: true,
+                    writable:     false
+                }),
+                metadata = new InstanceMeta(parent || this.constructor.$meta);
+            spec.value = metadata;
+            Object.defineProperty(this, '$meta', spec);
+            delete spec.value;
+            return metadata;            
         }
     });
 
@@ -6801,137 +6886,50 @@ new function () { // closure
      * @extends miruken.MetaBase
      */
     var InstanceMeta = MetaBase.extend({
-        constructor: function (parent) {
-            this.base(parent);
+        constructor: function (classMeta) {
+            this.base(classMeta);
             this.extend({
                 /**
-                 * Gets the associated base class.
-                 * @method getBase
-                 * @returns  {Function} base class.
-                 */                                
-                getBase: function () { return parent.getBase(); }, 
-                /**
-                 * Gets the associated class
+                 * Gets the associated class.
                  * @method getClass
                  * @returns  {Function} class.
                  */                                              
-                getClass: function () { return parent.getClass(); },
+                getClass: function () { return classMeta.getClass(); },
                 /**
                  * Determines if the meta-data represents a protocol.
                  * @method isProtocol
                  * @returns  {boolean} true if a protocol, false otherwise.
                  */                                                
-                isProtocol: function () { return parent.isProtocol(); }
+                isProtocol: function () { return classMeta.isProtocol(); }
             });
+        }
+    }, {
+        init: function () {
+            var instanceExtend = Base.prototype.extend;
+            Base.prototype.extend = function (key, value) {
+                var numArgs    = arguments.length,
+                    definition = (numArgs === 1) ? key : {};
+                if (numArgs >= 2) {
+                    definition[key] = value;
+                } else if (numArgs === 0) {
+                    return this;
+                }
+                var metadata = this.$meta;
+                if (metadata) {
+                    metadata.prepare(MetaStep.Extend, definition, expand);
+                    definition = expand.x || definition;
+                    function expand() {
+                        return expand.x || (expand.x = Object.create(definition));
+                    };                    
+                }
+                instanceExtend.call(this, definition);                
+                if (metadata) {
+                    metadata.perform(MetaStep.Extend, metadata, this, definition);
+                }
+                return this;
+            }
         }
     });
-
-    var baseExtend   = Base.extend,
-        noDefinition = Object.freeze({}); 
-    Base.extend = Abstract.extend = function () {
-        return (function (base, args) {
-            var protocols, mixins, macros, 
-                constraints = args;
-            if (base.prototype instanceof Protocol) {
-                (protocols = []).push(base);
-            }
-            if (args.length > 0 && $isArray(args[0])) {
-                constraints = args.shift();
-            }
-            while (constraints.length > 0) {
-                var constraint = constraints[0];
-                if (!constraint) {
-                    break;
-                } else if (constraint.prototype instanceof Protocol) {
-                    (protocols || (protocols = [])).push(constraint);
-                } else if (constraint instanceof MetaMacro) {
-                    (macros || (macros = [])).push(constraint);
-                } else if ($isFunction(constraint) 
-                           &&  constraint.prototype instanceof MetaMacro) {
-                    (macros || (macros = [])).push(new constraint);
-                } else if (constraint.prototype) {
-                    (mixins || (mixins = [])).push(constraint);
-                } else {
-                    break;
-                }
-                constraints.shift();
-            }
-            var instanceDef = MetaBase.normalize(args.shift() || noDefinition),
-                staticDef   = args.shift() || noDefinition,
-                subclass    = baseExtend.call(base, instanceDef, staticDef),
-                metadata    = new ClassMeta(base, subclass, protocols, macros);
-            Object.defineProperty(subclass, META, {
-                enumerable:   false,
-                configurable: false,
-                writable:     false,
-                value:        metadata
-            });
-            Object.defineProperty(subclass.prototype, META, {
-                enumerable:   false,
-                configurable: false,
-                get:          _createInstanceMeta
-            });
-            subclass.conformsTo = metadata.conformsTo.bind(metadata);
-            metadata.apply(MetaStep.Subclass, metadata, subclass.prototype, instanceDef);
-            if (mixins) {
-                Array2.forEach(mixins, subclass.implement, subclass);
-            }
-            return subclass;
-            })(this, Array.prototype.slice.call(arguments));
-    };
-
-    function _createInstanceMeta(parent) {
-        var spec = _createInstanceMeta.spec ||
-            (_createInstanceMeta.spec = {
-                enumerable:   false,
-                configurable: true,
-                writable:     false
-            }),
-            metadata = new InstanceMeta(parent || this.constructor.$meta);
-        spec.value = metadata;
-        Object.defineProperty(this, META, spec);
-        delete spec.value;
-        return metadata;
-    }
-
-    Base.prototype.conformsTo = function (protocol) {
-        return this.constructor.$meta.conformsTo(protocol);
-    };
-    
-    var implement = Base.implement;
-    Base.implement = Abstract.implement = function (source) {
-        if ($isFunction(source)) {
-            source = source.prototype; 
-        } else {
-            source = MetaBase.normalize(source);
-        }
-        if ($isSomething(source)) {
-            var metadata = this.$meta;
-            implement.call(this, source);
-            if (metadata) {
-                metadata.apply(MetaStep.Implement, metadata, this.prototype, source);
-            }
-        }
-        return this;
-    }
-
-    var extendInstance = Base.prototype.extend;
-    Base.prototype.extend = function (key, value) {
-        var numArgs    = arguments.length,
-            definition = (numArgs === 1) ? key : {};
-        if (numArgs >= 2) {
-            definition[key] = value;
-        } else if (numArgs === 0) {
-            return this;
-        }
-        definition = MetaBase.normalize(definition);
-        var metadata = this.$meta;
-        extendInstance.call(this, definition);
-        if (metadata) {
-            metadata.apply(MetaStep.Extend, metadata, this, definition);
-        }
-        return this;
-    }
 
     /**
      * Metamacro to proxy protocol methods through a delegate.<br/>
@@ -6940,7 +6938,7 @@ new function () { // closure
      * @extends miruken.MetaMacro
      */
     var $proxyProtocol = MetaMacro.extend({
-        apply: function (step, metadata, target, definition) {
+        perform: function (step, metadata, target, definition) {
             var clazz = metadata.getClass();
             if (clazz === Protocol) {
                 return;
@@ -6950,8 +6948,8 @@ new function () { // closure
                 if (key in protocolProto) {
                     continue;
                 }
-                var member = target[key];
-                if ($isFunction(member)) {
+                var member = Object.getOwnPropertyDescriptor(target, key);
+                if (member && $isFunction(member.value)) {
                     (function (methodName) {
                         target[methodName] = function () {
                             var args = Array.prototype.slice.call(arguments);
@@ -6990,8 +6988,8 @@ new function () { // closure
     });
     Protocol.extend     = Base.extend
     Protocol.implement  = Base.implement;
-    Protocol.$meta      = new ClassMeta(Base, Protocol, null, [new $proxyProtocol]);
-    Protocol.$meta.apply(MetaStep.Subclass, Protocol.$meta, Protocol.prototype);
+    Protocol.$meta      = new ClassMeta(null, Protocol, null, [new $proxyProtocol]);
+    Protocol.$meta.perform(MetaStep.Subclass, Protocol.$meta, Protocol.prototype);
 
     /**
      * Protocol base requiring conformance to match methods.
@@ -7041,11 +7039,41 @@ new function () { // closure
      */
     var $properties = MetaMacro.extend({
         constructor: function _(tag) {
-            var spec   = _.spec || (_.spec = {});
-            spec.value = tag || $properties.DEFAULT_TAG;
-            Object.defineProperty(this, 'tag', spec);
+            if ($isNothing(tag)) {
+                throw new Error("$properties requires a tag name");
+            }
+            Object.defineProperty(this, 'tag', { value: tag });
         },
-        apply: function _(step, metadata, target, definition) {
+        prepare: function _(step, definition, expand) {
+            if (this !== $properties.shared || !$isObject(definition)) {
+                return;
+            }
+            var properties, expanded,
+                names = Object.getOwnPropertyNames(definition);
+            for (var i = 0; i < names.length; ++i) {
+                var name = names[i],
+                    descriptor = Object.getOwnPropertyDescriptor(definition, name);
+                if (descriptor.get || descriptor.set) {
+                    var spec = _.spec || (_.spec = {
+                        configurable: true,
+                        value:        undefined
+                    });
+                    if (!properties) {
+                        expanded   = expand();
+                        properties = definition[this.tag] || (expanded[this.tag] = {});
+                    }
+                    Object.defineProperty(expanded, name, spec);
+                    var property = properties[name] = {};
+                    if (descriptor.get) {
+                        property.get = descriptor.get;
+                    }
+                    if (descriptor.set) {
+                        property.set = descriptor.set;
+                    }
+                }
+            }
+        },
+        perform: function _(step, metadata, target, definition) {
             var properties = this.extractProperty(this.tag, target, definition); 
             if (!properties) {
                 return;
@@ -7097,10 +7125,8 @@ new function () { // closure
                     spec.writable = true;                        
                     spec.value    = property.value;
                 }
-                if (!(name in target)) {
-                    _cleanDescriptor(property);
-                    this.defineProperty(metadata, target, name, spec, property);
-                }
+                _cleanDescriptor(property);
+                this.defineProperty(metadata, target, name, spec, property);
                 _cleanDescriptor(spec);
             }
         },
@@ -7120,7 +7146,14 @@ new function () { // closure
          */                
         isActive: True
     }, {
-        DEFAULT_TAG: "$properties"
+        init: function () {
+            Object.defineProperty(this, 'shared', {
+                enumerable:   false,
+                configurable: false,
+                writable:     false,
+                value:        Object.freeze(new this("$properties"))
+            });
+        }
     });
 
     function _makeGetter(getMethodName) {
@@ -7164,7 +7197,7 @@ new function () { // closure
      * @extends miruken.MetaMacro
      */
     var $inferProperties = MetaMacro.extend({
-        apply: function _(step, metadata, target, definition) {
+        perform: function _(step, metadata, target, definition) {
             for (var key in definition) {
                 var value = definition[key];
                 if (!$isFunction(value)) {
@@ -7257,7 +7290,7 @@ new function () { // closure
             Object.defineProperty(this, 'members', spec);
             delete spec.value;
         },
-        apply: function (step, metadata, target) {
+        perform: function (step, metadata, target) {
             if (step === MetaStep.Subclass) {
                 var members  = this.members,
                     clazz    = metadata.getClass(),
@@ -8274,7 +8307,7 @@ new function () { // closure
                 spec      = $decorator.spec || ($decorator.spec = {});
             spec.value = decoratee;
             Object.defineProperty(decorator, 'decoratee', spec);
-            _createInstanceMeta.call(decorator, decoratee.$meta);
+            ClassMeta.createInstanceMeta.call(decorator, decoratee.$meta);
             if (decorations) {
                 decorator.extend(decorations);
             }
@@ -8648,8 +8681,8 @@ new function () { // closure
      * @class Controller
      * @constructor
      * @extends miruken.callback.CallbackHandler
-     * @uses miruken.context.$contextual,
-     * @uses miruken.validate.$validateThat,
+     * @uses miruken.context.$contextual
+     * @uses miruken.validate.$validateThat
      * @uses miruken.validate.Validating
      */
     var Controller = CallbackHandler.extend(
@@ -9120,7 +9153,12 @@ new function () { // closure
          * Gets the regions context.
          * @property {miruken.context.Context} context
          */
-        get context() {},
+        get context() {},        
+        /**
+         * Gets the regions container element.
+         * @property {DOMElement} container
+         */
+        get container() {},        
         /**
          * Gets the regions controller.
          * @property {miruken.mvc.Controller} controller
@@ -9132,10 +9170,10 @@ new function () { // closure
          */            
         get controllerContext() {},        
         /**
-         * Renders a controller or view in the region.
+         * Renders new presentation in the region.
          * @method present
          * @param    {Any}      presentation  -  presentation options
-         * @returns  {Promise}  promise for the render process.
+         * @returns  {Promise}  promise for the rendering.
          */                                        
         present: function (presentation) {}
     });
@@ -9518,7 +9556,7 @@ new function () { // closure
      * @extends miruken.MetaMacro
      */    
     var $validateThat = MetaMacro.extend({
-        apply: function _(step, metadata, target, definition) {
+        perform: function _(step, metadata, target, definition) {
             var validateThat = this.extractProperty('$validateThat', target, definition);
             if (!validateThat) {
                 return;
@@ -9675,7 +9713,7 @@ new function () { // closure
      * @extends miruken.MetaMacro
      */    
     var $registerValidators = MetaMacro.extend({
-        apply: function (step, metadata, target, definition) {
+        perform: function (step, metadata, target, definition) {
             if (step === MetaStep.Subclass || step === MetaStep.Implement) {
                 for (var name in definition) {
                     var validator = definition[name];
@@ -27511,7 +27549,13 @@ describe("Package", function () {
                 name:    "bar",
                 parent:  foo
             });
+            var baz = new base2.Package(this, {
+                name:    "baz",
+                parent:  baz,
+                version: "2.0.0"
+            });            
             expect(bar.version).to.equal("1.0.0");
+            expect(baz.version).to.equal("2.0.0");
         });        
     });
     

@@ -30,6 +30,9 @@ new function() {
                 controller:   'PartialThreeController as vm'
             });
         },
+        destroyRegion: function () {
+            this.content.endContext();
+        },
         viewRegionCreated: function (region) {
             if (region.name === 'content') {
                 this.content = region;
