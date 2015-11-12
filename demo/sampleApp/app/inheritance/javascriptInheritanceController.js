@@ -41,7 +41,7 @@ new function(){
 				}
 			});
 
-			Employee.prototype.fullname = function(){
+			Employee.prototype.fullname = function (){
 				return Person.prototype.fullname.call(this) + ', ' + this.title;
 			}
 			

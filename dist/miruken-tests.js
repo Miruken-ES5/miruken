@@ -28482,7 +28482,7 @@ describe("ValidationCallbackHandler", function () {
 
         it("should provide key errors", function (done) {
             var team  = new Team({name: "Liverpool", division: "U8"}),
-                coach = new Coach("Jonathan");
+                coach = new Coach({firstName: "Jonathan"});
             league.addHandlers(team);
             Validator(league).validateAsync(coach).then(function (results) {
                 expect(results.valid).to.be.false;

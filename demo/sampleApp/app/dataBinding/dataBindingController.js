@@ -13,7 +13,7 @@ new function(){
 			first: 'Hari',
 			last:  'Seldon'
 		},
-		getFullName: function () {
+        get fullName() { 
 			return format('%1 %2', this.first, this.last);
 		}
 	});

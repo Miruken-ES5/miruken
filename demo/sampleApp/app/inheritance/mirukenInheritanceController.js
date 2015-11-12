@@ -17,7 +17,7 @@ new function(){
 					last:   '',
 					gender: ''
 				},
-				fullname: function(){
+				get fullname() {
 					return this.first + ' ' + this.last;
 				}
 			},{
@@ -30,7 +30,7 @@ new function(){
 					title: '',
 					payGrade: 0
 				},
-				fullname: function(){
+				get fullname() {
 					return this.base() + ', ' + this.title;
 				}
 			});

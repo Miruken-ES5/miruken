@@ -10,7 +10,6 @@ new function() {
 
 	var AnimationController = Controller.extend({
 		$properties:{
-            content: null,
 			message: 'Hello, Animations!'
 		},
         animationOne: function () {
@@ -45,6 +44,9 @@ new function() {
             ViewRegion(this.pictures.context.fade()).present({
                 templateUrl:  'app/animation/pictureThree.html'
             });
+        },
+        viewRegionCreated: function (region) {
+            this[region.name] = region;
         }
 	});
 
