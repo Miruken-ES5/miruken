@@ -2383,7 +2383,7 @@ new function () { // closure
      * @extends miruken.MetaMacro
      */
     var $callbacks = MetaMacro.extend({
-        perform: function (step, metadata, target, definition) {
+        execute: function (step, metadata, target, definition) {
             if ($isNothing(definition)) {
                 return;
             }
@@ -4010,10 +4010,10 @@ new function () { // closure
                     return root;
                 },
                 newChild: function () {
-                    _ensureActive();
+                    ensureActive();
                     var childContext = new ($classOf(this))(this).extend({
                         end: function () {
-                            var notifier = _notifier();
+                            var notifier = makeNotifier();
                             notifier.childContextEnding(childContext);
                             _children.remove(childContext);
                             this.base();
@@ -4079,7 +4079,7 @@ new function () { // closure
                  * @returns {Function} unsubscribes from context notifications.
                  */                                
                 observe: function (observer) {
-                    _ensureActive();
+                    ensureActive();
                     if (observer === null || observer === undefined) {
                         return;
                     }
@@ -4121,7 +4121,7 @@ new function () { // closure
                  */                                                                
                 end: function () { 
                     if (_state == ContextState.Active) {
-                        var notifier = _notifier();
+                        var notifier = makeNotifier();
                         _state = ContextState.Ending;
                         notifier.contextEnding(this);
                         this.unwind();
@@ -4133,13 +4133,13 @@ new function () { // closure
                 dispose: function () { this.end(); }
             });
 
-            function _ensureActive() {
+            function ensureActive() {
                 if (_state != ContextState.Active) {
                     throw new Error("The context has already ended.");
                 }
             }
 
-            function _notifier() {
+            function makeNotifier() {
                 return new ContextObserver(_observers ? _observers.copy() : null);
             }
         }
@@ -4203,7 +4203,7 @@ new function () { // closure
      * @extends miruken.MetaMacro
      */    
     var $contextual = MetaMacro.extend({
-        perform: function (step, metadata) {
+        execute: function (step, metadata) {
             if (step === MetaStep.Subclass) {
                 var clazz = metadata.getClass();
                 clazz.implement(ContextualMixin);
@@ -7022,22 +7022,22 @@ new function () { // closure
      */
     var MetaMacro = Base.extend({
         /**
-         * Prepares the macro for the given step.
-         * @method prepare
+         * Inflates the macro for the given step.
+         * @method inflate
          * @param  {miruken.MetaStep}  step        -  meta step
          * @param  {Object}            definition  -  updates to apply
          * @param  {Function}          expand      -  expanded definition
          */
-        prepare: function (step, definition, expand) {},
+        inflate: function (step, definition, expand) {},
         /**
-         * Performs the macro for the given step.
-         * @method perform
+         * Execite the macro for the given step.
+         * @method execute
          * @param  {miruken.MetaStep}  step        -  meta step
          * @param  {miruken.MetaBase}  metadata    -  effective metadata
          * @param  {Object}            target      -  target macro applied to 
          * @param  {Object}            definition  -  source to apply
          */
-        perform: function (step, metadata, target, definition) {},
+        execute: function (step, metadata, target, definition) {},
         /**
          * Triggered when a protocol is added to metadata.
          * @method protocolAdded
@@ -7163,18 +7163,18 @@ new function () { // closure
                     }
                     return false;
                 },
-                prepare: function (step, definition, expand) {
+                inflate: function (step, definition, expand) {
                     if (parent) {
-                        parent.prepare(step, definition, expand);
+                        parent.inflate(step, definition, expand);
                     } else if ($properties) {
-                        $properties.shared.prepare(step, definition, expand)
+                        $properties.shared.inflate(step, definition, expand)
                     }
                 },
-                perform: function (step, metadata, target, definition) {
+                execute: function (step, metadata, target, definition) {
                     if (parent) {
-                        parent.perform(step, metadata, target, definition);
+                        parent.execute(step, metadata, target, definition);
                     } else if ($properties) {
-                        $properties.shared.perform(step, metadata, target, definition);
+                        $properties.shared.execute(step, metadata, target, definition);
                     }
                 },
                 /**
@@ -7353,7 +7353,7 @@ new function () { // closure
                     return this.base(protocol) ||
                         !!(baseMeta && baseMeta.conformsTo(protocol));
                 },
-                prepare: function (step, definition, expand) {
+                inflate: function (step, definition, expand) {
                     this.base(step, definition, expand);
                     if (!_macros || _macros.length == 0) {
                         return;
@@ -7361,13 +7361,13 @@ new function () { // closure
                     var active = (step !== MetaStep.Subclass);
                     for (var i = 0; i < _macros.length; ++i) {
                         var macro = _macros[i];
-                        if ($isFunction(macro.prepare) &&
+                        if ($isFunction(macro.inflate) &&
                             (!active || macro.isActive()) && macro.shouldInherit()) {
-                            macro.prepare(step, definition, expand);
+                            macro.inflate(step, definition, expand);
                         }
                     }                    
                 },
-                perform: function (step, metadata, target, definition) {
+                execute: function (step, metadata, target, definition) {
                     this.base(step, metadata, target, definition);
                     if (!_macros || _macros.length == 0) {
                         return;
@@ -7378,10 +7378,15 @@ new function () { // closure
                         var macro = _macros[i];
                         if ((!active  || macro.isActive()) &&
                             (!inherit || macro.shouldInherit())) {
-                            macro.perform(step, metadata, target, definition);
+                            macro.execute(step, metadata, target, definition);
                         }
                     }
                 },
+                /**
+                 * Creates a sub-class from the current class metadata.
+                 * @method createSubclass
+                 * @returns  {Function} the newly created class function.
+                 */                                                                
                 createSubclass: function _() {
                     var args = Array.prototype.slice.call(arguments),
                         constraints = args, protocols, mixins, macros;
@@ -7408,38 +7413,62 @@ new function () { // closure
                         }
                         constraints.shift();
                     }
-                    var empty       = _.u || (_.u = {}),
-                        instanceDef = args.shift() || empty,
-                        staticDef   = args.shift() || empty;
-                    this.prepare(MetaStep.Subclass, instanceDef, expand);
+                    var empty        = _.u  || (_.u = {}),
+                        classSpec    = _.cm || (_.cm = {
+                            enumerable:   false,
+                            configurable: false,
+                            writable:     false,
+                        }),
+                        instanceSpec = _.im || (_.im = {
+                            enumerable:   false,
+                            configurable: false,
+                            get:          ClassMeta.createInstanceMeta
+                        }),
+                        instanceDef  = args.shift() || empty,
+                        staticDef    = args.shift() || empty;
+                    this.inflate(MetaStep.Subclass, instanceDef, expand);
                     if (macros) {
                         for (var i = 0; i < macros.length; ++i) {
-                            macros[i].prepare(MetaStep.Subclass, instanceDef, expand);
+                            macros[i].inflate(MetaStep.Subclass, instanceDef, expand);
                         }
                     }
-                    instanceDef = expand.x || instanceDef;
-                    var derivedClass = ClassMeta.baseExtend.call(subClass, instanceDef, staticDef),
-                        metadata     = new ClassMeta(this, derivedClass, protocols, macros);
-                    Object.defineProperty(derivedClass, '$meta', {
-                        enumerable:   false,
-                        configurable: false,
-                        writable:     false,
-                        value:        metadata
-                    });
-                    Object.defineProperty(derivedClass.prototype, '$meta', {
-                        enumerable:   false,
-                        configurable: false,
-                        get:          ClassMeta.createInstanceMeta
-                    });
-                    derivedClass.conformsTo = metadata.conformsTo.bind(metadata);
-                    metadata.perform(MetaStep.Subclass, metadata, derivedClass.prototype, instanceDef);
+                    instanceDef  = expand.x || instanceDef;
+                    var derived  = ClassMeta.baseExtend.call(subClass, instanceDef, staticDef),
+                        metadata = new ClassMeta(this, derived, protocols, macros);
+                    classSpec.value = metadata;
+                    Object.defineProperty(derived, '$meta', classSpec);
+                    Object.defineProperty(derived.prototype, '$meta', instanceSpec);
+                    delete classSpec.value;
+                    derived.conformsTo = metadata.conformsTo.bind(metadata);
+                    metadata.execute(MetaStep.Subclass, metadata, derived.prototype, instanceDef);
                     if (mixins) {
-                        Array2.forEach(mixins, derivedClass.implement, derivedClass);
+                        Array2.forEach(mixins, derived.implement, derived);
                     }
                     function expand() {
                         return expand.x || (expand.x = Object.create(instanceDef));
-                    }                    
-                    return derivedClass;                    
+                    }   
+                    return derived;                    
+                },
+                /**
+                 * Embellishes the class represented by this metadata.
+                 * @method embellishClass
+                 * @param   {Any} source  -  class function or object literal
+                 * @returns {Function} the underlying class.
+                 */
+                embellishClass: function (source) {
+                    if ($isFunction(source)) {
+                        source = source.prototype; 
+                    }
+                    if ($isSomething(source)) {
+                        this.inflate(MetaStep.Implement, source, expand);
+                        source = expand.x || source;
+                        ClassMeta.baseImplement.call(subClass, source);
+                        this.execute(MetaStep.Implement, this, subClass.prototype, source);
+                        function expand() {
+                            return expand.x || (expand.x = Object.create(source));
+                        };                    
+                    }
+                    return subClass;
                 }
             });
             this.addProtocol(protocols);
@@ -7449,25 +7478,12 @@ new function () { // closure
             this.baseExtend    = Base.extend;
             this.baseImplement = Base.implement;
             Base.$meta         = new this(undefined, Base);
-            Abstract.$meta     = new this(Base.$meta, Abstract);
-            Base.extend        = Abstract.extend = function () {
+            Abstract.$meta     = new this(Base.$meta, Abstract);            
+            Base.extend = Abstract.extend = function () {
                 return this.$meta.createSubclass.apply(this.$meta, arguments);
             };
-            Base.implement     = Abstract.implement = function (source) {
-                if ($isFunction(source)) {
-                    source = source.prototype; 
-                }
-                if ($isSomething(source)) {
-                    var metadata = this.$meta;
-                    metadata.prepare(MetaStep.Implement, source, expand);
-                    source = expand.x || source;
-                    ClassMeta.baseImplement.call(this, source);
-                    metadata.perform(MetaStep.Implement, metadata, this.prototype, source);
-                    function expand() {
-                        return expand.x || (expand.x = Object.create(source));
-                    };                    
-                }
-                return this;
+            Base.implement = Abstract.implement = function () {
+                return this.$meta.embellishClass.apply(this.$meta, arguments);                
             }
             Base.prototype.conformsTo = function (protocol) {
                 return this.constructor.$meta.conformsTo(protocol);
@@ -7475,11 +7491,11 @@ new function () { // closure
         },
         createInstanceMeta: function _(parent) {
             var spec = _.spec || (_.spec = {
-                    enumerable:   false,
-                    configurable: true,
-                    writable:     false
-                }),
-                metadata = new InstanceMeta(parent || this.constructor.$meta);
+                enumerable:   false,
+                configurable: true,
+                writable:     false
+            });
+            var metadata = new InstanceMeta(parent || this.constructor.$meta);
             spec.value = metadata;
             Object.defineProperty(this, '$meta', spec);
             delete spec.value;
@@ -7514,7 +7530,7 @@ new function () { // closure
         }
     }, {
         init: function () {
-            var instanceExtend = Base.prototype.extend;
+            var baseExtend = Base.prototype.extend;
             Base.prototype.extend = function (key, value) {
                 var numArgs    = arguments.length,
                     definition = (numArgs === 1) ? key : {};
@@ -7525,15 +7541,15 @@ new function () { // closure
                 }
                 var metadata = this.$meta;
                 if (metadata) {
-                    metadata.prepare(MetaStep.Extend, definition, expand);
+                    metadata.inflate(MetaStep.Extend, definition, expand);
                     definition = expand.x || definition;
                     function expand() {
                         return expand.x || (expand.x = Object.create(definition));
                     };                    
                 }
-                instanceExtend.call(this, definition);                
+                baseExtend.call(this, definition);                
                 if (metadata) {
-                    metadata.perform(MetaStep.Extend, metadata, this, definition);
+                    metadata.execute(MetaStep.Extend, metadata, this, definition);
                 }
                 return this;
             }
@@ -7547,7 +7563,7 @@ new function () { // closure
      * @extends miruken.MetaMacro
      */
     var $proxyProtocol = MetaMacro.extend({
-        perform: function (step, metadata, target, definition) {
+        execute: function (step, metadata, target, definition) {
             var clazz = metadata.getClass();
             if (clazz === Protocol) {
                 return;
@@ -7598,7 +7614,7 @@ new function () { // closure
     Protocol.extend     = Base.extend
     Protocol.implement  = Base.implement;
     Protocol.$meta      = new ClassMeta(null, Protocol, null, [new $proxyProtocol]);
-    Protocol.$meta.perform(MetaStep.Subclass, Protocol.$meta, Protocol.prototype);
+    Protocol.$meta.execute(MetaStep.Subclass, Protocol.$meta, Protocol.prototype);
 
     /**
      * Protocol base requiring conformance to match methods.
@@ -7653,7 +7669,7 @@ new function () { // closure
             }
             Object.defineProperty(this, 'tag', { value: tag });
         },
-        prepare: function _(step, definition, expand) {
+        inflate: function _(step, definition, expand) {
             if (this !== $properties.shared || !$isObject(definition)) {
                 return;
             }
@@ -7682,7 +7698,7 @@ new function () { // closure
                 }
             }
         },
-        perform: function _(step, metadata, target, definition) {
+        execute: function _(step, metadata, target, definition) {
             var properties = this.extractProperty(this.tag, target, definition); 
             if (!properties) {
                 return;
@@ -7806,7 +7822,7 @@ new function () { // closure
      * @extends miruken.MetaMacro
      */
     var $inferProperties = MetaMacro.extend({
-        perform: function _(step, metadata, target, definition) {
+        execute: function _(step, metadata, target, definition) {
             for (var key in definition) {
                 var value = definition[key];
                 if (!$isFunction(value)) {
@@ -7899,7 +7915,7 @@ new function () { // closure
             Object.defineProperty(this, 'members', spec);
             delete spec.value;
         },
-        perform: function (step, metadata, target) {
+        execute: function (step, metadata, target) {
             if (step === MetaStep.Subclass) {
                 var members  = this.members,
                     clazz    = metadata.getClass(),
@@ -10165,7 +10181,7 @@ new function () { // closure
      * @extends miruken.MetaMacro
      */    
     var $validateThat = MetaMacro.extend({
-        perform: function _(step, metadata, target, definition) {
+        execute: function _(step, metadata, target, definition) {
             var validateThat = this.extractProperty('$validateThat', target, definition);
             if (!validateThat) {
                 return;
@@ -10322,7 +10338,7 @@ new function () { // closure
      * @extends miruken.MetaMacro
      */    
     var $registerValidators = MetaMacro.extend({
-        perform: function (step, metadata, target, definition) {
+        execute: function (step, metadata, target, definition) {
             if (step === MetaStep.Subclass || step === MetaStep.Implement) {
                 for (var name in definition) {
                     var validator = definition[name];
