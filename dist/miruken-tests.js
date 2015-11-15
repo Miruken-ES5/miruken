@@ -22117,7 +22117,7 @@ eval(callback.namespace);
 
 new function () { // closure
 
-    var callback_test = new base2.Package(this, {
+    var callback_test = base2.package(this, {
         name:    "callback_test",
         exports: "Guest,Dealer,PitBoss,DrinkServer,Game,Security,Level1Security,Level2Security,WireMoney,CountMoney,Accountable,Cashier,Activity,CardTable,Casino"
     });
@@ -24493,7 +24493,7 @@ eval(graph.namespace);
 
 new function () { // closure
 
-    var grpah_test = new base2.Package(this, {
+    var grpah_test =  base2.package(this, {
         name:    "graph_test",
         exports: "TreeNode"
     });
@@ -24824,7 +24824,7 @@ eval(miruken.ioc.namespace);
 
 new function () { // closure
 
-    var ioc_fluent_test = new base2.Package(this, {
+    var ioc_fluent_test = base2.package(this, {
         name:    "ioc_fluent_test",
         exports: "Service,Authentication,Controller,Credentials,LoginController,SomeService,InMemoryAuthenticator,PackageInstaller"
     });
@@ -25123,7 +25123,7 @@ Promise.onPossiblyUnhandledRejection(Undefined);
 
 new function () { // closure
 
-    var ioc_test = new base2.Package(this, {
+    var ioc_test =  base2.package(this, {
         name:    "ioc_test",
         exports: "Car,Engine,Diagnostics,Junkyard,V12,RebuiltV12,Supercharger,Ferrari,Bugatti,Auction,OBDII,CraigsJunk,LogInterceptor,ToUpperInterceptor,ToLowerInterceptor"
     });
@@ -26433,7 +26433,7 @@ Promise.onPossiblyUnhandledRejection(Undefined);
 
 new function () { // closure
 
-    var miruken_test = new base2.Package(this, {
+    var miruken_test = base2.package(this, {
         name:    "miruken_test",
         exports: "Animal,Tricks,CircusAnimal,Dog,Elephant,AsianElephant,Tracked,ShoppingCart,LogInterceptor"
     });
@@ -27554,17 +27554,15 @@ describe("ProxyBuilder", function () {
 describe("Package", function () {
     describe("#version", function () {
         it("should inherit parent version", function () {
-            var foo = new base2.Package(this, {
+            var foo = base2.package(this, {
                 name:    "foo",
                 version: "1.0.0"
             });
-            var bar = new base2.Package(this, {
+            var bar = foo.package(this, {
                 name:    "bar",
-                parent:  foo
             });
-            var baz = new base2.Package(this, {
+            var baz = bar.package(this, {
                 name:    "baz",
-                parent:  baz,
                 version: "2.0.0"
             });            
             expect(bar.version).to.equal("1.0.0");
@@ -27645,7 +27643,7 @@ eval(miruken.mvc.namespace);
 
 new function () { // closure
 
-    var mvc_test = new base2.Package(this, {
+    var mvc_test = base2.package(this, {
         name:    "mvc_test",
         exports: "Person,Doctor,PersonController"
     });
@@ -28163,7 +28161,7 @@ eval(validate.namespace);
 
 new function () { // closure
 
-    var validate_test = new base2.Package(this, {
+    var validate_test = base2.package(this, {
         name:    "validate_test",
         exports: "Player,Coach,Team,HttpClient"
     });
@@ -28574,7 +28572,7 @@ eval(validate.namespace);
 
 new function () { // closure
 
-    var validatejs_test = new base2.Package(this, {
+    var validatejs_test = base2.package(this, {
         name:    "validatejs_test",
         exports: "Address,LineItem,Order,User,Database,CustomValidators"
     });

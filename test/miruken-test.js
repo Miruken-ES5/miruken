@@ -11,7 +11,7 @@ Promise.onPossiblyUnhandledRejection(Undefined);
 
 new function () { // closure
 
-    var miruken_test = new base2.Package(this, {
+    var miruken_test = base2.package(this, {
         name:    "miruken_test",
         exports: "Animal,Tricks,CircusAnimal,Dog,Elephant,AsianElephant,Tracked,ShoppingCart,LogInterceptor"
     });
@@ -1132,17 +1132,15 @@ describe("ProxyBuilder", function () {
 describe("Package", function () {
     describe("#version", function () {
         it("should inherit parent version", function () {
-            var foo = new base2.Package(this, {
+            var foo = base2.package(this, {
                 name:    "foo",
                 version: "1.0.0"
             });
-            var bar = new base2.Package(this, {
+            var bar = foo.package(this, {
                 name:    "bar",
-                parent:  foo
             });
-            var baz = new base2.Package(this, {
+            var baz = bar.package(this, {
                 name:    "baz",
-                parent:  baz,
                 version: "2.0.0"
             });            
             expect(bar.version).to.equal("1.0.0");

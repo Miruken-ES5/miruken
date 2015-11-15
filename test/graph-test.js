@@ -9,7 +9,7 @@ eval(graph.namespace);
 
 new function () { // closure
 
-    var grpah_test = new base2.Package(this, {
+    var grpah_test =  base2.package(this, {
         name:    "graph_test",
         exports: "TreeNode"
     });

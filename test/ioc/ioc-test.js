@@ -15,7 +15,7 @@ Promise.onPossiblyUnhandledRejection(Undefined);
 
 new function () { // closure
 
-    var ioc_test = new base2.Package(this, {
+    var ioc_test =  base2.package(this, {
         name:    "ioc_test",
         exports: "Car,Engine,Diagnostics,Junkyard,V12,RebuiltV12,Supercharger,Ferrari,Bugatti,Auction,OBDII,CraigsJunk,LogInterceptor,ToUpperInterceptor,ToLowerInterceptor"
     });
