@@ -1,5 +1,6 @@
-new function(){
-	var sampleApp = new base2.Package(this, {
+new function (){
+    
+	base2.package(this, {
 		name:    'sampleApp',
 		imports: 'miruken.ioc',
 		exports: 'ModalsInstaller'

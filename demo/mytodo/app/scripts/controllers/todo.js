@@ -1,8 +1,7 @@
 new function () {
 
-    var todo = new base2.Package(this, {
+    mytodoApp.package(this, {
         name:    "todo",
-        parent:  mytodoApp,
         imports: "miruken,miruken.mvc,miruken.ioc",
         exports: "TodoController,TodoInstaller,TodoRunner,TodoStartup"
     });

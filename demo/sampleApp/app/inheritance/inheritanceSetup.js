@@ -1,6 +1,7 @@
-new function(){
-	var sampleApp = new base2.Package(this, {
-		name: 'sampleApp',
+new function (){
+    
+	base2.package(this, {
+		name:    'sampleApp',
 		imports: 'miruken.ioc',
 		exports: 'InheritanceInstaller'
 	});
