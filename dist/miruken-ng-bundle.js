@@ -4156,7 +4156,7 @@ new function () { // closure
      * @class ContextualMixin
      * @private
      */
-    var ContextualMixin = {
+    var ContextualMixin = Object.freeze({
         /**
          * The context associated with the receiver.
          * @property {miruken.context.Context} context
@@ -4192,7 +4192,7 @@ new function () { // closure
                 this.__context.end();
             }
         }
-    };
+    });
 
     /**
      * Metamacro to make classes contextual.<br/>
@@ -4362,7 +4362,7 @@ new function () { // closure
             return this.decorate({
                 handle: function (callback, greedy, composer) {
                     return (callback instanceof Composition)
-                         ? base.handle(callback, greedy, composer)
+                         ? this.base(callback, greedy, composer)
                          : this.handleAxis(axis, callback, greedy, composer);
                 },
                 equals: function (other) {
@@ -4379,6 +4379,23 @@ new function () { // closure
         axisControl[key] = Function2.partial(applyAxis, axis);
     }
 
+    CallbackHandler.implement({
+        /**
+         * Establishes publish invocation semantics.
+         * @method $publish
+         * @returns {miruken.callback.CallbackHandler} publish semantics.
+         * @for miruken.callback.CallbackHandler
+         */
+        $publish: function () {
+            var composer = this;
+            var context = ContextualHelper.resolveContext(composer);
+            if (context) {
+                composer = context.$descendantOrSelf();
+            }
+            return composer.$notify();
+        }
+    });
+    
     /**
      * Sets the default traversal axis to
      * {{#crossLink "miruken.graph.TraversingAxis/Self:property"}}{{/crossLink}}.
@@ -4775,7 +4792,7 @@ new function () { // closure
         /**
          * Traverse a graph of objects.
          * @method traverse
-         * @param {miruken.graph.TraversingAxis} axis  -  axis of traversal
+         * @param {miruken.graph.TraversingAxis} axis        -  axis of traversal
          * @param {Function}                     visitor     -  receives visited nodes
          * @param {Object}                       [context]   -  visitor callback context
          */
@@ -6790,7 +6807,7 @@ new function () { // closure
      */
     base2.package(this, {
         name:    "miruken",
-        version: "0.0.11",
+        version: "0.0.12",
         exports: "Enum,Variance,Protocol,StrictProtocol,Delegate,Miruken,MetaStep,MetaMacro,Initializing,Disposing,DisposingMixin,Invoking,Parenting,Starting,Startup,Facet,Interceptor,InterceptorSelector,ProxyBuilder,Modifier,ArrayManager,IndexedList,$isProtocol,$isClass,$classOf,$ancestorOf,$isString,$isFunction,$isObject,$isArray,$isPromise,$isNothing,$isSomething,$using,$lift,$equals,$decorator,$decorate,$decorated,$debounce,$eq,$use,$copy,$lazy,$eval,$every,$child,$optional,$promise,$instant,$createModifier,$properties,$inferProperties,$inheritStatic"
     });
 
