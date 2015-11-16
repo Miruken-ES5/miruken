@@ -406,6 +406,31 @@ describe("Context", function() {
             expect(ended).to.be.false;
         });
     });
+
+    describe("CallbackHandler", function() {
+        it("should publish to all descendants", function() {
+            var count = 0,
+                Observing = Protocol.extend({
+                    observe: function () {}
+                }),
+                Observer = Base.extend(Observing, {
+                    observe: function () { ++count; }
+                }),
+                root       = new Context,
+                child1     = root.newChild(),
+                child2     = root.newChild(),
+                child3     = root.newChild(),
+                grandChild = child3.newChild();
+            root.addHandlers(new Observer);
+            child1.addHandlers(new Observer);
+            child1.addHandlers(new Observer);            
+            child2.addHandlers(new Observer);
+            child3.addHandlers(new Observer);
+            child3.addHandlers(new Observer);
+            Observing(root.$publish()).observe();
+            expect(count).to.equal(6);
+        });        
+    });
 });
 
 describe("Contextual", function() {

@@ -1,6 +1,6 @@
 new function () {
 
-    var mytodoApp = new base2.Package(this, {
+     base2.package(this, {
         name:     'mytodoApp',
         imports:  'miruken.ng',
         ngModule: [ 'ngAnimate',

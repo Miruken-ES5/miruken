@@ -14,7 +14,7 @@ eval(validate.namespace);
 
 new function () { // closure
 
-    var validate_test = new base2.Package(this, {
+    var validate_test = base2.package(this, {
         name:    "validate_test",
         exports: "Player,Coach,Team,HttpClient"
     });

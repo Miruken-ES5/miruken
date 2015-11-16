@@ -1,5 +1,6 @@
-new function(){
-	var sampleApp = new base2.Package(this, {
+new function () {
+    
+	base2.package(this, {
 		name:    'sampleApp',
 		imports: 'miruken.mvc',
 		exports: 'WelcomeController'
@@ -10,4 +11,5 @@ new function(){
 	var WelcomeController = Controller.extend({});
 
 	eval(this.exports);
+   
 }

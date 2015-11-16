@@ -14,7 +14,7 @@ eval(validate.namespace);
 
 new function () { // closure
 
-    var validatejs_test = new base2.Package(this, {
+    var validatejs_test = base2.package(this, {
         name:    "validatejs_test",
         exports: "Address,LineItem,Order,User,Database,CustomValidators"
     });

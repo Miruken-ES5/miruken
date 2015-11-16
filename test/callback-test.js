@@ -10,7 +10,7 @@ eval(callback.namespace);
 
 new function () { // closure
 
-    var callback_test = new base2.Package(this, {
+    var callback_test = base2.package(this, {
         name:    "callback_test",
         exports: "Guest,Dealer,PitBoss,DrinkServer,Game,Security,Level1Security,Level2Security,WireMoney,CountMoney,Accountable,Cashier,Activity,CardTable,Casino"
     });

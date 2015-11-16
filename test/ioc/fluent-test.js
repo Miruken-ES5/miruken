@@ -12,7 +12,7 @@ eval(miruken.ioc.namespace);
 
 new function () { // closure
 
-    var ioc_fluent_test = new base2.Package(this, {
+    var ioc_fluent_test = base2.package(this, {
         name:    "ioc_fluent_test",
         exports: "Service,Authentication,Controller,Credentials,LoginController,SomeService,InMemoryAuthenticator,PackageInstaller"
     });

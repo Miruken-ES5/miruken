@@ -1,6 +1,6 @@
 ﻿new function() {
 
-    var sampleApp = new base2.Package(this, {
+    base2.package(this, {
         name:    "sampleApp",
         imports: "miruken,miruken.mvc",
         exports: "SelfClosingModalController"

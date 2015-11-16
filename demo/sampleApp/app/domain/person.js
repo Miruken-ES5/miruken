@@ -1,8 +1,7 @@
 new function() {
 
-    var domain = new base2.Package(this, {
+    sampleApp.package(this, {
         name:    "domain",
-        parent:  sampleApp,
         imports: "miruken.mvc",
         exports: "Person"
     });

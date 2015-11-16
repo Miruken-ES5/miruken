@@ -11,7 +11,7 @@ eval(miruken.mvc.namespace);
 
 new function () { // closure
 
-    var mvc_test = new base2.Package(this, {
+    var mvc_test = base2.package(this, {
         name:    "mvc_test",
         exports: "Person,Doctor,PersonController"
     });

@@ -182,6 +182,8 @@ var Package = Base.extend({
     }
     
     if (_private) {
+      _private.__package = this;
+      _private.package = openPkg || this;
       // This next line gets round a bug in old Mozilla browsers
       var jsNamespace = base2.js ? base2.js.namespace : "";
       
@@ -213,7 +215,7 @@ var Package = Base.extend({
       _private.exported = function() {
         if (nsPkg.exported) nsPkg.exported(exports);
       };
-      _private.exports = namespace + "this._label_" + pkg.name + "();this.exported();";
+      _private.exports = "if(!" + pkg.name +")var " + pkg.name + "=this.__package;" + namespace + "this._label_" + pkg.name + "();this.exported();";
       
       // give objects and classes pretty toString methods
       var packageName = String2.slice(pkg, 1, -1);
@@ -268,6 +270,11 @@ var Package = Base.extend({
     return package;
   },
 
+  package: function(_private, _public) {
+    _public.parent = this;
+    return new Package(_private, _public);
+  },
+    
   toString: function() {
     return format("[%1]", this.parent ? String2.slice(this.parent, 1, -1) + "." + this.name : this.name);
   }
@@ -1723,9 +1730,8 @@ new function () { // closure
      * @namespace miruken.callback
      * @class $
      */
-    var callback = new base2.Package(this, {
+     miruken.package(this, {
         name:    "callback",
-        parent:  miruken,
         imports: "miruken",
         exports: "CallbackHandler,CascadeCallbackHandler,CompositeCallbackHandler,InvocationOptions,Resolving,Resolution,Composition,HandleMethod,ResolveMethod,RejectedError,getEffectivePromise,$handle,$callbacks,$define,$provide,$lookup,$NOT_HANDLED"
     });
@@ -3243,7 +3249,7 @@ new function () { // closure
      */                        
 
     if (typeof module !== 'undefined' && module.exports) {
-        module.exports = exports = callback;
+        module.exports = exports = this.package;
     }
 
     eval(this.exports);
@@ -3267,9 +3273,8 @@ new function () { // closure
      * @submodule context
      * @namespace miruken.context
      */
-    var context = new base2.Package(this, {
+    miruken.package(this, {
         name:    "context",
-        parent:  miruken,
         imports: "miruken,miruken.graph,miruken.callback",
         exports: "ContextState,ContextObserver,Context,ContextualHelper,$contextual"
     });
@@ -3543,7 +3548,7 @@ new function () { // closure
      * @class ContextualMixin
      * @private
      */
-    var ContextualMixin = {
+    var ContextualMixin = Object.freeze({
         /**
          * The context associated with the receiver.
          * @property {miruken.context.Context} context
@@ -3579,7 +3584,7 @@ new function () { // closure
                 this.__context.end();
             }
         }
-    };
+    });
 
     /**
      * Metamacro to make classes contextual.<br/>
@@ -3749,7 +3754,7 @@ new function () { // closure
             return this.decorate({
                 handle: function (callback, greedy, composer) {
                     return (callback instanceof Composition)
-                         ? base.handle(callback, greedy, composer)
+                         ? this.base(callback, greedy, composer)
                          : this.handleAxis(axis, callback, greedy, composer);
                 },
                 equals: function (other) {
@@ -3766,6 +3771,23 @@ new function () { // closure
         axisControl[key] = Function2.partial(applyAxis, axis);
     }
 
+    CallbackHandler.implement({
+        /**
+         * Establishes publish invocation semantics.
+         * @method $publish
+         * @returns {miruken.callback.CallbackHandler} publish semantics.
+         * @for miruken.callback.CallbackHandler
+         */
+        $publish: function () {
+            var composer = this;
+            var context = ContextualHelper.resolveContext(composer);
+            if (context) {
+                composer = context.$descendantOrSelf();
+            }
+            return composer.$notify();
+        }
+    });
+    
     /**
      * Sets the default traversal axis to
      * {{#crossLink "miruken.graph.TraversingAxis/Self:property"}}{{/crossLink}}.
@@ -3907,7 +3929,7 @@ new function () { // closure
         };
 
     if (typeof module !== 'undefined' && module.exports) {
-        module.exports = exports = context;
+        module.exports = exports = this.package;
     }
 
     eval(this.exports);
@@ -3929,9 +3951,8 @@ new function() { // closure
      * @submodule error
      * @namespace miruken.error
      */
-    var error = new base2.Package(this, {
+    miruken.package(this, {
         name:    "error",
-        parent:  miruken,
         imports: "miruken,miruken.callback",
         exports: "Errors,ErrorCallbackHandler"
     });
@@ -4055,7 +4076,7 @@ new function() { // closure
     });
 
     if (typeof module !== 'undefined' && module.exports) {
-        module.exports = exports = error;
+        module.exports = exports = this.package;
     }
 
     eval(this.exports);
@@ -4073,9 +4094,8 @@ new function () { // closure
      * @submodule graph
      * @namespace miruken.graph
      */
-    var grpah = new base2.Package(this, {
+     miruken.package(this, {
         name:    "graph",
-        parent:  miruken,
         imports: "miruken",
         exports: "TraversingAxis,Traversing,TraversingMixin,Traversal"
     });
@@ -4164,7 +4184,7 @@ new function () { // closure
         /**
          * Traverse a graph of objects.
          * @method traverse
-         * @param {miruken.graph.TraversingAxis} axis  -  axis of traversal
+         * @param {miruken.graph.TraversingAxis} axis        -  axis of traversal
          * @param {Function}                     visitor     -  receives visited nodes
          * @param {Object}                       [context]   -  visitor callback context
          */
@@ -4477,9 +4497,8 @@ new function () { // closure
      * @namespace miruken.ioc
      * @Class $
      */            
-    var ioc = new base2.Package(this, {
+    miruken.package(this, {
         name:    "ioc",
-        parent:  miruken,
         imports: "miruken,miruken.ioc",
         exports: "Installer,FromBuilder,FromPackageBuilder,BasedOnBuilder,KeyBuilder,$classes"
     });
@@ -4891,7 +4910,7 @@ new function () { // closure
     }
 
     if (typeof module !== 'undefined' && module.exports) {
-        module.exports = exports = ioc;
+        module.exports = exports = this.package;
     }
 
     eval(this.exports);
@@ -4922,9 +4941,8 @@ new function () { // closure
      * @namespace miruken.ioc
      * @Class $
      */        
-    var ioc = new base2.Package(this, {
+    miruken.package(this, {
         name:    "ioc",
-        parent:  miruken,
         imports: "miruken,miruken.graph,miruken.callback,miruken.context,miruken.validate",
         exports: "Container,Registration,ComponentPolicy,Lifestyle,TransientLifestyle,SingletonLifestyle,ContextualLifestyle,DependencyModifiers,DependencyModel,DependencyManager,DependencyInspector,ComponentModel,ComponentBuilder,ComponentModelError,IoContainer,DependencyResolution,DependencyResolutionError,$component,$$composer,$container"
     });
@@ -6159,7 +6177,7 @@ new function () { // closure
     }
 
     if (typeof module !== 'undefined' && module.exports) {
-        module.exports = exports = ioc;
+        module.exports = exports = this.package;
     }
 
     eval(this.exports);
@@ -6179,9 +6197,9 @@ new function () { // closure
      * @main miruken
      * @class $
      */
-    var miruken = new base2.Package(this, {
+    base2.package(this, {
         name:    "miruken",
-        version: "0.0.11",
+        version: "0.0.12",
         exports: "Enum,Variance,Protocol,StrictProtocol,Delegate,Miruken,MetaStep,MetaMacro,Initializing,Disposing,DisposingMixin,Invoking,Parenting,Starting,Startup,Facet,Interceptor,InterceptorSelector,ProxyBuilder,Modifier,ArrayManager,IndexedList,$isProtocol,$isClass,$classOf,$ancestorOf,$isString,$isFunction,$isObject,$isArray,$isPromise,$isNothing,$isSomething,$using,$lift,$equals,$decorator,$decorate,$decorated,$debounce,$eq,$use,$copy,$lazy,$eval,$every,$child,$optional,$promise,$instant,$createModifier,$properties,$inferProperties,$inheritStatic"
     });
 
@@ -8419,10 +8437,10 @@ new function () { // closure
         };
 
     if (typeof module !== 'undefined' && module.exports) {
-        module.exports = exports = miruken;
+        module.exports = exports = this.package;
     }
 
-    global.miruken = miruken;
+    global.miruken = this.package;
     global.Miruken = Miruken;
 
     eval(this.exports);
@@ -8451,9 +8469,8 @@ new function () { // closure
      * @namespace miruken.validate
      * @class $
      */    
-    var validate = new base2.Package(this, {
+    miruken.package(this, {
         name:    "validate",
-        parent:  miruken,
         imports: "miruken,miruken.callback",
         exports: "Validating,Validator,Validation,ValidationResult,ValidationCallbackHandler,$validate,$validateThat"
     });
@@ -8835,7 +8852,7 @@ new function () { // closure
     });
 
     if (typeof module !== 'undefined' && module.exports) {
-        module.exports = exports = validate;
+        module.exports = exports = this.package;
     }
 
     eval(this.exports);
@@ -8857,9 +8874,8 @@ new function () { // closure
      * @namespace miruken.validate
      * @class $
      */    
-    var validate = new base2.Package(this, {
+    miruken.package(this, {
         name:    "validate",
-        parent:  miruken,
         imports: "miruken,miruken.callback,miruken.validate",
         exports: "ValidationRegistry,ValidateJsCallbackHandler,$required,$nested"
     });
