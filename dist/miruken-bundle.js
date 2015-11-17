@@ -2272,6 +2272,9 @@ new function () { // closure
             HandleMethod, function (method, composer) {
                 return method.invokeOn(this.delegate, composer) || method.invokeOn(this, composer);
             },
+            ResolveMethod, function (method, composer) {
+                return method.invokeResolve(composer);
+            },            
             Composition, function (composable, composer) {
                 var callback = composable.callback;
                 return callback && $handle.dispatch(this, callback, null, composer);
