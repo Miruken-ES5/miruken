@@ -6751,9 +6751,13 @@ new function () { // closure
             dependencies[key] = resolved;
         }
         if (promises.length === 1) {
-            return promises[0].return(dependencies);
+            return promises[0].then(function () {
+                return dependencies;
+            });
         } else if (promises.length > 1) {
-            return Promise.all(promises).return(dependencies);
+            return Promise.all(promises).then(function () {
+                return dependencies;
+            });
         }
         return dependencies;
     }
@@ -6810,7 +6814,7 @@ new function () { // closure
      */
     base2.package(this, {
         name:    "miruken",
-        version: "0.0.14",
+        version: "0.0.15",
         exports: "Enum,Variance,Protocol,StrictProtocol,Delegate,Miruken,MetaStep,MetaMacro,Initializing,Disposing,DisposingMixin,Invoking,Parenting,Starting,Startup,Facet,Interceptor,InterceptorSelector,ProxyBuilder,Modifier,ArrayManager,IndexedList,$isProtocol,$isClass,$classOf,$ancestorOf,$isString,$isFunction,$isObject,$isArray,$isPromise,$isNothing,$isSomething,$using,$lift,$equals,$decorator,$decorate,$decorated,$debounce,$eq,$use,$copy,$lazy,$eval,$every,$child,$optional,$promise,$instant,$createModifier,$properties,$inferProperties,$inheritStatic"
     });
 
