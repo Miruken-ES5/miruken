@@ -47,7 +47,7 @@ new function () { // closure
         function ($rootElement, $rootScope, $injector, $templates, $controller, $compile, $q) {
             _instrumentScopes($rootScope, $injector);
             var appRegion = new PartialRegion('root', $rootElement, $rootScope, $templates, $controller, $compile, $q);
-            $appContext.addHandlers(rootRegion, new BootstrapProvider, new GreenSockFadeProvider);
+            $appContext.addHandlers(appRegion, new BootstrapProvider, new GreenSockFadeProvider);
             _provideInjector(appContainer, $injector);
     }]);
     
@@ -6817,7 +6817,7 @@ new function () { // closure
      */
     base2.package(this, {
         name:    "miruken",
-        version: "0.0.16",
+        version: "0.0.17",
         exports: "Enum,Variance,Protocol,StrictProtocol,Delegate,Miruken,MetaStep,MetaMacro,Initializing,Disposing,DisposingMixin,Invoking,Parenting,Starting,Startup,Facet,Interceptor,InterceptorSelector,ProxyBuilder,Modifier,ArrayManager,IndexedList,$isProtocol,$isClass,$classOf,$ancestorOf,$isString,$isFunction,$isObject,$isArray,$isPromise,$isNothing,$isSomething,$using,$lift,$equals,$decorator,$decorate,$decorated,$debounce,$eq,$use,$copy,$lazy,$eval,$every,$child,$optional,$promise,$instant,$createModifier,$properties,$inferProperties,$inheritStatic"
     });
 
