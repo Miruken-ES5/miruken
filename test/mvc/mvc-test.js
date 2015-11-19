@@ -86,12 +86,27 @@ describe("Model", function () {
         it("should import from data", function () {
             var person = new Person;
             person.fromData({
-                firstName: 'David',
-                lastName:  'Beckham'
+                firstName:  'David',
+                lastName:   'Beckham',
+                occupation: 'soccer'
             });
             expect(person.firstName).to.equal('David');
             expect(person.lastName).to.equal('Beckham');
+            expect(person.occupation).to.be.undefined;
         });
+
+        it("should import all from data", function () {
+            var person = new Person;
+            person.fromData({
+                firstName:  'David',
+                lastName:   'Beckham',
+                occupation: 'soccer'
+            }, { dynamic: true });
+            expect(person.firstName).to.equal('David');
+            expect(person.lastName).to.equal('Beckham');
+            expect(person.occupation).to.equal('soccer');
+        });
+        
     });
 
     describe("#toData", function () {

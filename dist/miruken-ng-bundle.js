@@ -6817,7 +6817,7 @@ new function () { // closure
      */
     base2.package(this, {
         name:    "miruken",
-        version: "0.0.17",
+        version: "0.0.18",
         exports: "Enum,Variance,Protocol,StrictProtocol,Delegate,Miruken,MetaStep,MetaMacro,Initializing,Disposing,DisposingMixin,Invoking,Parenting,Starting,Startup,Facet,Interceptor,InterceptorSelector,ProxyBuilder,Modifier,ArrayManager,IndexedList,$isProtocol,$isClass,$classOf,$ancestorOf,$isString,$isFunction,$isObject,$isArray,$isPromise,$isNothing,$isSomething,$using,$lift,$equals,$decorator,$decorate,$decorated,$debounce,$eq,$use,$copy,$lazy,$eval,$every,$child,$optional,$promise,$instant,$createModifier,$properties,$inferProperties,$inheritStatic"
     });
 
@@ -9637,14 +9637,16 @@ new function () { // closure
         /**
          * Maps json structured data into the model.
          * @method fromData
-         * @param   {Object}  data  -  json structured data
+         * @param   {Object}  data     -  json structured data
+         * @param   {Object}  options  -  mapping options
          */            
-        fromData: function (data) {
+            fromData: function (data, options) {
             if ($isNothing(data)) {
                 return;
             }
             var meta        = this.$meta,
-                descriptors = meta && meta.getDescriptor();
+                descriptors = meta && meta.getDescriptor(),
+                dynamic     = options && options.dynamic;
             if (descriptors) {
                 for (var key in descriptors) {
                     var descriptor = descriptors[key];
@@ -9663,11 +9665,17 @@ new function () { // closure
                 if (key in this) {
                     this[key] = mapper ? Model.map(value, mapper, descriptor) : value;
                 } else {
-                    var lkey = key.toLowerCase();
+                    var lkey  = key.toLowerCase(),
+                        found = false;
                     for (var k in this) {
                         if (k.toLowerCase() === lkey) {
                             this[k] = mapper ? Model.map(value, mapper, descriptor) : value;
+                            found = true;
+                            break;
                         }
+                    }
+                    if (!found && dynamic) {
+                        this[key] = value;
                     }
                 }
             }

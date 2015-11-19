@@ -6206,7 +6206,7 @@ new function () { // closure
      */
     base2.package(this, {
         name:    "miruken",
-        version: "0.0.17",
+        version: "0.0.18",
         exports: "Enum,Variance,Protocol,StrictProtocol,Delegate,Miruken,MetaStep,MetaMacro,Initializing,Disposing,DisposingMixin,Invoking,Parenting,Starting,Startup,Facet,Interceptor,InterceptorSelector,ProxyBuilder,Modifier,ArrayManager,IndexedList,$isProtocol,$isClass,$classOf,$ancestorOf,$isString,$isFunction,$isObject,$isArray,$isPromise,$isNothing,$isSomething,$using,$lift,$equals,$decorator,$decorate,$decorated,$debounce,$eq,$use,$copy,$lazy,$eval,$every,$child,$optional,$promise,$instant,$createModifier,$properties,$inferProperties,$inheritStatic"
     });
 
@@ -9026,14 +9026,16 @@ new function () { // closure
         /**
          * Maps json structured data into the model.
          * @method fromData
-         * @param   {Object}  data  -  json structured data
+         * @param   {Object}  data     -  json structured data
+         * @param   {Object}  options  -  mapping options
          */            
-        fromData: function (data) {
+            fromData: function (data, options) {
             if ($isNothing(data)) {
                 return;
             }
             var meta        = this.$meta,
-                descriptors = meta && meta.getDescriptor();
+                descriptors = meta && meta.getDescriptor(),
+                dynamic     = options && options.dynamic;
             if (descriptors) {
                 for (var key in descriptors) {
                     var descriptor = descriptors[key];
@@ -9052,11 +9054,17 @@ new function () { // closure
                 if (key in this) {
                     this[key] = mapper ? Model.map(value, mapper, descriptor) : value;
                 } else {
-                    var lkey = key.toLowerCase();
+                    var lkey  = key.toLowerCase(),
+                        found = false;
                     for (var k in this) {
                         if (k.toLowerCase() === lkey) {
                             this[k] = mapper ? Model.map(value, mapper, descriptor) : value;
+                            found = true;
+                            break;
                         }
+                    }
+                    if (!found && dynamic) {
+                        this[key] = value;
                     }
                 }
             }
@@ -27767,12 +27775,27 @@ describe("Model", function () {
         it("should import from data", function () {
             var person = new Person;
             person.fromData({
-                firstName: 'David',
-                lastName:  'Beckham'
+                firstName:  'David',
+                lastName:   'Beckham',
+                occupation: 'soccer'
             });
             expect(person.firstName).to.equal('David');
             expect(person.lastName).to.equal('Beckham');
+            expect(person.occupation).to.be.undefined;
         });
+
+        it("should import all from data", function () {
+            var person = new Person;
+            person.fromData({
+                firstName:  'David',
+                lastName:   'Beckham',
+                occupation: 'soccer'
+            }, { dynamic: true });
+            expect(person.firstName).to.equal('David');
+            expect(person.lastName).to.equal('Beckham');
+            expect(person.occupation).to.equal('soccer');
+        });
+        
     });
 
     describe("#toData", function () {
