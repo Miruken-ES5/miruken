@@ -2862,7 +2862,7 @@ new function () { // closure
                                 _aspectProceed(callback, composer, proceed);
                                 return isMethod ? callback.returnValue : true;
                             }
-                            return Promise.reject(new RejectedError);
+                            return Promise.reject(new RejectedError(callback));
                         });
                         if (isMethod) {
                             callback.returnValue = accept;
@@ -6206,7 +6206,7 @@ new function () { // closure
      */
     base2.package(this, {
         name:    "miruken",
-        version: "0.0.15",
+        version: "0.0.16",
         exports: "Enum,Variance,Protocol,StrictProtocol,Delegate,Miruken,MetaStep,MetaMacro,Initializing,Disposing,DisposingMixin,Invoking,Parenting,Starting,Startup,Facet,Interceptor,InterceptorSelector,ProxyBuilder,Modifier,ArrayManager,IndexedList,$isProtocol,$isClass,$classOf,$ancestorOf,$isString,$isFunction,$isObject,$isArray,$isPromise,$isNothing,$isSomething,$using,$lift,$equals,$decorator,$decorate,$decorated,$debounce,$eq,$use,$copy,$lazy,$eval,$every,$child,$optional,$promise,$instant,$createModifier,$properties,$inferProperties,$inheritStatic"
     });
 
@@ -8899,14 +8899,14 @@ new function () { // closure
          * @readOnly
          * @for miruken.validate.$ 
          */
-        $required   = Object.freeze({ presence: true }),
+        $required = Object.freeze({ presence: true }),
         /**
          * Shortcut to indicate nested validation.
          * @property {Object} $nested
          * @readOnly
          * @for miruken.validate.$ 
          */
-        $nested     = Object.freeze({ nested: true });
+        $nested = Object.freeze({ nested: true });
 
     validatejs.validators.nested = Undefined;
 

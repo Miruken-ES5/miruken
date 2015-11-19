@@ -27,15 +27,17 @@ new function () { // closure
     miruken.package(this, {
         name:    "ng",
         imports: "miruken,miruken.callback,miruken.context,miruken.validate,miruken.ioc,miruken.mvc",
-        exports: "Runner,Directive,Filter,RegionDirective,PartialRegion,UseModelValidation,DigitsOnly,InhibitFocus,$rootContext"
+        exports: "Runner,Directive,Filter,RegionDirective,PartialRegion,UseModelValidation,DigitsOnly,InhibitFocus,$appContext,$envContext,$rootContext"
     });
 
     eval(this.imports);
 
-    var $rootContext  = new Context,
-        rootContainer = new IoContainer;
+    var $appContext  = new Context,
+        $envContext  = $appContext.newChild(),
+        $rootContext = $envContext.newChild(),
+        appContainer = new IoContainer;
 
-    $rootContext.addHandlers(rootContainer, 
+    $appContext.addHandlers(appContainer, 
                              new miruken.validate.ValidationCallbackHandler,
                              new miruken.validate.ValidateJsCallbackHandler,
                              new miruken.error.ErrorCallbackHandler);
@@ -44,8 +46,9 @@ new function () { // closure
                               '$templateRequest', '$controller', '$compile', '$q',
         function ($rootElement, $rootScope, $injector, $templates, $controller, $compile, $q) {
             _instrumentScopes($rootScope, $injector);
-            var rootRegion = new PartialRegion('root', $rootElement, $rootScope, $templates, $controller, $compile, $q);
-            $rootContext.addHandlers(rootRegion, new BootstrapProvider, new GreenSockFadeProvider);
+            var appRegion = new PartialRegion('root', $rootElement, $rootScope, $templates, $controller, $compile, $q);
+            $appContext.addHandlers(rootRegion, new BootstrapProvider, new GreenSockFadeProvider);
+            _provideInjector(appContainer, $injector);
     }]);
     
     /**
@@ -319,6 +322,8 @@ new function () { // closure
                     throw new Error(format("The Angular module '%1' already exists.", name));
                 }
                 module = angular.module(name, module);
+                module.constant('$appContext', $appContext);
+                module.constant('$envContext', $envContext);                
                 module.constant('$rootContext', $rootContext);
                 _registerContents(ng, module, ng.exports.split(','));
             } else if (parent) {
@@ -336,14 +341,14 @@ new function () { // closure
             var module = this.ngModule;
             if (module && $isFunction(module.config)) {
                 var package   = this,
-                    container = Container($rootContext),
+                    container = Container($appContext),
                     runners   = [], starters = [];
                 _registerContents(this, module, exports);
                 module.config(['$injector', function ($injector) {
                     _installPackage(package, module, exports, $injector, runners, starters);
                 }]);
                 module.run(['$injector', '$q', '$log', function ($injector, $q, $log) {
-                   _provideInjector(rootContainer, $injector);
+                   _provideInjector(appContainer, $injector);
                    Array2.forEach(runners, function (runner) {
                        $injector.invoke(runner);
                    });
@@ -393,9 +398,8 @@ new function () { // closure
      * @function _instrumentScopes
      * Instruments angular scopes with miruken contexts.
      * @param  {Scope}   $rootScope  -  angular's root scope
-     * @param  {Scope}   $injector   -  angular's ng injector
      */
-    function _instrumentScopes($rootScope, $injector)
+    function _instrumentScopes($rootScope)
     {
         var scopeProto   = $rootScope.constructor.prototype,
             newScope     = scopeProto.$new,
@@ -422,7 +426,6 @@ new function () { // closure
             destroyScope.call(this);
         };
         $rootScope.rootContext = $rootScope.context = $rootContext;
-        _provideInjector(rootContainer, $injector);
     }
 
     /**
@@ -434,7 +437,7 @@ new function () { // closure
      * @param  {Array}    exports  - exported members
      */
     function _registerContents(package, module, exports) {
-        var container = Container($rootContext);
+        var container = Container($appContext);
         Array2.forEach(exports, function (name) {
             var member = package[name];
             if (!member || !member.prototype) {
@@ -498,7 +501,7 @@ new function () { // closure
      * @param  {Array}     starters  -  collects starters
      */
     function _installPackage(package, module, exports, injector, runners, starters) {
-        var container = Container($rootContext);
+        var container = Container($appContext);
         Array2.forEach(exports, function (name) {
             var member = package[name];
             if (!member) {
@@ -3470,7 +3473,7 @@ new function () { // closure
                                 _aspectProceed(callback, composer, proceed);
                                 return isMethod ? callback.returnValue : true;
                             }
-                            return Promise.reject(new RejectedError);
+                            return Promise.reject(new RejectedError(callback));
                         });
                         if (isMethod) {
                             callback.returnValue = accept;
@@ -6814,7 +6817,7 @@ new function () { // closure
      */
     base2.package(this, {
         name:    "miruken",
-        version: "0.0.15",
+        version: "0.0.16",
         exports: "Enum,Variance,Protocol,StrictProtocol,Delegate,Miruken,MetaStep,MetaMacro,Initializing,Disposing,DisposingMixin,Invoking,Parenting,Starting,Startup,Facet,Interceptor,InterceptorSelector,ProxyBuilder,Modifier,ArrayManager,IndexedList,$isProtocol,$isClass,$classOf,$ancestorOf,$isString,$isFunction,$isObject,$isArray,$isPromise,$isNothing,$isSomething,$using,$lift,$equals,$decorator,$decorate,$decorated,$debounce,$eq,$use,$copy,$lazy,$eval,$every,$child,$optional,$promise,$instant,$createModifier,$properties,$inferProperties,$inheritStatic"
     });
 
@@ -10331,14 +10334,14 @@ new function () { // closure
          * @readOnly
          * @for miruken.validate.$ 
          */
-        $required   = Object.freeze({ presence: true }),
+        $required = Object.freeze({ presence: true }),
         /**
          * Shortcut to indicate nested validation.
          * @property {Object} $nested
          * @readOnly
          * @for miruken.validate.$ 
          */
-        $nested     = Object.freeze({ nested: true });
+        $nested = Object.freeze({ nested: true });
 
     validatejs.validators.nested = Undefined;
 
