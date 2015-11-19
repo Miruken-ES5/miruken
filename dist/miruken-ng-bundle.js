@@ -6817,7 +6817,7 @@ new function () { // closure
      */
     base2.package(this, {
         name:    "miruken",
-        version: "0.0.18",
+        version: "0.0.19",
         exports: "Enum,Variance,Protocol,StrictProtocol,Delegate,Miruken,MetaStep,MetaMacro,Initializing,Disposing,DisposingMixin,Invoking,Parenting,Starting,Startup,Facet,Interceptor,InterceptorSelector,ProxyBuilder,Modifier,ArrayManager,IndexedList,$isProtocol,$isClass,$classOf,$ancestorOf,$isString,$isFunction,$isObject,$isArray,$isPromise,$isNothing,$isSomething,$using,$lift,$equals,$decorator,$decorate,$decorated,$debounce,$eq,$use,$copy,$lazy,$eval,$every,$child,$optional,$promise,$instant,$createModifier,$properties,$inferProperties,$inheritStatic"
     });
 
@@ -9626,13 +9626,14 @@ new function () { // closure
      * </pre>
      * @class Model
      * @constructor
-     * @param {Object} [data]  -  json structured data 
+     * @param  {Object}  [data]   -  json structured data
+     * @param  {Object}  options  -  mapping options
      * @extends Base
      */
     var Model = Base.extend(
         $inferProperties, $validateThat, {
-        constructor: function (data) {
-            this.fromData(data);
+        constructor: function (data, options) {
+            this.fromData(data, options);
         },
         /**
          * Maps json structured data into the model.
@@ -9663,13 +9664,13 @@ new function () { // closure
                 }
                 var value = data[key];
                 if (key in this) {
-                    this[key] = mapper ? Model.map(value, mapper, descriptor) : value;
+                    this[key] = _mapWithOptions(value, mapper, descriptor, options);
                 } else {
                     var lkey  = key.toLowerCase(),
                         found = false;
                     for (var k in this) {
                         if (k.toLowerCase() === lkey) {
-                            this[k] = mapper ? Model.map(value, mapper, descriptor) : value;
+                            this[k] = _mapWithOptions(value, mapper, descriptor, options);
                             found = true;
                             break;
                         }
@@ -9720,7 +9721,7 @@ new function () { // closure
          * Merges specified data into another model.
          * @method mergeInto
          * @param   {miruken.mvc.Model}  model  -  model to receive data
-         * @returns {boolean}  true if model could be merged into. 
+         * @returns {boolean} true if model could be merged into. 
          */            
         mergeInto: function (model) {
             if (!(model instanceof this.constructor)) {
@@ -9765,6 +9766,18 @@ new function () { // closure
         }
     });
 
+    function _mapWithOptions(value, mapper, descriptor, options) {
+        if (mapper) {
+            var opt = descriptor;
+            if (opt && options) {
+                opt = extend({}, opt);
+            }
+            opt = opt && options ? extend(opt, options) : options;
+            return Model.map(value, mapper, opt);
+        }
+        return value;
+    }
+    
     eval(this.exports);
     
 }

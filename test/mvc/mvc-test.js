@@ -106,7 +106,25 @@ describe("Model", function () {
             expect(person.lastName).to.equal('Beckham');
             expect(person.occupation).to.equal('soccer');
         });
-        
+
+        it("should import all related from data", function () {
+            var doctor = new Doctor;
+            doctor.fromData({
+                firstName: 'Mitchell',
+                lastName:  'Moskowitz',
+                hobbies:   undefined,
+                age:       0,
+                patient: {
+                    firstName:  'Lionel',
+                    lastName:   'Messi',
+                    occupation: 'soccer',
+                    age:       24
+                }
+            }, { dynamic: true });
+            expect(doctor.patient.firstName).to.equal('Lionel');
+            expect(doctor.patient.lastName).to.equal('Messi');
+            expect(doctor.patient.occupation).to.equal('soccer');
+        });
     });
 
     describe("#toData", function () {
