@@ -6032,12 +6032,22 @@ new function () { // closure
             if ($isPromise(instance)) {
                 return instance.then(function (instance) {
                     if ($isFunction(instance.initialize)) {
-                        instance.initialize();
-                    }                    
+                        var init = instance.initialize();
+                        if ($isPromise(init)) {
+                            return init.then(function () {
+                                return instance;
+                            });
+                        }
+                    }
                     return instance;
                 });                
             } else if ($isFunction(instance.initialize)) {
-                instance.initialize();
+                var init = instance.initialize();
+                if ($isPromise(init)) {
+                    return init.then(function () {
+                        return instance;
+                    });
+                }
             }
             return instance;            
         },
@@ -6153,24 +6163,28 @@ new function () { // closure
                                     // Only cache fulfilled instances
                                     if (object && !(instance = _cache[id])) {
                                         instance = object;
-                                        _this._recordInstance(id, instance, context);
+                                        return _this._recordInstance(id, instance, context);
                                     }
                                     return instance;
                                 });
                             } else if (object) {
                                 instance = object;
-                                this._recordInstance(id, instance, context);
+                                return this._recordInstance(id, instance, context);
                             }
                         }
                         return instance;
                     }
                 },
                 _recordInstance: function (id, instance, context) {
-                    var _this  = this;
-                    _cache[id] = instance;
+                    var _this      = this;
+                        init       = instance,
+                        _cache[id] = instance;
                     ContextualHelper.bindContext(instance, context);
                     if ($isFunction(instance.initialize)) {
-                        instance.initialize();
+                        init = instance.initialize();
+                        init = $isPromise(init)
+                             ? init.then(function () { return instance; })
+                             : instance;
                     }                                        
                     this.trackInstance(instance);
                     context.onEnded(function () {
@@ -6178,6 +6192,7 @@ new function () { // closure
                         _this.disposeInstance(instance);
                         delete _cache[id];
                     });
+                    return init;
                 },
                 disposeInstance: function (instance, disposing) {
                     if (!disposing) {  // Cannot be disposed directly
@@ -6817,7 +6832,7 @@ new function () { // closure
      */
     base2.package(this, {
         name:    "miruken",
-        version: "0.0.19",
+        version: "0.0.20",
         exports: "Enum,Variance,Protocol,StrictProtocol,Delegate,Miruken,MetaStep,MetaMacro,Initializing,Disposing,DisposingMixin,Invoking,Parenting,Starting,Startup,Facet,Interceptor,InterceptorSelector,ProxyBuilder,Modifier,ArrayManager,IndexedList,$isProtocol,$isClass,$classOf,$ancestorOf,$isString,$isFunction,$isObject,$isArray,$isPromise,$isNothing,$isSomething,$using,$lift,$equals,$decorator,$decorate,$decorated,$debounce,$eq,$use,$copy,$lazy,$eval,$every,$child,$optional,$promise,$instant,$createModifier,$properties,$inferProperties,$inheritStatic"
     });
 

@@ -57,7 +57,7 @@ module.exports = function(grunt) {
       },
       debug: {
         files: {
-           'debug/miruken-tests.js':  ['test/mvc/mvc-test.js']
+           'debug/miruken-tests.js':  ['test/ioc/ioc-test.js']
            //'debug/miruken-tests.js':     ['test/**/*.js']
         }
       }

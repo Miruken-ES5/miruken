@@ -507,13 +507,29 @@ describe("SingletonLifestyle", function () {
         });
         
         it("should call initialize", function (done) {
-            container.register($component(V12).transient());
+            container.register($component(V12).singleton());
             Promise.resolve(container.resolve(Engine)).then(function (engine) {
                 expect(engine.calibrated).to.be.true;
                 done();
             });
         });
-        
+
+        it("should wait on promise from initialize", function (done) {
+            var SelfCheckV12 = V12.extend({
+                initialize: function () {
+                    this.base();
+                    return Promise.delay(this, 2).then(function (v12) {
+                        v12.selfCheck = true;
+                    });
+                }
+            });
+            container.register($component(SelfCheckV12).singleton());
+            Promise.resolve(container.resolve(SelfCheckV12)).then(function (engine) {
+                expect(engine.calibrated).to.be.true;
+                expect(engine.selfCheck).to.be.true;
+                done();
+            });
+        });        
     });
 
     describe("#dispose", function () {
@@ -570,7 +586,23 @@ describe("TransientLifestyle", function () {
                 done();
             });
         });
-        
+
+        it("should wait on promise from initialize", function (done) {
+            var SelfCheckV12 = V12.extend({
+                initialize: function () {
+                    this.base();
+                    return Promise.delay(this, 2).then(function (v12) {
+                        v12.selfCheck = true;
+                    });
+                }
+            });
+            container.register($component(SelfCheckV12).transient());
+            Promise.resolve(container.resolve(SelfCheckV12)).then(function (engine) {
+                expect(engine.calibrated).to.be.true;
+                expect(engine.selfCheck).to.be.true;
+                done();
+            });
+        });                
     });
 });
 
@@ -673,6 +705,26 @@ describe("ContextualLifestyle", function () {
                 done();
             });
         });
+
+        it("should wait on promise from initialize", function (done) {
+            var SlowController = Controller.extend({
+                initialize: function () {
+                    this.base();
+                    return Promise.delay(this, 2).then(function (ctl) {
+                        ctl.loaded = true;
+                    });
+                }
+            });
+            var context   = new Context,
+                container = Container(context);
+            context.addHandlers(new IoContainer, new ValidationCallbackHandler);
+            container.register($component(SlowController).dependsOn($child(Context)));
+            Promise.resolve(container.resolve(SlowController)).then(function (controller) {
+                expect(controller.initialized).to.be.true;
+                expect(controller.loaded).to.be.true;
+                done();
+            });
+        });                        
     });
 
     describe("#dispose", function () {
