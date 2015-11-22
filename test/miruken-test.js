@@ -91,15 +91,42 @@ describe("miruken", function () {
 });
 
 describe("Enum", function () {
+    var Color = Enum({red: 1, blue: 2, green: 3});
+
+    it("should obtain value", function () {
+        expect(Color.red.value).to.eql(1);
+        expect(Color.blue.value).to.eql(2);
+        expect(Color.green.value).to.eql(3);
+    });
+
+    it("should obtain name", function () {
+        expect(Color.red.name).to.eql("red");
+        expect(Color.blue.name).to.eql("blue");
+        expect(Color.green.name).to.eql("green");
+    });
+
+    it("should obtain all names", function () {
+        expect(Color.names).to.include("red", "blue", "green");
+    });
+    
+    it("should support logical operations", function () {
+        expect(Color.red == Color.red).to.be.true;
+        expect(Color.red === Color.red).to.be.true
+        expect(Color.red != Color.blue).to.be.true;
+        expect(Color.red !== Color.blue).to.be.true;
+        expect(Color.red < Color.blue).to.be.true;
+        expect(Color.red <= Color.red).to.be.true;
+        expect(Color.green > Color.blue).to.be.true;
+        expect(Color.green >= Color.blue).to.be.true;
+    });
+    
     it("should be immutable", function () {
-        var Color = Enum({red: 1, blue: 2, green: 3});
         expect(Color.prototype).to.be.instanceOf(Enum);
         Color.black = 4;
         expect(Color.black).to.be.undefined;
     });
 
     it("should reject enum construction", function () {
-        var Color = Enum({red: 1, blue: 2, green: 3});
         expect(function () { 
             new Color(2);
         }).to.throw(Error, /Enums cannot be instantiated./);
@@ -242,6 +269,21 @@ describe("$properties", function () {
     it("should retrieve property descriptor", function () {
         var descriptor = Doctor.$meta.getDescriptor('patient');
         expect(descriptor.map).to.equal(Person);
+    });
+
+    it("should merge property descriptor with getter/setter", function () {
+        var Hospital = Base.extend({
+                $properties: {
+                    chiefDoctor: { map: Doctor }
+                },
+                get chiefDoctor() {
+                    return new Doctor({firstName: "Phil"});
+                }
+        }),
+            descriptor = Hospital.$meta.getDescriptor('chiefDoctor');
+            hospital = new Hospital;
+        expect(hospital.chiefDoctor.firstName).to.equal("Phil");
+        expect(descriptor.map).to.equal(Doctor);        
     });
 
     it("should retrieve inherited property descriptor", function () {

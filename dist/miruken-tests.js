@@ -2544,8 +2544,11 @@ new function () { // closure
      */
     var InvocationSemantics = Composition.extend({
         constructor: function (options) {
-            var _options   = options || InvocationOptions.None,
-                _specified = _options;
+            var _options   = (options || InvocationOptions.None);
+            if ($isFunction(_options.valueOf)) {
+                _options = _options.valueOf();
+            }
+            var _specified = _options;
             this.extend({
                 /**
                  * Gets the invocation option.
@@ -2554,7 +2557,7 @@ new function () { // closure
                  * @returns {boolean} true if invocation option enabled, false otherwise.
                  */
                 getOption: function (option) {
-                    return (_options & option) === option;
+                    return (_options & option) === option.value;
                 },
                 /**
                  * Sets the invocation option.
@@ -2577,7 +2580,7 @@ new function () { // closure
                  * @returns {boolean} true if invocation option specified, false otherwise.
                  */                
                 isSpecified: function (option) {
-                    return (_specified & option) === option;
+                    return (_specified & option) === option.value;
                 }
             });
         },
@@ -2586,9 +2589,10 @@ new function () { // closure
          * @method mergeInto
          * @param   {miruken.callback.InvocationSemantics}  semantics  -  receives invocation semantics
          */                
-        mergeInto: function (semantics) {
-            for (var index = 0; index <= 3; ++index) {
-                var option = (1 << index);
+        mergeInto: function _(semantics) {
+            var names = _.names || (_.names = InvocationOptions.names);
+            for (var i = 0; i < names.length; ++i) {
+                var option = InvocationOptions[names[i]];
                 if (this.isSpecified(option) && !semantics.isSpecified(option)) {
                     semantics.setOption(option, this.getOption(option));
                 }
@@ -2958,6 +2962,9 @@ new function () { // closure
 
         var handled, comparer;
         variance = variance || Variance.Contravariant;
+        if (!(variance instanceof Variance)) {
+            throw new TypeError("Invalid variance type supplied");
+        }        
         switch (variance) {
             case Variance.Covariant:
                 handled  = _resultRequired;
@@ -2971,8 +2978,6 @@ new function () { // closure
                 handled  = _resultRequired;
                 comparer = _invariantComparer; 
                 break;
-            default:
-                throw new Error("Variance must be Covariant, Contravariant or Invariant");
         }
 
         function definition(owner, constraint, handler, removed) {
@@ -3765,14 +3770,12 @@ new function () { // closure
                 }
             });
         }},
-        applyAxis   = axisControl.axis,
-        axisChoices = Array2.combine(TraversingAxis.names, TraversingAxis.values);
+        applyAxis = axisControl.axis;
 
-    for (var name in axisChoices) {
-        var axis = axisChoices[name],
-            key  = '$' + name.charAt(0).toLowerCase() + name.slice(1);
-        axisControl[key] = Function2.partial(applyAxis, axis);
-    }
+    Array2.forEach(TraversingAxis.names, function (name) {
+        var key = '$' + name.charAt(0).toLowerCase() + name.slice(1);
+        axisControl[key] = Function2.partial(applyAxis, TraversingAxis[name]);
+    });
 
     CallbackHandler.implement({
         /**
@@ -5114,7 +5117,10 @@ new function () { // closure
      */
     var DependencyModel = Base.extend({
         constructor: function (dependency, modifiers) {
-            modifiers = modifiers || DependencyModifiers.None;
+            modifiers = (modifiers || DependencyModifiers.None);
+            if ($isFunction(modifiers.valueOf)) {
+                modifiers = modifiers.valueOf();
+            }
             if (dependency instanceof Modifier) {
                 if ($use.test(dependency)) {
                     modifiers = modifiers | DependencyModifiers.Use;
@@ -5167,7 +5173,7 @@ new function () { // closure
          * @returns {boolean} true if the dependency is annotated with modifier(s).
          */        
         test: function (modifier) {
-            return (this.modifiers & modifier) === modifier;
+            return (this.modifiers & modifier) === modifier.value;
         }
     }, {
         coerce: function (object) {
@@ -6221,7 +6227,7 @@ new function () { // closure
      */
     base2.package(this, {
         name:    "miruken",
-        version: "0.0.20",
+        version: "0.0.21",
         exports: "Enum,Variance,Protocol,StrictProtocol,Delegate,Miruken,MetaStep,MetaMacro,Initializing,Disposing,DisposingMixin,Invoking,Parenting,Starting,Startup,Facet,Interceptor,InterceptorSelector,ProxyBuilder,Modifier,ArrayManager,IndexedList,$isProtocol,$isClass,$classOf,$ancestorOf,$isString,$isFunction,$isObject,$isArray,$isPromise,$isNothing,$isSomething,$using,$lift,$equals,$decorator,$decorate,$decorated,$debounce,$eq,$use,$copy,$lazy,$eval,$every,$child,$optional,$promise,$instant,$createModifier,$properties,$inferProperties,$inheritStatic"
     });
 
@@ -6300,27 +6306,31 @@ new function () { // closure
      * </pre>
      * @class Enum
      * @constructor
-     * @param  {Object}  choices  -  enum choices
+     * @param  {Any} value     -  enum value
+     * @param  {string} value  -  enum name
      */
     var Enum = Base.extend({
-        constructor: function () {
-            throw new TypeError("Enums cannot be instantiated.");
+        constructor: function _(value, name) {
+            if (!this.constructor.__defining) {
+                throw new TypeError("Enums cannot be instantiated.");
+            }
+            this.value = value;
+            this.name  = name;
         }
     }, {
-        coerce: function (choices) {
-            var en     = this.extend(null, choices),
-                names  = Object.freeze(Object.keys(choices)),
-                values = Object.freeze(Array2.map(names, function (name) {
-                        return choices[name];
-                }));
-            Object.defineProperties(en, {
-                names:  { value: names },
-                values: { value: values }
-            });
+        coerce: function _(choices) {
+            var en        = this.extend();
+            en.__defining = true;
+            en.names      = Object.freeze(Object.keys(choices));
+            for (var choice in choices) {
+                en[choice] = Object.freeze(new en(choices[choice], choice));
+            }
+            delete en.__defining;
             return Object.freeze(en);
         }
     });
-
+    Enum.prototype.valueOf = function () { return this.value; }
+    
     /**
      * Variance enum
      * @class Variance
@@ -6444,7 +6454,7 @@ new function () { // closure
          * @property {number} Extend
          */
         Extend: 3
-        });
+    });
 
     /**
      * Provides a method to modify a class definition at runtime.
@@ -7123,7 +7133,7 @@ new function () { // closure
                         properties = expanded[this.tag] = (properties || {});
                     }
                     Object.defineProperty(expanded, name, spec);
-                    var property = properties[name] = {};
+                    var property = properties[name] || (properties[name] = {});
                     if (descriptor.get) {
                         property.get = descriptor.get;
                     }
@@ -7910,9 +7920,8 @@ new function () { // closure
     /**
      * Facet choices for proxies.
      * @class Facet
-     * @extends miruken.Enum
      */
-    var Facet = Enum({
+    var Facet = Object.freeze({
         /**
          * @property {string} Parameters
          */
@@ -7929,7 +7938,7 @@ new function () { // closure
          * @property {string} Delegate
          */                        
         Delegate: 'delegate'
-        });
+    });
 
 
     /**
@@ -22444,7 +22453,7 @@ describe("Definitions", function () {
         it("Should reject invalid variance option", function () {
             expect(function () {
         $define('$buz', { variance: 1000 });
-            }).to.throw(Error, "Variance must be Covariant, Contravariant or Invariant");
+            }).to.throw(TypeError, "Invalid variance type supplied");
         });
     });
 
@@ -26650,15 +26659,42 @@ describe("miruken", function () {
 });
 
 describe("Enum", function () {
+    var Color = Enum({red: 1, blue: 2, green: 3});
+
+    it("should obtain value", function () {
+        expect(Color.red.value).to.eql(1);
+        expect(Color.blue.value).to.eql(2);
+        expect(Color.green.value).to.eql(3);
+    });
+
+    it("should obtain name", function () {
+        expect(Color.red.name).to.eql("red");
+        expect(Color.blue.name).to.eql("blue");
+        expect(Color.green.name).to.eql("green");
+    });
+
+    it("should obtain all names", function () {
+        expect(Color.names).to.include("red", "blue", "green");
+    });
+    
+    it("should support logical operations", function () {
+        expect(Color.red == Color.red).to.be.true;
+        expect(Color.red === Color.red).to.be.true
+        expect(Color.red != Color.blue).to.be.true;
+        expect(Color.red !== Color.blue).to.be.true;
+        expect(Color.red < Color.blue).to.be.true;
+        expect(Color.red <= Color.red).to.be.true;
+        expect(Color.green > Color.blue).to.be.true;
+        expect(Color.green >= Color.blue).to.be.true;
+    });
+    
     it("should be immutable", function () {
-        var Color = Enum({red: 1, blue: 2, green: 3});
         expect(Color.prototype).to.be.instanceOf(Enum);
         Color.black = 4;
         expect(Color.black).to.be.undefined;
     });
 
     it("should reject enum construction", function () {
-        var Color = Enum({red: 1, blue: 2, green: 3});
         expect(function () { 
             new Color(2);
         }).to.throw(Error, /Enums cannot be instantiated./);
@@ -26801,6 +26837,21 @@ describe("$properties", function () {
     it("should retrieve property descriptor", function () {
         var descriptor = Doctor.$meta.getDescriptor('patient');
         expect(descriptor.map).to.equal(Person);
+    });
+
+    it("should merge property descriptor with getter/setter", function () {
+        var Hospital = Base.extend({
+                $properties: {
+                    chiefDoctor: { map: Doctor }
+                },
+                get chiefDoctor() {
+                    return new Doctor({firstName: "Phil"});
+                }
+        }),
+            descriptor = Hospital.$meta.getDescriptor('chiefDoctor');
+            hospital = new Hospital;
+        expect(hospital.chiefDoctor.firstName).to.equal("Phil");
+        expect(descriptor.map).to.equal(Doctor);        
     });
 
     it("should retrieve inherited property descriptor", function () {

@@ -277,7 +277,7 @@ describe("Definitions", function () {
         it("Should reject invalid variance option", function () {
             expect(function () {
         $define('$buz', { variance: 1000 });
-            }).to.throw(Error, "Variance must be Covariant, Contravariant or Invariant");
+            }).to.throw(TypeError, "Invalid variance type supplied");
         });
     });
 
