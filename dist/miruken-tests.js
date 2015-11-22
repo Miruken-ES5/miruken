@@ -2544,11 +2544,8 @@ new function () { // closure
      */
     var InvocationSemantics = Composition.extend({
         constructor: function (options) {
-            var _options   = (options || InvocationOptions.None);
-            if ($isFunction(_options.valueOf)) {
-                _options = _options.valueOf();
-            }
-            var _specified = _options;
+            var _options   = +(options || InvocationOptions.None),
+                _specified = _options;
             this.extend({
                 /**
                  * Gets the invocation option.
@@ -2557,7 +2554,7 @@ new function () { // closure
                  * @returns {boolean} true if invocation option enabled, false otherwise.
                  */
                 getOption: function (option) {
-                    return (_options & option) === option.value;
+                    return (_options & option) === +option;
                 },
                 /**
                  * Sets the invocation option.
@@ -2580,7 +2577,7 @@ new function () { // closure
                  * @returns {boolean} true if invocation option specified, false otherwise.
                  */                
                 isSpecified: function (option) {
-                    return (_specified & option) === option.value;
+                    return (_specified & option) === +option;
                 }
             });
         },
@@ -5117,10 +5114,7 @@ new function () { // closure
      */
     var DependencyModel = Base.extend({
         constructor: function (dependency, modifiers) {
-            modifiers = (modifiers || DependencyModifiers.None);
-            if ($isFunction(modifiers.valueOf)) {
-                modifiers = modifiers.valueOf();
-            }
+            modifiers = +(modifiers || DependencyModifiers.None);
             if (dependency instanceof Modifier) {
                 if ($use.test(dependency)) {
                     modifiers = modifiers | DependencyModifiers.Use;
@@ -5173,7 +5167,7 @@ new function () { // closure
          * @returns {boolean} true if the dependency is annotated with modifier(s).
          */        
         test: function (modifier) {
-            return (this.modifiers & modifier) === modifier.value;
+            return (this.modifiers & modifier) === +modifier;
         }
     }, {
         coerce: function (object) {
@@ -6227,7 +6221,7 @@ new function () { // closure
      */
     base2.package(this, {
         name:    "miruken",
-        version: "0.0.21",
+        version: "0.0.23",
         exports: "Enum,Variance,Protocol,StrictProtocol,Delegate,Miruken,MetaStep,MetaMacro,Initializing,Disposing,DisposingMixin,Invoking,Parenting,Starting,Startup,Facet,Interceptor,InterceptorSelector,ProxyBuilder,Modifier,ArrayManager,IndexedList,$isProtocol,$isClass,$classOf,$ancestorOf,$isString,$isFunction,$isObject,$isArray,$isPromise,$isNothing,$isSomething,$using,$lift,$equals,$decorator,$decorate,$decorated,$debounce,$eq,$use,$copy,$lazy,$eval,$every,$child,$optional,$promise,$instant,$createModifier,$properties,$inferProperties,$inheritStatic"
     });
 
