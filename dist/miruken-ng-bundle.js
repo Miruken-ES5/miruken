@@ -158,6 +158,11 @@ new function () { // closure
                             }
                         }
 
+                        if (_controller.context !== partialContext) {
+                            _controller = pcopy(_controller);
+                            _controller.context = partialContext;
+                        }
+                        
                         if (_controller) {
                             _partialScope[controllerAs] = _controller;
                         }
@@ -4285,7 +4290,7 @@ new function () { // closure
         /**
          * Attaches a child context of the receiver to the contextual child.
          * @method bindChildContext
-         * @param  {miruken.context.Context}  child  -  contextual child
+         * @param  {miruken.context.Context}  child    -  contextual child
          * @param  {boolean}                  replace  -  true if replace existing context
          * @returns {miruken.context.Context} effective child context.
          * @throws {Error} an error if the child context could be attached.
@@ -6835,7 +6840,7 @@ new function () { // closure
      */
     base2.package(this, {
         name:    "miruken",
-        version: "0.0.23",
+        version: "0.0.24",
         exports: "Enum,Variance,Protocol,StrictProtocol,Delegate,Miruken,MetaStep,MetaMacro,Initializing,Disposing,DisposingMixin,Invoking,Parenting,Starting,Startup,Facet,Interceptor,InterceptorSelector,ProxyBuilder,Modifier,ArrayManager,IndexedList,$isProtocol,$isClass,$classOf,$ancestorOf,$isString,$isFunction,$isObject,$isArray,$isPromise,$isNothing,$isSomething,$using,$lift,$equals,$decorator,$decorate,$decorated,$debounce,$eq,$use,$copy,$lazy,$eval,$every,$child,$optional,$promise,$instant,$createModifier,$properties,$inferProperties,$inheritStatic"
     });
 
