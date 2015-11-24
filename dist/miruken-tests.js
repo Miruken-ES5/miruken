@@ -6221,7 +6221,7 @@ new function () { // closure
      */
     base2.package(this, {
         name:    "miruken",
-        version: "0.0.24",
+        version: "0.0.25",
         exports: "Enum,Variance,Protocol,StrictProtocol,Delegate,Miruken,MetaStep,MetaMacro,Initializing,Disposing,DisposingMixin,Invoking,Parenting,Starting,Startup,Facet,Interceptor,InterceptorSelector,ProxyBuilder,Modifier,ArrayManager,IndexedList,$isProtocol,$isClass,$classOf,$ancestorOf,$isString,$isFunction,$isObject,$isArray,$isPromise,$isNothing,$isSomething,$using,$lift,$equals,$decorator,$decorate,$decorated,$debounce,$eq,$use,$copy,$lazy,$eval,$every,$child,$optional,$promise,$instant,$createModifier,$properties,$inferProperties,$inheritStatic"
     });
 
@@ -9048,7 +9048,7 @@ new function () { // closure
          * @param   {Object}  data     -  json structured data
          * @param   {Object}  options  -  mapping options
          */            
-            fromData: function (data, options) {
+        fromData: function (data, options) {
             if ($isNothing(data)) {
                 return;
             }
@@ -9071,13 +9071,13 @@ new function () { // closure
                 }
                 var value = data[key];
                 if (key in this) {
-                    this[key] = _mapWithOptions(value, mapper, descriptor, options);
+                    this[key] = Model.map(value, mapper, options);
                 } else {
                     var lkey  = key.toLowerCase(),
                         found = false;
                     for (var k in this) {
                         if (k.toLowerCase() === lkey) {
-                            this[k] = _mapWithOptions(value, mapper, descriptor, options);
+                            this[k] = Model.map(value, mapper, options);
                             found = true;
                             break;
                         }
@@ -9160,30 +9160,16 @@ new function () { // closure
          * @returns {Object} json structured data.
          */                                
         map: function (value, mapper, options) {
-            if (value) {
-                return $isArray(value)
-                     ? Array2.map(value, function (elem) {
-                         return Model.map(elem, mapper, options)
-                       })
-                     : mapper(value, options);
-            }
+            return $isArray(value)
+                ? Array2.map(value, function (elem) {
+                    return Model.map(elem, mapper, options)
+                })
+            : (mapper ? mapper(value, options) : value);
         },
         coerce: function () {
             return this.new.apply(this, arguments);
         }
     });
-
-    function _mapWithOptions(value, mapper, descriptor, options) {
-        if (mapper) {
-            var opt = descriptor;
-            if (opt && options) {
-                opt = extend({}, opt);
-            }
-            opt = opt && options ? extend(opt, options) : options;
-            return Model.map(value, mapper, opt);
-        }
-        return value;
-    }
     
     eval(this.exports);
     
@@ -28127,7 +28113,7 @@ describe("Model", function () {
                     firstName: 'Emitt',
                     lastName:  'Smith'
                 }
-            }
+            };
             var doctor  = new Doctor(data),
                 patient = doctor.patient; 
             expect(doctor.firstName).to.equal('Daniel');
@@ -28148,7 +28134,7 @@ describe("Model", function () {
                     firstName: 'Tony',
                     lastName:  'Romo'
                 }]  
-            }
+            };
             var doctor   = new Doctor(data),
                 patients = doctor.patient; 
             expect(doctor.firstName).to.equal('Daniel');
@@ -28165,7 +28151,7 @@ describe("Model", function () {
             var data = {
                 fiRstNamE: 'Bruce',
                 LaStNaMe:  'Lee'
-            }
+            };
             var person = new Person(data);
             expect(person.firstName).to.equal('Bruce');
             expect(person.lastName).to.equal('Lee');
@@ -28182,7 +28168,7 @@ describe("Model", function () {
                     firstName: 'Bill'
                     }]
                 ]  
-            }
+            };
             var doctor = new Doctor(data),
                 group1 = doctor.patient[0],
                 group2 = doctor.patient[1];
@@ -28205,6 +28191,47 @@ describe("Model", function () {
             expect(model.person.firstName).to.equal('Henry');
             expect(model.person.lastName).to.equal('Ford');
         });
+
+        it("should map arrays", function () {
+            var Child = Model.extend({
+                    $properties: {
+                        name: { map: upper }
+                    }
+                }),
+                Parent = Model.extend({
+                    $properties: {
+                        name: { map: upper },
+                        children: { map: Child }
+                    }
+                });
+            var data = [{
+                name: 'John',
+                children:   [{
+                    name: 'Ralph'
+                }, {
+                    name: 'Susan'
+                }]
+                }, {
+                name: 'Beth',
+                children:   [{
+                    name: 'Lisa'
+                }, {
+                    name: 'Mike'
+                }]
+                }
+            ];
+            var parents = Model.map(data, Parent, { dynamic: true });
+            expect(parents).to.have.length(2);
+            expect(parents[0].name).to.equal("JOHN");
+            expect(parents[1].name).to.equal("BETH");
+            expect(parents[0].children[0].name).to.equal("RALPH");
+            expect(parents[0].children[1].name).to.equal("SUSAN");
+            expect(parents[1].children[0].name).to.equal("LISA");
+            expect(parents[1].children[1].name).to.equal("MIKE");
+            function upper(str) {
+                return str.toUpperCase();
+            }
+        });        
     });
 });
 

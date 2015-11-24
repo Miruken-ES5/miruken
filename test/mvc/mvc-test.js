@@ -313,7 +313,7 @@ describe("Model", function () {
                     firstName: 'Emitt',
                     lastName:  'Smith'
                 }
-            }
+            };
             var doctor  = new Doctor(data),
                 patient = doctor.patient; 
             expect(doctor.firstName).to.equal('Daniel');
@@ -334,7 +334,7 @@ describe("Model", function () {
                     firstName: 'Tony',
                     lastName:  'Romo'
                 }]  
-            }
+            };
             var doctor   = new Doctor(data),
                 patients = doctor.patient; 
             expect(doctor.firstName).to.equal('Daniel');
@@ -351,7 +351,7 @@ describe("Model", function () {
             var data = {
                 fiRstNamE: 'Bruce',
                 LaStNaMe:  'Lee'
-            }
+            };
             var person = new Person(data);
             expect(person.firstName).to.equal('Bruce');
             expect(person.lastName).to.equal('Lee');
@@ -368,7 +368,7 @@ describe("Model", function () {
                     firstName: 'Bill'
                     }]
                 ]  
-            }
+            };
             var doctor = new Doctor(data),
                 group1 = doctor.patient[0],
                 group2 = doctor.patient[1];
@@ -391,6 +391,47 @@ describe("Model", function () {
             expect(model.person.firstName).to.equal('Henry');
             expect(model.person.lastName).to.equal('Ford');
         });
+
+        it("should map arrays", function () {
+            var Child = Model.extend({
+                    $properties: {
+                        name: { map: upper }
+                    }
+                }),
+                Parent = Model.extend({
+                    $properties: {
+                        name: { map: upper },
+                        children: { map: Child }
+                    }
+                });
+            var data = [{
+                name: 'John',
+                children:   [{
+                    name: 'Ralph'
+                }, {
+                    name: 'Susan'
+                }]
+                }, {
+                name: 'Beth',
+                children:   [{
+                    name: 'Lisa'
+                }, {
+                    name: 'Mike'
+                }]
+                }
+            ];
+            var parents = Model.map(data, Parent, { dynamic: true });
+            expect(parents).to.have.length(2);
+            expect(parents[0].name).to.equal("JOHN");
+            expect(parents[1].name).to.equal("BETH");
+            expect(parents[0].children[0].name).to.equal("RALPH");
+            expect(parents[0].children[1].name).to.equal("SUSAN");
+            expect(parents[1].children[0].name).to.equal("LISA");
+            expect(parents[1].children[1].name).to.equal("MIKE");
+            function upper(str) {
+                return str.toUpperCase();
+            }
+        });        
     });
 });
 

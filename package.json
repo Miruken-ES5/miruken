@@ -1,6 +1,6 @@
 {
   "name": "miruken",
-  "version": "0.0.24",
+  "version": "0.0.25",
   "description": "",
   "dependencies": {
     "bluebird": "^2.9.34",

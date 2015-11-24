@@ -6840,7 +6840,7 @@ new function () { // closure
      */
     base2.package(this, {
         name:    "miruken",
-        version: "0.0.24",
+        version: "0.0.25",
         exports: "Enum,Variance,Protocol,StrictProtocol,Delegate,Miruken,MetaStep,MetaMacro,Initializing,Disposing,DisposingMixin,Invoking,Parenting,Starting,Startup,Facet,Interceptor,InterceptorSelector,ProxyBuilder,Modifier,ArrayManager,IndexedList,$isProtocol,$isClass,$classOf,$ancestorOf,$isString,$isFunction,$isObject,$isArray,$isPromise,$isNothing,$isSomething,$using,$lift,$equals,$decorator,$decorate,$decorated,$debounce,$eq,$use,$copy,$lazy,$eval,$every,$child,$optional,$promise,$instant,$createModifier,$properties,$inferProperties,$inheritStatic"
     });
 
@@ -9667,7 +9667,7 @@ new function () { // closure
          * @param   {Object}  data     -  json structured data
          * @param   {Object}  options  -  mapping options
          */            
-            fromData: function (data, options) {
+        fromData: function (data, options) {
             if ($isNothing(data)) {
                 return;
             }
@@ -9690,13 +9690,13 @@ new function () { // closure
                 }
                 var value = data[key];
                 if (key in this) {
-                    this[key] = _mapWithOptions(value, mapper, descriptor, options);
+                    this[key] = Model.map(value, mapper, options);
                 } else {
                     var lkey  = key.toLowerCase(),
                         found = false;
                     for (var k in this) {
                         if (k.toLowerCase() === lkey) {
-                            this[k] = _mapWithOptions(value, mapper, descriptor, options);
+                            this[k] = Model.map(value, mapper, options);
                             found = true;
                             break;
                         }
@@ -9779,30 +9779,16 @@ new function () { // closure
          * @returns {Object} json structured data.
          */                                
         map: function (value, mapper, options) {
-            if (value) {
-                return $isArray(value)
-                     ? Array2.map(value, function (elem) {
-                         return Model.map(elem, mapper, options)
-                       })
-                     : mapper(value, options);
-            }
+            return $isArray(value)
+                ? Array2.map(value, function (elem) {
+                    return Model.map(elem, mapper, options)
+                })
+            : (mapper ? mapper(value, options) : value);
         },
         coerce: function () {
             return this.new.apply(this, arguments);
         }
     });
-
-    function _mapWithOptions(value, mapper, descriptor, options) {
-        if (mapper) {
-            var opt = descriptor;
-            if (opt && options) {
-                opt = extend({}, opt);
-            }
-            opt = opt && options ? extend(opt, options) : options;
-            return Model.map(value, mapper, opt);
-        }
-        return value;
-    }
     
     eval(this.exports);
     
