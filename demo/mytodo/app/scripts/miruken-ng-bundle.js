@@ -27,7 +27,7 @@ new function () { // closure
     miruken.package(this, {
         name:    "ng",
         imports: "miruken,miruken.callback,miruken.context,miruken.validate,miruken.ioc,miruken.mvc",
-        exports: "Runner,Directive,Filter,RegionDirective,PartialRegion,UseModelValidation,DigitsOnly,InhibitFocus,$appContext,$envContext,$rootContext"
+        exports: "Runner,Directive,Filter,RegionDirective,DynamicControllerDirective,PartialRegion,UseModelValidation,DigitsOnly,InhibitFocus,$appContext,$envContext,$rootContext"
     });
 
     eval(this.imports);
@@ -245,6 +245,32 @@ new function () { // closure
             }); 
         }
     });
+
+    /**
+     * Angular directive to allow controller expressions.
+     * @class DynamicControllerDirective
+     * @constructor
+     * @extends miruken.ng.Directive     
+     */
+    var DynamicControllerDirective = Directive.extend({
+        restrict: 'A',
+        terminal: true,
+        priority: 100000,
+        $inject:  [ "$parse", "$compile" ],
+        constructor: function ($parse, $compile) {
+            this.extend({
+                link: function (scope, elem, attrs) {
+                    var name = $parse(elem.attr('dynamic-controller'))(scope);
+                    if (scope.src) {
+                        elem.attr('src', "'" + scope.src + "'");
+                    }
+                    elem.removeAttr('dynamic-controller');
+                    elem.attr('ng-controller', name);
+                    $compile(elem)(scope);
+                }
+            });
+        }
+    });
     
     /**
      * Angular directive enabling model validation.
@@ -353,7 +379,7 @@ new function () { // closure
                     _installPackage(package, module, exports, $injector, runners, starters);
                 }]);
                 module.run(['$rootScope', '$injector', '$q', '$log', function ($rootScope, $injector, $q, $log) {
-                    if (package.parent === base2) {
+                    if (package.parent === base2 && !(package.name in $rootScope)) {
                         $rootScope[package.name] = package;
                     }
                    _provideInjector(appContainer, $injector);
@@ -880,6 +906,7 @@ var Package = Base.extend({
       if (value && value.ancestorOf == Base.ancestorOf && name != "constructor") { // it's a class
         value.toString = K("[" + String2.slice(this, 1, -1) + "." + name + "]");
       }
+      if (this.exported) this.exported([name]);
     }
   },
 
@@ -6840,7 +6867,7 @@ new function () { // closure
      */
     base2.package(this, {
         name:    "miruken",
-        version: "0.0.25",
+        version: "0.0.27",
         exports: "Enum,Variance,Protocol,StrictProtocol,Delegate,Miruken,MetaStep,MetaMacro,Initializing,Disposing,DisposingMixin,Invoking,Parenting,Starting,Startup,Facet,Interceptor,InterceptorSelector,ProxyBuilder,Modifier,ArrayManager,IndexedList,$isProtocol,$isClass,$classOf,$ancestorOf,$isString,$isFunction,$isObject,$isArray,$isPromise,$isNothing,$isSomething,$using,$lift,$equals,$decorator,$decorate,$decorated,$debounce,$eq,$use,$copy,$lazy,$eval,$every,$child,$optional,$promise,$instant,$createModifier,$properties,$inferProperties,$inheritStatic"
     });
 
