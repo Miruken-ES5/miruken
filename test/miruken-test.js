@@ -108,7 +108,14 @@ describe("Enum", function () {
     it("should obtain all names", function () {
         expect(Color.names).to.include("red", "blue", "green");
     });
-    
+
+    it("should obtain enum from value", function () {
+        expect(Color.fromValue(1)).to.equal(Color.red);
+        expect(Color.fromValue("2")).to.equal(Color.blue);
+        expect(Color.fromValue(Color.green)).to.equal(Color.green)
+        expect(Color.fromValue(10)).to.be.udefined;
+    });
+
     it("should support logical operations", function () {
         expect(Color.red == Color.red).to.be.true;
         expect(Color.red === Color.red).to.be.true

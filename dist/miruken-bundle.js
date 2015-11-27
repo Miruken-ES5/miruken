@@ -14,7 +14,7 @@ base2 = {
   name:    "base2",
   version: "1.1 (alpha1)",
   exports:
-    "Base,Package,Abstract,Module,Enumerable,Map,Collection,RegGrp," +
+    "Base,Package,Abstract,Module,Enumerable," +
     "Undefined,Null,This,True,False,assignID,global",
   namespace: ""
 };
@@ -476,402 +476,6 @@ var Enumerable = Module.extend({
   
   some: function(object, test, context) {
     return !this.every(object, not(test), context);
-  }
-});
-
-// =========================================================================
-// base2/Map.js
-// =========================================================================
-
-// http://wiki.ecmascript.org/doku.php?id=proposals:dictionary
-
-var _HASH = "#";
-
-var Map = Base.extend({
-  constructor: function(values) {
-    if (values) this.merge(values);
-  },
-
-  clear: function() {
-    for (var key in this) if (key.indexOf(_HASH) == 0) {
-      delete this[key];
-    }
-  },
-
-  copy: function() {
-    base2.__prototyping = true; // not really prototyping but it stops [[construct]] being called
-    var copy = new this.constructor;
-    delete base2.__prototyping;
-    for (var i in this) if (this[i] !== copy[i]) {
-      copy[i] = this[i];
-    }
-    return copy;
-  },
-
-  forEach: function(block, context) {
-    for (var key in this) if (key.indexOf(_HASH) == 0) {
-      block.call(context, this[key], key.slice(1), this);
-    }
-  },
-
-  get: function(key) {
-    return this[_HASH + key];
-  },
-
-  getKeys: function() {
-    return this.map(II);
-  },
-
-  getValues: function() {
-    return this.map(I);
-  },
-
-  // Ancient browsers throw an error if we use "in" as an operator.
-  has: function(key) {
-    key = _HASH + key;
-    /*@if (@_jscript_version < 5.5)
-      return this[key] !== undefined || $Legacy.has(this, key);
-    @else @*/
-      return key in this;
-    /*@end @*/
-  },
-
-  merge: function(values /*, value1, value2, .. ,valueN */) {
-    var put = flip(this.put);
-    forEach (arguments, function(values) {
-      forEach (values, put, this);
-    }, this);
-    return this;
-  },
-
-  put: function(key, value) {
-    // create the new entry (or overwrite the old entry).
-    this[_HASH + key] = value;
-    return value;
-  },
-
-  remove: function(key) {
-    delete this[_HASH + key];
-  },
-
-  size: function() {
-    // this is expensive because we are not storing the keys
-    var size = 0;
-    for (var key in this) if (key.indexOf(_HASH) == 0) size++;
-    return size;
-  },
-
-  union: function(values) {
-    return this.merge.apply(this.copy(), arguments);
-  }
-});
-
-Map.implement(Enumerable);
-
-Map.prototype.filter = function(test, context) {
-  return this.reduce(function(result, value, key) {
-    if (!test.call(context, value, key, this)) {
-      result.remove(key);
-    }
-    return result;
-  }, this.copy(), this);
-};
-
-// =========================================================================
-// base2/Collection.js
-// =========================================================================
-
-// A Map that is more array-like (accessible by index).
-
-// Collection classes have a special (optional) property: Item
-// The Item property points to a constructor function.
-// Members of the collection must be an instance of Item.
-
-// The static create() method is responsible for all construction of collection items.
-// Instance methods that add new items (add, put, insertAt, putAt) pass *all* of their arguments
-// to the static create() method. If you want to modify the way collection items are 
-// created then you only need to override this method for custom collections.
-
-var _KEYS = "~";
-
-var Collection = Map.extend({
-  constructor: function(values) {
-    this[_KEYS] = new Array2;
-    this.base(values);
-  },
-  
-  add: function(key, item) {
-    // Duplicates not allowed using add().
-    // But you can still overwrite entries using put().
-    if (this.has(key)) throw "Duplicate key '" + key + "'.";
-    return this.put.apply(this, arguments);
-  },
-
-  clear: function() {
-    this.base();
-    this[_KEYS].length = 0;
-  },
-
-  copy: function() {
-    var copy = this.base();
-    copy[_KEYS] = this[_KEYS].copy();
-    return copy;
-  },
-
-  forEach: function(block, context) {
-    var keys = this[_KEYS].concat();
-    var length = keys.length;
-    for (var i = 0; i < length; i++) {
-      block.call(context, this[_HASH + keys[i]], keys[i], this);
-    }
-  },
-
-  getAt: function(index) {
-    var key = this[_KEYS].item(index);
-    return (key === undefined)  ? undefined : this[_HASH + key];
-  },
-
-  getKeys: function() {
-    return this[_KEYS].copy();
-  },
-
-  indexOf: function(key) {
-    return this[_KEYS].indexOf(String(key));
-  },
-
-  insertAt: function(index, key, item) {
-    if (this[_KEYS].item(index) == null) throw "Index out of bounds.";
-    if (this.has(key)) throw "Duplicate key '" + key + "'.";
-    this[_KEYS].insertAt(index, String(key));
-    this[_HASH + key] = null; // placeholder
-    return this.put.apply(this, _slice.call(arguments, 1));
-  },
-
-  item: function(keyOrIndex) {
-    return this[typeof keyOrIndex == "number" ? "getAt" : "get"](keyOrIndex);
-  },
-
-  put: function(key, item) {
-    var klass = this.constructor;
-    if (klass.Item && !instanceOf(item, klass.Item)) {
-      item = klass.create.apply(klass, arguments);
-    }
-    if (!this.has(key)) {
-      this[_KEYS].push(String(key));
-    }
-    this[_HASH + key] = item;
-    return item;
-  },
-
-  putAt: function(index, item) {
-    arguments[0] = this[_KEYS].item(index);
-    if (arguments[0] == null) throw "Index out of bounds.";
-    return this.put.apply(this, arguments);
-  },
-
-  remove: function(key) {
-    // The remove() method of the Array object can be slow so check if the key exists first.
-    if (this.has(key)) {
-      this[_KEYS].remove(String(key));
-      delete this[_HASH + key];
-    }
-  },
-
-  removeAt: function(index) {
-    var key = this[_KEYS].item(index);
-    if (key !== undefined) {
-      this[_KEYS].removeAt(index);
-      delete this[_HASH + key];
-    }
-  },
-
-  reverse: function() {
-    this[_KEYS].reverse();
-    return this;
-  },
-
-  size: function() {
-    return this[_KEYS].length;
-  },
-
-  slice: function(start, end) {
-    var sliced = this.copy();
-    if (arguments.length > 0) {
-      var keys = this[_KEYS], removed = keys;
-      sliced[_KEYS] = Array2(_slice.apply(keys, arguments));
-      if (sliced[_KEYS].length) {
-        removed = removed.slice(0, start);
-        if (arguments.length > 1) {
-          removed = removed.concat(keys.slice(end));
-        }
-      }
-      for (var i = 0; i < removed.length; i++) {
-        delete sliced[_HASH + removed[i]];
-      }
-    }
-    return sliced;
-  },
-
-  sort: function(compare) { // optimised (refers to _HASH)
-    if (compare) {
-      this[_KEYS].sort(bind(function(key1, key2) {
-        return compare(this[_HASH + key1], this[_HASH + key2], key1, key2);
-      }, this));
-    } else this[_KEYS].sort();
-    return this;
-  },
-
-  toString: function() {
-    return "(" + (this[_KEYS] || "") + ")";
-  }
-}, {
-  Item: null, // If specified, all members of the collection must be instances of Item.
-  
-  create: function(key, item) {
-    return this.Item ? new this.Item(key, item) : item;
-  },
-  
-  extend: function(_instance, _static) {
-    var klass = this.base(_instance);
-    klass.create = this.create;
-    if (_static) extend(klass, _static);
-    if (!klass.Item) {
-      klass.Item = this.Item;
-    } else if (typeof klass.Item != "function") {
-      klass.Item = (this.Item || Base).extend(klass.Item);
-    }
-    if (klass.init) klass.init();
-    return klass;
-  }
-});
-
-// =========================================================================
-// base2/RegGrp.js
-// =========================================================================
-
-// A collection of regular expressions and their associated replacement values.
-// A Base class for creating parsers.
-
-var _RG_BACK_REF        = /\\(\d+)/g,
-    _RG_ESCAPE_CHARS    = /\\./g,
-    _RG_ESCAPE_BRACKETS = /\(\?[:=!]|\[[^\]]+\]/g,
-    _RG_BRACKETS        = /\(/g,
-    _RG_LOOKUP          = /\$(\d+)/,
-    _RG_LOOKUP_SIMPLE   = /^\$\d+$/;
-
-var RegGrp = Collection.extend({
-  constructor: function(values, ignoreCase) {
-    this.base(values);
-    this.ignoreCase = !!ignoreCase;
-  },
-
-  ignoreCase: false,
-
-  exec: function(string, override) { // optimised (refers to _HASH/_KEYS)
-    string += ""; // type-safe
-    var items = this, keys = this[_KEYS];
-    if (!keys.length) return string;
-    if (override == RegGrp.IGNORE) override = 0;
-    return string.replace(new RegExp(this, this.ignoreCase ? "gi" : "g"), function(match) {
-      var item, offset = 1, i = 0;
-      // Loop through the RegGrp items.
-      while ((item = items[_HASH + keys[i++]])) {
-        var next = offset + item.length + 1;
-        if (arguments[offset]) { // do we have a result?
-          var replacement = override == null ? item.replacement : override;
-          switch (typeof replacement) {
-            case "function":
-              return replacement.apply(items, _slice.call(arguments, offset, next));
-            case "number":
-              return arguments[offset + replacement];
-            default:
-              return replacement;
-          }
-        }
-        offset = next;
-      }
-      return match;
-    });
-  },
-
-  insertAt: function(index, expression, replacement) {
-    if (instanceOf(expression, RegExp)) {
-      arguments[1] = expression.source;
-    }
-    return this.base.apply(this, arguments);
-  },
-
-  test: function(string) {
-    // The slow way to do it. Hopefully, this isn't called too often. :-)
-    return this.exec(string) != string;
-  },
-  
-  toString: function() {
-    var offset = 1;
-    return "(" + this.map(function(item) {
-      // Fix back references.
-      var expression = (item + "").replace(_RG_BACK_REF, function(match, index) {
-        return "\\" + (offset + Number(index));
-      });
-      offset += item.length + 1;
-      return expression;
-    }).join(")|(") + ")";
-  }
-}, {
-  IGNORE: "$0",
-  
-  init: function() {
-    forEach ("add,get,has,put,remove".split(","), function(name) {
-      this[name] = _override(this, name, function(expression) {
-        if (instanceOf(expression, RegExp)) {
-          arguments[0] = expression.source;
-        }
-        return this.base.apply(this, arguments);
-      });
-    }, this.prototype);
-  },
-  
-  Item: {
-    constructor: function(expression, replacement) {
-      if (replacement == null) replacement = RegGrp.IGNORE;
-      else if (replacement.replacement != null) replacement = replacement.replacement;
-      else if (typeof replacement != "function") replacement = String(replacement);
-      
-      // does the pattern use sub-expressions?
-      if (typeof replacement == "string" && _RG_LOOKUP.test(replacement)) {
-        // a simple lookup? (e.g. "$2")
-        if (_RG_LOOKUP_SIMPLE.test(replacement)) {
-          // store the index (used for fast retrieval of matched strings)
-          replacement = parseInt(replacement.slice(1), 10);
-        } else { // a complicated lookup (e.g. "Hello $2 $1")
-          // build a function to do the lookup
-          // Improved version by Alexei Gorkov:
-          var Q = '"';
-          replacement = replacement
-            .replace(/\\/g, "\\\\")
-            .replace(/"/g, "\\x22")
-            .replace(/\n/g, "\\n")
-            .replace(/\r/g, "\\r")
-            .replace(/\$(\d+)/g, Q + "+(arguments[$1]||" + Q+Q + ")+" + Q)
-            .replace(/(['"])\1\+(.*)\+\1\1$/, "$1");
-          replacement = new Function("return " + Q + replacement + Q);
-        }
-      }
-      
-      this.length = RegGrp.count(expression);
-      this.replacement = replacement;
-      this.toString = K(expression + "");
-    },
-
-    disabled: false,
-    length: 0,
-    replacement: ""
-  },
-  
-  count: function(expression) {
-    // Count the number of sub-expressions in a RegExp/RegGrp.Item.
-    expression = (expression + "").replace(_RG_ESCAPE_CHARS, "").replace(_RG_ESCAPE_BRACKETS, "");
-    return match(expression, _RG_BRACKETS).length;
   }
 });
 
@@ -1734,7 +1338,10 @@ new function () { // closure
      miruken.package(this, {
         name:    "callback",
         imports: "miruken",
-        exports: "CallbackHandler,CascadeCallbackHandler,CompositeCallbackHandler,InvocationOptions,Resolving,Resolution,Composition,HandleMethod,ResolveMethod,RejectedError,getEffectivePromise,$handle,$callbacks,$define,$provide,$lookup,$NOT_HANDLED"
+        exports: "CallbackHandler,CascadeCallbackHandler,CompositeCallbackHandler," +
+                 "InvocationOptions,Resolving,Resolution,Composition,HandleMethod," +
+                 "ResolveMethod,RejectedError,getEffectivePromise,$handle,$callbacks," +
+                 "$define,$provide,$lookup,$NOT_HANDLED"
     });
 
     eval(this.imports);
@@ -3789,6 +3396,14 @@ new function () { // closure
                 composer = context.$descendantOrSelf();
             }
             return composer.$notify();
+        },
+        $publishFromRoot: function () {
+            var composer = this;
+            var context = ContextualHelper.resolveContext(composer);
+            if (context) {
+                composer = context.root.$descendantOrSelf();
+            }
+            return composer.$notify();
         }
     });
     
@@ -4948,7 +4563,11 @@ new function () { // closure
     miruken.package(this, {
         name:    "ioc",
         imports: "miruken,miruken.graph,miruken.callback,miruken.context,miruken.validate",
-        exports: "Container,Registration,ComponentPolicy,Lifestyle,TransientLifestyle,SingletonLifestyle,ContextualLifestyle,DependencyModifiers,DependencyModel,DependencyManager,DependencyInspector,ComponentModel,ComponentBuilder,ComponentModelError,IoContainer,DependencyResolution,DependencyResolutionError,$component,$$composer,$container"
+        exports: "Container,Registration,ComponentPolicy,Lifestyle,TransientLifestyle," +
+                 "SingletonLifestyle,ContextualLifestyle,DependencyModifier,DependencyModel," +
+                 "DependencyManager,DependencyInspector,ComponentModel,ComponentBuilder," +
+                 "ComponentModelError,IoContainer,DependencyResolution,DependencyResolutionError," +
+                 "$component,$$composer,$container"
     });
 
     eval(this.imports);
@@ -5048,11 +4667,11 @@ new function () { // closure
     });
 
     /**
-     * DependencyModifiers flags enum
-     * @class DependencyModifiers
+     * DependencyModifier flags enum
+     * @class DependencyModifier
      * @extends miruken.Enum
      */    
-    var DependencyModifiers = Enum({
+    var DependencyModifier = Enum({
         /**
          * No dependency modifiers.
          * @property {number} None
@@ -5077,7 +4696,7 @@ new function () { // closure
          * See {{#crossLink "miruken.Modifier/$eval:attribute"}}{{/crossLink}}
          * @property {number} Dynamic
          */
-        Dynamic:    1 << 3,
+        Dynamic: 1 << 3,
         /**
          * See {{#crossLink "miruken.Modifier/$optional:attribute"}}{{/crossLink}}
          * @property {number} Optional
@@ -5110,39 +4729,39 @@ new function () { // closure
      * @class DependencyModel
      * @constructor
      * @param {Any} dependency  -  annotated dependency
-     * @param {miruken.ioc.DependencyModifiers} modifiers  -  dependency annotations
+     * @param {miruken.ioc.DependencyModifier} modifiers  -  dependency annotations
      * @extends Base
      */
     var DependencyModel = Base.extend({
         constructor: function (dependency, modifiers) {
-            modifiers = +(modifiers || DependencyModifiers.None);
+            modifiers = +(modifiers || DependencyModifier.None);
             if (dependency instanceof Modifier) {
                 if ($use.test(dependency)) {
-                    modifiers = modifiers | DependencyModifiers.Use;
+                    modifiers = modifiers | DependencyModifier.Use;
                 }
                 if ($lazy.test(dependency)) {
-                    modifiers = modifiers | DependencyModifiers.Lazy;
+                    modifiers = modifiers | DependencyModifier.Lazy;
                 }
                 if ($every.test(dependency)) {
-                    modifiers = modifiers | DependencyModifiers.Every;
+                    modifiers = modifiers | DependencyModifier.Every;
                 }
                 if ($eval.test(dependency)) {
-                    modifiers = modifiers | DependencyModifiers.Dynamic;
+                    modifiers = modifiers | DependencyModifier.Dynamic;
                 }
                 if ($child.test(dependency)) {
-                    modifiers = modifiers | DependencyModifiers.Child;
+                    modifiers = modifiers | DependencyModifier.Child;
                 }
                 if ($optional.test(dependency)) {
-                    modifiers = modifiers | DependencyModifiers.Optional;
+                    modifiers = modifiers | DependencyModifier.Optional;
                 }
                 if ($promise.test(dependency)) {
-                    modifiers = modifiers | DependencyModifiers.Promise;
+                    modifiers = modifiers | DependencyModifier.Promise;
                 }
                 if ($container.test(dependency)) {
-                    modifiers = modifiers | DependencyModifiers.Container;
+                    modifiers = modifiers | DependencyModifier.Container;
                 }
                 if ($eq.test(dependency)) {
-                    modifiers = modifiers | DependencyModifiers.Invariant;
+                    modifiers = modifiers | DependencyModifier.Invariant;
                 }
                 dependency = Modifier.unwrap(dependency);
             }
@@ -5155,7 +4774,7 @@ new function () { // closure
                 get dependency() { return dependency; },
                 /**
                  * Gets the dependency flags.
-                 * @property {miruken.ioc.DependencyModifiers} modifiers
+                 * @property {miruken.ioc.DependencyModifier} modifiers
                  * @readOnly
                  */                        
                 get modifiers() { return modifiers; }
@@ -5164,7 +4783,7 @@ new function () { // closure
         /**
          * Tests if the receiving dependency is annotated with the modifier.
          * @method test
-         * @param   {miruken.ioc.DependencyModifiers}  modifier  -  modifier flags
+         * @param   {miruken.ioc.DependencyModifier}  modifier  -  modifier flags
          * @returns {boolean} true if the dependency is annotated with modifier(s).
          */        
         test: function (modifier) {
@@ -6098,11 +5717,11 @@ new function () { // closure
                 if (dep === undefined) {
                     continue;
                 }
-                var use        = dep.test(DependencyModifiers.Use),
-                    lazy       = dep.test(DependencyModifiers.Lazy),
-                    promise    = dep.test(DependencyModifiers.Promise),
-                    child      = dep.test(DependencyModifiers.Child),
-                    dynamic    = dep.test(DependencyModifiers.Dynamic),
+                var use        = dep.test(DependencyModifier.Use),
+                    lazy       = dep.test(DependencyModifier.Lazy),
+                    promise    = dep.test(DependencyModifier.Promise),
+                    child      = dep.test(DependencyModifier.Child),
+                    dynamic    = dep.test(DependencyModifier.Dynamic),
                     dependency = dep.dependency;
                 if (use || dynamic || $isNothing(dependency)) {
                     if (dynamic && $isFunction(dependency)) {
@@ -6119,10 +5738,10 @@ new function () { // closure
                 } else if (dependency === Container) {
                     dependency = containerDep;
                 } else {
-                    var all           = dep.test(DependencyModifiers.Every),
-                        optional      = dep.test(DependencyModifiers.Optional),
-                        invariant     = dep.test(DependencyModifiers.Invariant),
-                        fromContainer = dep.test(DependencyModifiers.Container);
+                    var all           = dep.test(DependencyModifier.Every),
+                        optional      = dep.test(DependencyModifier.Optional),
+                        invariant     = dep.test(DependencyModifier.Invariant),
+                        fromContainer = dep.test(DependencyModifier.Container);
                     if (invariant) {
                         dependency = $eq(dependency);
                     }
@@ -6222,8 +5841,14 @@ new function () { // closure
      */
     base2.package(this, {
         name:    "miruken",
-        version: "0.0.27",
-        exports: "Enum,Variance,Protocol,StrictProtocol,Delegate,Miruken,MetaStep,MetaMacro,Initializing,Disposing,DisposingMixin,Invoking,Parenting,Starting,Startup,Facet,Interceptor,InterceptorSelector,ProxyBuilder,Modifier,ArrayManager,IndexedList,$isProtocol,$isClass,$classOf,$ancestorOf,$isString,$isFunction,$isObject,$isArray,$isPromise,$isNothing,$isSomething,$using,$lift,$equals,$decorator,$decorate,$decorated,$debounce,$eq,$use,$copy,$lazy,$eval,$every,$child,$optional,$promise,$instant,$createModifier,$properties,$inferProperties,$inheritStatic"
+        version: "0.0.29",
+        exports: "Enum,Variance,Protocol,StrictProtocol,Delegate,Miruken,MetaStep,MetaMacro," +
+                 "Initializing,Disposing,DisposingMixin,Invoking,Parenting,Starting,Startup," +
+                 "Facet,Interceptor,InterceptorSelector,ProxyBuilder,Modifier,ArrayManager,IndexedList," +
+                 "$isProtocol,$isClass,$classOf,$ancestorOf,$isString,$isFunction,$isObject,$isArray," +
+                 "$isPromise,$isNothing,$isSomething,$using,$lift,$equals,$decorator,$decorate,$decorated," +
+                 "$debounce,$eq,$use,$copy,$lazy,$eval,$every,$child,$optional,$promise,$instant," +
+                 "$createModifier,$properties,$inferProperties,$inheritStatic"
     });
 
     eval(this.imports);
@@ -6320,11 +5945,22 @@ new function () { // closure
             for (var choice in choices) {
                 en[choice] = Object.freeze(new en(choices[choice], choice));
             }
+            en.fromValue = _valueToEnum.bind(en);
             delete en.__defining;
             return Object.freeze(en);
         }
     });
     Enum.prototype.valueOf = function () { return this.value; }
+
+    function _valueToEnum(value) {
+        var names = this.names;
+        for (var i = 0; i < names.length; ++i) {
+            var e = this[names[i]];
+            if (e.value === +value) {
+                return e;
+            }
+        }        
+    }
     
     /**
      * Variance enum

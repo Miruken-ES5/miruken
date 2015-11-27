@@ -227,8 +227,8 @@ describe("DependencyModel", function () {
 
     describe("#test", function () {
         it("should test dependency modifier", function () {
-            var dependency = new DependencyModel(22, DependencyModifiers.Use);
-            expect(dependency.test(DependencyModifiers.Use)).to.be.true;
+            var dependency = new DependencyModel(22, DependencyModifier.Use);
+            expect(dependency.test(DependencyModifier.Use)).to.be.true;
         });
     });
 });
