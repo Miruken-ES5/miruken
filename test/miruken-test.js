@@ -94,17 +94,17 @@ describe("Enum", function () {
     var Color = Enum({red: 1, blue: 2, green: 3});
 
     it("should obtain value", function () {
-        expect(Color.red.value).to.eql(1);
-        expect(Color.blue.value).to.eql(2);
-        expect(Color.green.value).to.eql(3);
+        expect(Color.red.value).to.equal(1);
+        expect(Color.blue.value).to.equal(2);
+        expect(Color.green.value).to.equal(3);
     });
 
     it("should obtain name", function () {
-        expect(Color.red.name).to.eql("red");
-        expect(Color.blue.name).to.eql("blue");
-        expect(Color.green.name).to.eql("green");
+        expect(Color.red.name).to.equal("red");
+        expect(Color.blue.name).to.equal("blue");
+        expect(Color.green.name).to.equal("green");
     });
-
+    
     it("should obtain all names", function () {
         expect(Color.names).to.include("red", "blue", "green");
     });
@@ -138,6 +138,15 @@ describe("Enum", function () {
             new Color(2);
         }).to.throw(Error, /Enums cannot be instantiated./);
     });
+
+    it("should extend enum class", function () {
+        Color.implement({
+            get rgb() { return "#FFFFFF"; },
+            get displayName() { return this.name; }
+        });
+        expect(Color.red.rgb).to.equal("#FFFFFF");
+        expect(Color.green.displayName).to.equal("green");        
+    });    
 });
 
 describe("$meta", function () {

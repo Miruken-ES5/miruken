@@ -6493,7 +6493,7 @@ new function () { // closure
      */
     base2.package(this, {
         name:    "miruken",
-        version: "0.0.29",
+        version: "0.0.31",
         exports: "Enum,Variance,Protocol,StrictProtocol,Delegate,Miruken,MetaStep,MetaMacro," +
                  "Initializing,Disposing,DisposingMixin,Invoking,Parenting,Starting,Startup," +
                  "Facet,Interceptor,InterceptorSelector,ProxyBuilder,Modifier,ArrayManager,IndexedList," +
@@ -6582,12 +6582,22 @@ new function () { // closure
      * @param  {string} value  -  enum name
      */
     var Enum = Base.extend({
-        constructor: function _(value, name) {
+        constructor: function (value, name) {
             if (!this.constructor.__defining) {
                 throw new TypeError("Enums cannot be instantiated.");
             }
-            this.value = value;
-            this.name  = name;
+            Object.defineProperties(this, {
+                "value": {
+                    value:        value,
+                    writable:     false,
+                    configurable: false
+                },
+                "name": {
+                    value:        name,
+                    writable:     false,
+                    configurable: false
+                }
+            });
         }
     }, {
         coerce: function _(choices) {
@@ -6595,7 +6605,7 @@ new function () { // closure
             en.__defining = true;
             en.names      = Object.freeze(Object.keys(choices));
             for (var choice in choices) {
-                en[choice] = Object.freeze(new en(choices[choice], choice));
+                en[choice] = new en(choices[choice], choice);
             }
             en.fromValue = _valueToEnum.bind(en);
             delete en.__defining;
@@ -7280,6 +7290,10 @@ new function () { // closure
         }
     });
 
+    Enum.$meta      = new ClassMeta(Base.$meta, Enum);
+    Enum.extend     = Base.extend
+    Enum.implement  = Base.implement;
+    
     /**
      * Metamacro to proxy protocol methods through a delegate.<br/>
      * See {{#crossLink "miruken.Protocol"}}{{/crossLink}}
@@ -7337,7 +7351,7 @@ new function () { // closure
     });
     Protocol.extend     = Base.extend
     Protocol.implement  = Base.implement;
-    Protocol.$meta      = new ClassMeta(null, Protocol, null, [new $proxyProtocol]);
+    Protocol.$meta      = new ClassMeta(Base.$meta, Protocol, null, [new $proxyProtocol]);
     Protocol.$meta.execute(MetaStep.Subclass, Protocol.$meta, Protocol.prototype);
 
     /**

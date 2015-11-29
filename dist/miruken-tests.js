@@ -5841,7 +5841,7 @@ new function () { // closure
      */
     base2.package(this, {
         name:    "miruken",
-        version: "0.0.29",
+        version: "0.0.31",
         exports: "Enum,Variance,Protocol,StrictProtocol,Delegate,Miruken,MetaStep,MetaMacro," +
                  "Initializing,Disposing,DisposingMixin,Invoking,Parenting,Starting,Startup," +
                  "Facet,Interceptor,InterceptorSelector,ProxyBuilder,Modifier,ArrayManager,IndexedList," +
@@ -5930,12 +5930,22 @@ new function () { // closure
      * @param  {string} value  -  enum name
      */
     var Enum = Base.extend({
-        constructor: function _(value, name) {
+        constructor: function (value, name) {
             if (!this.constructor.__defining) {
                 throw new TypeError("Enums cannot be instantiated.");
             }
-            this.value = value;
-            this.name  = name;
+            Object.defineProperties(this, {
+                "value": {
+                    value:        value,
+                    writable:     false,
+                    configurable: false
+                },
+                "name": {
+                    value:        name,
+                    writable:     false,
+                    configurable: false
+                }
+            });
         }
     }, {
         coerce: function _(choices) {
@@ -5943,7 +5953,7 @@ new function () { // closure
             en.__defining = true;
             en.names      = Object.freeze(Object.keys(choices));
             for (var choice in choices) {
-                en[choice] = Object.freeze(new en(choices[choice], choice));
+                en[choice] = new en(choices[choice], choice);
             }
             en.fromValue = _valueToEnum.bind(en);
             delete en.__defining;
@@ -6628,6 +6638,10 @@ new function () { // closure
         }
     });
 
+    Enum.$meta      = new ClassMeta(Base.$meta, Enum);
+    Enum.extend     = Base.extend
+    Enum.implement  = Base.implement;
+    
     /**
      * Metamacro to proxy protocol methods through a delegate.<br/>
      * See {{#crossLink "miruken.Protocol"}}{{/crossLink}}
@@ -6685,7 +6699,7 @@ new function () { // closure
     });
     Protocol.extend     = Base.extend
     Protocol.implement  = Base.implement;
-    Protocol.$meta      = new ClassMeta(null, Protocol, null, [new $proxyProtocol]);
+    Protocol.$meta      = new ClassMeta(Base.$meta, Protocol, null, [new $proxyProtocol]);
     Protocol.$meta.execute(MetaStep.Subclass, Protocol.$meta, Protocol.prototype);
 
     /**
@@ -26279,17 +26293,17 @@ describe("Enum", function () {
     var Color = Enum({red: 1, blue: 2, green: 3});
 
     it("should obtain value", function () {
-        expect(Color.red.value).to.eql(1);
-        expect(Color.blue.value).to.eql(2);
-        expect(Color.green.value).to.eql(3);
+        expect(Color.red.value).to.equal(1);
+        expect(Color.blue.value).to.equal(2);
+        expect(Color.green.value).to.equal(3);
     });
 
     it("should obtain name", function () {
-        expect(Color.red.name).to.eql("red");
-        expect(Color.blue.name).to.eql("blue");
-        expect(Color.green.name).to.eql("green");
+        expect(Color.red.name).to.equal("red");
+        expect(Color.blue.name).to.equal("blue");
+        expect(Color.green.name).to.equal("green");
     });
-
+    
     it("should obtain all names", function () {
         expect(Color.names).to.include("red", "blue", "green");
     });
@@ -26323,6 +26337,15 @@ describe("Enum", function () {
             new Color(2);
         }).to.throw(Error, /Enums cannot be instantiated./);
     });
+
+    it("should extend enum class", function () {
+        Color.implement({
+            get rgb() { return "#FFFFFF"; },
+            get displayName() { return this.name; }
+        });
+        expect(Color.red.rgb).to.equal("#FFFFFF");
+        expect(Color.green.displayName).to.equal("green");        
+    });    
 });
 
 describe("$meta", function () {
