@@ -5841,8 +5841,8 @@ new function () { // closure
      */
     base2.package(this, {
         name:    "miruken",
-        version: "0.0.31",
-        exports: "Enum,Variance,Protocol,StrictProtocol,Delegate,Miruken,MetaStep,MetaMacro," +
+        version: "0.0.35",
+        exports: "Enum,Flags,Variance,Protocol,StrictProtocol,Delegate,Miruken,MetaStep,MetaMacro," +
                  "Initializing,Disposing,DisposingMixin,Invoking,Parenting,Starting,Startup," +
                  "Facet,Interceptor,InterceptorSelector,ProxyBuilder,Modifier,ArrayManager,IndexedList," +
                  "$isProtocol,$isClass,$classOf,$ancestorOf,$isString,$isFunction,$isObject,$isArray," +
@@ -5931,9 +5931,7 @@ new function () { // closure
      */
     var Enum = Base.extend({
         constructor: function (value, name) {
-            if (!this.constructor.__defining) {
-                throw new TypeError("Enums cannot be instantiated.");
-            }
+            this.constructing(value, name);
             Object.defineProperties(this, {
                 "value": {
                     value:        value,
@@ -5946,32 +5944,85 @@ new function () { // closure
                     configurable: false
                 }
             });
+        },
+        constructing: function (value, name) {
+            if (!this.constructor.__defining) {
+                throw new TypeError("Enums cannot be instantiated.");
+            }            
         }
     }, {
         coerce: function _(choices) {
-            var en        = this.extend();
+            if (this !== Enum && this !== Flags) {
+                return;
+            }
+            var en = this.extend(null, {
+                coerce: function _(value) {
+                    return this.fromValue(value);
+                }
+            });
             en.__defining = true;
             en.names      = Object.freeze(Object.keys(choices));
             for (var choice in choices) {
                 en[choice] = new en(choices[choice], choice);
             }
-            en.fromValue = _valueToEnum.bind(en);
+            en.fromValue = this.fromValue;
             delete en.__defining;
             return Object.freeze(en);
+        },
+        fromValue: function (value) {
+            value = +value;
+            var names = this.names;
+            for (var i = 0; i < names.length; ++i) {
+                var e = this[names[i]];
+                if (e.value === value) {
+                    return e;
+                }
+            }                    
         }
     });
     Enum.prototype.valueOf = function () { return this.value; }
 
-    function _valueToEnum(value) {
-        var names = this.names;
-        for (var i = 0; i < names.length; ++i) {
-            var e = this[names[i]];
-            if (e.value === +value) {
-                return e;
+    /**
+     * Defines a flags enumeration.
+     * <pre>
+     *    var DayOfWeek = Flags({
+     *        Monday:     1 << 0,
+     *        Tuesday:    1 << 1,
+     *        Wednesday:  1 << 2,
+     *        Thursday:   1 << 3,
+     *        Friday:     1 << 4,
+     *        Saturday:   1 << 5,
+     *        Sunday:     1 << 6
+     *    })
+     * </pre>
+     * @class Enum
+     * @constructor
+     * @param  {Any} value     -  flag value
+     * @param  {string} value  -  flag name
+     */    
+    var Flags = Enum.extend({
+        hasFlag: function (flag) {
+            flag = +flag;
+            return (this.value & flag) === flag;
+        },
+        constructing: function (value, name) {}
+    }, {
+        fromValue: function (value) {
+            value = +value;
+            var name, names = this.names;
+            for (var i = 0; i < names.length; ++i) {
+                var flag = this[names[i]];
+                if (flag.value === value) {
+                    return flag;
+                }
+                if ((value & flag.value) === flag.value) {
+                    name = name ? (name + "," + flag.name) : flag.name;
+                }
             }
-        }        
-    }
-    
+            return new this(value, name);
+        }
+    });
+                            
     /**
      * Variance enum
      * @class Variance
@@ -7256,23 +7307,33 @@ new function () { // closure
      */
     function $using(disposing, action, context) {
         if (disposing && $isFunction(disposing.dispose)) {
-            if ($isFunction(action)) {
+            if (!$isPromise(action)) {
                 var result;
                 try {
-                    result = action.call(context, disposing);
-                    return result;
+                    result = $isFunction(action)
+                           ? action.call(context, disposing)
+                           : action;
+                    if (!$isPromise(result)) {
+                        return result;
+                    }
                 } finally {
                     if ($isPromise(result)) {
                         action = result;
                     } else {
-                        disposing.dispose();
+                        var dresult = disposing.dispose();
+                        if (dresult !== undefined) {
+                            return dresult;
+                        }
                     }
                 }
-            } else if (!$isPromise(action)) {
-                return;
             }
-            action.finally(function () { disposing.dispose(); });
-            return action;
+            return action.then(function (res) {
+                var dres = disposing.dispose();
+                return dres !== undefined ? dres : res;
+            }, function (err) {
+                var dres = disposing.dispose();
+                return dres !== undefined ? dres : Promise.reject(err);
+            });
         }
     }
 
@@ -26292,29 +26353,37 @@ describe("miruken", function () {
 describe("Enum", function () {
     var Color = Enum({red: 1, blue: 2, green: 3});
 
-    it("should obtain value", function () {
-        expect(Color.red.value).to.equal(1);
-        expect(Color.blue.value).to.equal(2);
-        expect(Color.green.value).to.equal(3);
+    describe("#value", function () {
+        it("should obtain value", function () {
+            expect(Color.red.value).to.equal(1);
+            expect(Color.blue.value).to.equal(2);
+            expect(Color.green.value).to.equal(3);
+        });
     });
 
-    it("should obtain name", function () {
-        expect(Color.red.name).to.equal("red");
-        expect(Color.blue.name).to.equal("blue");
-        expect(Color.green.name).to.equal("green");
+    describe("#name", function () {
+        it("should obtain name", function () {
+            expect(Color.red.name).to.equal("red");
+            expect(Color.blue.name).to.equal("blue");
+            expect(Color.green.name).to.equal("green");
+        });
+    });
+
+    describe("#names", function () {
+        it("should obtain all names", function () {
+            expect(Color.names).to.include("red", "blue", "green");
+        });
+    });
+
+    describe("#fromValue", function () {
+        it("should obtain enum from value", function () {
+            expect(Color(1)).to.equal(Color.red);
+            expect(Color("2")).to.equal(Color.blue);
+            expect(Color(Color.green)).to.equal(Color.green)
+            expect(Color(10)).to.be.udefined;
+        });        
     });
     
-    it("should obtain all names", function () {
-        expect(Color.names).to.include("red", "blue", "green");
-    });
-
-    it("should obtain enum from value", function () {
-        expect(Color.fromValue(1)).to.equal(Color.red);
-        expect(Color.fromValue("2")).to.equal(Color.blue);
-        expect(Color.fromValue(Color.green)).to.equal(Color.green)
-        expect(Color.fromValue(10)).to.be.udefined;
-    });
-
     it("should support logical operations", function () {
         expect(Color.red == Color.red).to.be.true;
         expect(Color.red === Color.red).to.be.true
@@ -26345,6 +26414,65 @@ describe("Enum", function () {
         });
         expect(Color.red.rgb).to.equal("#FFFFFF");
         expect(Color.green.displayName).to.equal("green");        
+    });    
+});
+
+describe("Flags", function () {
+    var DayOfWeek = Flags({
+        Monday:    1,
+        Tuesday:   2,
+        Wednesday: 4,
+        Thursday:  8,
+        Friday:    16,
+        Saturday:  32,
+        Sunday:    64,
+        Weekday:   31,
+        Weekend:   96
+    });
+
+    describe("#value", function () {
+        it("should obtain value", function () {
+            expect(DayOfWeek.Monday.value).to.equal(1);
+            expect(DayOfWeek.Tuesday.value).to.equal(2);            
+        });
+    });
+
+    describe("#name", function () {
+        it("should obtain name", function () {
+            expect(DayOfWeek.Monday.name).to.equal("Monday");
+            expect(DayOfWeek.Tuesday.name).to.equal("Tuesday");
+            expect(DayOfWeek(21).name).to.equal("Monday,Wednesday,Friday");
+            expect(DayOfWeek.Weekend.name).to.equal("Weekend");            
+        });
+    });
+
+    describe("#names", function () {
+        it("should obtain all names", function () {
+            expect(DayOfWeek.names).to.include(
+                "Monday", "Tuesday", "Wednesday",
+                "Thursday", "Friday", "Saturday", "Sunday");            
+        });
+    });
+
+    describe("#fromValue", function () {
+        it("should obtain enum from value", function () {
+            expect(DayOfWeek(1)).to.equal(DayOfWeek.Monday);
+            expect(DayOfWeek("4")).to.equal(DayOfWeek.Wednesday);
+            expect(DayOfWeek(DayOfWeek.Friday) === DayOfWeek.Friday).to.be.true;
+            expect(DayOfWeek(21).value).to.equal(21);
+            expect(DayOfWeek.Saturday | DayOfWeek.Sunday).to.equal(+DayOfWeek.Weekend);
+            expect(DayOfWeek(DayOfWeek.Saturday | DayOfWeek.Sunday)).to.equal(DayOfWeek.Weekend);            
+        });        
+    });
+
+    describe("#hasFlag", function () {
+        it("should test enum flag", function () {
+            expect(DayOfWeek.Tuesday.hasFlag(DayOfWeek.Tuesday)).to.be.true;
+            expect(DayOfWeek(8).hasFlag(DayOfWeek.Thursday)).to.be.true;
+            expect(DayOfWeek(16).hasFlag(DayOfWeek.Monday)).to.be.false;
+            expect(DayOfWeek.Weekend.hasFlag(DayOfWeek.Sunday)).to.be.true;
+            expect(DayOfWeek.Weekday.hasFlag(2)).to.be.true;            
+        });        
     });    
 });
 
@@ -26789,7 +26917,7 @@ describe("$using", function () {
         });
         expect(shoppingCart.getItems()).to.eql([]);
     });
-
+    
     it("should call block then dispose if exeception", function () {
         var shoppingCart = new ShoppingCart;
         shoppingCart.addItem("Halo II");
@@ -26816,6 +26944,21 @@ describe("$using", function () {
         });
     });
 
+    it("should wait for promise fromm block to fulfill then dispose", function (done) {
+        var shoppingCart = new ShoppingCart;
+        shoppingCart.addItem("Halo II");
+        shoppingCart.addItem("Porsche");
+        $using(shoppingCart, function (cart) {
+               return Promise.delay(100).then(function () {
+                   shoppingCart.addItem("Book");
+                   expect(shoppingCart.getItems()).to.eql(["Halo II", "Porsche", "Book"]);
+               })
+        }).finally(function () {
+            expect(shoppingCart.getItems()).to.eql([]);
+            done();
+        });
+    });
+    
     it("should wait for promise to fail then dispose", function (done) {
         var shoppingCart = new ShoppingCart;
         shoppingCart.addItem("Halo II");
@@ -26828,6 +26971,60 @@ describe("$using", function () {
             done();
         });
     });
+
+    it("should return block result", function () {
+        var shoppingCart = new ShoppingCart;
+        shoppingCart.addItem("Halo II");
+        shoppingCart.addItem("Porsche");
+        expect($using(shoppingCart, function (cart) {
+            return "approved";
+        })).to.equal("approved");
+    });
+
+    it("should return block promise result", function (done) {
+        var shoppingCart = new ShoppingCart;
+        shoppingCart.addItem("Halo II");
+        shoppingCart.addItem("Porsche");
+        $using(shoppingCart, function (cart) {
+               return Promise.delay(100).then(function () {
+                   return "approved";
+               })
+        }).then(function (result) {
+            expect(result).to.equal("approved");
+            done();
+        });
+    });
+    
+    it("should return dispose result if present", function () {
+        var shoppingCart = (new ShoppingCart).extend({
+            dispose: function () {
+                this.base();
+                return "rejected";
+            }
+        });
+        shoppingCart.addItem("Halo II");
+        shoppingCart.addItem("Porsche");
+        expect($using(shoppingCart, function (cart) {
+            return "approved";
+        })).to.equal("rejected");
+    });
+
+    it("should return dispose promise result", function (done) {
+        var shoppingCart = (new ShoppingCart).extend({
+            dispose: function () {
+                this.base();
+                return Promise.resolve("rejected");
+            }
+        });
+        shoppingCart.addItem("Halo II");
+        shoppingCart.addItem("Porsche");
+        $using(shoppingCart, function (cart) {
+                   return "approved";
+        }).then(function (result) {
+            expect(result).to.equal("rejected");
+            done();
+        });
+    });    
 });
 
 describe("$decorator", function () {

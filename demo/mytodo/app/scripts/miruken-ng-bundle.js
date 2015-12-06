@@ -28,7 +28,7 @@ new function () { // closure
         name:    "ng",
         imports: "miruken,miruken.callback,miruken.context,miruken.validate,miruken.ioc,miruken.mvc",
         exports: "Runner,Directive,Filter,RegionDirective,DynamicControllerDirective," +
-                 "PartialRegion,UseModelValidation,DigitsOnly,InhibitFocus," +
+                 "PartialRegion,UseModelValidation,DigitsOnly,InhibitFocus,TrustFilter," +
                  "$appContext,$envContext,$rootContext"
     });
 
@@ -160,12 +160,11 @@ new function () { // closure
                             }
                         }
 
-                        if (_controller.context !== partialContext) {
-                            _controller = pcopy(_controller);
-                            _controller.context = partialContext;
-                        }
-                        
                         if (_controller) {
+                            if (_controller.context !== partialContext) {
+                                _controller         = pcopy(_controller);
+                                _controller.context = partialContext;
+                            }
                             _partialScope[controllerAs] = _controller;
                         }
                         
@@ -336,6 +335,25 @@ new function () { // closure
             });
         }
     });
+
+    /**
+     * Angular filter to trust content.<br/>
+     * See [Angular String Contextual Escaping](https://docs.angularjs.org/api/ng/service/$sce)
+     * 
+     * @class TrustFilter
+     * @constructor
+     * @extends miruken.ng.Filter     
+     */        
+    var TrustFilter = Filter.extend({
+        $inject: ["$sce"],
+        constructor: function ($sce) {
+            this.extend({
+                filter: function (input) {
+                    return $sce.trustAsHtml(input);
+                }
+            });
+        }
+    });
     
     Package.implement({
         init: function () {
@@ -426,7 +444,7 @@ new function () { // closure
                 var scope = composer.resolve('$scope');
                 if (scope) {
                     if (delay) {
-                        setTimeout(scope.$applyAsync.bind(scope), 20);
+                        setTimeout(scope.$applyAsync.bind(scope), delay);
                     } else {
                         scope.$applyAsync();
                     }
@@ -491,7 +509,7 @@ new function () { // closure
                 directive.setKey(member);
                 container.addComponent(directive);
                 var deps = _ngDependencies(directive);
-                deps.unshift('$rootScope');
+                deps.unshift("$rootScope", "$injector");
                 deps.push(Shim(member, deps.slice()));
                 if (/Directive$/.test(name)) {
                     name = name.substring(0, name.length - 9);
@@ -504,7 +522,7 @@ new function () { // closure
                 controller.setLifestyle(new ContextualLifestyle);
                 container.addComponent(controller);
                 var deps = _ngDependencies(controller);
-                deps.unshift('$scope', '$injector');
+                deps.unshift("$scope", "$injector");
                 deps.push(Shim(member, deps.slice()));
                 module.controller(name, deps);
             } else if (memberProto instanceof Filter) {
@@ -512,7 +530,7 @@ new function () { // closure
                 filter.setKey(member);
                 container.addComponent(filter);
                 var deps = _ngDependencies(filter);
-                deps.unshift('$rootScope');
+                deps.unshift("$rootScope", "$injector");
                 var shim = Shim(member, deps.slice());
                 deps.push(function () {
                     var instance = shim.apply(null, arguments);
@@ -6493,8 +6511,8 @@ new function () { // closure
      */
     base2.package(this, {
         name:    "miruken",
-        version: "0.0.31",
-        exports: "Enum,Variance,Protocol,StrictProtocol,Delegate,Miruken,MetaStep,MetaMacro," +
+        version: "0.0.35",
+        exports: "Enum,Flags,Variance,Protocol,StrictProtocol,Delegate,Miruken,MetaStep,MetaMacro," +
                  "Initializing,Disposing,DisposingMixin,Invoking,Parenting,Starting,Startup," +
                  "Facet,Interceptor,InterceptorSelector,ProxyBuilder,Modifier,ArrayManager,IndexedList," +
                  "$isProtocol,$isClass,$classOf,$ancestorOf,$isString,$isFunction,$isObject,$isArray," +
@@ -6583,9 +6601,7 @@ new function () { // closure
      */
     var Enum = Base.extend({
         constructor: function (value, name) {
-            if (!this.constructor.__defining) {
-                throw new TypeError("Enums cannot be instantiated.");
-            }
+            this.constructing(value, name);
             Object.defineProperties(this, {
                 "value": {
                     value:        value,
@@ -6598,32 +6614,85 @@ new function () { // closure
                     configurable: false
                 }
             });
+        },
+        constructing: function (value, name) {
+            if (!this.constructor.__defining) {
+                throw new TypeError("Enums cannot be instantiated.");
+            }            
         }
     }, {
         coerce: function _(choices) {
-            var en        = this.extend();
+            if (this !== Enum && this !== Flags) {
+                return;
+            }
+            var en = this.extend(null, {
+                coerce: function _(value) {
+                    return this.fromValue(value);
+                }
+            });
             en.__defining = true;
             en.names      = Object.freeze(Object.keys(choices));
             for (var choice in choices) {
                 en[choice] = new en(choices[choice], choice);
             }
-            en.fromValue = _valueToEnum.bind(en);
+            en.fromValue = this.fromValue;
             delete en.__defining;
             return Object.freeze(en);
+        },
+        fromValue: function (value) {
+            value = +value;
+            var names = this.names;
+            for (var i = 0; i < names.length; ++i) {
+                var e = this[names[i]];
+                if (e.value === value) {
+                    return e;
+                }
+            }                    
         }
     });
     Enum.prototype.valueOf = function () { return this.value; }
 
-    function _valueToEnum(value) {
-        var names = this.names;
-        for (var i = 0; i < names.length; ++i) {
-            var e = this[names[i]];
-            if (e.value === +value) {
-                return e;
+    /**
+     * Defines a flags enumeration.
+     * <pre>
+     *    var DayOfWeek = Flags({
+     *        Monday:     1 << 0,
+     *        Tuesday:    1 << 1,
+     *        Wednesday:  1 << 2,
+     *        Thursday:   1 << 3,
+     *        Friday:     1 << 4,
+     *        Saturday:   1 << 5,
+     *        Sunday:     1 << 6
+     *    })
+     * </pre>
+     * @class Enum
+     * @constructor
+     * @param  {Any} value     -  flag value
+     * @param  {string} value  -  flag name
+     */    
+    var Flags = Enum.extend({
+        hasFlag: function (flag) {
+            flag = +flag;
+            return (this.value & flag) === flag;
+        },
+        constructing: function (value, name) {}
+    }, {
+        fromValue: function (value) {
+            value = +value;
+            var name, names = this.names;
+            for (var i = 0; i < names.length; ++i) {
+                var flag = this[names[i]];
+                if (flag.value === value) {
+                    return flag;
+                }
+                if ((value & flag.value) === flag.value) {
+                    name = name ? (name + "," + flag.name) : flag.name;
+                }
             }
-        }        
-    }
-    
+            return new this(value, name);
+        }
+    });
+                            
     /**
      * Variance enum
      * @class Variance
@@ -7908,23 +7977,33 @@ new function () { // closure
      */
     function $using(disposing, action, context) {
         if (disposing && $isFunction(disposing.dispose)) {
-            if ($isFunction(action)) {
+            if (!$isPromise(action)) {
                 var result;
                 try {
-                    result = action.call(context, disposing);
-                    return result;
+                    result = $isFunction(action)
+                           ? action.call(context, disposing)
+                           : action;
+                    if (!$isPromise(result)) {
+                        return result;
+                    }
                 } finally {
                     if ($isPromise(result)) {
                         action = result;
                     } else {
-                        disposing.dispose();
+                        var dresult = disposing.dispose();
+                        if (dresult !== undefined) {
+                            return dresult;
+                        }
                     }
                 }
-            } else if (!$isPromise(action)) {
-                return;
             }
-            action.finally(function () { disposing.dispose(); });
-            return action;
+            return action.then(function (res) {
+                var dres = disposing.dispose();
+                return dres !== undefined ? dres : res;
+            }, function (err) {
+                var dres = disposing.dispose();
+                return dres !== undefined ? dres : Promise.reject(err);
+            });
         }
     }
 

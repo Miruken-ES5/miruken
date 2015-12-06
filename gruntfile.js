@@ -1,6 +1,6 @@
 module.exports = function(grunt) {
   // Project Configuration
-  grunt.initConfig({
+grunt.initConfig({
     pkg: grunt.file.readJSON('package.json'),
     app: {
       scripts: [
@@ -57,7 +57,7 @@ module.exports = function(grunt) {
       },
       debug: {
         files: {
-           'debug/miruken-tests.js':  ['test/mvc/mvc-test.js']
+           'debug/miruken-tests.js':  ['test/miruken-test.js']
            //'debug/miruken-tests.js':     ['test/**/*.js']
         }
       }
