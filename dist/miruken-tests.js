@@ -5841,7 +5841,7 @@ new function () { // closure
      */
     base2.package(this, {
         name:    "miruken",
-        version: "0.0.37",
+        version: "0.0.40",
         exports: "Enum,Flags,Variance,Protocol,StrictProtocol,Delegate,Miruken,MetaStep,MetaMacro," +
                  "Initializing,Disposing,DisposingMixin,Invoking,Parenting,Starting,Startup," +
                  "Facet,Interceptor,InterceptorSelector,ProxyBuilder,Modifier,ArrayManager,IndexedList," +
@@ -8777,7 +8777,7 @@ new function () { // closure
             }
             for (var key in data) {
                 var descriptor = descriptors && descriptors[key],
-                    mapper     = descriptor && descriptor.map;
+                    mapper     = descriptor  && descriptor.map;
                 if (mapper && descriptor.root) {
                     continue;  // already rooted
                 }
@@ -8789,8 +8789,10 @@ new function () { // closure
                         found = false;
                     for (var k in this) {
                         if (k.toLowerCase() === lkey) {
-                            this[k] = Model.map(value, mapper, options);
-                            found = true;
+                            descriptor = descriptors && descriptors[k];
+                            mapper     = descriptor  && descriptor.map;                            
+                            this[k]    = Model.map(value, mapper, options);
+                            found      = true;
                             break;
                         }
                     }
@@ -27789,6 +27791,22 @@ describe("Model", function () {
             expect(doctor.patient.lastName).to.equal('Messi');
             expect(doctor.patient.occupation).to.equal('soccer');
         });
+
+        it("should import all related from data ignoring case", function () {
+            var doctor = new Doctor;
+            doctor.fromData({
+                FirstNAME: 'Mitchell',
+                LASTName:  'Moskowitz',
+                patient: {
+                    FIRSTName:  'Lionel',
+                    lastNAME:   'Messi'
+                }
+            });
+            expect(doctor.firstName).to.equal('Mitchell');
+            expect(doctor.lastName).to.equal('Moskowitz');            
+            expect(doctor.patient.firstName).to.equal('Lionel');
+            expect(doctor.patient.lastName).to.equal('Messi');
+        });        
     });
 
     describe("#toData", function () {
