@@ -8,7 +8,7 @@ var miruken = require('../miruken');
 
 new function () { // closure
 
-    if (typeof angular === 'undefined') {
+    if (typeof angular === "undefined") {
         throw new Error("angular not found.  Did you forget to include angular.js first?");
     }
 
@@ -40,15 +40,15 @@ new function () { // closure
         appContainer = new IoContainer;
 
     $appContext.addHandlers(appContainer, 
-                             new miruken.validate.ValidationCallbackHandler,
-                             new miruken.validate.ValidateJsCallbackHandler,
-                             new miruken.error.ErrorCallbackHandler);
+                            new miruken.validate.ValidationCallbackHandler,
+                            new miruken.validate.ValidateJsCallbackHandler,
+                            new miruken.error.ErrorCallbackHandler);
 
-    angular.module('ng').run(['$rootElement', '$rootScope', '$injector',
-                              '$templateRequest', '$controller', '$compile', '$q',
+    angular.module("ng").run(["$rootElement", "$rootScope", "$injector",
+                              "$templateRequest", "$controller", "$compile", "$q",
         function ($rootElement, $rootScope, $injector, $templates, $controller, $compile, $q) {
             _instrumentScopes($rootScope, $injector);
-            var appRegion = new PartialRegion('root', $rootElement, $rootScope, $templates, $controller, $compile, $q);
+            var appRegion = new PartialRegion("root", $rootElement, $rootScope, $templates, $controller, $compile, $q);
             $appContext.addHandlers(appRegion, new BootstrapProvider, new GreenSockFadeProvider);
             _provideInjector(appContainer, $injector);
     }]);
@@ -126,7 +126,7 @@ new function () { // closure
                         template     = presentation.template,
                         templateUrl  = presentation.templateUrl,
                         controller   = presentation.controller;
-                        controllerAs = presentation.controllerAs || 'ctrl';
+                        controllerAs = presentation.controllerAs || "ctrl";
                     }
                     
                     if (template) {
@@ -136,58 +136,70 @@ new function () { // closure
                             return replaceContent(template);
                         });
                     } else {
-                        return $q.reject(new Error('A template or templateUrl must be specified'));
+                        return $q.reject(new Error("A template or templateUrl must be specified"));
                     }
                     
                     function replaceContent(template) {
                         var oldScope       = _partialScope,
                             modalPolicy    = new ModalPolicy,
                             isModal        = composer.handle(modalPolicy, true),
-                            parentScope    = isModal ? composer.resolve('$scope') : scope;
+                            parentScope    = isModal ? composer.resolve("$scope") : scope;
                         _partialScope      = (parentScope || scope).$new();
                         var partialContext = _partialScope.context;
                         _controller        = null;
 
                         if (controller) {
-                            if (controller.prototype instanceof Controller) {
-                                _controller = partialContext.resolve(controller);                                
-                            } else {
-                                var parts   = controller.split(' ');
+                            if ($isString(controller)) {
+                                var parts   = controller.split(" ");
                                 _controller = $controller(parts[0], { $scope: _partialScope });
                                 if (parts.length > 1) {
                                     controllerAs = parts[parts.length - 1];
                                 }
+                            } else {
+                                _controller = partialContext.resolve(controller);                                
+                            }
+
+                            if ($isPromise(_controller)) {
+                                return _controller.then(function (ctrl) {
+                                    _controller = ctrl;
+                                    return compile();
+                                });
                             }
                         }
 
-                        if (_controller) {
-                            if (_controller.context !== partialContext) {
-                                _controller         = pcopy(_controller);
-                                _controller.context = partialContext;
+                        function compile() {
+                            if (_controller) {
+                                if (_controller.context !== partialContext) {
+                                    _controller         = pcopy(_controller);
+                                    _controller.context = partialContext;
+                                }
+                                _partialScope[controllerAs] = _controller;
                             }
-                            _partialScope[controllerAs] = _controller;
+                            
+                            var content = $compile(template)(_partialScope);
+                            
+                            if (isModal) {
+                                var provider = modalPolicy.style || ModalProviding;
+                                return $q.when(provider(composer)
+                                    .showModal(container, content, modalPolicy, partialContext));
+                            }
+                            
+                            partialContext.onEnding(function (context) {
+                                if (context === _partialScope.context) {
+                                    _controller = null;
+                                }
+                            });
+                            
+                            return animateContent(container, content, partialContext, $q).then(function () {
+                                if (oldScope) {
+                                    oldScope.$destroy();
+                                }    
+                            });                        
                         }
                         
-                        var content = $compile(template)(_partialScope);
-
-                        if (isModal) {
-                            var provider = modalPolicy.style || ModalProviding;
-                            return $q.when(provider(composer).showModal(container, content, modalPolicy, partialContext));
-                        }
-                        
-                        partialContext.onEnding(function (context) {
-                            if (context === _partialScope.context) {
-                                _controller = null;
-                            }
-                        });
-                        
-                        return animateContent(container, content, partialContext, $q).then(function () {
-                            if (oldScope) {
-                                oldScope.$destroy();
-                            }    
-                        });
+                        return compile();
                     }
-
+                    
                     function animateContent(container, content, partialContext, $q) {
                         var fadePolicy = new FadePolicy,
                             fade       = composer.handle(fadePolicy, true);
@@ -199,7 +211,7 @@ new function () { // closure
 
                         partialContext.onEnding(function (context) {
                             if (context === _partialScope.context) {
-                                container.html('');
+                                container.html("");
                             }
                         });
                         
@@ -208,10 +220,6 @@ new function () { // closure
                     }
                 }
             });
-        },
-        toDelegate: function () {
-            var context = this.context;
-            return context ? context.toDelegate() : null;
         }
     });
 
@@ -222,10 +230,10 @@ new function () { // closure
      * @extends miruken.ng.Directive     
      */
     var RegionDirective = Directive.extend({
-        restrict:   'A',
+        restrict:   "A",
         scope:      true,        
         priority:   -1000,
-        $inject:    ['$templateRequest', '$controller', '$compile', '$q'],
+        $inject:    ["$templateRequest", "$controller", "$compile", "$q"],
         constructor: function ($templates, $controller, $compile, $q) {
             this.extend({
                 link: function (scope, element, attr) {
@@ -254,19 +262,19 @@ new function () { // closure
      * @extends miruken.ng.Directive     
      */
     var DynamicControllerDirective = Directive.extend({
-        restrict: 'A',
+        restrict: "A",
         terminal: true,
         priority: 100000,
         $inject:  [ "$parse", "$compile" ],
         constructor: function ($parse, $compile) {
             this.extend({
                 link: function (scope, elem, attrs) {
-                    var name = $parse(elem.attr('dynamic-controller'))(scope);
+                    var name = $parse(elem.attr("dynamic-controller"))(scope);
                     if (scope.src) {
-                        elem.attr('src', "'" + scope.src + "'");
+                        elem.attr("src", "'" + scope.src + "'");
                     }
-                    elem.removeAttr('dynamic-controller');
-                    elem.attr('ng-controller', name);
+                    elem.removeAttr("dynamic-controller");
+                    elem.attr("ng-controller", name);
                     $compile(elem)(scope);
                 }
             });
@@ -280,11 +288,11 @@ new function () { // closure
      * @extends miruken.ng.Directive     
      */
     var UseModelValidation = Directive.extend({
-        restrict: 'A',
-        require:  'ngModel',
+        restrict: "A",
+        require:  "ngModel",
         link: function (scope, elm, attrs, ctrl) {
             var context   = scope.context,
-                modelExpr = attrs['useModelValidation'];
+                modelExpr = attrs["useModelValidation"];
             ctrl.$validators.modelValidationHook = $debounce(function () {
                 var model = modelExpr ? scope.$eval(modelExpr) : undefined;
                 Validating(context).validateAsync(model)
@@ -301,17 +309,17 @@ new function () { // closure
      * @extends miruken.ng.Directive     
      */
     var DigitsOnly = Directive.extend({
-        restrict: 'A',
-        require:  '?ngModel',
+        restrict: "A",
+        require:  "?ngModel",
         link: function (scope, elm, attrs, modelCtrl) {
             modelCtrl.$parsers.push(function (inputValue) {
                 if (!modelCtrl) {
                     return;
                 }
                 if (inputValue == undefined) {
-                    return '';
+                    return "";
                 }
-                var strippedInput = inputValue.replace(/[^0-9]/g, '');
+                var strippedInput = inputValue.replace(/[^0-9]/g, "");
                 if (strippedInput != inputValue) {
                     modelCtrl.$setViewValue(strippedInput);
                     modelCtrl.$render();
@@ -328,9 +336,9 @@ new function () { // closure
      * @extends miruken.ng.Directive     
      */    
     var InhibitFocus = Directive.extend({
-        restrict: 'A',
+        restrict: "A",
         link: function (scope, elm, attrs) {
-            elm.bind('click', function () {
+            elm.bind("click", function () {
                 elm.blur();
             });
         }
@@ -373,15 +381,15 @@ new function () { // closure
                     throw new Error(format("The Angular module '%1' already exists.", name));
                 }
                 module = angular.module(name, module);
-                module.constant('$appContext', $appContext);
-                module.constant('$envContext', $envContext);                
-                module.constant('$rootContext', $rootContext);
-                _registerContents(ng, module, ng.exports.split(','));
+                module.constant("$appContext",  $appContext);
+                module.constant("$envContext",  $envContext);                
+                module.constant("$rootContext", $rootContext);
+                _registerContents(ng, module, ng.exports.split(","));
             } else if (parent) {
                 module = parent.ngModule;
             }
             if (module) {
-                Object.defineProperty(this, 'ngModule', { value: module });
+                Object.defineProperty(this, "ngModule", { value: module });
             }
             if (parent === base2) {
                 global[this.name] = this;
@@ -395,10 +403,10 @@ new function () { // closure
                     container = Container($appContext),
                     runners   = [], starters = [];
                 _registerContents(this, module, exports);
-                module.config(['$injector', function ($injector) {
+                module.config(["$injector", function ($injector) {
                     _installPackage(package, module, exports, $injector, runners, starters);
                 }]);
-                module.run(['$rootScope', '$injector', '$q', '$log', function ($rootScope, $injector, $q, $log) {
+                module.run(["$rootScope", "$injector", "$q", "$log", function ($rootScope, $injector, $q, $log) {
                     if (package.parent === base2 && !(package.name in $rootScope)) {
                         $rootScope[package.name] = package;
                     }
@@ -426,7 +434,7 @@ new function () { // closure
          */
         $ngApply: function() {
             return this.aspect(null, function(_, composer) {
-                var scope = composer.resolve('$scope');
+                var scope = composer.resolve("$scope");
                 if (scope) {
                     scope.$apply();
                 }
@@ -441,7 +449,7 @@ new function () { // closure
          */                                                                
         $ngApplyAsync: function(delay) {
             return this.aspect(null, function(_, composer) {
-                var scope = composer.resolve('$scope');
+                var scope = composer.resolve("$scope");
                 if (scope) {
                     if (delay) {
                         setTimeout(scope.$applyAsync.bind(scope), delay);
@@ -469,7 +477,7 @@ new function () { // closure
                 childContext = parentScope && parentScope.context
                              ? parentScope.context.newChild()
                              : new Context;
-            $provide(childContext, '$scope', childScope);
+            $provide(childContext, "$scope", childScope);
             childContext.onEnded(function (context) {
                 childScope.$destroy();
             });
@@ -569,7 +577,7 @@ new function () { // closure
             var memberProto = member.prototype;
             if (memberProto instanceof Installer || memberProto instanceof Runner) {
                 var deps      = (memberProto.$inject || member.$inject || []).slice(),
-                    moduleIdx = deps.indexOf('$module');
+                    moduleIdx = deps.indexOf("$module");
                 if (moduleIdx >= 0) {
                     deps.splice(moduleIdx, 1);
                 }
@@ -6511,7 +6519,7 @@ new function () { // closure
      */
     base2.package(this, {
         name:    "miruken",
-        version: "0.0.35",
+        version: "0.0.37",
         exports: "Enum,Flags,Variance,Protocol,StrictProtocol,Delegate,Miruken,MetaStep,MetaMacro," +
                  "Initializing,Disposing,DisposingMixin,Invoking,Parenting,Starting,Startup," +
                  "Facet,Interceptor,InterceptorSelector,ProxyBuilder,Modifier,ArrayManager,IndexedList," +
@@ -6621,11 +6629,11 @@ new function () { // closure
             }            
         }
     }, {
-        coerce: function _(choices) {
+        coerce: function _(choices, behavior) {
             if (this !== Enum && this !== Flags) {
                 return;
             }
-            var en = this.extend(null, {
+            var en = this.extend(behavior, {
                 coerce: function _(value) {
                     return this.fromValue(value);
                 }

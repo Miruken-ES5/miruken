@@ -5841,7 +5841,7 @@ new function () { // closure
      */
     base2.package(this, {
         name:    "miruken",
-        version: "0.0.35",
+        version: "0.0.37",
         exports: "Enum,Flags,Variance,Protocol,StrictProtocol,Delegate,Miruken,MetaStep,MetaMacro," +
                  "Initializing,Disposing,DisposingMixin,Invoking,Parenting,Starting,Startup," +
                  "Facet,Interceptor,InterceptorSelector,ProxyBuilder,Modifier,ArrayManager,IndexedList," +
@@ -5951,11 +5951,11 @@ new function () { // closure
             }            
         }
     }, {
-        coerce: function _(choices) {
+        coerce: function _(choices, behavior) {
             if (this !== Enum && this !== Flags) {
                 return;
             }
-            var en = this.extend(null, {
+            var en = this.extend(behavior, {
                 coerce: function _(value) {
                     return this.fromValue(value);
                 }
