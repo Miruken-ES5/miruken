@@ -391,10 +391,6 @@ new function () { // closure
                 module.constant("$appContext",  $appContext);
                 module.constant("$envContext",  $envContext);                
                 module.constant("$rootContext", $rootContext);
-<<<<<<< HEAD
-                _registerContents(ng, module, ng.exports.split(","));
-=======
->>>>>>> Allow promises for region controllers
             } else if (parent) {
                 module = parent.ngModule;
             }
@@ -6529,11 +6525,7 @@ new function () { // closure
      */
     base2.package(this, {
         name:    "miruken",
-<<<<<<< HEAD
-        version: "0.0.37",
-=======
         version: "0.0.40",
->>>>>>> Allow promises for region controllers
         exports: "Enum,Flags,Variance,Protocol,StrictProtocol,Delegate,Miruken,MetaStep,MetaMacro," +
                  "Initializing,Disposing,DisposingMixin,Invoking,Parenting,Starting,Startup," +
                  "Facet,Interceptor,InterceptorSelector,ProxyBuilder,Modifier,ArrayManager,IndexedList," +
