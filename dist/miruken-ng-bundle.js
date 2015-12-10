@@ -40,6 +40,9 @@ new function () { // closure
         appContainer  = new IoContainer,
         mirukenModule = angular.module("miruken.ng", []);
 
+    mirukenModule.constant("$appContext",  $appContext);
+    mirukenModule.constant("$envContext",  $envContext);                
+    mirukenModule.constant("$rootContext", $rootContext);
     Object.defineProperty(this.package, "ngModule", { value: mirukenModule });
     
     $appContext.addHandlers(appContainer, 
@@ -159,7 +162,9 @@ new function () { // closure
                                     controllerAs = parts[parts.length - 1];
                                 }
                             } else {
-                                _controller = partialContext.resolve(controller);                                
+                                _controller = composer
+                                    .$$provide(["$scope", _partialScope, Context, partialContext])
+                                    .resolve(controller);
                             }
 
                             if ($isPromise(_controller)) {
@@ -388,9 +393,6 @@ new function () { // closure
                     module.push(mirukenModule.name);
                 }
                 module = angular.module(name, module);
-                module.constant("$appContext",  $appContext);
-                module.constant("$envContext",  $envContext);                
-                module.constant("$rootContext", $rootContext);
             } else if (parent) {
                 module = parent.ngModule;
             }
@@ -3169,6 +3171,26 @@ new function () { // closure
                 }
                 return _aspectProceed(callback, composer, proceed, after);
             });
+        },
+        /**
+         * Decorates the handler to handle definitions.
+         * @method $handle
+         * @param   {Array}  [definitions]  -  handler overrides
+         * @returns {miruken.callback.CallbackHandler}  decorated callback handler.
+         * @for miruken.callback.CallbackHandler
+         */
+        $$handle: function (definitions) {
+            return this.decorate({$handle: definitions});
+        },
+        /**
+         * Decorates the handler to provide definitions.
+         * @method $handle
+         * @param   {Array}  [definitions]  -  provider overrides
+         * @returns {miruken.callback.CallbackHandler}  decorated callback handler.
+         * @for miruken.callback.CallbackHandler
+         */
+        $$provide: function (definitions) {
+            return this.decorate({$provide: definitions});
         },
         /**
          * Decorates the handler to conditionally handle callbacks.
@@ -6525,7 +6547,7 @@ new function () { // closure
      */
     base2.package(this, {
         name:    "miruken",
-        version: "0.0.40",
+        version: "0.0.43",
         exports: "Enum,Flags,Variance,Protocol,StrictProtocol,Delegate,Miruken,MetaStep,MetaMacro," +
                  "Initializing,Disposing,DisposingMixin,Invoking,Parenting,Starting,Startup," +
                  "Facet,Interceptor,InterceptorSelector,ProxyBuilder,Modifier,ArrayManager,IndexedList," +

@@ -2487,6 +2487,26 @@ new function () { // closure
             });
         },
         /**
+         * Decorates the handler to handle definitions.
+         * @method $handle
+         * @param   {Array}  [definitions]  -  handler overrides
+         * @returns {miruken.callback.CallbackHandler}  decorated callback handler.
+         * @for miruken.callback.CallbackHandler
+         */
+        $$handle: function (definitions) {
+            return this.decorate({$handle: definitions});
+        },
+        /**
+         * Decorates the handler to provide definitions.
+         * @method $handle
+         * @param   {Array}  [definitions]  -  provider overrides
+         * @returns {miruken.callback.CallbackHandler}  decorated callback handler.
+         * @for miruken.callback.CallbackHandler
+         */
+        $$provide: function (definitions) {
+            return this.decorate({$provide: definitions});
+        },
+        /**
          * Decorates the handler to conditionally handle callbacks.
          * @method when
          * @param   {Any}  constraint  -  matching constraint
@@ -5841,7 +5861,7 @@ new function () { // closure
      */
     base2.package(this, {
         name:    "miruken",
-        version: "0.0.40",
+        version: "0.0.43",
         exports: "Enum,Flags,Variance,Protocol,StrictProtocol,Delegate,Miruken,MetaStep,MetaMacro," +
                  "Initializing,Disposing,DisposingMixin,Invoking,Parenting,Starting,Startup," +
                  "Facet,Interceptor,InterceptorSelector,ProxyBuilder,Modifier,ArrayManager,IndexedList," +
@@ -27660,7 +27680,6 @@ describe("Package", function () {
         
     });
 });
-
 
 }).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
 },{"../lib/miruken.js":10,"bluebird":21,"chai":22}],68:[function(require,module,exports){
