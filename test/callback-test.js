@@ -1757,3 +1757,59 @@ describe("InvocationCallbackHandler", function () {
         });
     })
 });
+
+describe("Batcher", function () {
+    var Emailing = StrictProtocol.extend({
+            send: function (msg) {}
+        }),
+        EmailHandler = CallbackHandler.extend(Emailing, {
+            send: function (msg) {
+                var batcher = $composer.resolve(Batcher);
+                if (batcher && batcher.shouldBatch(Emailing)) {
+                    var emailBatch = new EmailBatch;
+                    batcher.addHandlers(emailBatch);
+                    return emailBatch.send(msg);
+                }
+                return msg;
+            }
+        }),
+        EmailBatch = Base.extend(Emailing, Batching, {
+            constructor: function (handler) {
+                var _msgs = [];
+                this.extend({
+                    send: function (msg) {
+                        _msgs.push(msg);
+                    },
+                    complete: function (composer) {
+                        return Emailing(composer).send(_msgs);
+                    }
+                });
+            }
+        });
+    describe("#handle", function () {
+        it("should batch callbacks", function () {
+            var handler = new EmailHandler,
+                batch   = handler.batch();
+            expect(Emailing(handler).send("Hello")).to.eql("Hello");
+            expect($using(batch, function () {
+                expect(Emailing(batch).send("Hello")).to.be.undefined;
+            })).to.eql([["Hello"]]);
+            expect(Emailing(batch).send("Hello")).to.eql("Hello");        
+        });
+
+        it("should batch requested protocols", function () {
+            var handler = new EmailHandler;
+            expect($using(handler.batch(Emailing), function (batch) {
+                expect(Emailing(batch).send("Hello")).to.be.undefined;
+            })).to.eql([["Hello"]]);                
+        });
+
+        it("should not batch unrequested protocols", function () {
+            var handler = new EmailHandler;
+            expect($using(handler.batch(Game), function (batch) {
+                expect(Emailing(batch.send("Hello"))).to.eql("Hello");
+            })).to.eql([]);
+        });
+    });
+});
+

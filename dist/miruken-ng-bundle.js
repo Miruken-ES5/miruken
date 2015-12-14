@@ -198,10 +198,11 @@ new function () { // closure
                                 }
                             });
                             
-                            return animateContent(container, content, partialContext, $q).then(function () {
+                            return animateContent(container, content, partialContext, $q).then(function (ctx) {
                                 if (oldScope) {
                                     oldScope.$destroy();
-                                }    
+                                }
+                                return ctx;
                             });                        
                         }
                         
@@ -2025,9 +2026,9 @@ new function () { // closure
         name:    "callback",
         imports: "miruken",
         exports: "CallbackHandler,CascadeCallbackHandler,CompositeCallbackHandler," +
-                 "InvocationOptions,Resolving,Resolution,Composition,HandleMethod," +
-                 "ResolveMethod,RejectedError,getEffectivePromise,$handle,$callbacks," +
-                 "$define,$provide,$lookup,$NOT_HANDLED"
+                 "InvocationOptions,Resolving,Batching,Batcher,Resolution,Composition," +
+                 "HandleMethod,ResolveMethod,RejectedError,getEffectivePromise,$handle," +
+                 "$callbacks,$define,$provide,$lookup,$NOT_HANDLED"
     });
 
     eval(this.imports);
@@ -2083,7 +2084,7 @@ new function () { // closure
             if (target === clazz.prototype) {
                 target = clazz;
             }
-            for (tag in _definitions) {
+            for (var tag in _definitions) {
                 var list = this.extractProperty(tag, source, definition);
                 if (!list || list.length == 0) {
                     continue;
@@ -2794,9 +2795,9 @@ new function () { // closure
     /**
      * InvocationOptions flags enum
      * @class InvocationOptions
-     * @extends miruken.Enum
+     * @extends miruken.Flags
      */
-    var InvocationOptions = {
+    var InvocationOptions = Flags({
         /**
          * @property {number} None
          */
@@ -2820,14 +2821,13 @@ new function () { // closure
          * Uses Resolve to determine instances to invoke.
          * @property {number} Resolve
          */                
-        Resolve: 1 << 3        
-    };
-    /**
-     * Publishes invocation to all handlers.
-     * @property {number} Notify
-     */                
-    InvocationOptions.Notify = InvocationOptions.Broadcast | InvocationOptions.BestEffort;
-    InvocationOptions = Enum(InvocationOptions);
+        Resolve: 1 << 3,
+        /**
+         * Publishes invocation to all handlers.
+         * @property {number} Notify
+         */                
+        Notify: (1 << 0) | (1 << 1)
+    });
 
     /**
      * Captures invocation semantics.
@@ -2838,7 +2838,7 @@ new function () { // closure
      */
     var InvocationSemantics = Composition.extend({
         constructor: function (options) {
-            var _options   = +(options || InvocationOptions.None),
+            var _options   = InvocationOptions.None.addFlag(options),
                 _specified = _options;
             this.extend({
                 /**
@@ -2848,7 +2848,7 @@ new function () { // closure
                  * @returns {boolean} true if invocation option enabled, false otherwise.
                  */
                 getOption: function (option) {
-                    return (_options & option) === +option;
+                    return _options.hasFlag(option);
                 },
                 /**
                  * Sets the invocation option.
@@ -2858,11 +2858,11 @@ new function () { // closure
                  */                
                 setOption: function (option, enabled) {
                     if (enabled) {
-                        _options = _options | option;
+                        _options = _options.addFlag(option);
                     } else {
-                        _options = _options & (~option);
+                        _options = _options.removeFlag(option);
                     }
-                    _specified = _specified | option;
+                    _specified = _specified.addFlag(option);
                 },
                 /**
                  * Determines if the invocation option was specified.
@@ -2871,7 +2871,7 @@ new function () { // closure
                  * @returns {boolean} true if invocation option specified, false otherwise.
                  */                
                 isSpecified: function (option) {
-                    return (_specified & option) === +option;
+                    return _specified.hasFlag(option);
                 }
             });
         },
@@ -2881,9 +2881,9 @@ new function () { // closure
          * @param   {miruken.callback.InvocationSemantics}  semantics  -  receives invocation semantics
          */                
         mergeInto: function _(semantics) {
-            var names = _.names || (_.names = InvocationOptions.names);
-            for (var i = 0; i < names.length; ++i) {
-                var option = InvocationOptions[names[i]];
+            var items = InvocationOptions.items;
+            for (var i = 0; i < items.length; ++i) {
+                var option = +items[i];
                 if (this.isSpecified(option) && !semantics.isSpecified(option)) {
                     semantics.setOption(option, this.getOption(option));
                 }
@@ -2897,6 +2897,55 @@ new function () { // closure
      * @extends miruken.Protocol
      */
     var Resolving = Protocol.extend();
+
+    /**
+     * Protocol to participate in batched operations.
+     * @class Batching
+     * @extends miruken.StrictProtocol
+     */
+    var Batching = StrictProtocol.extend({
+        /**
+         * Completes the batching operation.
+         * @method complete
+         * @param   {miruken.callback.CallbackHandler}  composer  - composition handler
+         * @returns {Any} the batching result.
+         */                
+        complete: function (composer) {}
+    });
+    
+    /**
+     * Coordinates batching operations through the
+     * {{#crossLink "miruken.callback.Batching"}}{{/crossLink}}.
+     * @class Batcher
+     * @constructor
+     * @param   {miruken.Protocol}  [...protocols]  -  protocols to batch
+     * @extends miruken.callback.CompositeCallbackHandler
+     */    
+    var Batcher = CompositeCallbackHandler.extend({
+        constructor: function (protocols) {
+            this.base();
+            if (protocols && !$isArray(protocols)) {
+                protocols = Array.prototype.slice.call(arguments);
+            }
+            this.extend({
+                shouldBatch: function (protocol) {
+                    return !protocols || protocols.indexOf(protocol) >= 0; 
+                }
+            });
+        },
+        complete: function (composer) {
+            var promise = false,
+                results = Array2.reduce(this.getHandlers(), function (res, handler) {
+                    var result = Batching(handler).complete(composer);
+                    if (result) {
+                        promise = promise || $isPromise(result);
+                        res.push(result);
+                        return res;
+                    }
+                }, []);
+            return promise ? Promise.all(results) : results;
+        }
+    });
     
     /**
      * Delegates properties and methods to a callback handler using 
@@ -3229,6 +3278,32 @@ new function () { // closure
             case 1:  return new CascadeCallbackHandler(this, arguments[0])
             default: return new CompositeCallbackHandler((Array2.unshift(arguments, this), arguments));
             }
+        },
+        /**
+         * Batches subsequent callbacks.
+         * @method batch
+         * @param   {miruken.Protocol}  [...protocols]  -  protocols to batch
+         * @returns {miruken.callback.CallbackHandler}  batching callback handler.
+         * @for miruken.callback.CallbackHandler
+         */
+        batch: function(protocols) {
+            var composer = this,
+                batcher  = new Batcher(protocols);
+            return this.decorate({
+                $provide: [Batcher, function () {
+                    return batcher;
+                }],
+                handleCallback: function (callback, greedy, composer) {
+                    return (batcher && !greedy
+                        &&  batcher.handleCallback(callback, false, composer))
+                        || this.base(callback, greedy, composer);
+                },
+                dispose: function () {
+                    var b = batcher;
+                    batcher = null;                   
+                    return b.complete(composer);
+                }
+            });            
         }
     });
 
@@ -6547,7 +6622,7 @@ new function () { // closure
      */
     base2.package(this, {
         name:    "miruken",
-        version: "0.0.43",
+        version: "0.0.47",
         exports: "Enum,Flags,Variance,Protocol,StrictProtocol,Delegate,Miruken,MetaStep,MetaMacro," +
                  "Initializing,Disposing,DisposingMixin,Invoking,Parenting,Starting,Startup," +
                  "Facet,Interceptor,InterceptorSelector,ProxyBuilder,Modifier,ArrayManager,IndexedList," +
@@ -6667,10 +6742,13 @@ new function () { // closure
                 }
             });
             en.__defining = true;
+            var items     = [];
             en.names      = Object.freeze(Object.keys(choices));
             for (var choice in choices) {
-                en[choice] = new en(choices[choice], choice);
+                var item = en[choice] = new en(choices[choice], choice);
+                items.push(item);
             }
+            en.items     = Object.freeze(items);
             en.fromValue = this.fromValue;
             delete en.__defining;
             return Object.freeze(en);
@@ -6709,9 +6787,19 @@ new function () { // closure
     var Flags = Enum.extend({
         hasFlag: function (flag) {
             flag = +flag;
-            return (this.value & flag) === flag;
+            return (this & flag) === flag;
         },
-        constructing: function (value, name) {}
+        addFlag: function (flag) {
+            return $isSomething(flag)
+                 ? this.constructor.fromValue(this | flag)
+                 : this;
+        },
+        removeFlag: function (flag) {
+            return $isSomething(flag)
+                 ? this.constructor.fromValue(this & (~flag))
+                 : this;
+        },
+        constructing: function (value, name) {}        
     }, {
         fromValue: function (value) {
             value = +value;
@@ -7942,8 +8030,9 @@ new function () { // closure
     var DisposingMixin = Module.extend({
         dispose: function (object) {
             if ($isFunction(object._dispose)) {
-                object._dispose();
+                var result = object._dispose();
                 object.dispose = Undefined;  // dispose once
+                return result;
             }
         }
     });
