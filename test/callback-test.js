@@ -1764,8 +1764,8 @@ describe("Batcher", function () {
         }),
         EmailHandler = CallbackHandler.extend(Emailing, {
             send: function (msg) {
-                var batcher = $composer.resolve(Batcher);
-                if (batcher && batcher.shouldBatch(Emailing)) {
+                var batcher = $composer.getBatcher(Emailing);
+                if (batcher) {
                     var emailBatch = new EmailBatch;
                     batcher.addHandlers(emailBatch);
                     return emailBatch.send(msg);

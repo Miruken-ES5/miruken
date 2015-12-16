@@ -2227,14 +2227,15 @@ new function () { // closure
     });
     
     /**
-     * Coordinates batching operations through the
+     * Coordinates batching operations through the protocol
      * {{#crossLink "miruken.callback.Batching"}}{{/crossLink}}.
      * @class Batcher
      * @constructor
      * @param   {miruken.Protocol}  [...protocols]  -  protocols to batch
      * @extends miruken.callback.CompositeCallbackHandler
+     * @uses miruken.callback.Batching
      */    
-    var Batcher = CompositeCallbackHandler.extend({
+    var Batcher = CompositeCallbackHandler.extend(Batching, {
         constructor: function (protocols) {
             this.base();
             if (protocols && !$isArray(protocols)) {
@@ -2242,7 +2243,7 @@ new function () { // closure
             }
             this.extend({
                 shouldBatch: function (protocol) {
-                    return !protocols || protocols.indexOf(protocol) >= 0; 
+                    return !protocols || (protocol && protocols.indexOf(protocol) >= 0); 
                 }
             });
         },
@@ -2617,6 +2618,12 @@ new function () { // closure
                     return b.complete(composer);
                 }
             });            
+        },
+        getBatcher: function (protocol) {
+            var batcher = this.resolve(Batcher);
+            if (batcher && (!protocol || batcher.shouldBatch(protocol))) {
+                return batcher;
+            }
         }
     });
 
@@ -23742,8 +23749,8 @@ describe("Batcher", function () {
         }),
         EmailHandler = CallbackHandler.extend(Emailing, {
             send: function (msg) {
-                var batcher = $composer.resolve(Batcher);
-                if (batcher && batcher.shouldBatch(Emailing)) {
+                var batcher = $composer.getBatcher(Emailing);
+                if (batcher) {
                     var emailBatch = new EmailBatch;
                     batcher.addHandlers(emailBatch);
                     return emailBatch.send(msg);
