@@ -272,8 +272,8 @@ describe("Traversal", function () {
         it("should traverse graph in pre-order", function () {
             var visited  = [];
             Traversal.preOrder(root, function (node) { visited.push(node); });
-            expect(visited).to.eql([root,     child1, child1_1, child2,  child2_1,
-                                    child2_2, child3, child3_1, child3_2,child3_3]);
+            expect(visited).to.eql([root,     child1, child1_1, child2,   child2_1,
+                                    child2_2, child3, child3_1, child3_2, child3_3]);
         });
     });
 

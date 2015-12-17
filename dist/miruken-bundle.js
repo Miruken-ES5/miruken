@@ -2608,8 +2608,7 @@ new function () { // closure
                     return batcher;
                 }],
                 handleCallback: function (callback, greedy, composer) {
-                    return (batcher && !greedy
-                        &&  batcher.handleCallback(callback, false, composer))
+                    return (batcher && batcher.handleCallback(callback, false, composer))
                         || this.base(callback, greedy, composer);
                 },
                 dispose: function () {
@@ -5942,7 +5941,7 @@ new function () { // closure
      */
     base2.package(this, {
         name:    "miruken",
-        version: "0.0.47",
+        version: "0.0.50",
         exports: "Enum,Flags,Variance,Protocol,StrictProtocol,Delegate,Miruken,MetaStep,MetaMacro," +
                  "Initializing,Disposing,DisposingMixin,Invoking,Parenting,Starting,Startup," +
                  "Facet,Interceptor,InterceptorSelector,ProxyBuilder,Modifier,ArrayManager,IndexedList," +
@@ -8438,8 +8437,7 @@ new function () { // closure
      * @constructor
      * @extends Base
      */    
-    var ValidationResult = Base.extend(
-        $inferProperties, {
+    var ValidationResult = Base.extend({
         constructor: function () {
             var _errors, _summary;
             this.extend({

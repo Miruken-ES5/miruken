@@ -2608,8 +2608,7 @@ new function () { // closure
                     return batcher;
                 }],
                 handleCallback: function (callback, greedy, composer) {
-                    return (batcher && !greedy
-                        &&  batcher.handleCallback(callback, false, composer))
+                    return (batcher && batcher.handleCallback(callback, false, composer))
                         || this.base(callback, greedy, composer);
                 },
                 dispose: function () {
@@ -5942,7 +5941,7 @@ new function () { // closure
      */
     base2.package(this, {
         name:    "miruken",
-        version: "0.0.47",
+        version: "0.0.50",
         exports: "Enum,Flags,Variance,Protocol,StrictProtocol,Delegate,Miruken,MetaStep,MetaMacro," +
                  "Initializing,Disposing,DisposingMixin,Invoking,Parenting,Starting,Startup," +
                  "Facet,Interceptor,InterceptorSelector,ProxyBuilder,Modifier,ArrayManager,IndexedList," +
@@ -8874,7 +8873,7 @@ new function () { // closure
          * @method fromData
          * @param   {Object}  data     -  json structured data
          * @param   {Object}  options  -  mapping options
-         */            
+         */
         fromData: function (data, options) {
             if ($isNothing(data)) {
                 return;
@@ -9271,8 +9270,7 @@ new function () { // closure
      * @constructor
      * @extends Base
      */    
-    var ValidationResult = Base.extend(
-        $inferProperties, {
+    var ValidationResult = Base.extend({
         constructor: function () {
             var _errors, _summary;
             this.extend({
@@ -24715,8 +24713,8 @@ describe("Traversal", function () {
         it("should traverse graph in pre-order", function () {
             var visited  = [];
             Traversal.preOrder(root, function (node) { visited.push(node); });
-            expect(visited).to.eql([root,     child1, child1_1, child2,  child2_1,
-                                    child2_2, child3, child3_1, child3_2,child3_3]);
+            expect(visited).to.eql([root,     child1, child1_1, child2,   child2_1,
+                                    child2_2, child3, child3_1, child3_2, child3_3]);
         });
     });
 
