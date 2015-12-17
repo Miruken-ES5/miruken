@@ -6628,7 +6628,7 @@ new function () { // closure
      */
     base2.package(this, {
         name:    "miruken",
-        version: "0.0.50",
+        version: "0.0.51",
         exports: "Enum,Flags,Variance,Protocol,StrictProtocol,Delegate,Miruken,MetaStep,MetaMacro," +
                  "Initializing,Disposing,DisposingMixin,Invoking,Parenting,Starting,Startup," +
                  "Facet,Interceptor,InterceptorSelector,ProxyBuilder,Modifier,ArrayManager,IndexedList," +
@@ -9579,8 +9579,8 @@ new function () { // closure
             for (var key in data) {
                 var descriptor = descriptors && descriptors[key],
                     mapper     = descriptor  && descriptor.map;
-                if (mapper && descriptor.root) {
-                    continue;  // already rooted
+                if ((mapper && descriptor.root) || (descriptor && descriptor.ignore)) {
+                    continue;  // ignore or already rooted
                 }
                 var value = data[key];
                 if (key in this) {
@@ -9622,13 +9622,19 @@ new function () { // closure
                         var keyValue   = this[key],
                             descriptor = descriptors[key],
                             keySpec    = all ? spec : spec[key];
-                        if (!(all || keySpec)) {
+                        if (!(all || keySpec) || descriptor.ignore) {
                             continue;
                         }
                         if (descriptor.root) {
                             if (keyValue && $isFunction(keyValue.toData)) {
                                 keyValue.toData(keySpec, data);
                             }
+                        } else if ($isArray(keyValue)) {
+                            data[key] = Array2.map(keyValue, function (elem) {
+                                return elem && $isFunction(elem.toData)
+                                     ? elem.toData(keySpec)
+                                     : elem;
+                            });
                         } else if (keyValue && $isFunction(keyValue.toData)) {
                             data[key] = keyValue.toData(keySpec);
                         } else {

@@ -34,7 +34,8 @@ new function () { // closure
                         greaterThan: 11
                     }
                 }
-            }
+            },
+            password: { ignore: true }
         },
         getHobbies: function () { return this._hobbies; },
         setHobbies: function (value) { this._hobbies = value; }
@@ -95,6 +96,14 @@ describe("Model", function () {
             expect(person.occupation).to.be.undefined;
         });
 
+        it("should ignore import from data", function () {
+            var person = new Person;
+            person.fromData({
+                password:   '1234'
+            });
+            expect(person.password).to.be.undefined;
+        });
+        
         it("should import all from data", function () {
             var person = new Person;
             person.fromData({
@@ -159,6 +168,18 @@ describe("Model", function () {
             });
         });
 
+        it("should ignore export some data", function () {
+            var person      = new Person;
+            person.password = '1234';
+            var data        = person.toData();
+            expect(data).to.eql({
+                firstName: undefined,
+                lastName:  undefined,
+                hobbies:   undefined,
+                age:       0
+            });
+        });
+        
         it("should export partial data", function () {
             var person = new Person({
                     firstName: 'Christiano',
