@@ -189,7 +189,13 @@ new function () { // closure
                             if (isModal) {
                                 var provider = modalPolicy.style || ModalProviding;
                                 return $q.when(provider(composer)
-                                    .showModal(container, content, modalPolicy, partialContext));
+                                	.showModal(container, content, modalPolicy, partialContext))
+                                	.then(function (ctx) {
+                                        if (_controoler && $isFunction(_controller.viewLoaded)) {
+                                            _controller.viewLoaded();
+                                        }
+                                        return ctx;
+                                    });
                             }
                             
                             partialContext.onEnding(function (context) {
@@ -201,6 +207,9 @@ new function () { // closure
                             return animateContent(container, content, partialContext, $q).then(function (ctx) {
                                 if (oldScope) {
                                     oldScope.$destroy();
+                                }
+                                if (_controoler && $isFunction(_controller.viewLoaded)) {
+                                    _controller.viewLoaded();
                                 }
                                 return ctx;
                             });                        
@@ -6628,7 +6637,7 @@ new function () { // closure
      */
     base2.package(this, {
         name:    "miruken",
-        version: "0.0.51",
+        version: "0.0.53",
         exports: "Enum,Flags,Variance,Protocol,StrictProtocol,Delegate,Miruken,MetaStep,MetaMacro," +
                  "Initializing,Disposing,DisposingMixin,Invoking,Parenting,Starting,Startup," +
                  "Facet,Interceptor,InterceptorSelector,ProxyBuilder,Modifier,ArrayManager,IndexedList," +
@@ -7669,17 +7678,25 @@ new function () { // closure
                             };
                         }(name);
                     }
-                } else if (property.get || property.set) {
-                    var methods = {},
-                        cname   = name.charAt(0).toUpperCase() + name.slice(1);
-                    if (property.get) {
-                        var get      = 'get' + cname; 
-                        methods[get] = property.get;
+                } else if (property.get || property.set || ("auto" in property)) {
+                    var field, methods = {},
+                        cname = name.charAt(0).toUpperCase() + name.slice(1);
+                    if (property.get || !property.set) {
+                        if (!property.get) {
+                            field = property.auto;
+                            if (!(field && $isString(field))) {
+                                field = "_" + name;
+                            }
+                        }
+                        var get      = 'get' + cname;                        
+                        methods[get] = property.get ||
+                            function () { return this[field]; };
                         spec.get     = _makeGetter(get);
                     }
-                    if (property.set) {
-                        var set      = 'set' + cname 
-                        methods[set] = property.set;
+                    if (property.set || !property.get) {
+                        var set      = 'set' + cname; 
+                        methods[set] = property.set ||
+                        	function (value) { this[field] = value; };
                         spec.set     = _makeSetter(set); 
                     }
                     if (step == MetaStep.Extend) {
@@ -9583,6 +9600,9 @@ new function () { // closure
                     continue;  // ignore or already rooted
                 }
                 var value = data[key];
+                if (value === undefined) {
+                    continue;
+                }
                 if (key in this) {
                     this[key] = Model.map(value, mapper, options);
                 } else {
@@ -9619,8 +9639,11 @@ new function () { // closure
                 var all = $isNothing(spec);
                 for (var key in descriptors) {
                     if (all || (key in spec)) {
-                        var keyValue   = this[key],
-                            descriptor = descriptors[key],
+                        var keyValue   = this[key];
+                        if (keyValue === undefined) {
+                            continue;
+                        }
+                        var descriptor = descriptors[key],
                             keySpec    = all ? spec : spec[key];
                         if (!(all || keySpec) || descriptor.ignore) {
                             continue;

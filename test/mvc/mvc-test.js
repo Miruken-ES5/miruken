@@ -163,7 +163,6 @@ describe("Model", function () {
             expect(data).to.eql({
                 firstName: 'Christiano',
                 lastName:  'Ronaldo',
-                hobbies:   undefined,
                 age:       23
             });
         });
@@ -173,10 +172,7 @@ describe("Model", function () {
             person.password = '1234';
             var data        = person.toData();
             expect(data).to.eql({
-                firstName: undefined,
-                lastName:  undefined,
-                hobbies:   undefined,
-                age:       0
+                age: 0
             });
         });
         
@@ -206,12 +202,10 @@ describe("Model", function () {
             expect(doctor.toData()).to.eql({
                 firstName: 'Mitchell',
                 lastName:  'Moskowitz',
-                hobbies:   undefined,
                 age:       0,
                 patient: {
                     firstName: 'Lionel',
                     lastName:  'Messi',
-                    hobbies:   undefined,
                     age:       24
                 }
             });
@@ -258,7 +252,6 @@ describe("Model", function () {
             expect(wrapper.toData()).to.eql({
                 firstName: 'Franck',
                 lastName:  'Ribery',
-                hobbies:   undefined,
                 age:       32
             });
         });

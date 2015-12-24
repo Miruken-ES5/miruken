@@ -283,10 +283,9 @@ describe("$properties", function () {
                     }
                 }
             },
+            dob: { auto: null },
             pet:  { map: Animal}
         },
-        get dob() { return this._dob; },
-        set dob(value) { this._dob = value; },
         get age() { return ~~((Date.now() - +this.dob) / (31557600000)); }
     }), Doctor = Person.extend({
         $properties: {

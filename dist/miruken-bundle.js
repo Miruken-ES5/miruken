@@ -5941,7 +5941,7 @@ new function () { // closure
      */
     base2.package(this, {
         name:    "miruken",
-        version: "0.0.51",
+        version: "0.0.53",
         exports: "Enum,Flags,Variance,Protocol,StrictProtocol,Delegate,Miruken,MetaStep,MetaMacro," +
                  "Initializing,Disposing,DisposingMixin,Invoking,Parenting,Starting,Startup," +
                  "Facet,Interceptor,InterceptorSelector,ProxyBuilder,Modifier,ArrayManager,IndexedList," +
@@ -6982,17 +6982,25 @@ new function () { // closure
                             };
                         }(name);
                     }
-                } else if (property.get || property.set) {
-                    var methods = {},
-                        cname   = name.charAt(0).toUpperCase() + name.slice(1);
-                    if (property.get) {
-                        var get      = 'get' + cname; 
-                        methods[get] = property.get;
+                } else if (property.get || property.set || ("auto" in property)) {
+                    var field, methods = {},
+                        cname = name.charAt(0).toUpperCase() + name.slice(1);
+                    if (property.get || !property.set) {
+                        if (!property.get) {
+                            field = property.auto;
+                            if (!(field && $isString(field))) {
+                                field = "_" + name;
+                            }
+                        }
+                        var get      = 'get' + cname;                        
+                        methods[get] = property.get ||
+                            function () { return this[field]; };
                         spec.get     = _makeGetter(get);
                     }
-                    if (property.set) {
-                        var set      = 'set' + cname 
-                        methods[set] = property.set;
+                    if (property.set || !property.get) {
+                        var set      = 'set' + cname; 
+                        methods[set] = property.set ||
+                        	function (value) { this[field] = value; };
                         spec.set     = _makeSetter(set); 
                     }
                     if (step == MetaStep.Extend) {
