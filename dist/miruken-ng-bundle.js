@@ -189,7 +189,13 @@ new function () { // closure
                             if (isModal) {
                                 var provider = modalPolicy.style || ModalProviding;
                                 return $q.when(provider(composer)
-                                    .showModal(container, content, modalPolicy, partialContext));
+                                	.showModal(container, content, modalPolicy, partialContext))
+                                	.then(function (ctx) {
+                                        if (_controller && $isFunction(_controller.viewLoaded)) {
+                                            _controller.viewLoaded();
+                                        }
+                                        return ctx;
+                                    });
                             }
                             
                             partialContext.onEnding(function (context) {
@@ -201,6 +207,9 @@ new function () { // closure
                             return animateContent(container, content, partialContext, $q).then(function (ctx) {
                                 if (oldScope) {
                                     oldScope.$destroy();
+                                }
+                                if (_controller && $isFunction(_controller.viewLoaded)) {
+                                    _controller.viewLoaded();
                                 }
                                 return ctx;
                             });                        
@@ -523,7 +532,7 @@ new function () { // closure
             name = memberProto.name || name;
             if (memberProto instanceof Directive) {
                 var directive = new ComponentModel;
-                directive.setKey(member);
+                directive.key = member;
                 container.addComponent(directive);
                 var deps = _ngDependencies(directive);
                 deps.unshift("$rootScope", "$injector");
@@ -535,8 +544,8 @@ new function () { // closure
                 module.directive(name, deps);
             } else if (memberProto instanceof Controller) {
                 var controller = new ComponentModel;
-                controller.setKey(member);
-                controller.setLifestyle(new ContextualLifestyle);
+                controller.key = member;
+                controller.lifestyle = new ContextualLifestyle;
                 container.addComponent(controller);
                 var deps = _ngDependencies(controller);
                 deps.unshift("$scope", "$injector");
@@ -544,7 +553,7 @@ new function () { // closure
                 module.controller(name, deps);
             } else if (memberProto instanceof Filter) {
                 var filter = new ComponentModel;
-                filter.setKey(member);
+                filter.key = member;
                 container.addComponent(filter);
                 var deps = _ngDependencies(filter);
                 deps.unshift("$rootScope", "$injector");
@@ -1239,50 +1248,23 @@ function extend(object, source) { // or extend(object, key, value)
     if (useProto) {
       var i = _HIDDEN.length, key;
       while ((key = _HIDDEN[--i])) {
-        var value = source[key];
-        if (value != proto[key]) {
-          if (_BASE.test(value)) {
-            object[key] = _override(object, key, value);
-          } else {
-            object[key] = value;
-          }
+        var desc = _getPropertyDescriptor(source, key);
+        if (desc.value != proto[key]) {
+          desc = _override(object, key, desc);
+          if (desc) Object.defineProperty(object, key, desc);
         }
       }
     }
     // Copy each of the source object's properties to the target object.
     for (key in source) {
       if (typeof proto[key] == "undefined") {
-        value = source[key];
-        if (value != _IGNORE) {
-          // Check for method overriding.
-          var ancestor = object[key];
-          if (ancestor && typeof value == "function") {
-            if (value != ancestor) {
-              if (_BASE.test(value)) {
-                object[key] = _override(object, key, value);
-              } else {
-                value.ancestor = ancestor;
-                object[key] = value;
-              }
-            }
-          } else {
-            object[key] = value;
-          }
-        }
+        var desc = _getPropertyDescriptor(source, key);
+        desc = _override(object, key, desc);
+        if (desc) Object.defineProperty(object, key, desc);
       }
     }
   }
-  // http://www.hedgerwow.com/360/dhtml/ie6_memory_leak_fix/
-  /*@if (@_jscript) {
-    try {
-      return object;
-    } finally {
-      object = null;
-    }
-  }
-  @else @*/
-    return object;
-  /*@end @*/
+  return object;
 };
 
 function _ancestorOf(ancestor, fn) {
@@ -1295,24 +1277,104 @@ function _ancestorOf(ancestor, fn) {
   return false;
 };
 
-function _override(object, name, method) {
-  // Return a method that overrides an existing method.
-  var ancestor = object[name];
-  var superObject = base2.__prototyping; // late binding for prototypes
-  if (superObject && ancestor != superObject[name]) superObject = null;
-  function _base() {
-    var previous = this.base;
-    this.base = superObject ? superObject[name] : ancestor;
-    var returnValue = method.apply(this, arguments);
-    this.base = previous;
-    return returnValue;
-  };
-  _base.method = method;
-  _base.ancestor = ancestor;
-  // introspection (removed when packed)
-  ;;; _base.toString = K(method + "");
-  return _base;
+function _override(object, name, desc) {
+  var value = desc.value;
+  if (value === _IGNORE) return;
+  if ((typeof value !== "function") && ("value" in desc)) {
+    return desc;
+  }
+  var ancestor = _getPropertyDescriptor(object, name);
+  if (!ancestor) return desc;
+  var superObject = base2.__prototyping; // late binding for prototypes;
+  if (superObject) {
+    var sprop = _getPropertyDescriptor(superObject, name);
+    if (sprop && (sprop.value != ancestor.value ||
+                  sprop.get   != ancestor.get ||
+                  sprop.set   != ancestor.set)) {
+        superObject = null;
+    }
+  }
+  if (value) {
+    var avalue = ancestor.value;
+    if (avalue && _BASE.test(value)) {
+      desc.value = function () {
+        var previous = this.base;
+        this.base = superObject ? superObject[name] || Undefined: avalue;
+        var returnValue = value.apply(this, arguments);
+        this.base = previous;
+        return returnValue;
+      };
+      desc.value.method   = value;
+      desc.value.ancestor = avalue;
+    }
+    return desc;
+  }
+  var get = desc.get, aget = ancestor.get;        
+  if (get) {
+    if (aget && _BASE.test(get)) {
+      desc.get = function () {
+        var previous = this.base;
+        if (superObject) {
+          var sprop = _getPropertyDescriptor(superObject, name);
+          this.base = sprop.get || Undefined;
+        } else {
+          this.base = aget;
+        }
+        var returnValue = get.apply(this, arguments);
+        this.base = previous;
+        return returnValue;
+      };
+      desc.get.method   = get;
+      desc.get.ancestor = aget;
+    }
+  } else if (superObject) {
+    desc.get = function () {
+      var sprop = _getPropertyDescriptor(superObject, name);
+      if (sprop.get) {
+        return sprop.get.apply(this, arguments);
+      }
+    };
+  } else {
+      desc.get = aget;
+  }
+  var set = desc.set, aset = ancestor.set;        
+  if (set) {
+    if (aset && _BASE.test(set)) {
+      desc.set = function () {
+        var previous = this.base;
+        if (superObject) {
+          var sprop = _getPropertyDescriptor(superObject, name);
+          this.base = sprop.set || Undefined;
+        } else {
+          this.base = aset;
+        }
+        var returnValue = set.apply(this, arguments);
+        this.base = previous;
+        return returnValue;
+      };
+      desc.set.method   = set;
+      desc.set.ancestor = aset;
+    }
+  } else if (superObject) {
+    desc.set = function () {
+      var sprop = _getPropertyDescriptor(superObject, name);
+      if (sprop.set) {
+        return sprop.set.apply(this, arguments);
+      }
+    };      
+  } else {
+    desc.set = aset;
+  }
+  return desc;
 };
+    
+function _getPropertyDescriptor(object, key) {
+    var source = object, descriptor;
+    while (source && !(
+        descriptor = Object.getOwnPropertyDescriptor(source, key))
+        ) source = Object.getPrototypeOf(source);
+    return descriptor;
+}
 
 // =========================================================================
 // lang/forEach.js
@@ -2026,9 +2088,9 @@ new function () { // closure
         name:    "callback",
         imports: "miruken",
         exports: "CallbackHandler,CascadeCallbackHandler,CompositeCallbackHandler," +
-                 "InvocationOptions,Resolving,Batching,Batcher,Resolution,Composition," +
-                 "HandleMethod,ResolveMethod,RejectedError,getEffectivePromise,$handle," +
-                 "$callbacks,$define,$provide,$lookup,$NOT_HANDLED"
+                 "InvocationOptions,Batching,Batcher,Resolution,Composition,HandleMethod," +
+                 "ResolveMethod,RejectedError,getEffectivePromise,$handle,$callbacks," +
+                 "$define,$provide,$lookup,$NOT_HANDLED"
     });
 
     eval(this.imports);
@@ -2890,13 +2952,6 @@ new function () { // closure
             }
         }
     });
-
-    /**
-     * Protocol marking {{#crossLink "miruken.callback.InvocationOptions/Resolve:property"}}{{/crossLink}} semantics.
-     * @class Resolving
-     * @extends miruken.Protocol
-     */
-    var Resolving = Protocol.extend();
 
     /**
      * Protocol to participate in batched operations.
@@ -5878,7 +5933,7 @@ new function () { // closure
             return !disposing;
         },
         apply: function (componentModel) {
-            componentModel.setLifestyle(this);
+            componentModel.lifestyle = this;
         }
     });
 
@@ -6024,7 +6079,7 @@ new function () { // closure
             var _componentModel = new ComponentModel,
                 _newInContext, _newInChildContext,
                 _policies = [];
-            _componentModel.setKey(key);
+            _componentModel.key = key;
             this.extend({
                 /**
                  * Marks the component as invariant.
@@ -6083,7 +6138,7 @@ new function () { // closure
                  * @chainable
                  */                                                
                 instance: function (instance) {
-                    _componentModel.setLifestyle(new SingletonLifestyle(instance));
+                    _componentModel.lifestyle = new SingletonLifestyle(instance);
                     return this;
                 },
                 /**
@@ -6093,7 +6148,7 @@ new function () { // closure
                  * @chainable
                  */
                 singleton: function () {
-                    _componentModel.setLifestyle(new SingletonLifestyle);
+                    _componentModel.lifestyle = new SingletonLifestyle;
                     return this;
                 },
                 /**
@@ -6103,7 +6158,7 @@ new function () { // closure
                  * @chainable
                  */                
                 transient: function () {
-                    _componentModel.setLifestyle(new TransientLifestyle);
+                    _componentModel.lifestyle = new TransientLifestyle;
                     return this;
                 },
                 /**
@@ -6113,7 +6168,7 @@ new function () { // closure
                  * @chainable
                  */                                
                 contextual: function () {
-                    _componentModel.setLifestyle(new ContextualLifestyle);
+                    _componentModel.lifestyle = new ContextualLifestyle;
                     return this;
                 },
                 /**
@@ -6628,9 +6683,9 @@ new function () { // closure
      */
     base2.package(this, {
         name:    "miruken",
-        version: "0.0.51",
+        version: "0.0.56",
         exports: "Enum,Flags,Variance,Protocol,StrictProtocol,Delegate,Miruken,MetaStep,MetaMacro," +
-                 "Initializing,Disposing,DisposingMixin,Invoking,Parenting,Starting,Startup," +
+                 "Initializing,Disposing,DisposingMixin,Resolving,Invoking,Parenting,Starting,Startup," +
                  "Facet,Interceptor,InterceptorSelector,ProxyBuilder,Modifier,ArrayManager,IndexedList," +
                  "$isProtocol,$isClass,$classOf,$ancestorOf,$isString,$isFunction,$isObject,$isArray," +
                  "$isPromise,$isNothing,$isSomething,$using,$lift,$equals,$decorator,$decorate,$decorated," +
@@ -6767,7 +6822,8 @@ new function () { // closure
                 if (e.value === value) {
                     return e;
                 }
-            }                    
+            }
+            throw new TypeError(format("%1 is not a valid value for this Enum.", value));
         }
     });
     Enum.prototype.valueOf = function () { return this.value; }
@@ -6958,10 +7014,11 @@ new function () { // closure
          * Inflates the macro for the given step.
          * @method inflate
          * @param  {miruken.MetaStep}  step        -  meta step
+         * @param  {miruken.MetaBase}  metadata    -  source metadata
          * @param  {Object}            definition  -  updates to apply
          * @param  {Function}          expand      -  expanded definition
          */
-        inflate: function (step, definition, expand) {},
+        inflate: function (step, metadata, definition, expand) {},
         /**
          * Execite the macro for the given step.
          * @method execute
@@ -7096,11 +7153,11 @@ new function () { // closure
                     }
                     return false;
                 },
-                inflate: function (step, definition, expand) {
+                inflate: function (step, metadata, definition, expand) {
                     if (parent) {
-                        parent.inflate(step, definition, expand);
+                        parent.inflate(step, metadata, definition, expand);
                     } else if ($properties) {
-                        $properties.shared.inflate(step, definition, expand)
+                        $properties.shared.inflate(step, metadata, definition, expand)
                     }
                 },
                 execute: function (step, metadata, target, definition) {
@@ -7119,9 +7176,15 @@ new function () { // closure
                  * @param  {Object}   [descriptor]  -  property descriptor
                  */
                 defineProperty: function(target, name, spec, descriptor) {
-                    descriptor = extend({}, descriptor);
-                    Object.defineProperty(target, name, spec);
-                    this.addDescriptor(name, descriptor);
+                    if (descriptor) {
+                        descriptor = copy(descriptor);
+                    }
+                    if (target) {
+                        Object.defineProperty(target, name, spec);
+                    }
+                    if (descriptor) {
+                        this.addDescriptor(name, descriptor);
+                    }
                 },
                 /**
                  * Gets the descriptor for one or more properties.
@@ -7286,8 +7349,8 @@ new function () { // closure
                     return this.base(protocol) ||
                         !!(baseMeta && baseMeta.conformsTo(protocol));
                 },
-                inflate: function (step, definition, expand) {
-                    this.base(step, definition, expand);
+                inflate: function (step, metadata, definition, expand) {
+                    this.base(step, metadata, definition, expand);
                     if (!_macros || _macros.length == 0) {
                         return;
                     }
@@ -7296,7 +7359,7 @@ new function () { // closure
                         var macro = _macros[i];
                         if ($isFunction(macro.inflate) &&
                             (!active || macro.isActive()) && macro.shouldInherit()) {
-                            macro.inflate(step, definition, expand);
+                            macro.inflate(step, metadata, definition, expand);
                         }
                     }                    
                 },
@@ -7359,10 +7422,10 @@ new function () { // closure
                         }),
                         instanceDef  = args.shift() || empty,
                         staticDef    = args.shift() || empty;
-                    this.inflate(MetaStep.Subclass, instanceDef, expand);
+                    this.inflate(MetaStep.Subclass, this, instanceDef, expand);
                     if (macros) {
                         for (var i = 0; i < macros.length; ++i) {
-                            macros[i].inflate(MetaStep.Subclass, instanceDef, expand);
+                            macros[i].inflate(MetaStep.Subclass, this, instanceDef, expand);
                         }
                     }
                     instanceDef  = expand.x || instanceDef;
@@ -7393,7 +7456,7 @@ new function () { // closure
                         source = source.prototype; 
                     }
                     if ($isSomething(source)) {
-                        this.inflate(MetaStep.Implement, source, expand);
+                        this.inflate(MetaStep.Implement, this, source, expand);
                         source = expand.x || source;
                         ClassMeta.baseImplement.call(subClass, source);
                         this.execute(MetaStep.Implement, this, subClass.prototype, source);
@@ -7474,7 +7537,7 @@ new function () { // closure
                 }
                 var metadata = this.$meta;
                 if (metadata) {
-                    metadata.inflate(MetaStep.Extend, definition, expand);
+                    metadata.inflate(MetaStep.Extend, metadata, definition, expand);
                     definition = expand.x || definition;
                     function expand() {
                         return expand.x || (expand.x = Object.create(definition));
@@ -7494,33 +7557,51 @@ new function () { // closure
     Enum.implement  = Base.implement;
     
     /**
-     * Metamacro to proxy protocol methods through a delegate.<br/>
+     * Metamacro to proxy protocol members through a delegate.<br/>
      * See {{#crossLink "miruken.Protocol"}}{{/crossLink}}
      * @class $proxyProtocol
      * @extends miruken.MetaMacro
      */
     var $proxyProtocol = MetaMacro.extend({
-        execute: function (step, metadata, target, definition) {
-            var clazz = metadata.getClass();
-            if (clazz === Protocol) {
-                return;
-            }    
-            var protocolProto = Protocol.prototype;
+        inflate: function (step, metadata, definition, expand) {
+            var protocolProto = Protocol.prototype, expanded;
             for (var key in definition) {
                 if (key in protocolProto) {
                     continue;
                 }
-                var member = Object.getOwnPropertyDescriptor(target, key);
-                if (member && $isFunction(member.value)) {
-                    (function (methodName) {
-                        target[methodName] = function () {
+                expanded = expanded || expand();
+                var member = _getPropertyDescriptor(definition, key);
+                if ($isFunction(member.value)) {
+                    (function (method) {
+                        member.value = function () {
                             var args = Array.prototype.slice.call(arguments);
-                            return this.__invoke(methodName, args);
-                        }
+                            return this.__invoke(method, args);
+                        };
                     })(key);
+                } else if (member.get || member.set) {
+                    if (member.get) {
+                        (function (get) {
+                            member.get = function () {
+                                return this.__get(get);
+                            };
+                        })(key);
+                    }
+                    if (member.set) {
+                        (function (set) {                        
+                            member.set = function (value) {
+                                return this.__set(set, value);
+                            }
+                        })(key);
+                    }
+                } else {
+                    continue;
                 }
-            }
+                Object.defineProperty(expanded, key, member);                
+            }            
+        },
+        execute: function (step, metadata, target, definition) {
             if (step === MetaStep.Subclass) {
+                var clazz = metadata.getClass();                
                 clazz.adoptedBy = Protocol.adoptedBy;
             }
         },
@@ -7548,10 +7629,9 @@ new function () { // closure
          */        
         isActive: True
     });
-    Protocol.extend     = Base.extend
-    Protocol.implement  = Base.implement;
-    Protocol.$meta      = new ClassMeta(Base.$meta, Protocol, null, [new $proxyProtocol]);
-    Protocol.$meta.execute(MetaStep.Subclass, Protocol.$meta, Protocol.prototype);
+    Protocol.extend    = Base.extend
+    Protocol.implement = Base.implement;
+    Protocol.$meta     = new ClassMeta(Base.$meta, Protocol, null, [new $proxyProtocol]);
 
     /**
      * Protocol base requiring conformance to match methods.
@@ -7589,7 +7669,7 @@ new function () { // closure
      *                        this.lastName = parts[1];
      *                    }
      *                }
-     *            },
+     *            }
      *        }
      *    })
      * </pre>
@@ -7606,45 +7686,14 @@ new function () { // closure
             }
             Object.defineProperty(this, 'tag', { value: tag });
         },
-        inflate: function _(step, definition, expand) {
-            if (this !== $properties.shared || !$isObject(definition)) {
-                return;
-            }
-            var properties, expanded,
-                names = Object.getOwnPropertyNames(definition);
-            for (var i = 0; i < names.length; ++i) {
-                var name = names[i],
-                    descriptor = Object.getOwnPropertyDescriptor(definition, name);
-                if (descriptor.get || descriptor.set) {
-                    var spec = _.spec || (_.spec = {
-                        configurable: true,
-                        value:        undefined
-                    });
-                    if (!properties) {
-                        expanded   = expand();
-                        properties = definition[this.tag];
-                        if (properties) {
-                            properties = pcopy(properties);
-                        }
-                        properties = expanded[this.tag] = (properties || {});
-                    }
-                    Object.defineProperty(expanded, name, spec);
-                    var property = properties[name] || (properties[name] = {});
-                    if (descriptor.get) {
-                        property.get = descriptor.get;
-                    }
-                    if (descriptor.set) {
-                        property.set = descriptor.set;
-                    }
-                }
-            }
-        },
         execute: function _(step, metadata, target, definition) {
             var properties = this.extractProperty(this.tag, target, definition); 
             if (!properties) {
                 return;
             }
+            var expanded = {}, source;
             for (var name in properties) {
+                source = expanded;
                 var property = properties[name],
                     spec = _.spec || (_.spec = {
                         configurable: true,
@@ -7654,46 +7703,33 @@ new function () { // closure
                     typeOf(property.length) == "number" || typeOf(property) !== 'object') {
                     property = { value: property };
                 }
-                if (target instanceof Protocol) {
-                    if (property.get || !property.set) {
-                        spec.get = function (get) {
-                            return function () {
-                                return this.__get(get);
-                            };
-                        }(name);
-                    }
-                    if (property.set || !property.get) {
-                        spec.set = function (set) {
-                            return function (value) {
-                                return this.__set(set, value);
-                            };
-                        }(name);
-                    }
+                if (name in definition) {
+                    source = null;  // don't replace standard property
                 } else if (property.get || property.set) {
-                    var methods = {},
-                        cname   = name.charAt(0).toUpperCase() + name.slice(1);
-                    if (property.get) {
-                        var get      = 'get' + cname; 
-                        methods[get] = property.get;
-                        spec.get     = _makeGetter(get);
+                    spec.get = property.get;
+                    spec.set = property.set;
+                } else if (target instanceof Protocol) {
+                    // $proxyProtocol will do the real work
+                    spec.get = spec.set = Undefined;
+                } else if ("auto" in property) {
+                    var field = property.auto;
+                    if (!(field && $isString(field))) {
+                        field = "_" + name;
                     }
-                    if (property.set) {
-                        var set      = 'set' + cname 
-                        methods[set] = property.set;
-                        spec.set     = _makeSetter(set); 
-                    }
-                    if (step == MetaStep.Extend) {
-                        target.extend(methods);
-                    } else {
-                        metadata.getClass().implement(methods);
-                    }
+                    spec.get = function () { return this[field]; };
+                    spec.set = function (value) { this[field] = value; };
                 } else {
-                    spec.writable = true;                        
+                    spec.writable = true;
                     spec.value    = property.value;
                 }
                 _cleanDescriptor(property);
-                this.defineProperty(metadata, target, name, spec, property);
+                this.defineProperty(metadata, source, name, spec, property);                
                 _cleanDescriptor(spec);
+            }
+            if (step == MetaStep.Extend) {
+                target.extend(expanded);
+            } else {
+                metadata.getClass().implement(expanded);
             }
         },
         defineProperty: function(metadata, target, name, spec, descriptor) {
@@ -7722,32 +7758,6 @@ new function () { // closure
         }
     });
 
-    function _makeGetter(getMethodName) {
-        return function () {
-            var getter = this[getMethodName];
-            if ($isFunction(getter)) {
-                return getter.call(this);
-            }
-        };   
-    }
-
-    function _makeSetter(setMethodName) {
-        return function (value) {
-            var setter = this[setMethodName];
-            if ($isFunction(setter)) {
-                setter.call(this, value);
-                return value;
-            }
-        };
-    }
-
-    function _cleanDescriptor(descriptor) {
-        delete descriptor.writable;
-        delete descriptor.value;
-        delete descriptor.get;
-        delete descriptor.set;
-    }
-
     /**
      * Metamacro to derive class properties from existng methods.
      * <p>Currently getFoo, isFoo and setFoo conventions are recognized.</p>
@@ -7763,31 +7773,50 @@ new function () { // closure
      * @extends miruken.MetaMacro
      */
     var $inferProperties = MetaMacro.extend({
-        execute: function _(step, metadata, target, definition) {
+        inflate: function _(step, metadata, definition, expand) {
+            var expanded;
             for (var key in definition) {
-                var value = definition[key];
-                if (!$isFunction(value)) {
-                    continue;
-                }
-                var spec = _.spec || (_.spec = {
-                    configurable: true,
-                    enumerable:   true
-                });
-                if (_inferProperty(key, value, definition, spec)) {
-                    var name = spec.name;
-                    if (name && !(name in target)) {
-                        spec.get = _makeGetter(spec.get);
-                        spec.set = _makeSetter(spec.set);                        
-                        this.defineProperty(metadata, target, name, spec);
+                var member = _getPropertyDescriptor(definition, key);
+                if ($isFunction(member.value)) {
+                    var spec = _.spec || (_.spec = {
+                        configurable: true,
+                        enumerable:   true
+                    });
+                    var name = this.inferProperty(key, member.value, definition, spec);
+                    if (name) {
+                        expanded = expanded || expand();
+                        Object.defineProperty(expanded, name, spec);
+                        _cleanDescriptor(spec);                        
                     }
-                    delete spec.name;
-                    delete spec.get;
-                    delete spec.set;
+                }
+            }            
+        },
+        inferProperty: function (key, method, definition, spec) {
+            for (var i = 0; i < GETTER_CONVENTIONS.length; ++i) {
+                var prefix = GETTER_CONVENTIONS[i];
+                if (key.lastIndexOf(prefix, 0) == 0) {
+                    if (method.length === 0) {  // no arguments
+                        spec.get   = method;                        
+                        var name   = key.substring(prefix.length),
+                            setter = definition['set' + name];
+                        if ($isFunction(setter)) {
+                            spec.set = setter;
+                        }
+                        return name.charAt(0).toLowerCase() + name.slice(1);
+                    }
                 }
             }
-        },
-        defineProperty: function(metadata, target, name, spec) {
-            metadata.defineProperty(target, name, spec);
+            if (key.lastIndexOf('set', 0) == 0) {
+                if (method.length === 1) {  // 1 argument
+                    spec.set   = method;                    
+                    var name   = key.substring(3),
+                        getter = definition['get' + name];
+                    if ($isFunction(getter)) {
+                        spec.get = getter;
+                    }
+                    return name.charAt(0).toLowerCase() + name.slice(1);
+                }
+            }
         },
         /**
          * Determines if the macro should be inherited
@@ -7803,30 +7832,13 @@ new function () { // closure
         isActive: True
     });
 
-    function _inferProperty(key, value, definition, spec) {
-        for (var i = 0; i < GETTER_CONVENTIONS.length; ++i) {
-            var prefix = GETTER_CONVENTIONS[i];
-            if (key.lastIndexOf(prefix, 0) == 0) {
-                if (value.length === 0) {  // no arguments
-                    var name  = key.substring(prefix.length);
-                    spec.get  = key;
-                    spec.set  = 'set' + name;
-                    spec.name = name.charAt(0).toLowerCase() + name.slice(1);
-                    return true;
-                }
-            }
-        }
-        if (key.lastIndexOf('set', 0) == 0) {
-            if (value.length === 1) {  // 1 argument
-                var name  = key.substring(3);
-                spec.set  = key;
-                spec.get  = 'get' + name;
-                spec.name = name.charAt(0).toLowerCase() + name.slice(1);
-                return true;
-            }
-        }
+    function _cleanDescriptor(descriptor) {
+        delete descriptor.writable;
+        delete descriptor.value;
+        delete descriptor.get;
+        delete descriptor.set;
     }
-
+    
     /**
      * Metamacro to inherit static members in subclasses.
      * <pre>
@@ -8013,7 +8025,7 @@ new function () { // closure
          */
         initialize: function () {}
     });
-
+    
     /**
      * Protocol for targets that manage disposal lifecycle.
      * @class Disposing
@@ -8042,6 +8054,13 @@ new function () { // closure
             }
         }
     });
+
+    /**
+     * Protocol marking resolve semantics.
+     * @class Resolving
+     * @extends miruken.Protocol
+     */
+    var Resolving = Protocol.extend();
 
     /**
      * Protocol for targets that can execute functions.
@@ -9583,6 +9602,9 @@ new function () { // closure
                     continue;  // ignore or already rooted
                 }
                 var value = data[key];
+                if (value === undefined) {
+                    continue;
+                }
                 if (key in this) {
                     this[key] = Model.map(value, mapper, options);
                 } else {
@@ -9619,8 +9641,11 @@ new function () { // closure
                 var all = $isNothing(spec);
                 for (var key in descriptors) {
                     if (all || (key in spec)) {
-                        var keyValue   = this[key],
-                            descriptor = descriptors[key],
+                        var keyValue   = this[key];
+                        if (keyValue === undefined) {
+                            continue;
+                        }
+                        var descriptor = descriptors[key],
                             keySpec    = all ? spec : spec[key];
                         if (!(all || keySpec) || descriptor.ignore) {
                             continue;
@@ -9955,7 +9980,7 @@ new function () { // closure
         }
     });
     
-    var IGNORE = ['valid', 'getErrors', 'errors', 'addKey', 'addError'];
+    var IGNORE = ['valid', 'errors', 'addKey', 'addError'];
 
     /**
      * Captures structured validation errors.
@@ -10011,7 +10036,7 @@ new function () { // closure
                             continue;
                         }
                         var result = this[key],
-                            errors = (result instanceof ValidationResult) && result.getErrors();
+                            errors = (result instanceof ValidationResult) && result.errors;
                         if (errors) {
                             _summary = _summary || {};
                             for (name in errors) {
