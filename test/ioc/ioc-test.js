@@ -263,7 +263,7 @@ describe("ComponentModel", function () {
         it("should reject factory if not a function", function () {
             var componentModel = new ComponentModel;
             expect(function () {
-                componentModel.setFactory(true);
+                componentModel.factory = true;
             }).to.throw(Error, "true is not a function.");
         });
     });

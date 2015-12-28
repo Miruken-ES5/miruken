@@ -119,9 +119,14 @@ describe("Enum", function () {
         it("should obtain enum from value", function () {
             expect(Color(1)).to.equal(Color.red);
             expect(Color("2")).to.equal(Color.blue);
-            expect(Color(Color.green)).to.equal(Color.green)
-            expect(Color(10)).to.be.udefined;
-        });        
+            expect(Color(Color.green)).to.equal(Color.green);
+        });
+
+        it("should throw exception if invalid value", function () {
+            expect(function () {
+                var color = Color(10);
+            }).to.throw(Error, /10 is not a valid value for this Enum./);            
+        });
     });
     
     it("should support logical operations", function () {
@@ -287,7 +292,8 @@ describe("$properties", function () {
             pet:  { map: Animal}
         },
         get age() { return ~~((Date.now() - +this.dob) / (31557600000)); }
-    }), Doctor = Person.extend({
+    });
+    var Doctor = Person.extend({
         $properties: {
             patient: { map: Person }
         },
@@ -319,13 +325,6 @@ describe("$properties", function () {
         person.firstName = 'Mickey';
         person.lastName  = 'Mouse';
         expect(person.fullName).to.equal('Mickey Mouse');
-    });
-
-    it("should synthesize property getters ", function () {
-        var person       = new Person;
-        person.firstName = 'Mickey';
-        person.lastName  = 'Mouse';
-        expect(person.getFullName()).to.equal('Mickey Mouse');
     });
 
     it("should synthesize property setters ", function () {
@@ -559,7 +558,6 @@ describe("$inferProperties", function () {
     it("should support property overrides", function () {
         var Teacher = Person.extend({
                 getFirstName: function () { return 'Teacher ' + this.base(); }
-
             }),
             teacher = new Teacher('Jane');
         expect(teacher.firstName).to.equal('Teacher Jane');
