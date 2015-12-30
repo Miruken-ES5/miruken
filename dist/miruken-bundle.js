@@ -608,8 +608,6 @@ function _override(object, name, desc) {
         this.base = previous;
         return returnValue;
       };
-      desc.value.method   = value;
-      desc.value.ancestor = avalue;
     }
     return desc;
   }
@@ -628,8 +626,6 @@ function _override(object, name, desc) {
         this.base = previous;
         return returnValue;
       };
-      desc.get.method   = get;
-      desc.get.ancestor = aget;
     }
   } else if (superObject) {
     desc.get = function () {
@@ -656,8 +652,6 @@ function _override(object, name, desc) {
         this.base = previous;
         return returnValue;
       };
-      desc.set.method   = set;
-      desc.set.ancestor = aset;
     }
   } else if (superObject) {
     desc.set = function () {
@@ -2570,6 +2564,8 @@ new function () { // closure
                         });
                         if (isMethod) {
                             callback.returnValue = accept;
+                        } else if (callback instanceof Resolution) {
+                            callback.resolve(accept);
                         } else if (callback instanceof Deferred) {
                             callback.track(accept);
                         }
@@ -3114,11 +3110,10 @@ new function () { // closure
         constructor: function (parent) {
             this.base();
 
-            var _id                 = assignID(this),
-                _state              = ContextState.Active,
-                _parent             = parent,
-                _children           = new Array2,
-                _baseHandleCallback = this.handleCallback,
+            var _id         = assignID(this),
+                _state      = ContextState.Active,
+                _parent     = parent,
+                _children   = new Array2,
                 _observers;
 
             this.extend({
@@ -3192,12 +3187,28 @@ new function () { // closure
                     return this;
                 },
                 handleCallback: function (callback, greedy, composer) {
-                    var handled = this.base(callback, greedy, composer);
-                    if (handled && !greedy) {
-                        return handled;
+                    var handled = false,
+                        axis    = this.__axis;
+                    if (!axis) {
+                        handled = this.base(callback, greedy, composer);
+                        if (handled && !greedy) {
+                            return handled;
+                        }
+                        if (_parent) {
+                            handled = handled | _parent.handle(callback, greedy, composer);
+                        }
+                        return !!handled;                        
                     }
-                    if (_parent) {
-                        handled = handled | _parent.handle(callback, greedy, composer);
+                    delete this.__axis;
+                    if (axis === TraversingAxis.Self) {
+                        return this.base(callback, greedy, composer);
+                    } else {
+                        this.traverse(axis, function (node) {
+                            handled = handled | ($equals(node, this)
+                                    ? this.base(callback, greedy, composer)
+                                    : node.handleAxis(TraversingAxis.Self, callback, greedy, composer));
+                            return handled && !greedy;
+                        }, this);
                     }
                     return !!handled;
                 },
@@ -3211,21 +3222,8 @@ new function () { // closure
                  * @returns {boolean} true if the callback was handled, false otherwise.
                  */                
                 handleAxis: function (axis, callback, greedy, composer) {
-                    if (callback === null || callback === undefined) {
-                        return false;
-                    }
-                    greedy   = !!greedy;
-                    composer = composer || this;
-                    if (axis == TraversingAxis.Self) {
-                        return _baseHandleCallback.call(this, callback, greedy, composer);
-                    }
-                    var handled = false;
-                    this.traverse(axis, function (node) {
-                        handled = handled
-                                | node.handleAxis(TraversingAxis.Self, callback, greedy, composer);
-                        return handled && !greedy;
-                    });
-                    return !!handled;
+                    this.__axis = axis;
+                    return this.handle(callback, greedy, composer);
                 },
                 /**
                  * Subscribes to the context notifications.
@@ -3511,13 +3509,14 @@ new function () { // closure
          */
         axis: function (axis) {
             return this.decorate({
-                handle: function (callback, greedy, composer) {
-                    return (callback instanceof Composition)
-                         ? this.base(callback, greedy, composer)
-                         : this.handleAxis(axis, callback, greedy, composer);
+                handleCallback: function (callback, greedy, composer) {
+                    if (!(callback instanceof Composition)) {
+                        this.__axis = axis;                        
+                    }
+                    return this.base(callback, greedy, composer);
                 },
                 equals: function (other) {
-                    return (this === other) || (other === this.decoratee);
+                    return (this === other) || ($decorated(this) === $decorated(other));
                 }
             });
         }},
@@ -5987,7 +5986,7 @@ new function () { // closure
      */
     base2.package(this, {
         name:    "miruken",
-        version: "0.0.56",
+        version: "0.0.59",
         exports: "Enum,Flags,Variance,Protocol,StrictProtocol,Delegate,Miruken,MetaStep,MetaMacro," +
                  "Initializing,Disposing,DisposingMixin,Resolving,Invoking,Parenting,Starting,Startup," +
                  "Facet,Interceptor,InterceptorSelector,ProxyBuilder,Modifier,ArrayManager,IndexedList," +
@@ -6319,16 +6318,17 @@ new function () { // closure
          * @method inflate
          * @param  {miruken.MetaStep}  step        -  meta step
          * @param  {miruken.MetaBase}  metadata    -  source metadata
+         * @param  {Object}            target      -  target macro applied to
          * @param  {Object}            definition  -  updates to apply
          * @param  {Function}          expand      -  expanded definition
          */
-        inflate: function (step, metadata, definition, expand) {},
+        inflate: function (step, metadata, target, definition, expand) {},
         /**
          * Execite the macro for the given step.
          * @method execute
          * @param  {miruken.MetaStep}  step        -  meta step
          * @param  {miruken.MetaBase}  metadata    -  effective metadata
-         * @param  {Object}            target      -  target macro applied to 
+         * @param  {Object}            target      -  target macro applied to
          * @param  {Object}            definition  -  source to apply
          */
         execute: function (step, metadata, target, definition) {},
@@ -6457,11 +6457,11 @@ new function () { // closure
                     }
                     return false;
                 },
-                inflate: function (step, metadata, definition, expand) {
+                inflate: function (step, metadata, target, definition, expand) {
                     if (parent) {
-                        parent.inflate(step, metadata, definition, expand);
+                        parent.inflate(step, metadata, target, definition, expand);
                     } else if ($properties) {
-                        $properties.shared.inflate(step, metadata, definition, expand)
+                        $properties.shared.inflate(step, metadata, target, definition, expand)
                     }
                 },
                 execute: function (step, metadata, target, definition) {
@@ -6653,8 +6653,8 @@ new function () { // closure
                     return this.base(protocol) ||
                         !!(baseMeta && baseMeta.conformsTo(protocol));
                 },
-                inflate: function (step, metadata, definition, expand) {
-                    this.base(step, metadata, definition, expand);
+                inflate: function (step, metadata, target, definition, expand) {
+                    this.base(step, metadata, target, definition, expand);
                     if (!_macros || _macros.length == 0) {
                         return;
                     }
@@ -6663,7 +6663,7 @@ new function () { // closure
                         var macro = _macros[i];
                         if ($isFunction(macro.inflate) &&
                             (!active || macro.isActive()) && macro.shouldInherit()) {
-                            macro.inflate(step, metadata, definition, expand);
+                            macro.inflate(step, metadata, target, definition, expand);
                         }
                     }                    
                 },
@@ -6726,10 +6726,10 @@ new function () { // closure
                         }),
                         instanceDef  = args.shift() || empty,
                         staticDef    = args.shift() || empty;
-                    this.inflate(MetaStep.Subclass, this, instanceDef, expand);
+                    this.inflate(MetaStep.Subclass, this, subClass.prototype, instanceDef, expand);
                     if (macros) {
                         for (var i = 0; i < macros.length; ++i) {
-                            macros[i].inflate(MetaStep.Subclass, this, instanceDef, expand);
+                            macros[i].inflate(MetaStep.Subclass, this, subClass.prototype, instanceDef, expand);
                         }
                     }
                     instanceDef  = expand.x || instanceDef;
@@ -6760,7 +6760,7 @@ new function () { // closure
                         source = source.prototype; 
                     }
                     if ($isSomething(source)) {
-                        this.inflate(MetaStep.Implement, this, source, expand);
+                        this.inflate(MetaStep.Implement, this, subClass.prototype, source, expand);
                         source = expand.x || source;
                         ClassMeta.baseImplement.call(subClass, source);
                         this.execute(MetaStep.Implement, this, subClass.prototype, source);
@@ -6841,7 +6841,7 @@ new function () { // closure
                 }
                 var metadata = this.$meta;
                 if (metadata) {
-                    metadata.inflate(MetaStep.Extend, metadata, definition, expand);
+                    metadata.inflate(MetaStep.Extend, metadata, this, definition, expand);
                     definition = expand.x || definition;
                     function expand() {
                         return expand.x || (expand.x = Object.create(definition));
@@ -6867,7 +6867,7 @@ new function () { // closure
      * @extends miruken.MetaMacro
      */
     var $proxyProtocol = MetaMacro.extend({
-        inflate: function (step, metadata, definition, expand) {
+        inflate: function (step, metadata, target, definition, expand) {
             var protocolProto = Protocol.prototype, expanded;
             for (var key in definition) {
                 if (key in protocolProto) {
@@ -7077,7 +7077,7 @@ new function () { // closure
      * @extends miruken.MetaMacro
      */
     var $inferProperties = MetaMacro.extend({
-        inflate: function _(step, metadata, definition, expand) {
+        inflate: function _(step, metadata, target, definition, expand) {
             var expanded;
             for (var key in definition) {
                 var member = _getPropertyDescriptor(definition, key);
@@ -8583,6 +8583,9 @@ new function () { // closure
      */        
     var ValidationCallbackHandler = CallbackHandler.extend(Validator, {
         validate: function (object, scope, results) {
+            if ($isNothing(object)) {
+                throw new TypeError("Missing object to validate.");
+            }
             var validation = new Validation(object, false, scope, results);
             $composer.handle(validation, true);
             results = validation.results;
@@ -8591,6 +8594,9 @@ new function () { // closure
             return results;
         },
         validateAsync: function (object, scope, results) {
+            if ($isNothing(object)) {
+                throw new TypeError("Missing object to validate.");
+            }            
             var validation = new Validation(object, true, scope, results),
                 composer   = $composer;
             return composer.deferAll(validation).then(function () {

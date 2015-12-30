@@ -343,6 +343,29 @@ describe("Context", function() {
             child3.store(dog);
             expect(grandChild.$ancestorSiblingOrSelf().resolve(Dog)).to.equal(dog);
         });
+
+        it("should combine aspect with traversal", function() {
+            var count      = 0,
+                dog        = new Dog,
+                root       = new Context,
+                child1     = root.newChild(),
+                child2     = root.newChild(),
+                child3     = root.newChild(),
+                grandChild = child3.newChild();
+            grandChild.store(dog);
+            Context.implement({
+                foo: function () {
+                    return this.aspect(null, function () {
+                        ++count;
+                    });
+                }
+            });
+            expect(child2.$descendantOrSelf().foo().resolve(Dog)).to.be.undefined;
+            expect(grandChild.$descendantOrSelf().foo().resolve(Dog)).to.equal(dog);
+            expect(child3.$descendantOrSelf().foo().resolve(Dog)).to.equal(dog);
+            expect(root.$descendantOrSelf().foo().resolve(Dog)).to.equal(dog);
+            expect(count).to.equal(4);            
+        });        
     });
 
     describe("#observe", function() {

@@ -88,6 +88,16 @@ describe("miruken", function () {
     it("should be in global namespace", function () {
         expect(global.miruken).to.equal(base2.miruken);
     });
+
+    it("should late bind", function () {
+        var Pincher = Dog.extend({
+            get name() { return "YO " + this.base(); }
+        });
+        var p = new Pincher("Poo");
+        expect(p.name).to.equal("Poo");
+        p.name = "Do";
+        expect(p.name).to.equal("Do");        
+    });    
 });
 
 describe("Enum", function () {

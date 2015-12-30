@@ -57,7 +57,7 @@ grunt.initConfig({
       },
       debug: {
         files: {
-           'debug/miruken-tests.js':  ['test/miruken-test.js']
+           'debug/miruken-tests.js':  ['test/mvc/mvc-test.js']
            //'debug/miruken-tests.js':     ['test/**/*.js']
         }
       }

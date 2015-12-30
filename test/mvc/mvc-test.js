@@ -542,7 +542,7 @@ describe("Controller", function () {
             }).to.throw(Error, "Validation requires a context to be available.");
         });
 
-        it("should validate the controller", function () {
+        it("should validate the controller", function (done) {
             var controller = new PersonController;
             controller.context = context;
             controller.validateAsync().then(function (results) {
@@ -551,10 +551,11 @@ describe("Controller", function () {
                     message: "Person can't be blank",
                     value:   undefined
                 }]);
+                done();
             });
         });
 
-        it("should validate object", function () {
+        it("should validate object", function (done) {
             var controller     = new PersonController;
             controller.context = context;
             controller.validateAsync(new Person).then(function (results) {
@@ -571,10 +572,11 @@ describe("Controller", function () {
                     message: "Age must be greater than 11",
                     value:   0
                 }]);
+                done();
             });
         });
 
-        it("should access validation errors from controller", function () {
+        it("should access validation errors from controller", function (done) {
             var controller     = new PersonController;
             controller.person  = new Person;
             controller.context = context;
@@ -595,8 +597,37 @@ describe("Controller", function () {
                     message: "Age must be greater than 11",
                     value:   0
                 }]);
+                done();
             });
         });
+
+        it("should validate the controller implicitly", function (done) {
+            var controller = new PersonController;
+            controller.context = context;
+            controller.context.$validAsync(controller)
+                .resolve(Controller).catch(function (err) {
+                    expect(controller.$validation.valid).to.be.false;
+                    expect(controller.$validation.person.errors.presence).to.eql([{
+                        message: "Person can't be blank",
+                        value:   undefined
+                    }]);
+                    done();
+                });
+        });
+
+        it("should validate the controller implicitly with traversal", function (done) {
+            var controller = new PersonController;
+            controller.context = context;
+            controller.context.$descendantOrSelf().$validAsync(controller)
+                .resolve(Controller).catch(function (err) {
+                    expect(controller.$validation.valid).to.be.false;
+                    expect(controller.$validation.person.errors.presence).to.eql([{
+                        message: "Person can't be blank",
+                        value:   undefined
+                    }]);
+                    done();
+                });
+        });        
     });
 
     describe("CallbackHandler", function () {
