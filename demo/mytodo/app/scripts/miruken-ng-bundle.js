@@ -2084,8 +2084,8 @@ new function () { // closure
         imports: "miruken",
         exports: "CallbackHandler,CascadeCallbackHandler,CompositeCallbackHandler," +
                  "InvocationOptions,Batching,Batcher,Resolution,Composition,HandleMethod," +
-                 "ResolveMethod,RejectedError,getEffectivePromise,$handle,$callbacks," +
-                 "$define,$provide,$lookup,$NOT_HANDLED"
+                 "ResolveMethod,RejectedError,TimeoutError,$handle,$callbacks,$define," +
+                 "$provide,$lookup,$NOT_HANDLED"
     });
 
     eval(this.imports);
@@ -2227,6 +2227,12 @@ new function () { // closure
                 get exception() { return _exception; },
                 set exception(exception) { _exception = exception; },
                 /**
+                 * Gets/sets the effective callback result.
+                 * @property {Any} callback result
+                 */                
+                get callbackResult() { return _returnValue; },
+                set callbackResult(value) { _returnValue = value; },
+                /**
                  * Attempts to invoke the method on the target.<br/>
                  * During invocation, the receiver will have access to a global **$composer** property
                  * representing the initiating {{#crossLink "miruken.callback.CallbackHandler"}}{{/crossLink}}.
@@ -2326,15 +2332,6 @@ new function () { // closure
                     var handled = false,
                         targets = composer.resolveAll(protocol);
                     
-                    function invokeTargets(targets) {
-                        for (var i = 0; i < targets.length; ++i) {
-                            handled = handled | this.invokeOn(targets[i], composer);
-                            if (handled && !all) {
-                                break;
-                            }
-                        }
-                    }
-                    
                     if ($isPromise(targets)) {
                         var that = this;
                         this.returnValue = new Promise(function (resolve, reject) {
@@ -2355,6 +2352,16 @@ new function () { // closure
                     }
                     
                     invokeTargets.call(this, targets);
+
+                    function invokeTargets(targets) {
+                        for (var i = 0; i < targets.length; ++i) {
+                            handled = handled | this.invokeOn(targets[i], composer);
+                            if (handled && !all) {
+                                break;
+                            }
+                        }
+                    }
+                                        
                     return handled;
                 }
             });
@@ -2375,7 +2382,7 @@ new function () { // closure
                 throw new TypeError("The key is required.");
             }
             many = !!many;
-            var _results = [],
+            var _results = [], _result,
                 _instant = $instant.test(key);
             this.extend({
                 /**
@@ -2397,12 +2404,33 @@ new function () { // closure
                  */
                 get results() { return _results; },
                 /**
+                 * Gets/sets the effective callback result.
+                 * @property {Any} callback result
+                 */                
+                get callbackResult() {
+                    if (_result === undefined) {
+                        if (!many) {
+                            if (_results.length > 0) {
+                                _result = _results[0];
+                            }
+                        } else if (_instant) {
+                            _result = Array2.flatten(_results);
+                        } else {
+                            _result = Promise.all(_results).then(Array2.flatten);
+                        }
+                    }
+                    return _result;
+                },
+                set callbackResult(value) { _result = value; },
+                /**
                  * Adds a lookup result.
                  * @param  {Any}  reault - lookup result
                  */
                 addResult: function (result) {
-                    if (!(_instant && $isPromise(result))) {
+                    if ((many || _results.length === 0) &&
+                        !(_instant && $isPromise(result))) {
                         _results.push(result);
+                        _result = undefined;
                     }
                 }
             });
@@ -2423,7 +2451,8 @@ new function () { // closure
                 throw new TypeError("The callback is required.");
             }
             many = !!many;
-            var _pending = [];
+            var _pending = [],
+                _tracked, _result;
             this.extend({
                 /**
                  * true if handle all, false otherwise.
@@ -2444,12 +2473,34 @@ new function () { // closure
                  */
                 get pending() { return _pending; },
                 /**
+                 * Gets/sets the effective callback result.
+                 * @property {Any} callback result
+                 */                
+                get callbackResult() {
+                    if (_result === undefined) {
+                        if (_pending.length === 1) {
+                            _result = Promise.resolve(_pending[0]).then(True);
+                        } else if (_pending.length > 1) {
+                            _result = Promise.all(_pending).then(True);
+                        } else {
+                            _result = Promise.resolve(_tracked);
+                        }
+                    }
+                    return _result;
+                },
+                set callbackResult(value) { _result = value; },
+                /**
                  * Tracks a pending promise.
-                 * @param {miruken.Promise}  promise - handle promise
+                 * @param {Promise}  promise - handle promise
                  */
                 track: function (promise) {
-                    if ($isPromise(promise)) {
+                    if ((many || _pending.length === 0) && $isPromise(promise)) {
                         _pending.push(promise);
+                        _result = undefined;
+                    }
+                    if (!_tracked) {
+                        _tracked = true;
+                        _result  = undefined;                        
                     }
                 }
             });
@@ -2471,7 +2522,7 @@ new function () { // closure
             }
             many = !!many;
             var _resolutions = [],
-                _promised    = false,
+                _promised    = false, _result,
                 _instant     = $instant.test(key);
             this.extend({
                 /**
@@ -2499,14 +2550,37 @@ new function () { // closure
                  */                
                 get resolutions() { return _resolutions; },
                 /**
+                 * Gets/sets the effective callback result.
+                 * @property {Any} callback result
+                 */
+                get callbackResult() {
+                    if (_result === undefined) {
+                        if (!many) {
+                            if (_resolutions.length > 0) {
+                                _result = _resolutions[0];
+                            }
+                        } else if (this.instant) {
+                            _result = Array2.flatten(_resolutions);
+                        } else {
+                            _result = Promise.all(_resolutions).then(Array2.flatten);
+                        }
+                    }
+                    return _result;
+                },
+                set callbackResult(value) { _result = value; }, 
+                /**
                  * Adds a resolution.
                  * @param {Any} resolution  -  resolution
                  */
                 resolve: function (resolution) {
+                    if (!many && _resolutions.length > 0) {
+                        return;
+                    }
                     var promised = $isPromise(resolution);
                     if (!_instant || !promised) {
                         _promised = _promised || promised;
                         _resolutions.push(resolution);
+                        _result   = undefined;
                     }
                 }
             });
@@ -2596,12 +2670,10 @@ new function () { // closure
         },
         $handle:[
             Lookup, function (lookup, composer) {
-                return $lookup.dispatch(this, lookup,lookup.key, composer, 
-                                        lookup.isMany, lookup.addResult);
+                return $lookup.dispatch(this, lookup,lookup.key, composer, lookup.isMany, lookup.addResult);
             },
             Deferred, function (deferred, composer) {
-                return $handle.dispatch(this, deferred.callback, null, composer,
-                                        deferred.isMany, deferred.track);
+                return $handle.dispatch(this, deferred.callback, null, composer, deferred.isMany, deferred.track);
             },
             Resolution, function (resolution, composer) {
                 var key      = resolution.key,
@@ -2647,8 +2719,7 @@ new function () { // closure
     });
 
     /**
-     * Identifies a rejected callback.  This usually occurs from aspect processing.<br/>
-     * See {{#crossLink "miruken.callback.CallbackHandlerAspect"}}{{/crossLink}}
+     * Identifies a rejected callback.  This usually occurs from aspect processing.
      * @class RejectedError
      * @constructor
      * @param {Object}  callback  -  rejected callback
@@ -2669,6 +2740,23 @@ new function () { // closure
     }
     RejectedError.prototype             = new Error;
     RejectedError.prototype.constructor = RejectedError;
+
+    /**
+     * Identifies a timeout error.
+     * @class TimeoutError
+     * @extends Error
+     */
+    function TimeoutError() {
+        if (Error.captureStackTrace) {
+            Error.captureStackTrace(this, this.constructor);
+        } else {
+            Error.call(this);
+        }
+    }
+    TimeoutError.prototype             = new Error;
+    TimeoutError.prototype.constructor = TimeoutError;
+
+    var timeoutError = Object.freeze(new TimeoutError());
     
     /**
      * Represents a two-way {{#crossLink "miruken.callback.CallbackHandler"}}{{/crossLink}} path.
@@ -3113,9 +3201,8 @@ new function () { // closure
          */                        
         defer: function (callback) {
             var deferred = new Deferred(callback);
-            return this.handle(deferred, false, global.$composer)
-                 ? Promise.all(deferred.pending).return(true)
-                 : Promise.resolve(false);
+            this.handle(deferred, false, global.$composer);
+            return deferred.callbackResult;            
         },
         /**
          * Asynchronusly handles the callback greedily.
@@ -3127,9 +3214,8 @@ new function () { // closure
          */                                
         deferAll: function (callback) {
             var deferred = new Deferred(callback, true);
-            return this.handle(deferred, true, global.$composer)
-                 ? Promise.all(deferred.pending).return(true)
-                 : Promise.resolve(false);
+            this.handle(deferred, true, global.$composer);
+            return deferred.callbackResult;
         },
         /**
          * Resolves the key.
@@ -3142,10 +3228,7 @@ new function () { // closure
         resolve: function (key) {
             var resolution = (key instanceof Resolution) ? key : new Resolution(key);
             if (this.handle(resolution, false, global.$composer)) {
-                var resolutions = resolution.resolutions;
-                if (resolutions.length > 0) {
-                    return resolutions[0];
-                }
+                return resolution.callbackResult;
             }
         },
         /**
@@ -3158,15 +3241,9 @@ new function () { // closure
          */                                        
         resolveAll: function (key) {
             var resolution = (key instanceof Resolution) ? key : new Resolution(key, true);
-            if (this.handle(resolution, true, global.$composer)) {
-                var resolutions = resolution.resolutions;
-                if (resolutions.length > 0) {
-                    return resolution.instant
-                         ? Array2.flatten(resolutions)
-                         : Promise.all(resolutions).then(Array2.flatten);
-                }
-            }
-            return [];
+            return this.handle(resolution, true, global.$composer)
+                 ? resolution.callbackResult
+                 : [];
         },
         /**
          * Looks up the key.
@@ -3178,10 +3255,7 @@ new function () { // closure
         lookup: function (key) {
             var lookup = (key instanceof Lookup) ? key : new Lookup(key);
             if (this.handle(lookup, false, global.$composer)) {
-                var results = lookup.results;
-                if (results.length > 0) {
-                    return results[0];
-                }
+                return lookup.callbackResult;
             }
         },
         /**
@@ -3193,15 +3267,9 @@ new function () { // closure
          */                                                
         lookupAll: function (key) {
             var lookup = (key instanceof Lookup) ? key : new Lookup(key, true);
-            if (this.handle(lookup, true, global.$composer)) {
-                var results = lookup.results;
-                if (results.length > 0) {
-                    return $instant.test(key)
-                         ? Array2.flatten(resolutions)
-                         : Promise.all(results).then(Array2.flatten);
-                }
-            }
-            return [];
+            return this.handle(lookup, true, global.$composer)
+                 ?  lookup.callbackResult
+                 : [];
         },
         /**
          * Decorates the handler.
@@ -3244,27 +3312,24 @@ new function () { // closure
          * @param   {Function}  action     -  after action
          * @param   {boolean}   reentrant  -  true if reentrant, false otherwise
          * @returns {miruken.callback.CallbackHandler}  callback handler aspect.
+         * @throws  {RejectedError} An error if before returns an unaccepted promise.
          * @for miruken.callback.CallbackHandler
          */                                                                
         aspect: function (before, after, reentrant) {
             return this.filter(function (callback, composer, proceed) {
                 if ($isFunction(before)) {
-                    var test     = before(callback, composer),
-                        isMethod = callback instanceof HandleMethod;
+                    var test = before(callback, composer);
                     if ($isPromise(test)) {
-                        var accept = test.then(function (accepted) {
+                        var hasResult = "callbackResult" in callback,
+                            accept    = test.then(function (accepted) {
                             if (accepted !== false) {
                                 _aspectProceed(callback, composer, proceed);
-                                return isMethod ? callback.returnValue : true;
+                                return hasResult ? callback.callbackResult : true;
                             }
                             return Promise.reject(new RejectedError(callback));
                         });
-                        if (isMethod) {
-                            callback.returnValue = accept;
-                        } else if (callback instanceof Resolution) {
-                            callback.resolve(accept);
-                        } else if (callback instanceof Deferred) {
-                            callback.track(accept);
+                        if (hasResult) {
+                            callback.callbackResult = accept;                            
                         }
                         return true;
                     } else if (test === false) {
@@ -3272,7 +3337,7 @@ new function () { // closure
                     }
                 }
                 return _aspectProceed(callback, composer, proceed, after);
-            });
+            }, reentrant);
         },
         /**
          * Decorates the handler to handle definitions.
@@ -3322,7 +3387,7 @@ new function () { // closure
          * Builds a handler chain.
          * @method next
          * @param   {Arguments}  arguments  -  handler chain members
-         * @returns {miruken.callback.CallbackHandler}  chained callback handler.
+         * @returns {miruken.callback.CallbackHandler}  chaining callback handler.
          * @for miruken.callback.CallbackHandler
          */                                                                                
         next: function () {
@@ -3333,13 +3398,97 @@ new function () { // closure
             }
         },
         /**
+         * Prevents continuous or concurrent handling on a target.
+         * @method $guard
+         * @param   {Object}  target              -  target to guard
+         * @param   {string}  [property='guard']  -  property for guard state
+         * @returns {miruken.callback.CallbackHandler}  guarding callback handler.
+         * @for miruken.callback.CallbackHandler
+         */        
+        $guard: function(target, property) {
+            if (target) {
+                var guarded = false;
+                property = property || "guarded";
+                return this.aspect(function () {
+                    if ((guarded = target[property])) {
+                        return false;
+                    }
+                    target[property] = true;
+                    return true;
+                }, function () {
+                    if (!guarded) {
+                        delete target[property];
+                        if (property in target) {
+                            target[property] = undefined;
+                        }
+                    }
+                });
+            }
+            return this;
+        },
+        /**
+         * Tracks the activity counts associated with a target. 
+         * @method $activity
+         * @param   {Object}  target                 -  target to track
+         * @param   {Object}  [ms=50]                -  delay to wait before tracking
+         * @param   {string}  [property='activity']  -  property for activity state
+         * @returns {miruken.callback.CallbackHandler}  activity callback handler.
+         * @for miruken.callback.CallbackHandler
+         */                
+        $activity: function (target, ms, property) {
+            var enabled = false;
+            property = property || "activity";
+            return this.aspect(function () {
+                setTimeout(function () {
+                    if (enabled !== undefined) {
+                        enabled = true;
+                        var activity = target[property] || 0;
+                        target[property] = ++activity;
+                    }
+                }, $isSomething(ms) ? ms : 50);
+                return true;
+            }, function () {
+                if (enabled) {
+                    var activity = target[property];
+                    if (!activity || activity === 1) {
+                        delete target[property];
+                        if (property in target) {
+                            target[property] = undefined;
+                        }
+                    } else {
+                        target[property] = --activity;
+                    }
+                }
+                enabled = undefined;
+            });
+        },
+        /**
+         * Configures the receiver to set timeouts on all promises.
+         * @method $timeout
+         * @param   {number}  ms  -  duration before promise times out
+         * @returns {miruken.callback.CallbackHandler}  timeout callback handler.
+         * @for miruken.callback.CallbackHandler
+         */        
+        $timeout: function(ms) {
+            return this.filter(function(callback, composer, proceed) {
+                var handled = proceed();
+                if (handled) {
+                    var result = callback.callbackResult;
+                    if ($isPromise(result)) {
+                        callback.callbackResult = Promise.resolve(result).timeout(ms, timeoutError);
+                    }
+                }
+                return handled;
+            });
+        },
+        /**
          * Batches subsequent callbacks.
-         * @method batch
+         * @method $batch
          * @param   {miruken.Protocol}  [...protocols]  -  protocols to batch
          * @returns {miruken.callback.CallbackHandler}  batching callback handler.
          * @for miruken.callback.CallbackHandler
          */
-        batch: function(protocols) {
+        $batch: function(protocols) {
             var composer = this,
                 batcher  = new Batcher(protocols);
             return this.decorate({
@@ -3369,16 +3518,20 @@ new function () { // closure
         var promise;
         try {
             var handled = proceed();
-            if (handled && (promise = getEffectivePromise(callback))) {
-                // Use 'fulfilled' or 'rejected' handlers instead of 'finally' to ensure
-                // aspect boundary is consistent with synchronous invocations and avoid
-                // reentrancy issues.
-                if ($isFunction(after))
-                    promise.then(function (result) {
-                        after(callback, composer);
-                    }, function (error) {
-                        after(callback, composer);
-                    });
+            if (handled) {
+                var result = callback.callbackResult;
+                if ($isPromise(result)) {
+                    promise = result;
+                    // Use 'fulfilled' or 'rejected' handlers instead of 'finally' to ensure
+                    // aspect boundary is consistent with synchronous invocations and avoid
+                    // reentrancy issues.
+                    if ($isFunction(after))
+                        promise.then(function (result) {
+                            after(callback, composer);
+                        }, function (error) {
+                            after(callback, composer);
+                        });
+                }
             }
             return handled;
         } finally {
@@ -3668,21 +3821,6 @@ new function () { // closure
     }
 
     /**
-     * Gets the effective promise.  This could be the result of a method call.<br/>
-     * See {{#crossLink "miruken.callback.HandleMethod"}}{{/crossLink}}
-     * @method getEffectivePromise
-     * @param    {Object}  object  -  source object
-     * @returns  {Promise} effective promise.
-     * @for miruken.callback.$
-     */
-    function getEffectivePromise(object) {
-        if (object instanceof HandleMethod) {
-            object = object.returnValue;
-        }
-        return $isPromise(object) ? object : null;
-    }
-
-    /**
      * Marks the callback handler for validation.
      * @method $valid
      * @param   {Object}  target  -  object to validate
@@ -3919,6 +4057,9 @@ new function () { // closure
                  * @returns {boolean} true if the callback was handled, false otherwise.
                  */                
                 handleAxis: function (axis, callback, greedy, composer) {
+                    if (!(axis instanceof TraversingAxis)) {
+                        throw new TypeError("Invalid axis type supplied");
+                    }        
                     this.__axis = axis;
                     return this.handle(callback, greedy, composer);
                 },
@@ -4506,19 +4647,18 @@ new function() { // closure
         $recover: function (context) {
             return this.filter(function(callback, composer, proceed) {
                 try {
-                    var promise,
                     handled = proceed();
-                    if (handled && (promise = getEffectivePromise(callback))) {
-                        promise = promise.then(null, function (error) {
-                            return Errors(composer).handleError(error, context);
-                        });
-                        if (callback instanceof HandleMethod) {
-                            callback.returnValue = promise;
+                    if (handled) {
+                        var result = callback.callbackResult;
+                        if ($isPromise(result)) {
+                            callback.callbackResult = result.catch(function (err) {
+                                return Errors(composer).handleError(err, context);
+                            });
                         }
                     }
                     return handled;
-                } catch (exception) {
-                    Errors(composer).handleException(exception, context);
+                } catch (ex) {
+                    Errors(composer).handleException(ex, context);
                     return true;
                 }
             });
@@ -6683,14 +6823,14 @@ new function () { // closure
      */
     base2.package(this, {
         name:    "miruken",
-        version: "0.0.59",
+        version: "0.0.61",
         exports: "Enum,Flags,Variance,Protocol,StrictProtocol,Delegate,Miruken,MetaStep,MetaMacro," +
                  "Initializing,Disposing,DisposingMixin,Resolving,Invoking,Parenting,Starting,Startup," +
                  "Facet,Interceptor,InterceptorSelector,ProxyBuilder,Modifier,ArrayManager,IndexedList," +
                  "$isProtocol,$isClass,$classOf,$ancestorOf,$isString,$isFunction,$isObject,$isArray," +
                  "$isPromise,$isNothing,$isSomething,$using,$lift,$equals,$decorator,$decorate,$decorated," +
                  "$debounce,$eq,$use,$copy,$lazy,$eval,$every,$child,$optional,$promise,$instant," +
-                 "$createModifier,$properties,$inferProperties,$inheritStatic"
+                 "$createModifier,$properties,$inferProperties,$inheritStatic,getPropertyDescriptor"
     });
 
     eval(this.imports);
@@ -7571,7 +7711,7 @@ new function () { // closure
                     continue;
                 }
                 expanded = expanded || expand();
-                var member = _getPropertyDescriptor(definition, key);
+                var member = getPropertyDescriptor(definition, key);
                 if ($isFunction(member.value)) {
                     (function (method) {
                         member.value = function () {
@@ -7612,7 +7752,7 @@ new function () { // closure
                 protocolProto = Protocol.prototype;
             for (var key in source) {
                 if (!((key in protocolProto) && (key in this))) {
-                    var descriptor = _getPropertyDescriptor(source, key);
+                    var descriptor = getPropertyDescriptor(source, key);
                     Object.defineProperty(target, key, descriptor);
                 }
             }
@@ -7777,7 +7917,7 @@ new function () { // closure
         inflate: function _(step, metadata, target, definition, expand) {
             var expanded;
             for (var key in definition) {
-                var member = _getPropertyDescriptor(definition, key);
+                var member = getPropertyDescriptor(definition, key);
                 if ($isFunction(member.value)) {
                     var spec = _.spec || (_.spec = {
                         configurable: true,
@@ -8582,7 +8722,7 @@ new function () { // closure
             for (key in sourceProto) {
                 if (!((key in proxied) || (key in _noProxyMethods))
                 && (!proxy.shouldProxy || proxy.shouldProxy(key, source))) {
-                    var descriptor = _getPropertyDescriptor(sourceProto, key);
+                    var descriptor = getPropertyDescriptor(sourceProto, key);
                     if ('value' in descriptor) {
                         var member = isProtocol ? undefined : descriptor.value;
                         if ($isNothing(member) || $isFunction(member)) {
@@ -8971,12 +9111,20 @@ new function () { // closure
             return defaultReturnValue;
         };
     };
-    
-    function _getPropertyDescriptor(object, key) {
+
+    /**
+     * Gets the property descriptor for an object.
+     * @method getPropertyDescriptor
+     * @param    {Object}   object       - target of descriptor
+     * @param    {key}      key          - the name of the property
+     * @param    {boolean}  [own=false]  - true if own property only
+     * @returns  {Object} associated property descriptor or undefined
+     */    
+    function getPropertyDescriptor(object, key, own) {
         var source = object, descriptor;
         while (source && !(
             descriptor = Object.getOwnPropertyDescriptor(source, key))
-              ) source = Object.getPrototypeOf(source);
+              ) source = own ? null : Object.getPrototypeOf(source);
         return descriptor;
     }
 
@@ -10523,7 +10671,7 @@ new function () { // closure
 /* @preserve
  * The MIT License (MIT)
  * 
- * Copyright (c) 2014 Petka Antonov
+ * Copyright (c) 2013-2015 Petka Antonov
  * 
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -10545,7 +10693,7 @@ new function () { // closure
  * 
  */
 /**
- * bluebird build version 2.9.34
+ * bluebird build version 2.10.2
  * Features enabled: core, race, call_get, generators, map, nodeify, promisify, props, reduce, settle, some, cancel, using, filter, any, each, timers
 */
 !function(e){if("object"==typeof exports&&"undefined"!=typeof module)module.exports=e();else if("function"==typeof define&&define.amd)define([],e);else{var f;"undefined"!=typeof window?f=window:"undefined"!=typeof global?f=global:"undefined"!=typeof self&&(f=self),f.Promise=e()}}(function(){var define,module,exports;return (function e(t,n,r){function s(o,u){if(!n[o]){if(!t[o]){var a=typeof _dereq_=="function"&&_dereq_;if(!u&&a)return a(o,!0);if(i)return i(o,!0);var f=new Error("Cannot find module '"+o+"'");throw f.code="MODULE_NOT_FOUND",f}var l=n[o]={exports:{}};t[o][0].call(l.exports,function(e){var n=t[o][1][e];return s(n?n:e)},l,l.exports,e,t,n,r)}return n[o].exports}var i=typeof _dereq_=="function"&&_dereq_;for(var o=0;o<r.length;o++)s(r[o]);return s})({1:[function(_dereq_,module,exports){
@@ -11602,6 +11750,8 @@ var debugging = false || (util.isNode &&
                     (!!process.env["BLUEBIRD_DEBUG"] ||
                      process.env["NODE_ENV"] === "development"));
 
+if (util.isNode && process.env["BLUEBIRD_DEBUG"] == 0) debugging = false;
+
 if (debugging) {
     async.disableTrampolineIfNecessary();
 }
@@ -11792,6 +11942,8 @@ Promise.prototype.thenReturn = function (value) {
             undefined,
             undefined
        );
+    } else if (value instanceof Promise) {
+        value._ignoreRejections();
     }
     return this._then(returner, undefined, undefined, value, undefined);
 };
@@ -12732,6 +12884,7 @@ if (util.isNode) {
 }
 util.notEnumerableProp(Promise, "_getDomain", getDomain);
 
+var UNDEFINED_BINDING = {};
 var async = _dereq_("./async.js");
 var errors = _dereq_("./errors.js");
 var TypeError = Promise.TypeError = errors.TypeError;
@@ -13016,7 +13169,9 @@ Promise.prototype._receiverAt = function (index) {
         ? this._receiver0
         : this[
             index * 5 - 5 + 4];
-    if (ret === undefined && this._isBound()) {
+    if (ret === UNDEFINED_BINDING) {
+        return undefined;
+    } else if (ret === undefined && this._isBound()) {
         return this._boundValue();
     }
     return ret;
@@ -13061,6 +13216,7 @@ Promise.prototype._migrateCallbacks = function (follower, index) {
     var promise = follower._promiseAt(index);
     var receiver = follower._receiverAt(index);
     if (promise instanceof Promise) promise._setIsMigrated();
+    if (receiver === undefined) receiver = UNDEFINED_BINDING;
     this._addCallbacks(fulfill, reject, progress, promise, receiver, null);
 };
 
@@ -13971,11 +14127,16 @@ function promisifyAll(obj, suffix, filter, promisifier) {
         var key = methods[i];
         var fn = methods[i+1];
         var promisifiedKey = key + suffix;
-        obj[promisifiedKey] = promisifier === makeNodePromisified
-                ? makeNodePromisified(key, THIS, key, fn, suffix)
-                : promisifier(fn, function() {
-                    return makeNodePromisified(key, THIS, key, fn, suffix);
-                });
+        if (promisifier === makeNodePromisified) {
+            obj[promisifiedKey] =
+                makeNodePromisified(key, THIS, key, fn, suffix);
+        } else {
+            var promisified = promisifier(fn, function() {
+                return makeNodePromisified(key, THIS, key, fn, suffix);
+            });
+            util.notEnumerableProp(promisified, "__isPromisified__", true);
+            obj[promisifiedKey] = promisified;
+        }
     }
     util.toFastProperties(obj);
     return obj;
@@ -14796,10 +14957,16 @@ var TimeoutError = Promise.TimeoutError;
 
 var afterTimeout = function (promise, message) {
     if (!promise.isPending()) return;
-    if (typeof message !== "string") {
-        message = "operation timed out";
+    
+    var err;
+    if(!util.isPrimitive(message) && (message instanceof Error)) {
+        err = message;
+    } else {
+        if (typeof message !== "string") {
+            message = "operation timed out";
+        }
+        err = new TimeoutError(message);
     }
-    var err = new TimeoutError(message);
     util.markAsOriginatingFromRejection(err);
     promise._attachExtraTrace(err);
     promise._cancel(err);
@@ -14986,10 +15153,20 @@ module.exports = function (Promise, apiRejection, tryConvertToPromise,
                         "you must pass at least 2 arguments to Promise.using");
         var fn = arguments[len - 1];
         if (typeof fn !== "function") return apiRejection("fn must be a function\u000a\u000a    See http://goo.gl/916lJJ\u000a");
-        len--;
+
+        var input;
+        var spreadArgs = true;
+        if (len === 2 && Array.isArray(arguments[0])) {
+            input = arguments[0];
+            len = input.length;
+            spreadArgs = false;
+        } else {
+            input = arguments;
+            len--;
+        }
         var resources = new Array(len);
         for (var i = 0; i < len; ++i) {
-            var resource = arguments[i];
+            var resource = input[i];
             if (Disposer.isDisposer(resource)) {
                 var disposer = resource;
                 resource = resource.promise();
@@ -15013,7 +15190,8 @@ module.exports = function (Promise, apiRejection, tryConvertToPromise,
                 promise._pushContext();
                 var ret;
                 try {
-                    ret = fn.apply(undefined, vals);
+                    ret = spreadArgs
+                        ? fn.apply(undefined, vals) : fn.call(undefined,  vals);
                 } finally {
                     promise._popContext();
                 }

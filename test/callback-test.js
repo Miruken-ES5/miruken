@@ -1428,7 +1428,7 @@ describe("CallbackHandler", function () {
             expect(cardGames.resolve(Cashier)).to.be.undefined;
         });
     });
-
+    
     describe("#implementing", function () {
         var Calculator = Protocol.extend({
             add:    function (op1, op2) {},
@@ -1758,7 +1758,7 @@ describe("InvocationCallbackHandler", function () {
     })
 });
 
-describe("Batcher", function () {
+describe("CallbackHandler", function () {
     var Emailing = StrictProtocol.extend({
             send: function (msg) {}
         }),
@@ -1786,10 +1786,46 @@ describe("Batcher", function () {
                 });
             }
         });
-    describe("#handle", function () {
+
+    describe("#$timeout", function () {
+        it("should reject promise if timed out", function (done) {
+            var bank       = (new (CallbackHandler.extend({
+                    $handle:[
+                        WireMoney, function (wireMoney) {
+                            wireMoney.received = 50000;
+                            return Promise.delay(wireMoney, 100);
+                        }]
+                }))),
+                casino     = new Casino('Venetian').addHandlers(bank),
+                wireMoney  = new WireMoney(150000);
+            Promise.resolve(casino.$timeout(50).defer(wireMoney)).catch(function (err) {
+                expect(err).to.be.instanceOf(TimeoutError);
+                done();
+            });
+        });
+
+        it("should ignore time out if promise resolved", function (done) {
+            var bank       = (new (CallbackHandler.extend({
+                    $handle:[
+                        WireMoney, function (wireMoney) {
+                            wireMoney.received = 50000;
+                            return Promise.delay(wireMoney, 50);
+                        }]
+                }))),
+                casino     = new Casino('Venetian').addHandlers(bank),
+                wireMoney  = new WireMoney(150000);
+            Promise.resolve(casino.$timeout(100).defer(wireMoney)).then(function (handled) {
+                expect(handled).to.be.true;
+                expect(wireMoney.received).to.equal(50000);
+                done();
+            });
+        });                
+    });
+    
+    describe("#$batch", function () {
         it("should batch callbacks", function () {
             var handler = new EmailHandler,
-                batch   = handler.batch();
+                batch   = handler.$batch();
             expect(Emailing(handler).send("Hello")).to.eql("Hello");
             expect($using(batch, function () {
                 expect(Emailing(batch).send("Hello")).to.be.undefined;
@@ -1799,17 +1835,16 @@ describe("Batcher", function () {
 
         it("should batch requested protocols", function () {
             var handler = new EmailHandler;
-            expect($using(handler.batch(Emailing), function (batch) {
+            expect($using(handler.$batch(Emailing), function (batch) {
                 expect(Emailing(batch).send("Hello")).to.be.undefined;
             })).to.eql([["Hello"]]);                
         });
 
         it("should not batch unrequested protocols", function () {
             var handler = new EmailHandler;
-            expect($using(handler.batch(Game), function (batch) {
+            expect($using(handler.$batch(Game), function (batch) {
                 expect(Emailing(batch.send("Hello"))).to.eql("Hello");
             })).to.eql([]);
         });
     });
 });
-
