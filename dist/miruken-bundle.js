@@ -1907,6 +1907,16 @@ new function () { // closure
                      * @readOnly
                      */
                     get callback() { return callback; },
+                    /**
+                     * Gets/sets the effective callback result.
+                     * @property {Any} callback result
+                     */                
+                    get callbackResult() {
+                        return callback.callbackResult;
+                    },
+                    set callbackResult(value) {
+                        callback.callbackResult = value;
+                    }
                 });
             }
         }
@@ -2047,9 +2057,20 @@ new function () { // closure
     /**
      * Identifies a timeout error.
      * @class TimeoutError
+     * @constructor
+     * @param {Object}  callback  -  timed out callback
+     * @param {string}  message   -  timeout message
      * @extends Error
      */
-    function TimeoutError() {
+    function TimeoutError(callback, message) {
+        /**
+         * Gets the rejected callback.
+         * @property {Object} callback
+         */         
+        this.callback = callback;
+        
+        this.message = message || "Timeout occurred";
+                    
         if (Error.captureStackTrace) {
             Error.captureStackTrace(this, this.constructor);
         } else {
@@ -2058,8 +2079,6 @@ new function () { // closure
     }
     TimeoutError.prototype             = new Error;
     TimeoutError.prototype.constructor = TimeoutError;
-
-    var timeoutError = Object.freeze(new TimeoutError());
     
     /**
      * Represents a two-way {{#crossLink "miruken.callback.CallbackHandler"}}{{/crossLink}} path.
@@ -2768,17 +2787,37 @@ new function () { // closure
         /**
          * Configures the receiver to set timeouts on all promises.
          * @method $timeout
-         * @param   {number}  ms  -  duration before promise times out
+         * @param   {number}             ms       -  duration before promise times out
+         * @param   {Function | Error}   [error]  -  error instance or custom error class
          * @returns {miruken.callback.CallbackHandler}  timeout callback handler.
          * @for miruken.callback.CallbackHandler
          */        
-        $timeout: function(ms) {
+        $timeout: function(ms, error) {
             return this.filter(function(callback, composer, proceed) {
                 var handled = proceed();
                 if (handled) {
                     var result = callback.callbackResult;
                     if ($isPromise(result)) {
-                        callback.callbackResult = Promise.resolve(result).timeout(ms, timeoutError);
+                        callback.callbackResult = new Promise(function (resolve, reject) {
+                            var timeout;
+                            result.then(function (res) {
+                                if (timeout) {
+                                    clearTimeout(timeout);
+                                }
+                                resolve(res);
+                            }, reject);
+                            timeout = setTimeout(function () {
+                                if (!error) {
+                                    error = new TimeoutError(callback);
+                                } else if ($isFunction(error)) {
+                                    error = error.new(callback);
+                                }
+                                if ($isFunction(result.reject)) {
+                                    result.reject(error);
+                                }
+                                reject(error);
+                            }, ms);
+                        });
                     }
                 }
                 return handled;
@@ -6126,14 +6165,14 @@ new function () { // closure
      */
     base2.package(this, {
         name:    "miruken",
-        version: "0.0.61",
+        version: "0.0.64",
         exports: "Enum,Flags,Variance,Protocol,StrictProtocol,Delegate,Miruken,MetaStep,MetaMacro," +
                  "Initializing,Disposing,DisposingMixin,Resolving,Invoking,Parenting,Starting,Startup," +
                  "Facet,Interceptor,InterceptorSelector,ProxyBuilder,Modifier,ArrayManager,IndexedList," +
                  "$isProtocol,$isClass,$classOf,$ancestorOf,$isString,$isFunction,$isObject,$isArray," +
                  "$isPromise,$isNothing,$isSomething,$using,$lift,$equals,$decorator,$decorate,$decorated," +
                  "$debounce,$eq,$use,$copy,$lazy,$eval,$every,$child,$optional,$promise,$instant," +
-                 "$createModifier,$properties,$inferProperties,$inheritStatic,getPropertyDescriptor"
+                 "$createModifier,$properties,$inferProperties,$inheritStatic"
     });
 
     eval(this.imports);
@@ -7014,7 +7053,7 @@ new function () { // closure
                     continue;
                 }
                 expanded = expanded || expand();
-                var member = getPropertyDescriptor(definition, key);
+                var member = _getPropertyDescriptor(definition, key);
                 if ($isFunction(member.value)) {
                     (function (method) {
                         member.value = function () {
@@ -7055,7 +7094,7 @@ new function () { // closure
                 protocolProto = Protocol.prototype;
             for (var key in source) {
                 if (!((key in protocolProto) && (key in this))) {
-                    var descriptor = getPropertyDescriptor(source, key);
+                    var descriptor = _getPropertyDescriptor(source, key);
                     Object.defineProperty(target, key, descriptor);
                 }
             }
@@ -7220,7 +7259,7 @@ new function () { // closure
         inflate: function _(step, metadata, target, definition, expand) {
             var expanded;
             for (var key in definition) {
-                var member = getPropertyDescriptor(definition, key);
+                var member = _getPropertyDescriptor(definition, key);
                 if ($isFunction(member.value)) {
                     var spec = _.spec || (_.spec = {
                         configurable: true,
@@ -8025,7 +8064,7 @@ new function () { // closure
             for (key in sourceProto) {
                 if (!((key in proxied) || (key in _noProxyMethods))
                 && (!proxy.shouldProxy || proxy.shouldProxy(key, source))) {
-                    var descriptor = getPropertyDescriptor(sourceProto, key);
+                    var descriptor = _getPropertyDescriptor(sourceProto, key);
                     if ('value' in descriptor) {
                         var member = isProtocol ? undefined : descriptor.value;
                         if ($isNothing(member) || $isFunction(member)) {
@@ -8415,15 +8454,7 @@ new function () { // closure
         };
     };
 
-    /**
-     * Gets the property descriptor for an object.
-     * @method getPropertyDescriptor
-     * @param    {Object}   object       - target of descriptor
-     * @param    {key}      key          - the name of the property
-     * @param    {boolean}  [own=false]  - true if own property only
-     * @returns  {Object} associated property descriptor or undefined
-     */    
-    function getPropertyDescriptor(object, key, own) {
+    function _getPropertyDescriptor(object, key, own) {
         var source = object, descriptor;
         while (source && !(
             descriptor = Object.getOwnPropertyDescriptor(source, key))

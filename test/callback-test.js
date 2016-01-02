@@ -1819,7 +1819,64 @@ describe("CallbackHandler", function () {
                 expect(wireMoney.received).to.equal(50000);
                 done();
             });
-        });                
+        });
+        
+        it("should reject promise with error instance", function (done) {
+            var bank       = (new (CallbackHandler.extend({
+                    $handle:[
+                        WireMoney, function (wireMoney) {
+                            wireMoney.received = 50000;
+                            return Promise.delay(wireMoney, 100);
+                        }]
+                }))),
+                casino     = new Casino('Venetian').addHandlers(bank),
+                wireMoney  = new WireMoney(150000);
+            Promise.resolve(casino.$timeout(50, new Error("Oh No!"))
+                            .defer(wireMoney)).catch(function (err) {
+                expect(err.message).to.equal("Oh No!");
+                done();
+            });
+        });
+
+        it("should reject promise with custom error class", function (done) {
+            function BankError(callback) {
+                this.callback = callback;
+                Error.call(this);
+            }
+            BankError.prototype             = new Error;
+            BankError.prototype.constructor = BankError;
+            var bank       = (new (CallbackHandler.extend({
+                    $handle:[
+                        WireMoney, function (wireMoney) {
+                            wireMoney.received = 50000;
+                            return Promise.delay(wireMoney, 100);
+                        }]
+                }))),
+                casino     = new Casino('Venetian').addHandlers(bank),
+                wireMoney  = new WireMoney(150000);
+            Promise.resolve(casino.$timeout(50, BankError)
+                            .defer(wireMoney)).catch(function (err) {
+                expect(err).to.be.instanceOf(BankError);
+                expect(err.callback.callback).to.equal(wireMoney);
+                done();
+            });
+        });
+
+        it("should propogate errors", function (done) {
+            var bank       = (new (CallbackHandler.extend({
+                    $handle:[
+                        WireMoney, function (wireMoney) {
+                            return Promise.reject(new Error("No money"));
+                        }]
+                }))),
+                casino     = new Casino('Venetian').addHandlers(bank),
+                wireMoney  = new WireMoney(150000);
+            Promise.resolve(casino.$timeout(50, new Error("Oh No!"))
+                            .defer(wireMoney)).catch(function (err) {
+                expect(err.message).to.equal("No money");
+                done();
+            });
+        });        
     });
     
     describe("#$batch", function () {
