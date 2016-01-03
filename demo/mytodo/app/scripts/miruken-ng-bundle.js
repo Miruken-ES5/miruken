@@ -1258,7 +1258,7 @@ function extend(object, source) { // or extend(object, key, value)
     }
     // Copy each of the source object's properties to the target object.
     for (key in source) {
-      if (typeof proto[key] == "undefined") {
+      if (typeof proto[key] == "undefined" && key !== "base") {
         var desc = _getPropertyDescriptor(source, key);
         desc = _override(object, key, desc);
         if (desc) Object.defineProperty(object, key, desc);
@@ -1299,11 +1299,18 @@ function _override(object, name, desc) {
     var avalue = ancestor.value;
     if (avalue && _BASE.test(value)) {
       desc.value = function () {
-        var previous = this.base;
-        this.base = superObject ? superObject[name] || Undefined: avalue;
-        var returnValue = value.apply(this, arguments);
-        this.base = previous;
-        return returnValue;
+        var b = this.base;
+        this.base = function () {
+          var b = this.base,
+              method = (superObject && superObject[name]) || avalue;
+          this.base = Undefined;  // method overriden in ctor
+          var ret = method.apply(this, arguments);
+          this.base = b;
+          return ret;
+        };
+        var ret = value.apply(this, arguments);
+        this.base = b;
+        return ret;
       };
     }
     return desc;
@@ -1312,24 +1319,24 @@ function _override(object, name, desc) {
   if (get) {
     if (aget && _BASE.test(get)) {
       desc.get = function () {
-        var previous = this.base;
-        if (superObject) {
-          var sprop = _getPropertyDescriptor(superObject, name);
-          this.base = sprop.get || Undefined;
-        } else {
-          this.base = aget;
+        var b = this.base;
+        this.base = function () {
+          var b = this.base,
+              get = (superObject && _getPropertyDescriptor(superObject, name).get) || aget;
+          this.base = Undefined;  // getter overriden in ctor            
+          var ret = get.apply(this, arguments);
+          this.base = b;
+          return ret;
         }
-        var returnValue = get.apply(this, arguments);
-        this.base = previous;
-        return returnValue;
+        var ret = get.apply(this, arguments);
+        this.base = b;
+        return ret;
       };
     }
   } else if (superObject) {
     desc.get = function () {
-      var sprop = _getPropertyDescriptor(superObject, name);
-      if (sprop.get) {
-        return sprop.get.apply(this, arguments);
-      }
+      var getter = _getPropertyDescriptor(superObject, name).get;
+      return getter.apply(this, arguments);
     };
   } else {
       desc.get = aget;
@@ -1338,24 +1345,24 @@ function _override(object, name, desc) {
   if (set) {
     if (aset && _BASE.test(set)) {
       desc.set = function () {
-        var previous = this.base;
-        if (superObject) {
-          var sprop = _getPropertyDescriptor(superObject, name);
-          this.base = sprop.set || Undefined;
-        } else {
-          this.base = aset;
+        var b = this.base;
+        this.base = function () {
+          var b = this.base,
+              set = (superObject && _getPropertyDescriptor(superObject, name).set) || aset;
+          this.base = Undefined;  // setter overriden in ctor            
+          var ret = set.apply(this, arguments);
+          this.base = b;
+          return ret;
         }
-        var returnValue = set.apply(this, arguments);
-        this.base = previous;
-        return returnValue;
+        var ret = set.apply(this, arguments);
+        this.base = b;
+        return ret;
       };
     }
   } else if (superObject) {
     desc.set = function () {
-      var sprop = _getPropertyDescriptor(superObject, name);
-      if (sprop.set) {
-        return sprop.set.apply(this, arguments);
-      }
+      var setter = _getPropertyDescriptor(superObject, name).set;
+      return setter.apply(this, arguments);
     };      
   } else {
     desc.set = aset;
@@ -3510,7 +3517,7 @@ new function () { // closure
                                     error = error.new(callback);
                                 }
                                 if ($isFunction(result.reject)) {
-                                    result.reject(error);
+                                    result.reject(error);  // TODO: cancel
                                 }
                                 reject(error);
                             }, ms);
@@ -6862,7 +6869,7 @@ new function () { // closure
      */
     base2.package(this, {
         name:    "miruken",
-        version: "0.0.64",
+        version: "0.0.65",
         exports: "Enum,Flags,Variance,Protocol,StrictProtocol,Delegate,Miruken,MetaStep,MetaMacro," +
                  "Initializing,Disposing,DisposingMixin,Resolving,Invoking,Parenting,Starting,Startup," +
                  "Facet,Interceptor,InterceptorSelector,ProxyBuilder,Modifier,ArrayManager,IndexedList," +
