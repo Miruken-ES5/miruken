@@ -638,8 +638,8 @@ function _override(object, name, desc) {
     }
   } else if (superObject) {
     desc.get = function () {
-      var getter = _getPropertyDescriptor(superObject, name).get;
-      return getter.apply(this, arguments);
+      var get = _getPropertyDescriptor(superObject, name).get;
+      return get.apply(this, arguments);
     };
   } else {
       desc.get = aget;
@@ -664,8 +664,8 @@ function _override(object, name, desc) {
     }
   } else if (superObject) {
     desc.set = function () {
-      var setter = _getPropertyDescriptor(superObject, name).set;
-      return setter.apply(this, arguments);
+      var set = _getPropertyDescriptor(superObject, name).set;
+      return set.apply(this, arguments);
     };      
   } else {
     desc.set = aset;
@@ -2652,7 +2652,7 @@ new function () { // closure
                         var hasResult = "callbackResult" in callback,
                             accept    = test.then(function (accepted) {
                             if (accepted !== false) {
-                                _aspectProceed(callback, composer, proceed);
+                                _aspectProceed(callback, composer, proceed, after, accepted);
                                 return hasResult ? callback.callbackResult : true;
                             }
                             return Promise.reject(new RejectedError(callback));
@@ -2665,7 +2665,7 @@ new function () { // closure
                         return true;
                     }
                 }
-                return _aspectProceed(callback, composer, proceed, after);
+                return _aspectProceed(callback, composer, proceed, after, test);
             }, reentrant);
         },
         /**
@@ -2765,19 +2765,19 @@ new function () { // closure
          * @for miruken.callback.CallbackHandler
          */                
         $activity: function (target, ms, property) {
-            var enabled = false;
             property = property || "activity";
             return this.aspect(function () {
+                var state = { enabled: false };
                 setTimeout(function () {
-                    if (enabled !== undefined) {
-                        enabled = true;
+                    if ("enabled" in state) {
+                        state.enabled = true;
                         var activity = target[property] || 0;
                         target[property] = ++activity;
                     }
                 }, $isSomething(ms) ? ms : 50);
-                return true;
-            }, function () {
-                if (enabled) {
+                return state;
+            }, function (_, composer, state) {
+                if (state.enabled) {
                     var activity = target[property];
                     if (!activity || activity === 1) {
                         delete target[property];
@@ -2788,7 +2788,7 @@ new function () { // closure
                         target[property] = --activity;
                     }
                 }
-                enabled = undefined;
+                delete state.enabled;
             });
         },
         /**
@@ -2863,7 +2863,7 @@ new function () { // closure
         }
     });
 
-    function _aspectProceed(callback, composer, proceed, after) {
+    function _aspectProceed(callback, composer, proceed, after, state) {
         var promise;
         try {
             var handled = proceed();
@@ -2876,16 +2876,16 @@ new function () { // closure
                     // reentrancy issues.
                     if ($isFunction(after))
                         promise.then(function (result) {
-                            after(callback, composer);
+                            after(callback, composer, state);
                         }, function (error) {
-                            after(callback, composer);
+                            after(callback, composer, state);
                         });
                 }
             }
             return handled;
         } finally {
             if (!promise && $isFunction(after)) {
-                after(callback, composer);
+                after(callback, composer, state);
             }
         }
     }
@@ -6172,7 +6172,7 @@ new function () { // closure
      */
     base2.package(this, {
         name:    "miruken",
-        version: "0.0.65",
+        version: "0.0.66",
         exports: "Enum,Flags,Variance,Protocol,StrictProtocol,Delegate,Miruken,MetaStep,MetaMacro," +
                  "Initializing,Disposing,DisposingMixin,Resolving,Invoking,Parenting,Starting,Startup," +
                  "Facet,Interceptor,InterceptorSelector,ProxyBuilder,Modifier,ArrayManager,IndexedList," +
