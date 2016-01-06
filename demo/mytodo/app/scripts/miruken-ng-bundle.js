@@ -526,11 +526,11 @@ new function () { // closure
         var container = Container($appContext);
         Array2.forEach(exports, function (name) {
             var member = package[name];
-            if (!member || !member.prototype) {
+            if (!member || !member.prototype || $isProtocol(member)) {
                 return;
             }
             var memberProto = member.prototype;
-            name = memberProto.name || name;
+            name = memberProto.$name || name;
             if (memberProto instanceof Directive) {
                 var directive = new ComponentModel;
                 directive.key = member;
@@ -3334,7 +3334,7 @@ new function () { // closure
         /**
          * Decorates the handler for applying aspects to callbacks.
          * @method aspect
-         * @param   {Function}  before     -  before predicate
+         * @param   {Function}  before     -  before action.  Return false to reject
          * @param   {Function}  action     -  after action
          * @param   {boolean}   reentrant  -  true if reentrant, false otherwise
          * @returns {miruken.callback.CallbackHandler}  callback handler aspect.
@@ -3528,7 +3528,7 @@ new function () { // closure
             });
         },
         /**
-         * Batches subsequent callbacks.
+         * Prepares the CallbackHandler for batching.
          * @method $batch
          * @param   {miruken.Protocol}  [...protocols]  -  protocols to batch
          * @returns {miruken.callback.CallbackHandler}  batching callback handler.
@@ -6869,7 +6869,7 @@ new function () { // closure
      */
     base2.package(this, {
         name:    "miruken",
-        version: "0.0.66",
+        version: "0.0.67",
         exports: "Enum,Flags,Variance,Protocol,StrictProtocol,Delegate,Miruken,MetaStep,MetaMacro," +
                  "Initializing,Disposing,DisposingMixin,Resolving,Invoking,Parenting,Starting,Startup," +
                  "Facet,Interceptor,InterceptorSelector,ProxyBuilder,Modifier,ArrayManager,IndexedList," +
@@ -7125,13 +7125,16 @@ new function () { // closure
             Object.defineProperty(this, 'strict', { value: !!strict });
         },
         __get: function (propertyName) {
-            return this.delegate.get(this.constructor, propertyName, this.strict);
+            var delegate = this.delegate;
+            return delegate && delegate.get(this.constructor, propertyName, this.strict);
         },
-        __set: function (propertyName, propertyValue) {                
-            return this.delegate.set(this.constructor, propertyName, propertyValue, this.strict);
+        __set: function (propertyName, propertyValue) {
+            var delegate = this.delegate;            
+            return delegate && delegate.set(this.constructor, propertyName, propertyValue, this.strict);
         },
         __invoke: function (methodName, args) {
-            return this.delegate.invoke(this.constructor, methodName, args, this.strict);
+            var delegate = this.delegate;                        
+            return delegate && delegate.invoke(this.constructor, methodName, args, this.strict);
         }
     }, {
         conformsTo: False,        
