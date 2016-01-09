@@ -1760,8 +1760,9 @@ describe("InvocationCallbackHandler", function () {
 
 describe("CallbackHandler", function () {
     var Emailing = StrictProtocol.extend({
-            send: function (msg) {}
-        }),
+           send: function (msg) {},
+           fail: function(msg) {}
+           }),
         EmailHandler = CallbackHandler.extend(Emailing, {
             send: function (msg) {
                 var batcher = $composer.getBatcher(Emailing);
@@ -1771,6 +1772,9 @@ describe("CallbackHandler", function () {
                     return emailBatch.send(msg);
                 }
                 return msg;
+            },
+            fail: function (msg) {
+                throw new Error("Can't send message");
             }
         }),
         EmailBatch = Base.extend(Emailing, Batching, {
@@ -1787,6 +1791,47 @@ describe("CallbackHandler", function () {
             }
         });
 
+    describe("#$promise", function () {
+        it("should convert return to promise", function (done) {
+            var handler = new EmailHandler;
+            expect(Emailing(handler).send("Hello")).to.eql("Hello");
+            Emailing(handler.$promise()).send("Hello").then(function (result) {
+                expect(result).to.eql("Hello");
+                done();
+            });
+        });
+        
+        it("should convert undefined to promise", function (done) {
+            var handler = new EmailHandler;
+            expect(Emailing(handler).send()).to.be.undefined;
+            Emailing(handler.$promise()).send().then(function (result) {
+                expect(result).to.be.undefined;
+                done();
+            });
+        });
+
+        it("should pass promise returns through", function (done) {
+            var handler = new EmailHandler,
+                msg     = Promise.resolve("Hello");
+            expect(Emailing(handler).send(msg)).to.equal(msg);
+            Emailing(handler.$promise()).send(msg).then(function (result) {
+                expect(result).to.eql("Hello");
+                done();
+            });
+        });
+
+        it("should convert exception to promise", function (done) {
+            var handler = new EmailHandler;
+            expect(function () {
+                Emailing(handler).fail()                
+            }).to.throw(Error, "Can't send message");
+            Emailing(handler.$promise()).fail().catch(function (err) {
+                expect(err.message).to.equal("Can't send message");
+                done();
+            });
+        });        
+    });
+    
     describe("#$timeout", function () {
         it("should reject promise if timed out", function (done) {
             var bank       = (new (CallbackHandler.extend({
@@ -1878,7 +1923,7 @@ describe("CallbackHandler", function () {
             });
         });        
     });
-    
+ 
     describe("#$batch", function () {
         it("should batch callbacks", function () {
             var handler = new EmailHandler,

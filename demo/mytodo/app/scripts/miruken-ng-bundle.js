@@ -3489,6 +3489,28 @@ new function () { // closure
             });
         },
         /**
+         * Ensures all return values are promises..
+         * @method $promises
+         * @returns {miruken.callback.CallbackHandler}  promising callback handler.
+         * @for miruken.callback.CallbackHandler
+         */                
+        $promise: function() {
+            return this.filter(function(callback, composer, proceed) {
+                try {                
+                    var handled = proceed();
+                    if (handled) {
+                        var result = callback.callbackResult;                    
+                        callback.callbackResult = $isPromise(result)
+                            ? result : Promise.resolve(result);
+                    }
+                    return handled;
+                } catch (ex) {
+                    callback.callbackResult = Promise.reject(ex);
+                    return true;
+                }
+            });
+        },        
+        /**
          * Configures the receiver to set timeouts on all promises.
          * @method $timeout
          * @param   {number}             ms       -  duration before promise times out
@@ -6869,7 +6891,7 @@ new function () { // closure
      */
     base2.package(this, {
         name:    "miruken",
-        version: "0.0.67",
+        version: "0.0.68",
         exports: "Enum,Flags,Variance,Protocol,StrictProtocol,Delegate,Miruken,MetaStep,MetaMacro," +
                  "Initializing,Disposing,DisposingMixin,Resolving,Invoking,Parenting,Starting,Startup," +
                  "Facet,Interceptor,InterceptorSelector,ProxyBuilder,Modifier,ArrayManager,IndexedList," +
