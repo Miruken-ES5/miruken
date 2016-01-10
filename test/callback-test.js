@@ -1948,5 +1948,17 @@ describe("CallbackHandler", function () {
                 expect(Emailing(batch.send("Hello"))).to.eql("Hello");
             })).to.eql([]);
         });
+
+        it("should work with filters", function () {
+            var count   = 0,
+                handler = new EmailHandler,
+                batch   = handler.aspect(null, function () {
+                    ++count;
+                }).$batch();
+            expect($using(batch, function () {
+                expect(Emailing(batch).send("Hello")).to.be.undefined;
+            })).to.eql([["Hello"]]);
+            expect(count).to.equal(2);
+        });        
     });
 });

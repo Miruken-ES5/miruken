@@ -2388,8 +2388,9 @@ new function () { // closure
      * @param   {miruken.Protocol}  [...protocols]  -  protocols to batch
      * @extends miruken.callback.CompositeCallbackHandler
      * @uses miruken.callback.Batching
-     */    
-    var Batcher = CompositeCallbackHandler.extend(Batching, {
+     */
+    var BatchingComplete = Batching.extend();
+    var Batcher = CompositeCallbackHandler.extend(BatchingComplete, {
         constructor: function (protocols) {
             this.base();
             if (protocols && !$isArray(protocols)) {
@@ -2860,20 +2861,28 @@ new function () { // closure
          * @for miruken.callback.CallbackHandler
          */
         $batch: function(protocols) {
-            var composer = this,
-                batcher  = new Batcher(protocols);
+            var _batcher  = new Batcher(protocols),
+                _complete = false;
             return this.decorate({
                 $provide: [Batcher, function () {
-                    return batcher;
+                    return _batcher;
                 }],
                 handleCallback: function (callback, greedy, composer) {
-                    return (batcher && batcher.handleCallback(callback, false, composer))
-                        || this.base(callback, greedy, composer);
+                    var handled = false;
+                    if (_batcher && !(callback instanceof Composition)) {
+                        var b = _batcher;
+                        if (_complete) {
+                            _batcher = null;
+                        }
+                        if ((handled = b.handleCallback(callback, greedy, composer)) && !greedy) {
+                            return true;
+                        }
+                    }
+                    return this.base(callback, greedy, composer) || handled;
                 },
                 dispose: function () {
-                    var b = batcher;
-                    batcher = null;                   
-                    return b.complete(composer);
+                    _complete = true;
+                    return BatchingComplete(this).complete(this);
                 }
             });            
         },
@@ -6194,7 +6203,7 @@ new function () { // closure
      */
     base2.package(this, {
         name:    "miruken",
-        version: "0.0.68",
+        version: "0.0.70",
         exports: "Enum,Flags,Variance,Protocol,StrictProtocol,Delegate,Miruken,MetaStep,MetaMacro," +
                  "Initializing,Disposing,DisposingMixin,Resolving,Invoking,Parenting,Starting,Startup," +
                  "Facet,Interceptor,InterceptorSelector,ProxyBuilder,Modifier,ArrayManager,IndexedList," +
