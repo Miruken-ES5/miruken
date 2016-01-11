@@ -2869,9 +2869,9 @@ new function () { // closure
                 }],
                 handleCallback: function (callback, greedy, composer) {
                     var handled = false;
-                    if (_batcher && !(callback instanceof Composition)) {
+                    if (_batcher) {
                         var b = _batcher;
-                        if (_complete) {
+                        if (_complete && !(callback instanceof Composition)) {
                             _batcher = null;
                         }
                         if ((handled = b.handleCallback(callback, greedy, composer)) && !greedy) {
@@ -6203,7 +6203,7 @@ new function () { // closure
      */
     base2.package(this, {
         name:    "miruken",
-        version: "0.0.70",
+        version: "0.0.71",
         exports: "Enum,Flags,Variance,Protocol,StrictProtocol,Delegate,Miruken,MetaStep,MetaMacro," +
                  "Initializing,Disposing,DisposingMixin,Resolving,Invoking,Parenting,Starting,Startup," +
                  "Facet,Interceptor,InterceptorSelector,ProxyBuilder,Modifier,ArrayManager,IndexedList," +
@@ -8364,7 +8364,7 @@ new function () { // closure
      * @returns  {boolean} true if value null or undefined.
      */
     function $isNothing(value) {
-        return (value === undefined) || (value === null);
+        return value == null;
     }
 
     /**
@@ -8374,7 +8374,7 @@ new function () { // closure
      * @returns  {boolean} true if value not null or undefined.
      */
     function $isSomething(value) {
-        return !$isNothing(value);
+        return value != null;
     }
 
     /**
