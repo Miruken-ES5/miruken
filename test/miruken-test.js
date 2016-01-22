@@ -101,21 +101,56 @@ describe("miruken", function () {
 });
 
 describe("Enum", function () {
-    var Color = Enum({red: 1, blue: 2, green: 3});
-
-    describe("#value", function () {
-        it("should obtain value", function () {
-            expect(Color.red.value).to.equal(1);
-            expect(Color.blue.value).to.equal(2);
-            expect(Color.green.value).to.equal(3);
-        });
-    });
+    var Color = Enum({red: 1, blue: 2, green: 3}),
+        Message = Enum({run: "run", cancel: "cancel" });
 
     describe("#name", function () {
         it("should obtain name", function () {
             expect(Color.red.name).to.equal("red");
             expect(Color.blue.name).to.equal("blue");
             expect(Color.green.name).to.equal("green");
+            expect(Message.run.name).to.equal("run");
+            expect(Message.cancel.name).to.equal("cancel");                        
+        });
+    });
+    
+    describe("#value", function () {
+        it("should obtain value", function () {
+            expect(Color.red.value).to.equal(1);
+            expect(Color.blue.value).to.equal(2);
+            expect(Color.green.value).to.equal(3);
+            expect(Message.run.value).to.equal("run");
+            expect(Message.cancel.value).to.equal("cancel");            
+        });
+    });
+
+    describe("#ordinal", function () {
+        it("should obtain ordinal", function () {
+            expect(Color.red.ordinal).to.equal(0);
+            expect(Color.blue.ordinal).to.equal(1);
+            expect(Color.green.ordinal).to.equal(2);
+            expect(Message.run.ordinal).to.equal(0);
+            expect(Message.cancel.ordinal).to.equal(1);
+        });
+    });
+
+    describe("#valueOf", function () {
+        it("should obtain value", function () {
+            expect(+Color.red).to.equal(1);
+            expect(+Color.blue).to.equal(2);
+            expect(+Color.green).to.equal(3);
+            expect(+Message.run).to.equal(0);
+            expect(+Message.cancel).to.equal(1);            
+        });
+    });
+
+    describe("#toString", function () {
+        it("should convert to string", function () {
+            expect(Color.red.toString()).to.equal("red");
+            expect(Color.blue.toString()).to.equal("blue");
+            expect(Color.green.toString()).to.equal("green");
+            expect(Message.run.toString()).to.equal("run");
+            expect(Message.cancel.toString()).to.equal("cancel");                        
         });
     });
 
@@ -130,6 +165,8 @@ describe("Enum", function () {
             expect(Color(1)).to.equal(Color.red);
             expect(Color("2")).to.equal(Color.blue);
             expect(Color(Color.green)).to.equal(Color.green);
+            expect(Message("run")).to.equal(Message.run);
+            expect(Message(Message.cancel)).to.equal(Message.cancel);
         });
 
         it("should throw exception if invalid value", function () {
@@ -201,6 +238,21 @@ describe("Flags", function () {
         });
     });
 
+    describe("#valueOf", function () {
+        it("should obtain value", function () {
+            expect(+DayOfWeek.Friday).to.equal(16);
+            expect(+DayOfWeek.Weekend).to.equal(96);            
+        });
+    });
+
+    describe("#toString", function () {
+        it("should convert to string", function () {        
+            expect(DayOfWeek.Wednesday.toString()).to.equal("Wednesday");
+            expect(DayOfWeek(21).toString()).to.equal("Monday,Wednesday,Friday");
+            expect(DayOfWeek.Weekend.toString()).to.equal("Weekend");            
+        });
+    });
+    
     describe("#names", function () {
         it("should obtain all names", function () {
             expect(DayOfWeek.names).to.include(

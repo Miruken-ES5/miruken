@@ -10,7 +10,7 @@
         <button class="btn btn-default" ng-click="vm.destroyRegion()">Destroy Region</button>        
       </div>
 
-      <div region="'content'">
+      <div region="content">
         <h4>This is some default content in the region.</h4>
         <p>Click the buttons above load a new partial view.</p>
       </div>
@@ -27,7 +27,7 @@
     
     <div ng-repeat="x in [1, 2, 3]">
       <div class="col-sm-4">
-          <ng-include src="'app/regions/partialThree.html'" region="'region' + $index"></ng-include>
+          <ng-include src="'app/regions/partialThree.html'" region="{{'region-' + $index}}"></ng-include>
       </div>
     </div>
 
