@@ -1761,31 +1761,69 @@ describe("InvocationCallbackHandler", function () {
 describe("CallbackHandler", function () {
     var Emailing = StrictProtocol.extend({
            send: function (msg) {},
-           fail: function(msg) {}
+           sendConfirm: function (msg) {},        
+           fail: function(msg) {},
+           failConfirm: function(msg) {}        
            }),
         EmailHandler = CallbackHandler.extend(Emailing, {
             send: function (msg) {
-                var batcher = $composer.getBatcher(Emailing);
-                if (batcher) {
-                    var emailBatch = new EmailBatch;
-                    batcher.addHandlers(emailBatch);
-                    return emailBatch.send(msg);
-                }
-                return msg;
+                var batch = this.getBatch();
+                return batch ? batch.send(msg) : msg; 
             },
+            sendConfirm: function (msg) {
+                var batch = this.getBatch();
+                return batch ? batch.sendConfirm(msg)
+                     : Promise.resolve(msg);
+            },            
             fail: function (msg) {
                 throw new Error("Can't send message");
+            },
+            failConfirm: function (msg) {
+                var batch = this.getBatch();
+                return batch ? batch.failConfirm(msg)
+                     : Promise.reject(Error("Can't send message"));
+            },            
+            getBatch: function () {
+                var batcher = $composer.getBatcher(Emailing);
+                if (batcher) {
+                    var batch = new EmailBatch;
+                    batcher.addHandlers(batch);
+                    return batch;
+                }
             }
         }),
         EmailBatch = Base.extend(Emailing, Batching, {
             constructor: function (handler) {
-                var _msgs = [];
+                var _msgs     = [],
+                    _resolves = [],
+                    _promises = [];
                 this.extend({
                     send: function (msg) {
+                        _msgs.push(msg + " batch");
+                    },
+                    sendConfirm: function (msg) {
                         _msgs.push(msg);
+                        var promise =  new Promise(function (resolve) {
+                            _resolves.push(function () { resolve(msg + " batch"); });
+                        });
+                        _promises.push(promise);
+                        return promise;
+                    },
+                    failConfirm: function (msg) {
+                        var promise = new Promise(function (resolve, reject) {
+                            _resolves.push(function () { reject(Error("Can't send message")); });
+                        });
+                        _promises.push(promise);
+                        return promise;
                     },
                     complete: function (composer) {
-                        return Emailing(composer).send(_msgs);
+                        for (var i = 0; i < _resolves.length; ++i) {
+                            _resolves[i]();
+                        }
+                        var results = Emailing(composer).send(_msgs);
+                        return _promises.length > 0
+                             ? Promise.all(_promises).then(function () { return results; })
+                             : results;
                     }
                 });
             }
@@ -1928,25 +1966,109 @@ describe("CallbackHandler", function () {
         it("should batch callbacks", function () {
             var handler = new EmailHandler,
                 batch   = handler.$batch();
-            expect(Emailing(handler).send("Hello")).to.eql("Hello");
+            expect(Emailing(handler).send("Hello")).to.equal("Hello");
             expect($using(batch, function () {
                 expect(Emailing(batch).send("Hello")).to.be.undefined;
-            })).to.eql([["Hello"]]);
-            expect(Emailing(batch).send("Hello")).to.eql("Hello");        
+            })).to.eql([["Hello batch"]]);
+            expect(Emailing(batch).send("Hello")).to.equal("Hello");
+        });
+
+        it("should batch async callbacks", function (done) {
+            var count   = 0,
+                handler = new EmailHandler;
+            Emailing(handler).sendConfirm("Hello").then(function (result) {
+                expect(result).to.equal("Hello");
+                ++count;
+            });
+            $using(handler.$batch(), function (batch) {
+                Emailing(batch).sendConfirm("Hello").then(function (result) {
+                    expect(result).to.equal("Hello batch");
+                    ++count;
+                });
+            }).then(function (result) {
+                expect(result).to.eql([["Hello"]]);
+                Emailing(handler).sendConfirm("Hello").then(function (result) {
+                    expect(result).to.equal("Hello");
+                    expect(count).to.equal(2);
+                    done();
+                });
+            });
+        });
+        
+        it("should reject batch async", function (done) {
+            var count   = 0,
+                handler = new EmailHandler;
+            $using(handler.$batch(), function (batch) {
+                Emailing(batch).failConfirm("Hello").catch(function (err) {
+                    expect(err.message).to.equal("Can't send message");
+                    ++count;
+                });
+            }).catch(function (err) {
+                expect(err.message).to.equal("Can't send message");
+                Emailing(handler).failConfirm("Hello").catch(function (err) {
+                    expect(err.message).to.equal("Can't send message");
+                    expect(count).to.equal(1);                    
+                    done();
+                });
+            });
         });
 
         it("should batch requested protocols", function () {
             var handler = new EmailHandler;
             expect($using(handler.$batch(Emailing), function (batch) {
                 expect(Emailing(batch).send("Hello")).to.be.undefined;
-            })).to.eql([["Hello"]]);                
+            })).to.eql([["Hello batch"]]);                
+        });
+
+        it("should batch requested protocols async", function (done) {
+            var count   = 0,
+                handler = new EmailHandler;
+            Emailing(handler).sendConfirm("Hello").then(function (result) {
+                expect(result).to.equal("Hello");
+                ++count;
+            });
+            $using(handler.$batch(Emailing), function (batch) {
+                Emailing(batch).sendConfirm("Hello").then(function (result) {
+                    expect(result).to.equal("Hello batch");
+                    ++count;
+                });
+            }).then(function (result) {
+                expect(result).to.eql([["Hello"]]);
+                Emailing(handler).sendConfirm("Hello").then(function (result) {
+                    expect(result).to.equal("Hello");
+                    expect(count).to.equal(2);
+                    done();
+                });
+            });
         });
 
         it("should not batch unrequested protocols", function () {
             var handler = new EmailHandler;
             expect($using(handler.$batch(Game), function (batch) {
-                expect(Emailing(batch.send("Hello"))).to.eql("Hello");
+                expect(Emailing(batch.send("Hello"))).to.equal("Hello");
             })).to.eql([]);
+        });
+
+        it("should not batch unrequested protocols async", function (done) { 
+            var handler = new EmailHandler;           
+            expect($using(handler.$batch(Game), function (batch) {
+                Emailing(batch).sendConfirm("Hello").then(function (result) {
+                    expect(result).to.equal("Hello");
+                    done();
+                });
+            })).to.eql([]);
+        });
+
+        it("should not batch async after completed", function (done) {
+            var handler = new EmailHandler;
+            $using(handler.$batch(), function (batch) {
+                Emailing(batch).sendConfirm("Hello").then(function (result) {
+                    Emailing(batch).sendConfirm("Hello").then(function (result) {
+                        expect(result).to.equal("Hello");
+                        done();
+                    });
+                });
+            });
         });
 
         it("should work with filters", function () {
@@ -1957,7 +2079,7 @@ describe("CallbackHandler", function () {
                 }).$batch();
             expect($using(batch, function () {
                 expect(Emailing(batch).send("Hello")).to.be.undefined;
-            })).to.eql([["Hello"]]);
+            })).to.eql([["Hello batch"]]);
             expect(count).to.equal(2);
         });        
     });

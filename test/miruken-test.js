@@ -7,8 +7,6 @@ eval(base2.namespace);
 eval(base2.js.namespace);
 eval(miruken.namespace);
 
-Promise.onPossiblyUnhandledRejection(Undefined);
-
 new function () { // closure
 
     var miruken_test = base2.package(this, {

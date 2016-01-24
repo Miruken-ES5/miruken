@@ -2869,11 +2869,10 @@ new function () { // closure
          */
         $batch: function(protocols) {
             var _batcher  = new Batcher(protocols),
-                _complete = false;
+                _complete = false,
+                _promises = [];
             return this.decorate({
-                $provide: [Batcher, function () {
-                    return _batcher;
-                }],
+                $provide: [Batcher, function () { return _batcher; }],
                 handleCallback: function (callback, greedy, composer) {
                     var handled = false;
                     if (_batcher) {
@@ -2882,6 +2881,12 @@ new function () { // closure
                             _batcher = null;
                         }
                         if ((handled = b.handleCallback(callback, greedy, composer)) && !greedy) {
+                            if (_batcher) {
+                                var result = callback.callbackResult;
+                                if ($isPromise(result)) {
+                                    _promises.push(result);
+                                }
+                            }
                             return true;
                         }
                     }
@@ -2889,7 +2894,10 @@ new function () { // closure
                 },
                 dispose: function () {
                     _complete = true;
-                    return BatchingComplete(this).complete(this);
+                    var results = BatchingComplete(this).complete(this);
+                    return _promises.length > 0
+                         ? Promise.all(_promises).then(function () { return results; })
+                         : results;
                 }
             });            
         },
@@ -4954,6 +4962,8 @@ new function () { // closure
 
     eval(this.imports);
 
+    Promise.onPossiblyUnhandledRejection(Undefined);
+
     /**
      * Symbol for injecting composer dependency.<br/>
      * See {{#crossLink "miruken.callback.CallbackHandler"}}{{/crossLink}}
@@ -6203,7 +6213,7 @@ new function () { // closure
      */
     base2.package(this, {
         name:    "miruken",
-        version: "0.0.78",
+        version: "0.0.80",
         exports: "Enum,Flags,Variance,Protocol,StrictProtocol,Delegate,Miruken,MetaStep,MetaMacro," +
                  "Initializing,Disposing,DisposingMixin,Resolving,Invoking,Parenting,Starting,Startup," +
                  "Facet,Interceptor,InterceptorSelector,ProxyBuilder,Modifier,ArrayManager,IndexedList," +

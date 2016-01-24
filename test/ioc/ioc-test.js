@@ -11,8 +11,6 @@ eval(miruken.context.namespace);
 eval(miruken.validate.namespace);
 eval(ioc.namespace);
 
-Promise.onPossiblyUnhandledRejection(Undefined);
-
 new function () { // closure
 
     var ioc_test =  base2.package(this, {
