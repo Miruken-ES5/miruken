@@ -235,7 +235,7 @@ new function () { // closure
                         
                         container.html(content);
                         if (!_partialScope.$$phase) {
-                            _partialScope.$apply();
+                            _partialScope.$digest();
                         }
                         return $q.when(partialContext);
                     }
@@ -2100,6 +2100,8 @@ new function () { // closure
 
     eval(this.imports);
 
+    Promise.onPossiblyUnhandledRejection(Undefined);
+
     var _definitions = {},
         /**
          * Definition for handling callbacks contravariantly.
@@ -3441,6 +3443,7 @@ new function () { // closure
             if (target) {
                 var guarded = false;
                 property = property || "guarded";
+                var propExists = property in target;
                 return this.aspect(function () {
                     if ((guarded = target[property])) {
                         return false;
@@ -3449,9 +3452,9 @@ new function () { // closure
                     return true;
                 }, function () {
                     if (!guarded) {
-                        delete target[property];
-                        if (property in target) {
-                            target[property] = undefined;
+                        target[property] = undefined;
+                        if (!propExists) {
+                            delete target[property];
                         }
                     }
                 });
@@ -3468,7 +3471,8 @@ new function () { // closure
          * @for miruken.callback.CallbackHandler
          */                
         $activity: function (target, ms, property) {
-            property = property || "activity";
+            property = property || "$$activity";
+            var propExists = property in target;            
             return this.aspect(function () {
                 var state = { enabled: false };
                 setTimeout(function () {
@@ -3483,9 +3487,9 @@ new function () { // closure
                 if (state.enabled) {
                     var activity = target[property];
                     if (!activity || activity === 1) {
-                        delete target[property];
-                        if (property in target) {
-                            target[property] = undefined;
+                        target[property] = undefined;
+                        if (!propExists) {
+                            delete target[property];
                         }
                     } else {
                         target[property] = --activity;
@@ -5662,8 +5666,6 @@ new function () { // closure
 
     eval(this.imports);
 
-    Promise.onPossiblyUnhandledRejection(Undefined);
-
     /**
      * Symbol for injecting composer dependency.<br/>
      * See {{#crossLink "miruken.callback.CallbackHandler"}}{{/crossLink}}
@@ -5752,13 +5754,13 @@ new function () { // closure
     var ComponentPolicy = Protocol.extend({
         /**
          * Applies the policy to the component model.
-         * @method applyComponentModel
+         * @method applyPolicy
          * @param  {miruken.ioc.ComponentModel} componentModel  -  component model
          * @param  {Array}                      [...policies]   -  all known policies
          */
-        applyComponentModel: function (componentModel, policies) {},
+        applyPolicy: function (componentModel, policies) {},
         /**
-         * Informs the creation of a component.
+         * Notifies the creation of a component.
          * @method componentCreated
          * @param  {Object} component     -  component instance
          * @param  {Object} dependencies  -  all resolved dependencies
@@ -5920,7 +5922,7 @@ new function () { // closure
      * @extends Base
      */
     var DependencyPolicy = Base.extend(ComponentPolicy, {
-        applyComponentModel: function (componentModel, policies) {
+        applyPolicy: function (componentModel, policies) {
             // Dependencies will be merged from inject definitions
             // starting from most derived unitl no more remain or the
             // current definition is fully specified (no undefined).
@@ -6185,7 +6187,7 @@ new function () { // closure
             }
             return !disposing;
         },
-        applyComponentModel: function (componentModel, policies) {
+        applyPolicy: function (componentModel, policies) {
             componentModel.lifestyle = this;
         }
     });
@@ -6705,8 +6707,8 @@ new function () { // closure
                     policies  = DEFAULT_POLICIES.concat(policies || []);
                     for (var i = 0; i < policies.length; ++i) {
                         var policy = policies[i];
-                        if ($isFunction(policy.applyComponentModel)) {
-                            policy.applyComponentModel(componentModel, policies);
+                        if ($isFunction(policy.applyPolicy)) {
+                            policy.applyPolicy(componentModel, policies);
                         }
                     }
                     var validation = Validator($composer).validate(componentModel);
@@ -6766,9 +6768,16 @@ new function () { // closure
                     dependencies = _resolveBurden(burden, instant, resolution, composer);
                 return $isPromise(dependencies)
                      ? dependencies.then(createComponent)
-                     : createComponent(dependencies);
-                function createComponent(deps) {
-                    return factory.call(composer, deps);
+                     : createComponent();
+                function createComponent() {
+                    var component = factory.call(composer, dependencies);
+                    for (var i = 0; i < policies.length; ++i) {
+                        var policy = policies[i];
+                        if ($isFunction(policy.componentCreated)) {
+                            policy.componentCreated(component, dependencies);
+                        }
+                    }                    
+                    return component;
                 }
             }, composer);
         }, lifestyle.dispose.bind(lifestyle));
@@ -6913,7 +6922,7 @@ new function () { // closure
      */
     base2.package(this, {
         name:    "miruken",
-        version: "0.0.80",
+        version: "0.0.81",
         exports: "Enum,Flags,Variance,Protocol,StrictProtocol,Delegate,Miruken,MetaStep,MetaMacro," +
                  "Initializing,Disposing,DisposingMixin,Resolving,Invoking,Parenting,Starting,Startup," +
                  "Facet,Interceptor,InterceptorSelector,ProxyBuilder,Modifier,ArrayManager,IndexedList," +
