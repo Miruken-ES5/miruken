@@ -5659,8 +5659,8 @@ new function () { // closure
         imports: "miruken,miruken.graph,miruken.callback,miruken.context,miruken.validate",
         exports: "Container,Registration,ComponentPolicy,Lifestyle,TransientLifestyle," +
                  "SingletonLifestyle,ContextualLifestyle,DependencyModifier,DependencyModel," +
-                 "DependencyManager,DependencyPolicy,ComponentModel,ComponentBuilder," +
-                 "ComponentModelError,IoContainer,DependencyResolution,DependencyResolutionError," +
+                 "DependencyManager,ComponentModel,ComponentBuilder,ComponentModelError," +
+                 "IoContainer,DependencyResolution,DependencyResolutionError," +
                  "$component,$$composer,$container"
     });
 
@@ -6134,28 +6134,7 @@ new function () { // closure
          * @returns {Object} component instance.
          */
         resolve: function (factory) {
-            var instance = factory();
-            if ($isPromise(instance)) {
-                return instance.then(function (instance) {
-                    if ($isFunction(instance.initialize)) {
-                        var init = instance.initialize();
-                        if ($isPromise(init)) {
-                            return init.then(function () {
-                                return instance;
-                            });
-                        }
-                    }
-                    return instance;
-                });                
-            } else if ($isFunction(instance.initialize)) {
-                var init = instance.initialize();
-                if ($isPromise(init)) {
-                    return init.then(function () {
-                        return instance;
-                    });
-                }
-            }
-            return instance;            
+            return factory();
         },
         /**
          * Tracks the component instance for disposal.
@@ -6210,24 +6189,13 @@ new function () { // closure
         constructor: function (instance) {
             this.extend({
                 resolve: function (factory) {
-                    if (!instance) {
-                        var object = this.base(factory);
-                        if ($isPromise(object)) {
-                            var _this = this;
-                            return object.then(function (object) {
-                                // Only cache fulfilled instances
-                                if (!instance && object) {
-                                    instance = object;
-                                    _this.trackInstance(instance);
-                                }
-                                return instance;
-                            });
-                        } else if (object) {
+                    return instance ? instance : factory(function (object) {
+                        // Only cache fulfilled instances
+                        if (!instance && object) {
                             instance = object;
-                            this.trackInstance(instance)
+                            this.trackInstance(instance);
                         }
-                    }
-                    return instance;
+                    }.bind(this));
                 },
                 disposeInstance: function (obj, disposing) {
                     // Singletons cannot be disposed directly
@@ -6261,44 +6229,20 @@ new function () { // closure
                     if (context) {
                         var id       = context.id,
                             instance = _cache[id];
-                        if (!instance) {
-                            var object = factory();
-                            if ($isPromise(object)) {
-                                var _this = this;
-                                return object.then(function (object) {
-                                    // Only cache fulfilled instances
-                                    if (object && !(instance = _cache[id])) {
-                                        instance = object;
-                                        return _this._recordInstance(id, instance, context);
-                                    }
-                                    return instance;
-                                });
-                            } else if (object) {
-                                instance = object;
-                                return this._recordInstance(id, instance, context);
+                        return instance ? instance : factory(function (object) {
+                            // Only cache fulfilled instances                                
+                            if (object && !_cache[id]) {
+                                _cache[id] = instance = object;                                     
+                                ContextualHelper.bindContext(instance, context);
+                                this.trackInstance(instance);
+                                context.onEnded(function () {
+                                    instance.context = null;
+                                    this.disposeInstance(instance);
+                                    delete _cache[id];
+                                }.bind(this));
                             }
-                        }
-                        return instance;
+                        }.bind(this));
                     }
-                },
-                _recordInstance: function (id, instance, context) {
-                    var _this      = this;
-                        init       = instance,
-                        _cache[id] = instance;
-                    ContextualHelper.bindContext(instance, context);
-                    if ($isFunction(instance.initialize)) {
-                        init = instance.initialize();
-                        init = $isPromise(init)
-                             ? init.then(function () { return instance; })
-                             : instance;
-                    }                                        
-                    this.trackInstance(instance);
-                    context.onEnded(function () {
-                        instance.context = null;
-                        _this.disposeInstance(instance);
-                        delete _cache[id];
-                    });
-                    return init;
                 },
                 disposeInstance: function (instance, disposing) {
                     if (!disposing) {  // Cannot be disposed directly
@@ -6322,6 +6266,20 @@ new function () { // closure
         }
     });
 
+    /**
+     * Executes the {{#crossLink "miruken.Initializing"}}{{/crossLink}} protocol.
+     * @class InitializingPolicy
+     * @uses miruken.ioc.ComponentPolicy
+     * @extends Base
+     */
+    var InitializingPolicy = Base.extend(ComponentPolicy, {
+        componentCreated: function (component, dependencies) {
+            if ($isFunction(component.initialize)) {
+                return component.initialize();
+            }
+        }        
+    });
+    
     /**
      * Builds {{#crossLink "miruken.ioc.ComponentModel"}}{{/crossLink}} using fluent api.
      * @class ComponentBuilder
@@ -6451,42 +6409,27 @@ new function () { // closure
                 /**
                  * Attaches component interceptors.
                  * @method interceptors
-                 * @param  {Argument} arguments  -  interceptors
+                 * @param  {miruken.Interceptor}  ...interceptors  -  interceptors
                  * @return {miruken.ioc.ComponentBuilder} builder
                  * @chainable
                  */                                                
-                interceptors: function (/* interceptors */) {
-                    var interceptors = (arguments.length === 1 && $isArray(arguments[0]))
-                                     ? arguments[0]
-                                     : Array.prototype.slice.call(arguments);
+                interceptors: function (interceptors) {
+                    interceptors = $isArray(interceptors) ? interceptors
+                                 : Array.prototype.slice.call(arguments);
                     return new InterceptorBuilder(this, _componentModel, interceptors);
                 },
                 /**
-                 * Gets the {{#crossLink "miruken.ioc.ComponentPolicy"}}{{/crossLink}} of type policyClass.
-                 * @method getPolicy
-                 * @param   {Function}  policyClass  -  type of policy to get
-                 * @returns {miruken.ioc.ComponentPolicy} policy of type PolicyClass
+                 * Attaches {{#crossLink "miruken.ioc.ComponentPolicy"}}{{/crossLink}}'s.
+                 * @method policies
+                 * @param   {miruken.ioc.ComponentPolicy}  ...policies  -  policies
                  */            
-                getPolicy: function (policyClass) {
-                    for (var i = 0; i < _policies.length; ++i) {
-                        var policy = _policies[i];
-                        if (policy instanceof policyClass) {
-                            return policy;
-                        }
+                policies: function (policies) {
+                    if ($isArray(policies)) {
+                        _policies.push.apply(_policies, policies);
+                    } else if (policies) {
+                        _policies.push.apply(_policies, arguments);
                     }
-                },
-                /**
-                 * Attaches a {{#crossLink "miruken.ioc.ComponentPolicy"}}{{/crossLink}} to the model.
-                 * @method addPolicy
-                 * @param   {miruken.ioc.ComponentPolicy}  policy  -  policy
-                 * @returns {boolean} true if policy was added, false if policy type already attached.
-                 */            
-                addPolicy: function (policy) {
-                    if (this.getPolicy($classOf(policy))) {
-                        return false;
-                    }
-                    _policies.push(policy);
-                    return true;
+                    return this;
                 },
                 register: function (container) {
                     if ( _newInContext || _newInChildContext) {
@@ -6691,7 +6634,7 @@ new function () { // closure
     ComponentModelError.prototype             = new Error;
     ComponentModelError.prototype.constructor = ComponentModelError;
 
-    var DEFAULT_POLICIES = [ new DependencyPolicy ];
+    var DEFAULT_POLICIES = [ new DependencyPolicy, new InitializingPolicy ];
     
     /**
      * Default Inversion of Control {{#crossLink "miruken.ioc.Container"}}{{/crossLink}}.
@@ -6763,21 +6706,32 @@ new function () { // closure
             if (!resolution.claim(handler, clazz)) {  // cycle detected
                 return $NOT_HANDLED;
             }
-            return lifestyle.resolve(function () {
+            return lifestyle.resolve(function (configure) {
                 var instant      = $instant.test(resolution.key),
                     dependencies = _resolveBurden(burden, instant, resolution, composer);
                 return $isPromise(dependencies)
                      ? dependencies.then(createComponent)
-                     : createComponent();
-                function createComponent() {
+                     : createComponent(dependencies);
+                function createComponent(dependencies) {
                     var component = factory.call(composer, dependencies);
-                    for (var i = 0; i < policies.length; ++i) {
-                        var policy = policies[i];
-                        if ($isFunction(policy.componentCreated)) {
-                            policy.componentCreated(component, dependencies);
+                    if ($isFunction(configure)) {
+                        configure(component, dependencies);
+                    }
+                    return applyPolicies(0);
+                    function applyPolicies(index) {
+                        for (var i = index; i < policies.length; ++i) {
+                            var policy = policies[i];
+                            if ($isFunction(policy.componentCreated)) {
+                                var result = policy.componentCreated(component, dependencies);
+                                if ($isPromise(result)) {
+                                    return result.then(function () {
+                                        return applyPolicies(i + 1);
+                                    });
+                                }
+                            }
                         }
-                    }                    
-                    return component;
+                        return component;
+                    }
                 }
             }, composer);
         }, lifestyle.dispose.bind(lifestyle));
@@ -6922,7 +6876,7 @@ new function () { // closure
      */
     base2.package(this, {
         name:    "miruken",
-        version: "0.0.81",
+        version: "0.0.82",
         exports: "Enum,Flags,Variance,Protocol,StrictProtocol,Delegate,Miruken,MetaStep,MetaMacro," +
                  "Initializing,Disposing,DisposingMixin,Resolving,Invoking,Parenting,Starting,Startup," +
                  "Facet,Interceptor,InterceptorSelector,ProxyBuilder,Modifier,ArrayManager,IndexedList," +

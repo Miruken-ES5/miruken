@@ -503,31 +503,6 @@ describe("SingletonLifestyle", function () {
                     done();
                 });
         });
-        
-        it("should call initialize", function (done) {
-            container.register($component(V12).singleton());
-            Promise.resolve(container.resolve(Engine)).then(function (engine) {
-                expect(engine.calibrated).to.be.true;
-                done();
-            });
-        });
-
-        it("should wait on promise from initialize", function (done) {
-            var SelfCheckV12 = V12.extend({
-                initialize: function () {
-                    this.base();
-                    return Promise.delay(this, 2).then(function (v12) {
-                        v12.selfCheck = true;
-                    });
-                }
-            });
-            container.register($component(SelfCheckV12).singleton());
-            Promise.resolve(container.resolve(SelfCheckV12)).then(function (engine) {
-                expect(engine.calibrated).to.be.true;
-                expect(engine.selfCheck).to.be.true;
-                done();
-            });
-        });        
     });
 
     describe("#dispose", function () {
@@ -576,31 +551,6 @@ describe("TransientLifestyle", function () {
                     done();
                 });
         });
-
-        it("should call initialize", function (done) {
-            container.register($component(V12).transient());
-            Promise.resolve(container.resolve(Engine)).then(function (engine) {
-                expect(engine.calibrated).to.be.true;
-                done();
-            });
-        });
-
-        it("should wait on promise from initialize", function (done) {
-            var SelfCheckV12 = V12.extend({
-                initialize: function () {
-                    this.base();
-                    return Promise.delay(this, 2).then(function (v12) {
-                        v12.selfCheck = true;
-                    });
-                }
-            });
-            container.register($component(SelfCheckV12).transient());
-            Promise.resolve(container.resolve(SelfCheckV12)).then(function (engine) {
-                expect(engine.calibrated).to.be.true;
-                expect(engine.selfCheck).to.be.true;
-                done();
-            });
-        });                
     });
 });
 
@@ -692,37 +642,6 @@ describe("ContextualLifestyle", function () {
                 done();
             });
         });
-
-        it("should call initialize", function (done) {
-            var context   = new Context,
-                container = Container(context);
-            context.addHandlers(new IoContainer, new ValidationCallbackHandler);
-            container.register($component(Controller).dependsOn($child(Context)));
-            Promise.resolve(container.resolve(Controller)).then(function (controller) {
-                expect(controller.initialized).to.be.true;
-                done();
-            });
-        });
-
-        it("should wait on promise from initialize", function (done) {
-            var SlowController = Controller.extend({
-                initialize: function () {
-                    this.base();
-                    return Promise.delay(this, 2).then(function (ctl) {
-                        ctl.loaded = true;
-                    });
-                }
-            });
-            var context   = new Context,
-                container = Container(context);
-            context.addHandlers(new IoContainer, new ValidationCallbackHandler);
-            container.register($component(SlowController).dependsOn($child(Context)));
-            Promise.resolve(container.resolve(SlowController)).then(function (controller) {
-                expect(controller.initialized).to.be.true;
-                expect(controller.loaded).to.be.true;
-                done();
-            });
-        });                        
     });
 
     describe("#dispose", function () {
@@ -1138,6 +1057,67 @@ describe("IoContainer", function () {
             });
         });
 
+        it("should call initialize", function (done) {
+            container.register($component(V12));
+            Promise.resolve(container.resolve(Engine)).then(function (engine) {
+                expect(engine.calibrated).to.be.true;
+                done();
+            });
+        });
+
+        it("should wait on promise from initialize", function (done) {
+            var SelfCheckV12 = V12.extend({
+                initialize: function () {
+                    this.base();
+                    return Promise.delay(this, 2).then(function (v12) {
+                        v12.selfCheck = true;
+                    });
+                }
+            });
+            container.register($component(SelfCheckV12));
+            Promise.resolve(container.resolve(SelfCheckV12)).then(function (engine) {
+                expect(engine.calibrated).to.be.true;
+                expect(engine.selfCheck).to.be.true;
+                done();
+            });
+        });        
+
+        var Policy1 =  Base.extend(ComponentPolicy, {
+            componentCreated: function (component, dependencies) {
+                component.policies = ["Policy1"];
+            }
+        });
+
+        var Policy2 =  Base.extend(ComponentPolicy, {
+            componentCreated: function (component, dependencies) {
+                return Promise.delay(this, 2).then(function () {
+                    component.policies.push("Policy2");
+                });
+            }
+        });
+
+        var Policy3 =  Base.extend(ComponentPolicy, {
+            componentCreated: function (component, dependencies) {
+                component.policies.push("Policy3");
+            }
+        });
+        
+        it("should apply policies after creation", function (done) {
+            container.register($component(V12).policies(new Policy1, new Policy2, new Policy3));
+            Promise.resolve(container.resolve(Engine)).then(function (engine) {
+                expect(engine.policies).to.eql(["Policy1", "Policy2", "Policy3"]);
+                done();
+            });
+        });        
+
+        it("should apply policies array after creation", function (done) {
+            container.register($component(V12).policies([new Policy1, new Policy2, new Policy3]));
+            Promise.resolve(container.resolve(Engine)).then(function (engine) {
+                expect(engine.policies).to.eql(["Policy1", "Policy2", "Policy3"]);
+                done();
+            });
+        });        
+        
         it("should resolve in new child context", function (done) {
             var Workflow = Base.extend($contextual);
             container.register($component(Workflow).newInContext());
