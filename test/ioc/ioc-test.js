@@ -1117,6 +1117,30 @@ describe("IoContainer", function () {
                 done();
             });
         });        
+
+        it("should apply policies container-wide", function (done) {
+            var context   = new Context,
+                container = Container(context);
+            context.addHandlers(new IoContainer, new ValidationCallbackHandler);
+            container.addPolicies(new Policy1, new Policy2, new Policy3);
+            container.register($component(V12));
+            Promise.resolve(container.resolve(Engine)).then(function (engine) {
+                expect(engine.policies).to.eql(["Policy1", "Policy2", "Policy3"]);
+                done();
+            });
+        });        
+
+        it("should apply policies array container-wide", function (done) {
+            var context   = new Context,
+                container = Container(context);
+            context.addHandlers(new IoContainer, new ValidationCallbackHandler);
+            container.addPolicies([new Policy1, new Policy2, new Policy3]);
+            container.register($component(V12));
+            Promise.resolve(container.resolve(Engine)).then(function (engine) {
+                expect(engine.policies).to.eql(["Policy1", "Policy2", "Policy3"]);
+                done();
+            });
+        });        
         
         it("should resolve in new child context", function (done) {
             var Workflow = Base.extend($contextual);

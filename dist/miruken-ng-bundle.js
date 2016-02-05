@@ -3097,9 +3097,7 @@ new function () { // closure
     var Batcher = CompositeCallbackHandler.extend(BatchingComplete, {
         constructor: function (protocols) {
             this.base();
-            if (protocols && !$isArray(protocols)) {
-                protocols = Array.prototype.slice.call(arguments);
-            }
+            protocols = protocols && Array.prototype.concat.apply([], arguments);            
             this.extend({
                 shouldBatch: function (protocol) {
                     return !protocols || (protocol && protocols.indexOf(protocol) >= 0); 
@@ -5672,7 +5670,7 @@ new function () { // closure
      * @property {Object} $$composer
      * @for miruken.ioc.$
      */    
-    var $$composer = {};
+    var $$composer = Object.freeze({});
     
     /**
      * Modifier to request container dependency.<br/>
@@ -5703,15 +5701,21 @@ new function () { // closure
          * @param   {Arguments}  [...registrations]  -  registrations
          * @return {Function} function to unregister components.
          */
-        register: function (/*registrations*/) {},
+        register: function (registrations) {},
         /**
          * Adds a configured component to the container with policies.
          * @method addComponent
          * @param   {miruken.ioc.ComponentModel} componentModel  -  component model
          * @param   {Array}                      [...policies]   -  component policies
-         * @return {Function} function to remove component.
+         * @return  {Function} function to remove component.
          */
         addComponent: function (componentModel, policies) {},
+        /**
+         * Adds container-wide policies for all component.
+         * @method addPolicies
+         * @param   {Array}  [...policies]  -  container-wide policies
+         */        
+        addPolicies: function (policies) {},
         /**
          * Resolves the component for the key.
          * @method resolve
@@ -5769,11 +5773,11 @@ new function () { // closure
     });
 
     /**
-     * DependencyModifier flags enum
+     * DependencyModifier flags
      * @class DependencyModifier
      * @extends miruken.Enum
      */    
-    var DependencyModifier = Enum({
+    var DependencyModifier = Flags({
         /**
          * No dependency modifiers.
          * @property {number} None
@@ -5824,8 +5828,18 @@ new function () { // closure
          * @property {number} Child
          */        
         Child: 1 << 8
-        });
+    });
 
+    DependencyModifier.Use.modifier       = $use;
+    DependencyModifier.Lazy.modifier      = $lazy;
+    DependencyModifier.Every.modifier     = $every;
+    DependencyModifier.Dynamic.modifier   = $eval;
+    DependencyModifier.Child.modifier     = $child;
+    DependencyModifier.Optional.modifier  = $optional;
+    DependencyModifier.Promise.modifier   = $promise;
+    DependencyModifier.Container.modifier = $container;
+    DependencyModifier.Invariant.modifier = $eq;
+    
     /**
      * Describes a component dependency.
      * @class DependencyModel
@@ -5836,35 +5850,14 @@ new function () { // closure
      */
     var DependencyModel = Base.extend({
         constructor: function (dependency, modifiers) {
-            modifiers = +(modifiers || DependencyModifier.None);
+            modifiers = DependencyModifier.None.addFlag(modifiers);
             if (dependency instanceof Modifier) {
-                if ($use.test(dependency)) {
-                    modifiers = modifiers | DependencyModifier.Use;
-                }
-                if ($lazy.test(dependency)) {
-                    modifiers = modifiers | DependencyModifier.Lazy;
-                }
-                if ($every.test(dependency)) {
-                    modifiers = modifiers | DependencyModifier.Every;
-                }
-                if ($eval.test(dependency)) {
-                    modifiers = modifiers | DependencyModifier.Dynamic;
-                }
-                if ($child.test(dependency)) {
-                    modifiers = modifiers | DependencyModifier.Child;
-                }
-                if ($optional.test(dependency)) {
-                    modifiers = modifiers | DependencyModifier.Optional;
-                }
-                if ($promise.test(dependency)) {
-                    modifiers = modifiers | DependencyModifier.Promise;
-                }
-                if ($container.test(dependency)) {
-                    modifiers = modifiers | DependencyModifier.Container;
-                }
-                if ($eq.test(dependency)) {
-                    modifiers = modifiers | DependencyModifier.Invariant;
-                }
+                Array2.forEach(DependencyModifier.items, function (flag) {
+                    var modifier = flag.modifier;
+                    if (modifier && modifier.test(dependency)) {
+                        modifiers = modifiers.addFlag(flag);
+                    }
+                });
                 dependency = Modifier.unwrap(dependency);
             }
             this.extend({
@@ -5889,7 +5882,7 @@ new function () { // closure
          * @returns {boolean} true if the dependency is annotated with modifier(s).
          */        
         test: function (modifier) {
-            return (this.modifiers & modifier) === +modifier;
+            return this.modifiers.hasFlag(modifier);
         }
     }, {
         coerce: function (object) {
@@ -5922,7 +5915,7 @@ new function () { // closure
      * @extends Base
      */
     var DependencyPolicy = Base.extend(ComponentPolicy, {
-        applyPolicy: function (componentModel, policies) {
+        applyPolicy: function (componentModel) {
             // Dependencies will be merged from inject definitions
             // starting from most derived unitl no more remain or the
             // current definition is fully specified (no undefined).
@@ -6143,10 +6136,10 @@ new function () { // closure
          */        
         trackInstance: function (instance) {
             if (instance && $isFunction(instance.dispose)) {
-                var _this = this;
+                var lifestyle = this;
                 instance.extend({
                     dispose: function (disposing) {
-                        if (disposing || _this.disposeInstance(instance, true)) {
+                        if (disposing || lifestyle.disposeInstance(instance, true)) {
                             this.base();
                             this.dispose = this.base;
                         }
@@ -6166,7 +6159,7 @@ new function () { // closure
             }
             return !disposing;
         },
-        applyPolicy: function (componentModel, policies) {
+        applyPolicy: function (componentModel) {
             componentModel.lifestyle = this;
         }
     });
@@ -6196,10 +6189,10 @@ new function () { // closure
                         }
                     }.bind(this));
                 },
-                disposeInstance: function (obj, disposing) {
+                disposeInstance: function (object, disposing) {
                     // Singletons cannot be disposed directly
-                    if (!disposing && (obj === instance)) {
-                        if (this.base(obj, disposing)) {
+                    if (!disposing && (object === instance)) {
+                        if (this.base(object, disposing)) {
                            instance = undefined;
                            return true;
                         }
@@ -6230,9 +6223,9 @@ new function () { // closure
                             instance = _cache[id];
                         return instance ? instance : factory(function (object) {
                             if (object && !_cache[id]) {
-                                _cache[id] = instance = object;                                     
-                                ContextualHelper.bindContext(instance, context);
+                                _cache[id] = instance = object;
                                 this.trackInstance(instance);
+                                ContextualHelper.bindContext(instance, context);
                                 context.onEnded(function () {
                                     instance.context = null;
                                     this.disposeInstance(instance);
@@ -6271,7 +6264,7 @@ new function () { // closure
      * @extends Base
      */
     var InitializingPolicy = Base.extend(ComponentPolicy, {
-        componentCreated: function (component, dependencies) {
+        componentCreated: function (component) {
             if ($isFunction(component.initialize)) {
                 return component.initialize();
             }
@@ -6288,8 +6281,7 @@ new function () { // closure
     var ComponentBuilder = Base.extend(Registration, {
         constructor: function (key) {
             var _componentModel = new ComponentModel,
-                _newInContext, _newInChildContext,
-                _policies = [];
+                _newInContext, _newInChildContext, _policies;
             _componentModel.key = key;
             this.extend({
                 /**
@@ -6320,13 +6312,8 @@ new function () { // closure
                  * @return {miruken.ioc.ComponentBuilder} builder
                  * @chainable
                  */                                
-                dependsOn: function (/* dependencies */) {
-                    var dependencies;
-                    if (arguments.length === 1 && $isArray(arguments[0])) {
-                        dependencies = arguments[0];
-                    } else if (arguments.length > 0) {
-                        dependencies = Array.prototype.slice.call(arguments);
-                    }
+                dependsOn: function (dependencies) {
+                    dependencies = Array.prototype.concat.apply([], arguments);
                     _componentModel.setDependencies(dependencies);
                     return this;
                 },
@@ -6412,8 +6399,7 @@ new function () { // closure
                  * @chainable
                  */                                                
                 interceptors: function (interceptors) {
-                    interceptors = $isArray(interceptors) ? interceptors
-                                 : Array.prototype.slice.call(arguments);
+                    interceptors = Array.prototype.concat.apply([], arguments);
                     return new InterceptorBuilder(this, _componentModel, interceptors);
                 },
                 /**
@@ -6422,10 +6408,8 @@ new function () { // closure
                  * @param   {miruken.ioc.ComponentPolicy}  ...policies  -  policies
                  */            
                 policies: function (policies) {
-                    if ($isArray(policies)) {
-                        _policies.push.apply(_policies, policies);
-                    } else if (policies) {
-                        _policies.push.apply(_policies, arguments);
+                    if (policies) {
+                        _policies = Array.prototype.concat.apply(_policies || [], arguments);
                     }
                     return this;
                 },
@@ -6643,9 +6627,12 @@ new function () { // closure
      */
     var IoContainer = CallbackHandler.extend(Container, {
         constructor: function () {
+            var _policies = DEFAULT_POLICIES;
             this.extend({
                 addComponent: function (componentModel, policies) {
-                    policies  = DEFAULT_POLICIES.concat(policies || []);
+                    policies = (policies && policies.length > 0)
+                             ? _policies.concat(policies)
+                             : _policies;
                     for (var i = 0; i < policies.length; ++i) {
                         var policy = policies[i];
                         if ($isFunction(policy.applyPolicy)) {
@@ -6657,10 +6644,15 @@ new function () { // closure
                         throw new ComponentModelError(componentModel, validation);
                     }
                     return this.registerHandler(componentModel, policies); 
-                }
+                },
+                addPolicies: function (policies) {
+                    if (policies) {
+                        _policies = _policies.concat.apply(_policies, arguments);
+                    }
+                }                
             })
         },
-        register: function (/*registrations*/) {
+        register: function (registrations) {
             return Array2.flatten(arguments).map(function (registration) {
                 return registration.register(this, $composer);
             }.bind(this));
@@ -6874,7 +6866,7 @@ new function () { // closure
      */
     base2.package(this, {
         name:    "miruken",
-        version: "0.0.82",
+        version: "0.0.83",
         exports: "Enum,Flags,Variance,Protocol,StrictProtocol,Delegate,Miruken,MetaStep,MetaMacro," +
                  "Initializing,Disposing,DisposingMixin,Resolving,Invoking,Parenting,Starting,Startup," +
                  "Facet,Interceptor,InterceptorSelector,ProxyBuilder,Modifier,ArrayManager,IndexedList," +
