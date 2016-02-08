@@ -564,6 +564,7 @@ describe("ContextualLifestyle", function () {
             Object.defineProperty(this, "initialized", { value: !!this.context });
         }
     });
+    
     describe("#resolve", function () {
         it("should resolve diferent instance per context for ContextualLifestyle", function (done) {
             var context   = new Context,
@@ -697,6 +698,26 @@ describe("ContextualLifestyle", function () {
 });
 
 describe("IoContainer", function () {
+    var Policy1 =  Base.extend(ComponentPolicy, {
+        componentCreated: function (component, dependencies) {
+            component.policies = ["Policy1"];
+        }
+    });
+    
+    var Policy2 =  Base.extend(ComponentPolicy, {
+        componentCreated: function (component, dependencies) {
+            return Promise.delay(this, 2).then(function () {
+                component.policies.push("Policy2");
+            });
+        }
+    });
+    
+    var Policy3 =  Base.extend(ComponentPolicy, {
+        componentCreated: function (component, dependencies) {
+            component.policies.push("Policy3");
+        }
+    });
+    
     describe("#register", function () {
         var context, container;
         beforeEach(function() {
@@ -717,6 +738,16 @@ describe("IoContainer", function () {
             container.register($component('car').boundTo(Ferrari));
         });
 
+        it("should register component as singletons by default", function (done) {
+            container.register($component(V12));
+            Promise.all([container.resolve(Engine), container.resolve(Engine)])
+                .spread(function (engine1, engine2) {
+                    expect(engine1).to.be.instanceOf(V12);
+                    expect(engine2).to.equal(engine1);
+                    done();
+                });
+        });
+        
         it("should unregister component", function (done) {
             var unregister = container.register($component(V12))[0];
             Promise.resolve(container.resolve(Engine)).then(function (engine) {
@@ -754,6 +785,46 @@ describe("IoContainer", function () {
         });
     });
 
+    describe("#addPolicies", function () {
+        it("should apply policies container-wide", function (done) {
+            var context   = new Context,
+                container = Container(context);
+            context.addHandlers(new IoContainer, new ValidationCallbackHandler);
+            container.addPolicies(new Policy1, new Policy2, new Policy3);
+            container.register($component(V12));
+            Promise.resolve(container.resolve(Engine)).then(function (engine) {
+                expect(engine.policies).to.eql(["Policy1", "Policy2", "Policy3"]);
+                done();
+            });
+        });        
+
+        it("should apply policies array container-wide", function (done) {
+            var context   = new Context,
+                container = Container(context);
+            context.addHandlers(new IoContainer, new ValidationCallbackHandler);
+            container.addPolicies([new Policy1, new Policy2, new Policy3]);
+            container.register($component(V12));
+            Promise.resolve(container.resolve(Engine)).then(function (engine) {
+                expect(engine.policies).to.eql(["Policy1", "Policy2", "Policy3"]);
+                done();
+            });
+        });
+
+        it("should change the default lifestyle to transient", function (done) {
+            var context   = new Context,
+                container = Container(context);
+            context.addHandlers(new IoContainer, new ValidationCallbackHandler);
+            container.addPolicies(new TransientLifestyle);
+            container.register($component(V12));
+            Promise.all([container.resolve(Engine), container.resolve(Engine)])
+                .spread(function (engine1, engine2) {
+                    expect(engine1).to.be.instanceOf(V12);
+                    expect(engine2).to.not.equal(engine1);
+                    done();
+                });
+        });        
+    });
+    
     describe("#resolve", function () {
         var context, container;
         beforeEach(function() {
@@ -770,7 +841,7 @@ describe("IoContainer", function () {
                 done();
             });
         });
-
+        
         it("should resolve nothing if component not found", function (done) {
             Promise.resolve(container.resolve(Car)).then(function (car) {
                 expect(car).to.be.undefined;
@@ -1081,26 +1152,6 @@ describe("IoContainer", function () {
                 done();
             });
         });        
-
-        var Policy1 =  Base.extend(ComponentPolicy, {
-            componentCreated: function (component, dependencies) {
-                component.policies = ["Policy1"];
-            }
-        });
-
-        var Policy2 =  Base.extend(ComponentPolicy, {
-            componentCreated: function (component, dependencies) {
-                return Promise.delay(this, 2).then(function () {
-                    component.policies.push("Policy2");
-                });
-            }
-        });
-
-        var Policy3 =  Base.extend(ComponentPolicy, {
-            componentCreated: function (component, dependencies) {
-                component.policies.push("Policy3");
-            }
-        });
         
         it("should apply policies after creation", function (done) {
             container.register($component(V12).policies(new Policy1, new Policy2, new Policy3));
@@ -1112,30 +1163,6 @@ describe("IoContainer", function () {
 
         it("should apply policies array after creation", function (done) {
             container.register($component(V12).policies([new Policy1, new Policy2, new Policy3]));
-            Promise.resolve(container.resolve(Engine)).then(function (engine) {
-                expect(engine.policies).to.eql(["Policy1", "Policy2", "Policy3"]);
-                done();
-            });
-        });        
-
-        it("should apply policies container-wide", function (done) {
-            var context   = new Context,
-                container = Container(context);
-            context.addHandlers(new IoContainer, new ValidationCallbackHandler);
-            container.addPolicies(new Policy1, new Policy2, new Policy3);
-            container.register($component(V12));
-            Promise.resolve(container.resolve(Engine)).then(function (engine) {
-                expect(engine.policies).to.eql(["Policy1", "Policy2", "Policy3"]);
-                done();
-            });
-        });        
-
-        it("should apply policies array container-wide", function (done) {
-            var context   = new Context,
-                container = Container(context);
-            context.addHandlers(new IoContainer, new ValidationCallbackHandler);
-            container.addPolicies([new Policy1, new Policy2, new Policy3]);
-            container.register($component(V12));
             Promise.resolve(container.resolve(Engine)).then(function (engine) {
                 expect(engine.policies).to.eql(["Policy1", "Policy2", "Policy3"]);
                 done();

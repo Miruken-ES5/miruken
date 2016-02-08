@@ -4996,14 +4996,14 @@ new function () { // closure
      */            
     var Container = StrictProtocol.extend(Invoking, Disposing, {
         /**
-         * Registers on or more components in the container.
+         * Registers components in the container.
          * @method register
          * @param   {Arguments}  [...registrations]  -  registrations
          * @return {Function} function to unregister components.
          */
         register: function (registrations) {},
         /**
-         * Adds a configured component to the container with policies.
+         * Adds a configured component to the container.
          * @method addComponent
          * @param   {miruken.ioc.ComponentModel} componentModel  -  component model
          * @param   {Array}                      [...policies]   -  component policies
@@ -5011,24 +5011,24 @@ new function () { // closure
          */
         addComponent: function (componentModel, policies) {},
         /**
-         * Adds container-wide policies for all component.
+         * Adds container-wide policies for all components.
          * @method addPolicies
          * @param   {Array}  [...policies]  -  container-wide policies
          */        
         addPolicies: function (policies) {},
         /**
-         * Resolves the component for the key.
+         * Resolves the first component satisfying the key.
          * @method resolve
          * @param   {Any}  key  -  key used to identify the component
-         * @returns {Object | Promise}  component satisfying the key.
+         * @returns {Object | Promise} first component satisfying the key.
          * @async
          */
         resolve: function (key) {},
         /**
-         * Resolves all the components for the key.
+         * Resolves all the components satisfying the key.
          * @method resolveAll
          * @param   {Any}  key  -  key used to identify the component
-         * @returns {Array} components or promises satisfying the key.
+         * @returns {Array | Promise} all components satisfying the key.
          * @async
          */
         resolveAll: function (key) {}
@@ -5041,17 +5041,17 @@ new function () { // closure
      */                
     var Registration = Protocol.extend({
         /**
-         * Encapsulates the regisration of one or more components in a container.
+         * Encapsulates the regisration of components in a container.
          * @method register
-         * @param {miruken.ioc.Container}            container  -  container to register components
-         * @param {miruken.callback.CallbackHandler} composer   -  composition handler
+         * @param  {miruken.ioc.Container}            container  -  container
+         * @param  {miruken.callback.CallbackHandler} composer   -  composition handler
          * @return {Function} function to unregister components.
          */
          register: function (container, composer) {}
     });
 
      /**
-     * Protocol for defining policies for a {{#crossLink "miruken.ioc.ComponentModel"}}{{/crossLink}}
+     * Protocol for defining policies for components.
      * @class ComponentPolicy
      * @extends miruken.Protocol
      */                
@@ -5066,10 +5066,11 @@ new function () { // closure
         /**
          * Notifies the creation of a component.
          * @method componentCreated
-         * @param  {Object} component     -  component instance
-         * @param  {Object} dependencies  -  all resolved dependencies
+         * @param  {Object} component                           -  component instance
+         * @param  {Object} dependencies                        -  resolved dependencies
+         * @param  {miruken.callback.CallbackHandler} composer  -  composition handler
          */        
-        componentCreated: function (component, dependencies) {}
+        componentCreated: function (component, dependencies, composer) {}
     });
 
     /**
@@ -5206,44 +5207,6 @@ new function () { // closure
                  ? DependencyModel(item) 
                  : item;
         }                         
-    });
-
-    /**
-     * Policy for extracting dependencies from a component model.
-     * @class DependencyPolicy
-     * @uses miruken.ioc.ComponentPolicy
-     * @extends Base
-     */
-    var DependencyPolicy = Base.extend(ComponentPolicy, {
-        applyPolicy: function (componentModel) {
-            // Dependencies will be merged from inject definitions
-            // starting from most derived unitl no more remain or the
-            // current definition is fully specified (no undefined).
-            var dependencies = componentModel.getDependencies();
-            if (dependencies && !Array2.contains(dependencies, undefined)) {
-                return;
-            }
-            var clazz = componentModel.implementation;
-            componentModel.manageDependencies(function (manager) {
-                while (clazz && (clazz !== Base)) {
-                    var injects = [clazz.prototype.$inject, clazz.prototype.inject,
-                                   clazz.$inject, clazz.inject];
-                    for (var i = 0; i < injects.length; ++i) {
-                        var inject = injects[i];
-                        if (inject !== undefined) {
-                            if ($isFunction(inject)) {
-                                inject = inject();
-                            }
-                            manager.merge(inject);
-                            if (!Array2.contains(inject, undefined)) {
-                                return;
-                            }
-                        }
-                    }
-                    clazz = $ancestorOf(clazz);
-                }
-            });
-        }
     });
 
     /**
@@ -5420,7 +5383,7 @@ new function () { // closure
      * @uses miruken.DisposingMixin
      * @uses miruken.Disposing
      */
-    var Lifestyle = Base.extend(ComponentPolicy, Disposing, DisposingMixin, {
+    var Lifestyle = Abstract.extend(ComponentPolicy, Disposing, DisposingMixin, {
         /**
          * Obtains the component instance.
          * @method resolve
@@ -5460,19 +5423,24 @@ new function () { // closure
             return !disposing;
         },
         applyPolicy: function (componentModel) {
-            componentModel.lifestyle = this;
+            componentModel.lifestyle = new this.constructor;
         }
     });
 
    /**
-     * Lifestyle for creating new untracked component instances.
+     * Creates untracked component instances.
      * @class TransientLifestyle
      * @extends miruken.ioc.Lifestyle
      */
-    var TransientLifestyle = Lifestyle.extend();
+    var TransientLifestyle = Lifestyle.extend({
+        constructor: function () {},
+        applyPolicy: function (componentModel) {
+            componentModel.lifestyle = this;  // stateless
+        }
+    });
 
    /**
-     * Lifestyle for managing a single instance of a component.
+     * Manages a single instance of a component.
      * @class SingletonLifestyle
      * @constructor
      * @param {Object} [instance]  -  existing component instance
@@ -5507,7 +5475,7 @@ new function () { // closure
     });
 
    /**
-     * Lifestyle for managing instances scoped to a {{#crossLink "miruken.context.Context"}}{{/crossLink}}.
+     * Manages instances scoped to a {{#crossLink "miruken.context.Context"}}{{/crossLink}}.
      * @class ContextualLifestyle
      * @constructor
      * @extends miruken.ioc.Lifestyle
@@ -5557,6 +5525,44 @@ new function () { // closure
         }
     });
 
+    /**
+     * Collects dependencies to be injected into components.
+     * @class InjectingPolicy
+     * @uses miruken.ioc.ComponentPolicy
+     * @extends Base
+     */
+    var InjectingPolicy = Base.extend(ComponentPolicy, {
+        applyPolicy: function (componentModel) {
+            // Dependencies will be merged from inject definitions
+            // starting from most derived unitl no more remain or the
+            // current definition is fully specified (no holes).
+            var dependencies = componentModel.getDependencies();
+            if (dependencies && !Array2.contains(dependencies, undefined)) {
+                return;
+            }
+            var clazz = componentModel.implementation;
+            componentModel.manageDependencies(function (manager) {
+                while (clazz && (clazz !== Base)) {
+                    var injects = [clazz.prototype.$inject, clazz.prototype.inject,
+                                   clazz.$inject, clazz.inject];
+                    for (var i = 0; i < injects.length; ++i) {
+                        var inject = injects[i];
+                        if (inject !== undefined) {
+                            if ($isFunction(inject)) {
+                                inject = inject();
+                            }
+                            manager.merge(inject);
+                            if (!Array2.contains(inject, undefined)) {
+                                return;
+                            }
+                        }
+                    }
+                    clazz = $ancestorOf(clazz);
+                }
+            });
+        }
+    });
+    
     /**
      * Executes the {{#crossLink "miruken.Initializing"}}{{/crossLink}} protocol.
      * @class InitializingPolicy
@@ -5916,7 +5922,7 @@ new function () { // closure
     ComponentModelError.prototype             = new Error;
     ComponentModelError.prototype.constructor = ComponentModelError;
 
-    var DEFAULT_POLICIES = [ new DependencyPolicy, new InitializingPolicy ];
+    var DEFAULT_POLICIES = [ new InjectingPolicy, new InitializingPolicy ];
     
     /**
      * Default Inversion of Control {{#crossLink "miruken.ioc.Container"}}{{/crossLink}}.
@@ -6012,7 +6018,7 @@ new function () { // closure
                         for (var i = index; i < policies.length; ++i) {
                             var policy = policies[i];
                             if ($isFunction(policy.componentCreated)) {
-                                var result = policy.componentCreated(component, dependencies);
+                                var result = policy.componentCreated(component, dependencies, composer);
                                 if ($isPromise(result)) {
                                     return result.then(function () {
                                         return applyPolicies(i + 1);
@@ -6166,7 +6172,7 @@ new function () { // closure
      */
     base2.package(this, {
         name:    "miruken",
-        version: "0.0.83",
+        version: "0.0.84",
         exports: "Enum,Flags,Variance,Protocol,StrictProtocol,Delegate,Miruken,MetaStep,MetaMacro," +
                  "Initializing,Disposing,DisposingMixin,Resolving,Invoking,Parenting,Starting,Startup," +
                  "Facet,Interceptor,InterceptorSelector,ProxyBuilder,Modifier,ArrayManager,IndexedList," +
@@ -26174,6 +26180,7 @@ describe("ContextualLifestyle", function () {
             Object.defineProperty(this, "initialized", { value: !!this.context });
         }
     });
+    
     describe("#resolve", function () {
         it("should resolve diferent instance per context for ContextualLifestyle", function (done) {
             var context   = new Context,
@@ -26307,6 +26314,26 @@ describe("ContextualLifestyle", function () {
 });
 
 describe("IoContainer", function () {
+    var Policy1 =  Base.extend(ComponentPolicy, {
+        componentCreated: function (component, dependencies) {
+            component.policies = ["Policy1"];
+        }
+    });
+    
+    var Policy2 =  Base.extend(ComponentPolicy, {
+        componentCreated: function (component, dependencies) {
+            return Promise.delay(this, 2).then(function () {
+                component.policies.push("Policy2");
+            });
+        }
+    });
+    
+    var Policy3 =  Base.extend(ComponentPolicy, {
+        componentCreated: function (component, dependencies) {
+            component.policies.push("Policy3");
+        }
+    });
+    
     describe("#register", function () {
         var context, container;
         beforeEach(function() {
@@ -26327,6 +26354,16 @@ describe("IoContainer", function () {
             container.register($component('car').boundTo(Ferrari));
         });
 
+        it("should register component as singletons by default", function (done) {
+            container.register($component(V12));
+            Promise.all([container.resolve(Engine), container.resolve(Engine)])
+                .spread(function (engine1, engine2) {
+                    expect(engine1).to.be.instanceOf(V12);
+                    expect(engine2).to.equal(engine1);
+                    done();
+                });
+        });
+        
         it("should unregister component", function (done) {
             var unregister = container.register($component(V12))[0];
             Promise.resolve(container.resolve(Engine)).then(function (engine) {
@@ -26364,6 +26401,46 @@ describe("IoContainer", function () {
         });
     });
 
+    describe("#addPolicies", function () {
+        it("should apply policies container-wide", function (done) {
+            var context   = new Context,
+                container = Container(context);
+            context.addHandlers(new IoContainer, new ValidationCallbackHandler);
+            container.addPolicies(new Policy1, new Policy2, new Policy3);
+            container.register($component(V12));
+            Promise.resolve(container.resolve(Engine)).then(function (engine) {
+                expect(engine.policies).to.eql(["Policy1", "Policy2", "Policy3"]);
+                done();
+            });
+        });        
+
+        it("should apply policies array container-wide", function (done) {
+            var context   = new Context,
+                container = Container(context);
+            context.addHandlers(new IoContainer, new ValidationCallbackHandler);
+            container.addPolicies([new Policy1, new Policy2, new Policy3]);
+            container.register($component(V12));
+            Promise.resolve(container.resolve(Engine)).then(function (engine) {
+                expect(engine.policies).to.eql(["Policy1", "Policy2", "Policy3"]);
+                done();
+            });
+        });
+
+        it("should change the default lifestyle to transient", function (done) {
+            var context   = new Context,
+                container = Container(context);
+            context.addHandlers(new IoContainer, new ValidationCallbackHandler);
+            container.addPolicies(new TransientLifestyle);
+            container.register($component(V12));
+            Promise.all([container.resolve(Engine), container.resolve(Engine)])
+                .spread(function (engine1, engine2) {
+                    expect(engine1).to.be.instanceOf(V12);
+                    expect(engine2).to.not.equal(engine1);
+                    done();
+                });
+        });        
+    });
+    
     describe("#resolve", function () {
         var context, container;
         beforeEach(function() {
@@ -26380,7 +26457,7 @@ describe("IoContainer", function () {
                 done();
             });
         });
-
+        
         it("should resolve nothing if component not found", function (done) {
             Promise.resolve(container.resolve(Car)).then(function (car) {
                 expect(car).to.be.undefined;
@@ -26691,26 +26768,6 @@ describe("IoContainer", function () {
                 done();
             });
         });        
-
-        var Policy1 =  Base.extend(ComponentPolicy, {
-            componentCreated: function (component, dependencies) {
-                component.policies = ["Policy1"];
-            }
-        });
-
-        var Policy2 =  Base.extend(ComponentPolicy, {
-            componentCreated: function (component, dependencies) {
-                return Promise.delay(this, 2).then(function () {
-                    component.policies.push("Policy2");
-                });
-            }
-        });
-
-        var Policy3 =  Base.extend(ComponentPolicy, {
-            componentCreated: function (component, dependencies) {
-                component.policies.push("Policy3");
-            }
-        });
         
         it("should apply policies after creation", function (done) {
             container.register($component(V12).policies(new Policy1, new Policy2, new Policy3));
@@ -26722,30 +26779,6 @@ describe("IoContainer", function () {
 
         it("should apply policies array after creation", function (done) {
             container.register($component(V12).policies([new Policy1, new Policy2, new Policy3]));
-            Promise.resolve(container.resolve(Engine)).then(function (engine) {
-                expect(engine.policies).to.eql(["Policy1", "Policy2", "Policy3"]);
-                done();
-            });
-        });        
-
-        it("should apply policies container-wide", function (done) {
-            var context   = new Context,
-                container = Container(context);
-            context.addHandlers(new IoContainer, new ValidationCallbackHandler);
-            container.addPolicies(new Policy1, new Policy2, new Policy3);
-            container.register($component(V12));
-            Promise.resolve(container.resolve(Engine)).then(function (engine) {
-                expect(engine.policies).to.eql(["Policy1", "Policy2", "Policy3"]);
-                done();
-            });
-        });        
-
-        it("should apply policies array container-wide", function (done) {
-            var context   = new Context,
-                container = Container(context);
-            context.addHandlers(new IoContainer, new ValidationCallbackHandler);
-            container.addPolicies([new Policy1, new Policy2, new Policy3]);
-            container.register($component(V12));
             Promise.resolve(container.resolve(Engine)).then(function (engine) {
                 expect(engine.policies).to.eql(["Policy1", "Policy2", "Policy3"]);
                 done();
