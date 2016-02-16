@@ -762,8 +762,8 @@ describe("$using", function () {
         shoppingCart.addItem("Porsche");
         $using(shoppingCart, Promise.delay(100).then(function () {
                throw new Error("Something bad");
-               }) 
-        ).finally(function () {
+               })
+        ).catch(function (err) {
             expect(shoppingCart.getItems()).to.eql([]);
             done();
         });
@@ -918,6 +918,33 @@ describe("Modifier", function () {
 });
 
 describe("Protocol", function () {
+    it("should proxy calls to normal objects", function () {
+        var dog = Animal(new Dog);
+        expect(dog.talk()).to.equal('Ruff Ruff');
+    });
+    
+    it("should ignore null or undefined target", function () {
+        Animal().talk();
+        Animal(null).talk();
+    });
+    
+    it("should ignore missing methods", function () {
+        var dog = Animal(new Dog);
+        dog.eat('bug');
+    });
+    
+    it("should support specialization", function () {
+        expect(CircusAnimal(new Dog).fetch("bone")).to.equal('Fetched bone');
+    });
+    
+    it("should ignore if strict and protocol not adopted", function () {
+        var Toy = Base.extend({
+            talk: function () { return 'To infinity and beyond'; }
+        });
+        expect(Animal(new Toy).talk()).to.equal('To infinity and beyond');
+        expect(Animal(new Toy, true).talk()).to.be.undefined;
+    });
+    
     describe("#isProtocol", function () {
         it("should determine if type is a protocol", function () {
             expect(Protocol.isProtocol(Animal)).to.be.true;
@@ -1170,37 +1197,6 @@ describe("Protocol", function () {
     });
 });
 
-describe("Proxy", function () {
-    describe("#proxyMethod", function () {
-        it("should proxy calls to normal objects", function () {
-            var dog = Animal(new Dog);
-            expect(dog.talk()).to.equal('Ruff Ruff');
-        });
-
-        it("should ignore null or undefined target", function () {
-            Animal().talk();
-            Animal(null).talk();
-        });
-
-        it("should ignore missing methods", function () {
-            var dog = Animal(new Dog);
-            dog.eat('bug');
-        });
-
-        it("should support specialization", function () {
-            expect(CircusAnimal(new Dog).fetch("bone")).to.equal('Fetched bone');
-        });
-
-        it("should ignore if strict and protocol not adopted", function () {
-            var Toy = Base.extend({
-                talk: function () { return 'To infinity and beyond'; }
-            });
-            expect(Animal(new Toy).talk()).to.equal('To infinity and beyond');
-            expect(Animal(new Toy, true).talk()).to.be.undefined;
-        });
-    });
-});
-
 describe("ProxyBuilder", function () {
     var ToUpperInterceptor = Interceptor.extend({
         intercept: function (invocation) {
@@ -1219,7 +1215,7 @@ describe("ProxyBuilder", function () {
     });
         
     describe("#buildProxy", function () {
-        it("should proxy class", function () {
+        it.only("should proxy class", function () {
             var proxyBuilder = new ProxyBuilder,
                 DogProxy     = proxyBuilder.buildProxy([Dog]),
                 dog          = new DogProxy({

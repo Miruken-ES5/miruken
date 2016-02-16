@@ -2393,8 +2393,8 @@ new function () { // closure
      * @extends miruken.callback.CompositeCallbackHandler
      * @uses miruken.callback.Batching
      */
-    var BatchingComplete = Batching.extend();
-    var Batcher = CompositeCallbackHandler.extend(BatchingComplete, {
+    var BatchingComplete = Batching.extend(),
+        Batcher = CompositeCallbackHandler.extend(BatchingComplete, {
         constructor: function (protocols) {
             this.base();
             protocols = protocols && Array.prototype.concat.apply([], arguments);            
@@ -5527,11 +5527,11 @@ new function () { // closure
 
     /**
      * Collects dependencies to be injected into components.
-     * @class InjectingPolicy
+     * @class InjectionPolicy
      * @uses miruken.ioc.ComponentPolicy
      * @extends Base
      */
-    var InjectingPolicy = Base.extend(ComponentPolicy, {
+    var InjectionPolicy = Base.extend(ComponentPolicy, {
         applyPolicy: function (componentModel) {
             // Dependencies will be merged from inject definitions
             // starting from most derived unitl no more remain or the
@@ -5565,11 +5565,11 @@ new function () { // closure
     
     /**
      * Executes the {{#crossLink "miruken.Initializing"}}{{/crossLink}} protocol.
-     * @class InitializingPolicy
+     * @class InitializationPolicy
      * @uses miruken.ioc.ComponentPolicy
      * @extends Base
      */
-    var InitializingPolicy = Base.extend(ComponentPolicy, {
+    var InitializationPolicy = Base.extend(ComponentPolicy, {
         componentCreated: function (component) {
             if ($isFunction(component.initialize)) {
                 return component.initialize();
@@ -5922,7 +5922,7 @@ new function () { // closure
     ComponentModelError.prototype             = new Error;
     ComponentModelError.prototype.constructor = ComponentModelError;
 
-    var DEFAULT_POLICIES = [ new InjectingPolicy, new InitializingPolicy ];
+    var DEFAULT_POLICIES = [ new InjectionPolicy, new InitializationPolicy ];
     
     /**
      * Default Inversion of Control {{#crossLink "miruken.ioc.Container"}}{{/crossLink}}.
@@ -5973,7 +5973,7 @@ new function () { // closure
             return _registerHandler(this, key, clazz, lifestyle, factory, burden, policies); 
         },
         invoke: function (fn, dependencies, ctx) {
-            var inject  = fn.$inject,
+            var inject  = fn.$inject || fn.inject,
                 manager = new DependencyManager(dependencies);
             if (inject) {
                 if ($isFunction(inject)) {
@@ -6160,6 +6160,7 @@ new function () { // closure
 },{"../callback.js":2,"../context.js":3,"../miruken.js":10,"../validate":11,"bluebird":14}],10:[function(require,module,exports){
 (function (global){
 require('./base2.js');
+var Promise = require('bluebird');
 
 new function () { // closure
 
@@ -7993,12 +7994,12 @@ new function () { // closure
      */
     var InterceptorSelector = Base.extend({
         /**
-         * Description goes here
+         * Selects the interceptors to apply for the method.
          * @method selectInterceptors
-         * @param    {Type}    type         - type being intercepted
-         * @param    {string}  method       - method name
+         * @param    {Type}    type         - intercepted type
+         * @param    {string}  method       - intercepted method name
          * @param    {Array}   interceptors - available interceptors
-         * @returns  {Array} effective interceptors
+         * @returns  {Array} interceptors to apply to method.
          */
         selectInterceptors: function (type, method, interceptors) {
             return interceptors;
@@ -8014,8 +8015,8 @@ new function () { // closure
         /**
          * Builds a proxy class for the supplied types.
          * @method buildProxy
-         * @param    {Array}     ...types    - classes and protocols
-         * @param    {Object}    options     - literal options
+         * @param    {Array}     ...types  -  classes and protocols
+         * @param    {Object}    options   -  literal options
          * @returns  {Function}  proxy class.
          */
         buildProxy: function(types, options) {
@@ -8030,23 +8031,23 @@ new function () { // closure
 
     function _buildProxy(classes, protocols, options) {
         var base  = options.baseType || classes.shift() || Base,
-            proxy = base.extend(protocols.concat(classes), {
+            proxy = base.extend(classes.concat(protocols), {
             constructor: function _(facets) {
                 var spec = _.spec || (_.spec = {});
                 spec.value = facets[Facet.InterceptorSelectors]
                 if (spec.value && spec.value.length > 0) {
-                    Object.defineProperty(this, 'selectors', spec);
+                    Object.defineProperty(this, "selectors", spec);
                 }
                 spec.value = facets[Facet.Interceptors];
                 if (spec.value && spec.value.length > 0) {
-                    Object.defineProperty(this, 'interceptors', spec);
+                    Object.defineProperty(this, "interceptors", spec);
                 }
                 spec.value = facets[Facet.Delegate];
                 if (spec.value) {
                     spec.writable = true;
-                    Object.defineProperty(this, 'delegate', spec);
+                    Object.defineProperty(this, "delegate", spec);
                 }
-                ctor = _proxyMethod('constructor', this.base, base);
+                ctor = _proxyMethod("constructor", this.base, base);
                 ctor.apply(this, facets[Facet.Parameters]);
                 delete spec.writable;
                 delete spec.value;
@@ -8143,7 +8144,7 @@ new function () { // closure
             var invocation = {
                 args: Array.prototype.slice.call(arguments),
                 useDelegate: function (value) {
-                    delegate = value; 
+                    delegate = value;
                 },
                 replaceDelegate: function (value) {
                     _this.delegate = delegate = value;
@@ -8508,7 +8509,7 @@ new function () { // closure
 }
 
 }).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
-},{"./base2.js":1}],11:[function(require,module,exports){
+},{"./base2.js":1,"bluebird":14}],11:[function(require,module,exports){
 module.exports = require('./validate.js');
 require('./validatejs.js');
 
