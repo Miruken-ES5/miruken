@@ -1215,7 +1215,7 @@ describe("ProxyBuilder", function () {
     });
         
     describe("#buildProxy", function () {
-        it.only("should proxy class", function () {
+        it("should proxy class", function () {
             var proxyBuilder = new ProxyBuilder,
                 DogProxy     = proxyBuilder.buildProxy([Dog]),
                 dog          = new DogProxy({

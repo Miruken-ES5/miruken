@@ -85,8 +85,8 @@ new function () { // closure
         constructor: function () {
             var _total = 0.0;
             this.extend({
-                getTotal: function () { return _total; },
-                record:   function (amount) { _total += amount; }
+                get total() { return _total; },
+                record: function (amount) { _total += amount; }
             });
         }
     });
@@ -96,9 +96,9 @@ new function () { // closure
             assets      = Number(assets || 0);
             liabilities = Number(liabilities || 0);
             this.extend({
-                getAssets:       function () { return assets; },
-                getLiabilities:  function () { return liabilities; },
-                getBalance:      function () { return assets - liabilities; },
+                get assets() { return assets; },
+                get liabilities() { return liabilities; },
+                get balance() { return assets - liabilities; },
                 addAssets:       function (amount) { assets      += amount; },
                 addLiabilities:  function (amount) { liabilities += amount; },
                 transfer:        function (amount, receiver) {
@@ -114,12 +114,12 @@ new function () { // closure
         },
         $handle:[
             CountMoney, function (countMoney, composer) {
-                countMoney.record(this.getBalance());
+                countMoney.record(this.balance);
             }]
     });
 
     var Cashier = Accountable.extend({
-        toString: function () { return 'Cashier $' + this.getBalance(); },
+        toString: function () { return 'Cashier $' + this.balance; },
         $handle:[
             WireMoney, function (wireMoney, composer) {
                 wireMoney.received = wireMoney.requested;
@@ -482,7 +482,7 @@ describe("CallbackHandler", function () {
                 casino     = new Casino('Belagio').addHandlers(cashier),
                 countMoney = new CountMoney;
             expect(casino.handle(countMoney)).to.be.true;
-            expect(countMoney.getTotal()).to.equal(1000000.00);
+            expect(countMoney.total).to.equal(1000000.00);
         });
 
         it("should handle callbacks per instance", function () {
@@ -690,10 +690,10 @@ describe("CallbackHandler", function () {
             countMoney = new CountMoney;
             cashier.transfer(50000, blackjack)
 
-            expect(blackjack.getBalance()).to.equal(50000);
-            expect(cashier.getBalance()).to.equal(950000);
+            expect(blackjack.balance).to.equal(50000);
+            expect(cashier.balance).to.equal(950000);
             expect(casino.handle(countMoney, true)).to.be.true;
-            expect(countMoney.getTotal()).to.equal(1000000.00);
+            expect(countMoney.total).to.equal(1000000.00);
         });
 
         it("should handle callbacks anonymously", function () {
@@ -702,7 +702,7 @@ describe("CallbackHandler", function () {
                     countMoney.record(50);
                 }, CountMoney);
             expect(handler.handle(countMoney)).to.be.true;
-            expect(countMoney.getTotal()).to.equal(50);
+            expect(countMoney.total).to.equal(50);
         });
 
         it("should handle compound keys", function () {
@@ -777,7 +777,7 @@ describe("CallbackHandler", function () {
                 countMoney = new CountMoney;
             Promise.resolve(handler.defer(countMoney)).then(function (handled) {
                 expect(handled).to.be.true;
-                expect(countMoney.getTotal()).to.equal(50);
+                expect(countMoney.total).to.equal(50);
                 done();
             });
         });
@@ -939,15 +939,15 @@ describe("CallbackHandler", function () {
             var Config  = Base.extend({
                     constructor: function (key) {
                         this.extend({
-                                getKey: function () { return key; }
-                            });
+                            get key() { return key; }
+                        });
                     }
                 });
                 settings  = new (CallbackHandler.extend({
                     $provide:[
                         Config, function (resolution) {
                             var config = resolution.key,
-                                key    = config.getKey();
+                                key    = config.key;
                             if (key == "url") {
                                 return "my.server.com";
                             } else if (key == "user") {
@@ -1210,7 +1210,7 @@ describe("CallbackHandler", function () {
                 countMoney = new CountMoney;
             expect(casino.filter(function (cb, cm, proceed) { return proceed(); })
                    .handle(countMoney)).to.be.true;
-            expect(countMoney.getTotal()).to.equal(1000000.00);
+            expect(countMoney.total).to.equal(1000000.00);
         });
 
         it("should reject callback", function () {
@@ -1240,7 +1240,7 @@ describe("CallbackHandler", function () {
                 casino     = new Casino('Belagio').addHandlers(cashier),
                 countMoney = new CountMoney;
             expect(casino.aspect(False).handle(countMoney)).to.be.true;
-            expect(countMoney.getTotal()).to.equal(0);
+            expect(countMoney.total).to.equal(0);
         });
 
         it("should ignore invocation", function () {
@@ -1255,7 +1255,7 @@ describe("CallbackHandler", function () {
                 countMoney = new CountMoney;
             expect(casino.aspect(True, function (countIt) { countIt.record(-1); })
                    .handle(countMoney)).to.be.true;
-            expect(countMoney.getTotal()).to.equal(999999.00);
+            expect(countMoney.total).to.equal(999999.00);
         });
 
         it("should invoke with side-effect", function () {
