@@ -152,6 +152,16 @@ describe("Enum", function () {
         });
     });
 
+    describe("#toJSON", function () {
+        it("should convert to JSON", function () {
+            expect(Color.red.toJSON()).to.equal(1);
+            expect(Color.blue.toJSON()).to.equal(2);
+            expect(Color.green.toJSON()).to.equal(3);
+            expect(Message.run.toJSON()).to.equal("run");
+            expect(Message.cancel.toJSON()).to.equal("cancel");            
+        });
+    });
+    
     describe("#names", function () {
         it("should obtain all names", function () {
             expect(Color.names).to.include("red", "blue", "green");

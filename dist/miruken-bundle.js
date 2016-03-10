@@ -6285,6 +6285,12 @@ new function () { // closure
             });
         },
         toString: function () { return this.name; },
+        toJSON: function () {
+            var value = this.value;
+            return value != null && $isFunction(value.toJSON)
+                 ? value.toJSON()
+                 : value;
+        },
         constructing: function (value, name) {
             if (!this.constructor.__defining) {
                 throw new TypeError("Enums cannot be instantiated.");

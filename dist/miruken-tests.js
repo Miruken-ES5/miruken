@@ -6285,6 +6285,12 @@ new function () { // closure
             });
         },
         toString: function () { return this.name; },
+        toJSON: function () {
+            var value = this.value;
+            return value != null && $isFunction(value.toJSON)
+                 ? value.toJSON()
+                 : value;
+        },
         constructing: function (value, name) {
             if (!this.constructor.__defining) {
                 throw new TypeError("Enums cannot be instantiated.");
@@ -9189,6 +9195,7 @@ new function () { // closure
             }            
             return data;
         },
+        toJSON: function() { return this.toData(); },
         /**
          * Merges specified data into another model.
          * @method mergeInto
@@ -27179,6 +27186,16 @@ describe("Enum", function () {
         });
     });
 
+    describe("#toJSON", function () {
+        it("should convert to JSON", function () {
+            expect(Color.red.toJSON()).to.equal(1);
+            expect(Color.blue.toJSON()).to.equal(2);
+            expect(Color.green.toJSON()).to.equal(3);
+            expect(Message.run.toJSON()).to.equal("run");
+            expect(Message.cancel.toJSON()).to.equal("cancel");            
+        });
+    });
+    
     describe("#names", function () {
         it("should obtain all names", function () {
             expect(Color.names).to.include("red", "blue", "green");
