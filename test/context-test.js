@@ -11,7 +11,7 @@ describe("Context", function() {
     var Dog = Base.extend({});
     
     describe("#getState", function() {
-        it("should start in the default state", function() {
+        it("should start in the active state", function() {
             var context = new Context;
             expect(context.state).to.equal(ContextState.Active);
             expect(context.children).to.be.empty;
@@ -125,7 +125,7 @@ describe("Context", function() {
     });
     
     describe("#unwind", function() {
-        it("should end children when ended", function() {
+        it("should end children when unwinded", function() {
             var context = new Context,
                 child1  = context.newChild(),
                 child2  = context.newChild();
@@ -309,7 +309,7 @@ describe("Context", function() {
             expect(root.$descendantOrSelf().resolve(Dog)).to.equal(dog);
         });
 
-        it("should traverse ancestot, siblings or |self|", function() {
+        it("should traverse descendants or |self|", function() {
             var dog        = new Dog,
                 root       = new Context,
                 child1     = root.newChild(),

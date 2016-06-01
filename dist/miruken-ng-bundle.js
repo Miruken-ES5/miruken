@@ -2120,7 +2120,7 @@ new function () { // closure
          * @method $lookup  
          * @for miruken.callback.$
          */                
-        $lookup = $define('$lookup' , Variance.Invariant),
+        $lookup = $define('$lookup', Variance.Invariant),
         /**
          * return value to indicate a callback was not handled.
          * @property {Object} $NOT_HANDLED
@@ -2249,8 +2249,8 @@ new function () { // closure
                  * During invocation, the receiver will have access to a global **$composer** property
                  * representing the initiating {{#crossLink "miruken.callback.CallbackHandler"}}{{/crossLink}}.
                  * @method invokeOn
-                 * @param   {Object}                            target  - method receiver
-                 * @param   {miruken.callback.CallbackHandler}  composer  - composition handler
+                 * @param   {Object}                            target    -  method receiver
+                 * @param   {miruken.callback.CallbackHandler}  composer  -  composition handler
                  * @returns {boolean} true if the method was accepted.
                  */
                 invokeOn: function (target, composer) {
@@ -2264,8 +2264,8 @@ new function () { // closure
                             return false;
                         }                    
                     }
+                    var oldComposer = global.$composer;                    
                     try {
-                        var oldComposer = global.$composer;
                         global.$composer = composer;
                         switch (type) {
                             case HandleMethod.Get:
@@ -2282,6 +2282,7 @@ new function () { // closure
                             return false;
                         }
                         _returnValue = result;
+                        return true;                        
                     } catch (exception) {
                         _exception = exception;
                         throw exception;
@@ -2292,7 +2293,6 @@ new function () { // closure
                             delete global.$composer;
                         }
                     }
-                    return true;
                 }
             });
         }
@@ -2568,8 +2568,9 @@ new function () { // closure
                 get callbackResult() {
                     if (_result === undefined) {
                         if (!many) {
-                            if (_resolutions.length > 0) {
-                                _result = _resolutions[0];
+                            var resolutions = _flattenPrune(_resolutions);
+                            if (resolutions.length > 0) {
+                                _result = resolutions[0];
                             }
                         } else {
                             _result = this.instant
@@ -2635,8 +2636,9 @@ new function () { // closure
     });
 
     var compositionScope = $decorator({
+        isCompositionScope: function () { return true; },
         handleCallback: function (callback, greedy, composer) {
-            if ($classOf(callback) !== Composition) {
+            if (!(callback instanceof Composition)) {
                 callback = new Composition(callback);
             }
             return this.base(callback, greedy, composer);
@@ -2688,9 +2690,7 @@ new function () { // closure
          * @returns {boolean} true if the callback was handled, false otherwise.
          */
         handleCallback: function (callback, greedy, composer) {
-            return callback instanceof ResolveMethod
-                ? callback.invokeResolve(composer)
-                : $handle.dispatch(this, callback, null, composer, greedy);
+            return $handle.dispatch(this, callback, null, composer, greedy);
         },
         $handle:[
             Lookup, function (lookup, composer) {
@@ -2722,7 +2722,7 @@ new function () { // closure
             },
             ResolveMethod, function (method, composer) {
                 return method.invokeResolve(composer);
-            },            
+            },
             Composition, function (composable, composer) {
                 var callback = composable.callback;
                 return callback && $handle.dispatch(this, callback, null, composer);
@@ -2857,6 +2857,7 @@ new function () { // closure
                 /**
                  * Adds the callback handlers to the composite.
                  * @method addHandlers
+                 * @param   {Any}  ...handlers  -  handlers to add
                  * @returns {miruken.callback.CompositeCallbackHandler}  composite
                  * @chainable
                  */
@@ -2869,8 +2870,26 @@ new function () { // closure
                     return this;
                 },
                 /**
+                 * Adds the callback handlers to the composite.
+                 * @method addHandlers
+                 * @param   {number}  atIndex      -  index to insert at
+                 * @param   {Any}     ...handlers  -  handlers to insert
+                 * @returns {miruken.callback.CompositeCallbackHandler}  composite
+                 * @chainable
+                 */
+                insertHandlers: function (atIndex /*,handlers*/) {
+                    var index = 0;
+                    Array2.flatten(arguments).forEach(function (handler) {
+                        if (handler) {
+                            _handlers.splice(atIndex + index++, handler.toCallbackHandler());
+                        }
+                    });
+                    return this;                    
+                },                
+                /**
                  * Removes callback handlers from the composite.
                  * @method removeHandlers
+                 * @param   {Any}  ...handlers  -  handlers to remove
                  * @returns {miruken.callback.CompositeCallbackHandler}  composite
                  * @chainable
                  */
@@ -2902,10 +2921,7 @@ new function () { // closure
                             handled = true;
                         }
                     }
-                    if (!handled || greedy) {
-                        handled = this.base(callback, greedy, composer) || handled;
-                    }
-                    return handled;
+                    return this.base(callback, greedy, composer) || handled;
                 }
             });
             this.addHandlers(arguments);
@@ -2998,7 +3014,7 @@ new function () { // closure
         /**
          * Uses Resolve to determine instances to invoke.
          * @property {number} Resolve
-         */                
+         */
         Resolve: 1 << 3,
         /**
          * Publishes invocation to all handlers.
@@ -3035,11 +3051,9 @@ new function () { // closure
                  * @param   {boolean}  enabled  -  true if enable option, false to clear.
                  */                
                 setOption: function (option, enabled) {
-                    if (enabled) {
-                        _options = _options.addFlag(option);
-                    } else {
-                        _options = _options.removeFlag(option);
-                    }
+                    _options = enabled
+                             ? _options.addFlag(option)
+                             : _options.removeFlag(option);
                     _specified = _specified.addFlag(option);
                 },
                 /**
@@ -3144,15 +3158,22 @@ new function () { // closure
     });
 
     function _delegateInvocation(delegate, type, protocol, methodName, args, strict) {
-        var handler   = delegate.handler,
+        var broadcast  = false,
+            useResolve = false,
+            bestEffort = false,
+            handler    = delegate.handler;
+
+        if (!handler.isCompositionScope) {
             semantics = new InvocationSemantics;
-        handler.handle(semantics, true);
-        strict = !!(strict | semantics.getOption(InvocationOptions.Strict));
-        var broadcast    = semantics.getOption(InvocationOptions.Broadcast),
-            bestEffort   = semantics.getOption(InvocationOptions.BestEffort),
-            useResolve   = semantics.getOption(InvocationOptions.Resolve)
-                        || protocol.conformsTo(Resolving),
-            handleMethod = useResolve
+            if (handler.handle(semantics, true)) {
+                strict     = !!(strict | semantics.getOption(InvocationOptions.Strict));
+                broadcast  = semantics.getOption(InvocationOptions.Broadcast);
+                bestEffort = semantics.getOption(InvocationOptions.BestEffort);
+                useResolve = semantics.getOption(InvocationOptions.Resolve)
+                          || protocol.conformsTo(Resolving);
+            }
+        }
+        var handleMethod = useResolve
                          ? new ResolveMethod(type, protocol, methodName, args, strict, broadcast, !bestEffort)
                          : new HandleMethod(type, protocol, methodName, args, strict);
         if (!handler.handle(handleMethod, broadcast && !useResolve) && !bestEffort) {
@@ -3212,6 +3233,21 @@ new function () { // closure
                     if (callback instanceof InvocationSemantics) {
                         semantics.mergeInto(callback);
                         handled = true;
+                    } else if (!greedy) {
+                        // Greedy must be false when resolving since Resolution.isMany
+                        // represents greedy in that case
+                        if (semantics.isSpecified(
+                            InvocationOptions.Broadcast | InvocationOptions.Resolve)) {
+                            greedy = semantics.getOption(InvocationOptions.Broadcast)
+                                  && !semantics.getOption(InvocationOptions.Resolve);
+                        } else {
+                            var inv = new InvocationSemantics;
+                            if (this.handle(inv, true) &&
+                                inv.isSpecified(InvocationOptions.Broadcast)) {
+                                greedy = inv.getOption(InvocationOptions.Broadcast)
+                                     && !inv.getOption(InvocationOptions.Resolve);
+                            }
+                        }
                     }
                     if (greedy || !handled) {
                         handled = handled | this.base(callback, greedy, composer);
@@ -3346,7 +3382,7 @@ new function () { // closure
          * @returns {miruken.callback.CallbackHandler}  callback handler aspect.
          * @throws  {RejectedError} An error if before returns an unaccepted promise.
          * @for miruken.callback.CallbackHandler
-         */                                                                
+         */
         aspect: function (before, after, reentrant) {
             return this.filter(function (callback, composer, proceed) {
                 if ($isFunction(before)) {
@@ -3365,7 +3401,7 @@ new function () { // closure
                         }
                         return true;
                     } else if (test === false) {
-                        return true;
+                        throw new RejectedError(callback);
                     }
                 }
                 return _aspectProceed(callback, composer, proceed, after, test);
@@ -4137,7 +4173,7 @@ new function () { // closure
                     if (!axis) {
                         handled = this.base(callback, greedy, composer);
                         if (handled && !greedy) {
-                            return handled;
+                            return true;
                         }
                         if (_parent) {
                             handled = handled | _parent.handle(callback, greedy, composer);
@@ -4757,7 +4793,7 @@ new function() { // closure
         $recover: function (context) {
             return this.filter(function(callback, composer, proceed) {
                 try {
-                    handled = proceed();
+                    var handled = proceed();
                     if (handled) {
                         var result = callback.callbackResult;
                         if ($isPromise(result)) {
@@ -5123,7 +5159,7 @@ new function () { // closure
         }
         if ($isFunction(node.traverse))
             node.traverse(function (child) {
-                return Traversal.preOrder(child, visitor, context);
+                return _preOrder(child, visitor, context, visited);
             });
         return false;
     }
@@ -5135,7 +5171,7 @@ new function () { // closure
         }
         if ($isFunction(node.traverse))
             node.traverse(function (child) {
-                return Traversal.postOrder(child, visitor, context);
+                return _postOrder(child, visitor, context, visited);
             });
         return visitor.call(context, node);
     }
@@ -8170,7 +8206,7 @@ new function () { // closure
         invoke: function (protocol, methodName, args, strict) {
             var object = this.object;
             if (object && (!strict || protocol.adoptedBy(object))) {
-                method = object[methodName];                
+                var method = object[methodName];                
                 return method && method.apply(object, args);
             }
         }
@@ -8753,7 +8789,7 @@ new function () { // closure
                     spec.writable = true;
                     Object.defineProperty(this, "delegate", spec);
                 }
-                ctor = _proxyMethod("constructor", this.base, base);
+                var ctor = _proxyMethod("constructor", this.base, base);
                 ctor.apply(this, facets[Facet.Parameters]);
                 delete spec.writable;
                 delete spec.value;
@@ -8788,7 +8824,7 @@ new function () { // closure
             var source      = sources[i],
                 sourceProto = source.prototype,
                 isProtocol  = $isProtocol(source);
-            for (key in sourceProto) {
+            for (var key in sourceProto) {
                 if (!((key in proxied) || (key in _noProxyMethods))
                 && (!proxy.shouldProxy || proxy.shouldProxy(key, source))) {
                     var descriptor = _getPropertyDescriptor(sourceProto, key);
@@ -8902,7 +8938,7 @@ new function () { // closure
         if (arguments.length >= 2) {
             overrides[arguments[0]] = arguments[1];
         }
-        for (methodName in overrides) {
+        for (var methodName in overrides) {
             if (!(methodName in _noProxyMethods) && 
                 (!proxy.shouldProxy || proxy.shouldProxy(methodName, clazz))) {
                 var method = this[methodName];
@@ -9792,7 +9828,7 @@ new function () { // closure
          */
         fromData: function (data, options) {
             if ($isNothing(data)) {
-                return;
+                return this;
             }
             var meta        = this.$meta,
                 descriptors = meta && meta.getDescriptor(),
@@ -9848,7 +9884,7 @@ new function () { // closure
             var meta        = this.$meta,
                 descriptors = meta && meta.getDescriptor();
             if (descriptors) {
-                var all = $isNothing(spec);
+                var all = !$isObject(spec);
                 for (var key in descriptors) {
                     if (all || (key in spec)) {
                         var keyValue   = this[key];

@@ -1239,14 +1239,17 @@ describe("CallbackHandler", function () {
             var cashier    = new Cashier(1000000.00),
                 casino     = new Casino('Belagio').addHandlers(cashier),
                 countMoney = new CountMoney;
-            expect(casino.aspect(False).handle(countMoney)).to.be.true;
-            expect(countMoney.total).to.equal(0);
+            expect(function () {
+                casino.aspect(False).handle(countMoney);
+            }).to.throw(RejectedError);
         });
 
         it("should ignore invocation", function () {
             var guest = new Guest(21),
                 level = CallbackHandler(new Level1Security);
-            expect(Security(level.aspect(False)).admit(guest)).to.be.undefined;
+            expect(function () {
+                Security(level.aspect(False)).admit(guest);
+            }).to.throw(RejectedError);
         });
 
         it("should handle callback with side-effect", function () {
