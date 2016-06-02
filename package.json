@@ -1,7 +1,9 @@
 {
   "name": "miruken",
   "version": "0.0.87",
-  "description": "",
+  "description": "Framework for true object-oriented view management",
+  "license": "MIT",
+  "repository": "miruken/MirukenJS",
   "dependencies": {
     "bluebird": "^2.10.2",
     "chai": "^1.10.0",
@@ -10,6 +12,7 @@
     "validate.js": "^0.10.0"
   },
   "devDependencies": {
+    "grunt": "0.4.5",
     "grunt-browserify": "^3.5.0",
     "grunt-concurrent": "latest",
     "grunt-contrib-copy": "^0.8.0",
