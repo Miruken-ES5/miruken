@@ -7,5 +7,9 @@ debug/
 *~
 node_modules
 bower_components
-documentation/docs/
+documentation/docs
 bundles/
+nbproject/
+coverage/
+/lib/merrittbase2.js
+/wiki/Features and Benefits.MD
