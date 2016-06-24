@@ -1,0 +1,7 @@
+{
+  "name": "sampleCode",
+  "private": true,
+  "dependencies": {
+    "system.js": "~0.19.3"
+  }
+}
