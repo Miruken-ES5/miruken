@@ -13,7 +13,7 @@ new function () {
     		name: null
     	},
 
-	    constructor: function(name){
+	    constructor(name) {
 	        this.name = name;
 	        Animal.count++;
 	        this.id = Animal.count;

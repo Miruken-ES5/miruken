@@ -4,8 +4,8 @@ new function(){
 
 	describe("statics", () => {
 		
-		var tom   = new Animal('Tom');
-		var jerry = new Animal('Jerry');
+		let tom   = new Animal('Tom');
+		let jerry = new Animal('Jerry');
 
 		it("should export Animal", ()=>{
 			Animal.should.not.be.null;

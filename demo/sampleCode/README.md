@@ -1,15 +1,14 @@
-#ES2015KarmaMochaAndJSPM
+Sample Code for MirukenJs
 
-It turns out that getting a project set up to use 
+This code is written using
 
+- MirukenJs
 - ES2015 
 - Babel 
 - Karma 
 - Mocha
 - Chai
 - and JSPM 
-
-can be pretty challenging.  This set up works.  (Atleast it does today.)
 
 ##To run the tests
 
@@ -20,5 +19,3 @@ First install the node modules
 Then start Karma
 	
 	karma start
-
-You should see 3 passing tests

@@ -11,9 +11,10 @@ new function () {
 
 	});
 
-	var ticket = new Ticket();
+	let ticket = new Ticket();
+	
 	ticket.extend({
-	    Open: function(){
+	    Open() {
 	    }
 	});
 
@@ -25,7 +26,7 @@ new function () {
 	if (passValidation)
 	{
 	    ticket.extend({
-	        Close: function(){
+	        Close() {
 	        }
 	    });
 	}

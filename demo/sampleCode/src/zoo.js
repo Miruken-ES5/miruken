@@ -11,13 +11,13 @@ new function(){
 	});
 
 	const Eagle = Animal.extend({
-	    shriek: function(){
+	    shriek() {
 	        // make a sound
 	    }
 	});
 
 	const Mouse = Animal.extend({
-	    squeak: function(){
+	    squeak() {
 	        // make a sound
 	    }
 	});

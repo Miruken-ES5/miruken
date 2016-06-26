@@ -13,7 +13,7 @@ new function(){
             name: null
         },
 
-        constructor: function(name){
+        constructor(name) {
             this.name = name;
             Animal.count++;
             this.id = Animal.count;
@@ -23,7 +23,7 @@ new function(){
     });
 
     Animal.implement({
-        verify: function(){
+        verify() {
             return this.hasOwnProperty('id')
                 && this.hasOwnProperty('name');
         } 
