@@ -11,9 +11,14 @@ module.exports = function (config) {
         "node_modules/**/*.js"
       ],
       loadFiles: [
+        "src/*.js",
         "tests/*.js"
       ]
     },
+
+    files: [
+      "bower_components/miruken/dist/miruken-bundle.js",
+    ],
 
     autoWatch: true,
 
