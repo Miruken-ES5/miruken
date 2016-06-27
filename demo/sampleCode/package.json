@@ -16,6 +16,7 @@
     "karma": "~0.13",
     "karma-chai": "^0.1.0",
     "karma-chrome-launcher": "^0.2.0",
+    "karma-coverage": "^1.0.0",
     "karma-jspm": "^2.0.1",
     "karma-mocha": "^1.0.1",
     "karma-mocha-reporter": "^2.0.4",
@@ -24,7 +25,7 @@
   "scripts": {
     "postinstall": "node node_modules/bower/bin/bower install",
     "prestart": "npm install",
-    "start": "http-server -c-1 -o",
+    "start": "node config.js",
     "pretest": "npm install",
     "test": "karma start karma.conf.js",
     "test-single-run": "karma start karma.conf.js --single-run"

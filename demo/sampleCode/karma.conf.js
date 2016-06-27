@@ -7,8 +7,8 @@ module.exports = function (config) {
       config    : "config.js",
       packages  : "bower_components/system.js/dist",
       serveFiles: [
-        "src/**/*.js",
-        "node_modules/**/*.js"
+        "src/*.js"
+        //"node_modules/**/*.js"
       ],
       loadFiles: [
         "src/*.js",
@@ -17,8 +17,14 @@ module.exports = function (config) {
     },
 
     files: [
-      "bower_components/miruken/dist/miruken-bundle.js",
+      "bower_components/miruken/dist/miruken-bundle.js"
     ],
+
+    // preprocess matching files before serving them to the browser
+    // available preprocessors: https://npmjs.org/browse/keyword/karma-preprocessor
+    preprocessors: {
+      'src/*.js': ['coverage']
+    },
 
     autoWatch: true,
 
@@ -34,7 +40,7 @@ module.exports = function (config) {
       "karma-chai"
     ],
 
-    reporters: ["mocha"]
+    reporters: ["mocha", "coverage"]
 
   });
 };
