@@ -25,7 +25,7 @@
 new function(){
 
   base2.package(this, {
-    name:     "instrumentation",
+    name:     "loggers",
     imports:  "miruken",
     exports:  "Logger,ConsoleLogger,NotificationLogger"
   });
