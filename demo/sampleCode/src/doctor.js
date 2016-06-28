@@ -10,17 +10,15 @@ new function() {
 
 	const Doctor = Person.extend({
 		$properties: {
-			firstName: null,
-			lastName : null,
-			gender   : null
+			specialty: null
 		},
 		get fullName(){
-			return `${this.firstName} ${this.lastName}`
+			return `Dr. ${this.base()}, ${this.specialty}`
 		}
 	}, {
-		male          : "MALE",
-		female        : "FEMALE",
-		complicated: "COMPLICATED"
+		earNoseThroat:  "ENT",
+		familyPractice: "FP",
+		spinalSurgeon:  "OSS"
 	});
 
 	eval(this.exports);

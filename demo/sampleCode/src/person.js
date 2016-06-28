@@ -19,7 +19,7 @@ new function() {
 	}, {
 		male          : "MALE",
 		female        : "FEMALE",
-		complicated: "COMPLICATED"
+		itsComplicated: "ITSCOMPLICATED"
 	});
 
 	eval(this.exports);

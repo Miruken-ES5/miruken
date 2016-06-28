@@ -11,6 +11,8 @@ module.exports = function (config) {
         "node_modules/**/*.js"
       ],
       loadFiles: [
+        "src/person.js",
+        "src/doctor.js",
         "src/*.js",
         "tests/*.js"
       ]
