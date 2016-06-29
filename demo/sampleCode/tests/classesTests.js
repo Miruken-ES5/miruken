@@ -1,7 +1,7 @@
 /* 
  * The MIT License
  *
- * Copyright 2016 Craig Neuwirt, Michael Dudley.
+ * Copyright 2016 mjesse.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -22,41 +22,28 @@
  * THE SOFTWARE.
  */
 
-new function(){
+new function() {
 
-	base2.package(this, {
-		name   : "logging",
-		exports: "Logger",
-		imports: "miruken"
-	});
+  base2.package(this, {
+    name: "classesTest",
+    imports: "instrumentation"
+  });
 
-	eval(this.imports);
+  eval(base2.instrumentation.namespace);
 
-	const loggingProtocol = Protocol.extend({
-		debug(){},
-		error(){}
-	});
+  describe("classes", () => {
 
-	const NullLogger = Base.extend(loggingProtocol, {
-		debug(){},
-		error(){}
-	});
+    it("should contain a logger", () => {
+      Logger.should.not.be.nothing;
+    });
 
-	let nullLogger = new NullLogger();
-	const Logger = Base.extend(loggingProtocol, {
-		debug(message){
-			console.log(`DEBUG: ${message}`);
-		},
-		error(message){
-			console.log(`ERROR: ${message}`);
-		}
+    it("should contain a console logger", () => {
+      ConsoleLogger.should.not.be.nothing;
+    });
 
-	}, {
-		get NullLogger(){
-			return nullLogger
-		}
-	}); 
-
-	eval(this.exports);
+    it("should contain a notification logger", () => {
+      NotificationLogger.should.not.be.nothing;
+    });
+  });
 
 };

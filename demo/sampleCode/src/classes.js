@@ -24,39 +24,26 @@
 
 new function(){
 
-	base2.package(this, {
-		name   : "logging",
-		exports: "Logger",
-		imports: "miruken"
-	});
+  base2.package(this, {
+    name:     "instrumentation",
+    imports:  "miruken",
+    exports:  "Logger,ConsoleLogger,NotificationLogger"
+  });
 
-	eval(this.imports);
+  eval(this.imports);
 
-	const loggingProtocol = Protocol.extend({
-		debug(){},
-		error(){}
-	});
+  // we need a base logger to capture all the messages
+  const Logger = Base.extend({
+  });
 
-	const NullLogger = Base.extend(loggingProtocol, {
-		debug(){},
-		error(){}
-	});
+  // now extend to create a console logger
+  const ConsoleLogger = Logger.extend({
+  });
 
-	let nullLogger = new NullLogger();
-	const Logger = Base.extend(loggingProtocol, {
-		debug(message){
-			console.log(`DEBUG: ${message}`);
-		},
-		error(message){
-			console.log(`ERROR: ${message}`);
-		}
+  // now extend to create a notification logger
+  const NotificationLogger = Logger.extend({
+  });
 
-	}, {
-		get NullLogger(){
-			return nullLogger
-		}
-	}); 
-
-	eval(this.exports);
+  eval(this.exports);
 
 };
