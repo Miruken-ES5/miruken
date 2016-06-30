@@ -39,4 +39,10 @@ new function(){
 		});
 
 	});
+
+	describe("statics in the NullLogger", () => {
+		it("should have a static instance of NullLogger on the class", () => {
+			NullLogger.instance.should.not.be.nothing;
+		});
+	});
 }
