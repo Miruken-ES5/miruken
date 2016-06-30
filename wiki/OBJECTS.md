@@ -4,17 +4,15 @@ Miruken's object-oriented approach gives power to development teams who have wor
 To begin, it is important to understand how JavaScript objects work compared to other object-oriented languages. If you are not familiar how JavaScript is a classless object-oriented programming language, refer to [Introduction to Object-Oriented JavaScript](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Introduction_to_Object-Oriented_JavaScript).
 
 ##Base Objects
-**Base** is the base class for your objects. This object is what provides the object-oriented framework in Miruken. For now, let's discuss the two (2) functions Base provides: **extend** and **implement**.
+**Base** is the base class for all objects in Miruken. This object is what provides the object-oriented features in Miruken. For now, let's discuss the two (2) functions Base provides: **extend** and **implement**.
 
 ---
 
 ##Extend Function
-**Extend** is the function in which objects are created. You can use it to extend *classes* and *instances*.
+**Extend** is the function which derived classes and objects are created. You can use it to extend *classes* and *instances*.  Extend can receive many arguments as you will see, but it's most frequently use is one to two arguments
 
-Extend takes two (2) arguments:
-
-1. An object that you want to extend.
-2. An object that will be used to create static methods and properties.
+1. An object whose members are available on instances.
+2. An object whose members are available on the class itself.
 
 The second argument is *optional* and will be explained later in this section.
 
@@ -27,31 +25,17 @@ We are going to create a zoo package where you start with an **Animal** class an
 
 For example, we will create a `Logger` object. Then extend it to be a `ConsoleLogger` and a `NotificationLogger`.
 
-    new function(){
+    // we need a base logger to capture all the messages
+    const Logger = Base.extend({
+    });
 
-      base2.package(this, {
-        name:     "instrumentation",
-        imports:  "miruken",
-        exports:  "Logger,ConsoleLogger,NotificationLogger"
-      });
+    // now extend to create a console logger
+    const ConsoleLogger = Logger.extend({
+    });
 
-      eval(this.imports);
-
-      // we need a base logger to capture all the messages
-      const Logger = Base.extend({
-      });
-
-      // now extend to create a console logger
-      const ConsoleLogger = Logger.extend({
-      });
-
-      // now extend to create a notification logger
-      const NotificationLogger = Logger.extend({
-      });
-
-      eval(this.exports);
-
-    };
+    // now extend to create a notification logger
+    const NotificationLogger = Logger.extend({
+    });
 
 As you can see, creating and extending classes is very straight forward. Provide a class name and use `extend`.
 
@@ -101,7 +85,7 @@ For example, we have a `Logger` class that takes a name, just to differientiate 
     };
 
 ###Static
-You can also `extend` objects with functions that are static and accessible to all instances of that class. As mentioned above, this is second argument you can pass into the `extend` function.
+You can also `extend` objects with functions that are static and accessible to all instances of that class. As mentioned above, this is the second argument you can pass into the `extend` function.
 
 For example, using pseudo-code:
 
@@ -114,7 +98,7 @@ For example, using pseudo-code:
             id = Count();
             name = name;
         };
-        
+
         Id: function(){
             return id;
         };
