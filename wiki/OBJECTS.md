@@ -85,8 +85,8 @@ For example, we have a `Logger` class that takes a name, just to differentiate t
         alertLogger.alert("Whoops!");
     };
 
-##Working with Static
-You can also `extend` objects with functions that are static and accessible to all instances of that class. As mentioned above, this is the last argument you can pass into the `extend` function.
+##Working with Static Methods
+You can also modify objects with functions that are static and accessible to all instances of that class.
 
 For example:
 
@@ -131,24 +131,25 @@ For example:
     };
 
 ##Creating Mixins
-Mixins provides a clean way for code reuse without inheritance. The power of composition makes sense when you have an object that needs a diverse set of functionality, but you don't want to do this through a lot of extending or inheritance.
+Mixins provides a clean way for code reuse without inheritance. The power of composition makes sense when you have an object that needs a diverse sets of functionality, but you don't want to do this through a lot of extending or inheritance. In this way, Miruken can provide multiple inheritance of various objects.
 
 For example:
 
-    const someClass = Base.extend(MyMixin, {
-
+    const ErrorIconMixin = Base.extend({
+        showErrorIcon(): {
+        }
     });
 
-    For Example 1
-    const s = new SomeClass();
+    const ErrorMessageMixin = Base.extend({
+        showErrorMessage(message): {
+        }
+    });
 
-    For Example 2
-    SomeClass().implement(MyMixin);
-
-    For Example 2 Class
-    const myMixin = Base.extend({
-        addHistory(){
-        };
+    const Validation = Base.extend(ErrorIconMixin, ErrorMessageMixin, {
+        show(): {
+            ErrorIconMixin.showErrorIcon();
+            ErrorMessageMixin.showErrorMessage();
+        }
     });
 
 ##Creating Properties
