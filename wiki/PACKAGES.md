@@ -35,10 +35,59 @@ For example:
     };
 
 ##Imports
-Using `imports` states that names of package(s) to be available in your closure.
+Using `imports` states that *names* of package(s) to be available in your closure. This is in essence makes classes defined in packages available in the closure. To start, you will need to bring in *miruken*. You will also need to run the `eval` function to actually import those classes.
+
+For example:
+
+    new function() {
+        base2.package({
+            name: "logging",
+            imports: "miruken"
+        });
+
+        eval(this.imports);
+    }
 
 ##Exports
-Using `exports` states that objects defined in the closure to be available for other closures.
+Using `exports` states that *classes* defined in the closure to be available for other closures. Similar to imports, you need to call the `eval` to actually export the classes.
+
+For example:
+
+    new function() {
+        base2.package({
+            name: "logging",
+            imports: "miruken"
+        });
+
+        eval(this.imports);
+
+        const loggingProtocol = Protocol.extend({
+            debug(){},
+            error(){}
+        });
+
+        const NullLogger = Base.extend(loggingProtocol, {
+            debug(){},
+            error(){}
+        });
+
+        let nullLogger = new NullLogger();
+        const Logger = Base.extend(loggingProtocol, {
+            debug(message){
+                console.log(`DEBUG: ${message}`);
+            },
+            error(message){
+                console.log(`ERROR: ${message}`);
+            }
+
+        }, {
+            get NullLogger(){
+                return nullLogger
+            }
+        }); 
+
+        eval(this.exports);
+    }
 
 ##Naming
 

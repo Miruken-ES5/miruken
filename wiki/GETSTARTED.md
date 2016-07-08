@@ -13,6 +13,7 @@ You now have access to the power of Miruken.
 
 1. About Miruken
 2. Objects
-3. Packages
-4. Context and Callbacks
-5. Models, Views, and Controllers
+3. Module
+4. Packages
+5. Context and Callbacks
+6. Models, Views, and Controllers
