@@ -3,22 +3,23 @@
 **Namespace**
 >miruken
 
-The concept of a protocol is inspired by protocols in Objective-C and is loosely comparable to interfaces in C# or Java.
+The concept of a Protocol is inspired by protocols in Objective-C and is loosely comparable to interfaces in C# or Java.
 
-I say protocols are loosly comparable to interfaces because in Miruken objects are not required to implement all the functions of a protocol.
-Objects can choose to only implement one or more functions from the Protocal and the actual implementation can be spread across many objects.
+I say protocols are loosly comparable to interfaces because in Miruken objects are not required to implement all the functions of a Protocol.
+Objects can choose to only implement one or more functions from the Protocal and the full implementation can be spread across many objects.
 
-A protocol describes a set of expected behaviors by defining functions and properties. Parameters included in the Protocol definition are not actually used, but are very helpful in describing how the Protical should be called.
-Protocols only define functions they do not implement them.
+A Protocol describes a set of expected behaviors by defining functions and properties. 
+Parameters included in the Protocol definition are not actually used, but are very helpful in describing how the Protocol should be called.
+Protocols are only definitions.
 The actual implementaion is done in CallbackHandlers.
 
-As an example lets create a Logging protocol with a debug method
+As an example lets create a Logging Protocol with a debug method.
+
 ```JavaScript
 let Logging = Protocol.extend({
 	debug(message) {}
 });
 ```
-
 and then lets create a [CallbackHandler](CallbackHandler.md) to implement the Logging Protocol and add it to a [Context](Context.md).
 
 ```JavaScript
@@ -30,39 +31,111 @@ let ObservableLoggingHandler = CallbackHandler.extend({
 });  
 
 let context = new Context();
-context.addHandlers([new ObservableLoggingHandler()]);
+context.addHandlers(new ObservableLoggingHandler());
 ```
-When the debug method is called 
+When the debug method is called within our context
 
-	Logging(context).debug("message");
+```JavaScript
+Logging(context).debug("message");
+```
 
-the debug method implementation on ObservableLoggingHandler will be called, 
+the debug method on ObservableLoggingHandler will be called and `debugCalled` will equal true.
 
-Notice that this ObservableLoggingHandler does not explicitly implement the Logging Protocol, 
-but will still be chosen to handle a call to debug because Miruken matches
-Protocol methods based on name.  This makes the framework very flexible, but sometimes
-this is not the behavior that is desired.
+Notice that ObservableLoggingHandler does not explicitly implement the Logging Protocol.
+It is ismply a CallbackHandler with a debug method.
+It was chosen to handle the call to debug because Miruken matches
+Protocol methods based on the method name.
 
 ##StrictProtocol
 
-StrictProtocols have a very simular bevahior to Protocols, but will only match 
-CallbackHandlers that explicitly implement the Protocol.  In general it is recommended to 
-create StrictProtocols unless you need the flexibility of Protocols.
+StrictProtocols have a very simular bevahior to Protocols, 
+but give you more control over which CallbackHandlers are given a chance to handle the method call.
+Only CallbackHandlers that explicitly implement the StrictProtocol will be given a chance to handle the method call.
+A CallbackHandler can explicitly implement an interface by passing it in to the extend method before the object literal
+that defines the behavior.
 
-Here our protocol extends from StrictProtocol
+Here is a new Loggin Protocol and this time it extends from StrictProtocol.
 
-	let Logging = StrictProtocol.extend({
-		debug(message) {}
-	});
+```JavaScript
+let Logging = StrictProtocol.extend({
+        debug(message) {}
+});
+```
 
-and can only be implemented by CallbackHandlers that explicitly handle Logging.
+It can only be implemented by CallbackHandlers that explicitly handle the Logging Protocol.
 
-	let ObservableLoggingHandler = CallbackHandler.extend(Logging, {
-    	debug(message) {
-    		debugCalled = true;
-    	}
-    });   
+```
+let ObservableLoggingHandler = CallbackHandler.extend(Logging, {
+    debug(message) {
+            debugCalled = true;
+    }
+});   
 
-	let context = new Context();
-	context.addHandlers([new ObservableLoggingHandler()]);
+let context = new Context();
+context.addHandlers(new ObservableLoggingHandler());
+```
 
+##Benefits of Protocols
+
+**Polymorphism**
+>Polymorphism means that the receiver of a call decides the implementation. 
+>Poly meaning many and morph meaning shape or form.
+
+Protocols enable polymorphic behavior in javascript. A single protocol can be implemented in many forms.
+For the Logging protocol defined above, we may have a NullLogger that does nothing, a ConsoleLogger that logs to the local console window, 
+and an HttpLogger that logs back to the web server. Each of them can choose to implement part or all of the Logging protocol.  
+
+Combining Protocols with Contexts and CallbackHandlers gives application developers complete control over application behavior.  
+It gives the ability to override, modify, and extend behavior at any level of the application.
+
+##Methods for working with Protocols
+
+Given the following Protocols and instances
+
+```JavaScript
+let Logging = Protocol.extend({
+    debug(message) {}
+});
+        
+let debugCalled = false;
+let ObservableLoggingHandler = CallbackHandler.extend(Logging, {
+    debug(message) {
+        debugCalled = true;
+    }
+});   
+
+let handler = new ObservableLoggingHandler();
+```
+
+###$isProtocol(target) 
+
+A function in miruken that returns true if the target is a Protocol
+
+```JavaScript
+$isProtocol(Logging)
+    .should.be.true;
+```
+
+###Protocol.isProtocol(target)
+
+A method on Protocol that return true if the target is a Protocol
+
+```JavaScript
+Protocol.isProtocol(Logging)
+    .should.be.true;
+```
+
+###Protocol.adoptedBy(target)
+Returns true if the Protocol is impmented by the target.
+
+```JavaScript
+Logging.adoptedBy(ObservableLoggingHandler)
+    .should.be.true;
+```
+###object.conformsTo(protocol)
+Returns true if the object implements the Protocol.
+
+```JavaScript
+ObservableLoggingHandler.conformsTo(Logging)
+    .should.be.true;
+```
