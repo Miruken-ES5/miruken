@@ -15,31 +15,94 @@ describe("Protocol CallbackHandler and Context", () => {
     });   
 
     describe("Protocol", () => {
-        let Logging = Protocol.extend({
-                debug(message) {}
-        });
 
-        let debugCalled = false;
-        let ObservableLoggingHandler = CallbackHandler.extend({
-            debug(message) {
-                    debugCalled = true;
-            }
-        });   
+        describe("methods", () => {
+            let Logging = Protocol.extend({
+                    debug(message) {}
+            });
 
-        let context = new Context();
-        context.addHandlers([new ObservableLoggingHandler()]);
+            let debugCalled = false;
+            let ObservableLoggingHandler = CallbackHandler.extend({
+                debug(message) {
+                        debugCalled = true;
+                }
+            });   
 
-        describe("will match the first callback handler found with method name", () => {
-            it("will be called", () => {
-                    Logging(context).debug("message");
-                    debugCalled.should.be.true;
+            let context = new Context();
+            context.addHandlers(new ObservableLoggingHandler());
+
+            describe("will match the first callback handler found with method name", () => {
+                it("will be called", () => {
+                        Logging(context).debug("message");
+                        debugCalled.should.be.true;
+                });
+            });
+
+            describe("parameter count is not taken into consideration", () => {
+                it("will still be called", () => {
+                        Logging(context).debug("message", "something else");
+                        debugCalled.should.be.true;
+                });
             });
         });
 
-        describe("parameter count is not taken into consideration", () => {
-            it("will still be called", () => {
-                    Logging(context).debug("message", "something else");
-                    debugCalled.should.be.true;
+        describe("properties", () => {
+
+            describe("with $properties", () => {
+                let Logging  = Protocol.extend({
+                    $properties: {
+                        level: null
+                    }
+                });
+
+                let LoggingHandler = CallbackHandler.extend(Logging, {
+                    $properties: {
+                        level: "debug" 
+                    }
+                });
+                
+                let context = new Context();
+                context.addHandlers(new LoggingHandler());
+
+                it("returns the property value", () => {
+                    Logging(context).level
+                        .should.equal("debug");
+                });
+    
+                it("sets and returns values", () => {
+                    Logging(context).level = "error";
+
+                    Logging(context).level
+                        .should.equal("error");
+                });
+            });
+
+            describe("with getter and setter", () => {
+                let Logging  = Protocol.extend({
+                    get level() {},
+                    set level(value) {}
+                });
+
+                let logLevel = "debug";
+                let LoggingHandler = CallbackHandler.extend(Logging, {
+                    get level() { return logLevel; },
+                    set level(value) { logLevel = value; }
+                });
+                
+                let context = new Context();
+                context.addHandlers(new LoggingHandler());
+
+                it("returns the property value", () => {
+                    Logging(context).level
+                        .should.equal("debug");
+                });
+    
+                it("sets and returns values", () => {
+                    Logging(context).level = "error";
+
+                    Logging(context).level
+                        .should.equal("error");
+                });
             });
         });
     });
