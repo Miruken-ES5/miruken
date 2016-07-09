@@ -13,6 +13,7 @@ Parameters included in the Protocol definition are not actually used, but are ve
 Protocols are only definitions.
 The actual implementaion is done in CallbackHandlers.
 
+##Methods
 As an example lets create a Logging Protocol with a debug method.
 
 ```JavaScript
@@ -46,7 +47,48 @@ It is ismply a CallbackHandler with a debug method.
 It was chosen to handle the call to debug because Miruken matches
 Protocol methods based on the method name.
 
-##StrictProtocol
+##Properties
+
+###$properties
+
+```JavaScript
+let Logging  = Protocol.extend({
+    $properties: {
+        level: null
+    }
+});
+
+let LoggingHandler = CallbackHandler.extend(Logging, {
+    $properties: {
+        level: "debug" 
+    }
+});
+
+let context = new Context();
+context.addHandlers(new LoggingHandler());
+```
+
+
+
+###getters and setters
+
+```JavaScript
+let Logging  = Protocol.extend({
+    get level() {},
+    set level(value) {}
+});
+
+let logLevel = "debug";
+let LoggingHandler = CallbackHandler.extend(Logging, {
+    get level() { return logLevel; },
+    set level(value) { logLevel = value; }
+});
+
+let context = new Context();
+context.addHandlers(new LoggingHandler());
+```
+
+#StrictProtocol
 
 StrictProtocols have a very simular bevahior to Protocols, 
 but give you more control over which CallbackHandlers are given a chance to handle the method call.
