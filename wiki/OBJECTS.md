@@ -6,19 +6,18 @@ To begin, it is important to understand how JavaScript objects work compared to 
 ##Base Objects
 **Base** is the base class for all objects in Miruken. This object is what provides the object-oriented features in Miruken. For now, let's discuss the two (2) functions Base provides: **extend** and **implement**.
 
----
-
-##Extend Function
-**Extend** is the function which derived classes and objects are created. You can use it to extend *classes* and *instances*.  Extend can receive many arguments as you will see, but it's most frequently use is one to two arguments
+**Extend** is the function with which derived classes and objects are created. You can use it to extend *classes* and *instances*.  Extend can receive many arguments as you will see, but it's most frequently use is one to two arguments
 
 1. An object whose members are available on instances.
 2. An object whose members are available on the class itself.
 
-The second argument is *optional* and will be explained later in this section.
+The last argument is *optional* and will be explained later in this section.
 
 **NOTE:** This is *not* to be confused with the ECMAScript 6 [`extends`](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Classes#Sub_classing_with_extends) keyword. Miruken provides additional functionality that is not available with `extends`.
 
-###Classes
+**Implement** is similar to *extend* where all you want to do is add additional static functionality to your class. The difference between `extend` and `implement` is you only need to pass an object with member functions or a single function you wish to add.
+
+##Working with Classes
 To begin, you can `extend` classes. **Base** is a class, therefore you should start by extending **Base** to create your classes. Afterwards, you can keep extending your classes to create additional classes as you would traditionally in class-based programming languages.
 
 We are going to create a zoo package where you start with an **Animal** class and extend it to be more specific, such as an **Eagle** and a **Mouse**.  Packages will be described later.
@@ -39,10 +38,10 @@ For example, we will create a `Logger` object. Then extend it to be a `ConsoleLo
 
 As you can see, creating and extending classes is very straight forward. Provide a class name and use `extend`.
 
-###Instances
-Extend doesn't just help define additional attributes of classes. Because you can leverage the dynamic nature of JavaScript, you can `extend` instances after construction and it will not affect other instances of that class.
+##Working with Instances
+Miruken doesn't just help define additional attributes of classes. Because you can leverage the dynamic nature of JavaScript, you can modify instances after construction and it will not affect other instances of that class.
 
-For example, we have a `Logger` class that takes a name, just to differientiate the instances. You could theoretically have one logger that only does console logging while you create another instance to add an alert capability.
+For example, we have a `Logger` class that takes a name, just to differentiate the instances. You could theoretically have one logger that only does console logging while you create another instance to add an alert capability.
 
     new function () {
 
@@ -77,169 +76,153 @@ For example, we have a `Logger` class that takes a name, just to differientiate 
         let myLogger = new Logger("console");
         let alertLogger = new Logger("alert");
 
-        alertLogger.extend({
-          alert: function(message) {
+        alertLogger.implement({
+          alert(message) {
             alert(message);
           }
         });
+
+        alertLogger.alert("Whoops!");
     };
 
-###Static
-You can also `extend` objects with functions that are static and accessible to all instances of that class. As mentioned above, this is the second argument you can pass into the `extend` function.
-
-For example, using pseudo-code:
-
-    const Animal = Base.extend({
-        let id = 0;
-        let name = '';
-
-        constructor: function(name){
-            Animal.prototype.count = Animal.prototype.count++ || 1;
-            id = Count();
-            name = name;
-        };
-
-        Id: function(){
-            return id;
-        };
-
-        Name: function(){
-            return name;
-        };
-    },{
-        Count: function(){
-            return Animal.prototype.count;
-        };
-    });
-
-    let Tom = new Animal('Tom');
-    let Jerry = new Animal('Jerry');
-
-    // static values
-    Animal.Count()  // returns 2
-
-    // instance values
-    Tom.Id()        // returns 1
-    Jerry.Id()      // returns 2
-
----
-
-##Implement Function
-Mixins provides a clean way for code reuse without inheritance.
-
-**Implement** lets you add additional functionality to your objects in a manner that is dynamic. Implement only takes in a function as its argument. This means you can add that function to new instances as needed.
-
-###Classes
-*Find Ruby Mixin definition*
-
-    class.foo()
-    class2.foo() { this.foo(), foo()}
-
-Like C# static methods...
-
-    const myMixin = Module.extend({
-        foo(object){
-        };
-    });
-    const someClass = Base.extend(MyMixin, {
-
-    });
-
-    For Example 1
-    const s = new SomeClass();
-
-    For Example 2
-    SomeClass().implement(MyMixin);
-
-    For Example 2 Class
-    const myMixin = Base.extend({
-        foo(){
-        };
-    });
-
-    implements functions on classes or modules.
-
-Given you have an object that should have an `id` and `name` property, you can add a verify function to that object and run it to check. The great thing about this is you can do it as if you were in development mode and not release mode.
-
-    var debugMode = true;   // set to false for Release mode
-
-    const Animal = Base.extend({
-        var id = 0;
-        var name = '';
-
-        constructor: function(name){
-            id = id++;
-            this.name = name;
-        };
-    });
-
-    var Verify = function(object){
-        return object.hasOwnProperty('id')
-            && object.hasOwnProperty('name');
-    };
-
-    if (debugMode) {
-        Animal.implement(Verify);
-    }
-
-    var dog = new Animal('Rover');
-
-    if (!dog.Verify()) {
-        console.log('There is problem this with object.');
-    }
-
-##Modules Mixins
-Another way to create a mixin is to use **Module**. Module is abstract, therefore you cannot create an instance, but you leverage the nature of abstract to modify other objects.
+##Working with Static Methods
+You can also modify objects with functions that are static and accessible to all instances of that class.
 
 For example:
 
-    const Person = Base2.extend({
-        $properties: {
-            id: 0,
-            personName: ""
+    new function() {
+
+        base2.package({
+            name:       "instrumentation",
+            imports:    "miruken",
+            exports:    "NullLogger"
+        });
+
+        eval(this.imports);
+
+        //A null object implementation
+        let nullLoggerInstance;
+        const NullLogger = Base.extend({
+            debug(){},
+            error(){}
+        }, {
+            get instance(){
+                return nullLoggerInstance = nullLoggerInstance || new NullLogger();
+            }
+        });
+
+        eval(this.exports);
+    }
+
+    new function() {
+
+        base2.package({
+            name:       "logging",
+            imports:    "instrumentation"
+        });
+
+        eval(this.imports);
+
+        let logger = NullLogger.instance;
+
+        // now just use the logger
+        logger.debug();
+
+    };
+
+##Creating Mixins
+Mixins provides a clean way for code reuse without inheritance. The power of composition makes sense when you have an object that needs a diverse sets of functionality, but you don't want to do this through a lot of extending or inheritance. In this way, Miruken can provide multiple inheritance of various objects.
+
+For example:
+
+    const ErrorIconMixin = Base.extend({
+        showErrorIcon(): {
         }
-        constructor: (name) {
-            personName = name;
-            id = Count()++;
-        };
-        private count = 0;
-        private Count() {
-            return count;
-        };
     });
 
-    const Relationship = Base2.extend({
-        var entity1Id: 0;
-        var entity2Id: 0;
-        constructor: (entity1, entity2){
-            entity1Id = entity1.Id;
-            entity2Id = entity2.Id;
-        };
+    const ErrorMessageMixin = Base.extend({
+        showErrorMessage(message): {
+        }
     });
 
-    var person = new Person();
-    var doctor = new Person();
-    var relationship = new Relationship(person, doctor);
-
-    const IsEntityMixin = Module.extend({
-        IsEntity(object) {
-            object.Destination = "JFK";
-        };
+    const Validation = Base.extend(ErrorIconMixin, ErrorMessageMixin, {
+        show(): {
+            ErrorIconMixin.showErrorIcon();
+            ErrorMessageMixin.showErrorMessage();
+        }
     });
 
-##Properties
+##Creating Properties
 One of the features of Miruken is `$properties`. As the name implies, it creates the get/set operations for a given key and type.
 
-For example, using pseudo-code:
+For example:
 
-    const Person = Base.extend({
-        $properties: {
-            firstName: '',
-            lastName: '',
-            active: true,
-            id: 0
-        }
-    });
+    new function() {
+
+        base2.package(this, {
+            name   : "members",
+            exports: "Person,Doctor"
+        });
+
+        eval(this.imports);
+
+        const Person = Base.extend({
+            $properties: {
+                firstName: null,
+                lastName: null,
+                gender: null
+            },
+            get fullName(){
+                return `${this.firstName} ${this.lastName}`
+            }
+        }, {
+            male: "MALE",
+            female: "FEMALE",
+            itsComplicated: "ITSCOMPLICATED"
+        });
+
+        const Doctor = Person.extend({
+            $properties: {
+                specialty: null
+            },
+            get fullName(){
+                return `Dr. ${this.base()}, ${this.specialty}`
+            }
+        }, {
+            earNoseThroat:  "ENT",
+            familyPractice: "FP",
+            spinalSurgeon:  "OSS"
+        });
+
+        eval(this.exports);
+    };
+
+    new function() {
+
+        base2.package({
+            name: 'community',
+            imports: 'common'
+        });
+
+        eval(this.imports);
+
+        let member = new Person({
+            firstName: 'John',
+            lastName: 'Smith'
+        });
+
+        var personName = member.fullName; // "John Smith"
+
+        let specialist = new Doctor({
+            firstName: 'John',
+            lastName: 'Smith',
+            gender: Person.male,
+            specialty: Doctor.earNoseThroat
+        });
+
+        var specialistName = specialist.fullName; // "Dr. John Smith, ENT"
+
+    };
 
 ##References:
 1. [A Base Class for JavaScript Inheritance](http://dean.edwards.name/weblog/2006/03/base/)

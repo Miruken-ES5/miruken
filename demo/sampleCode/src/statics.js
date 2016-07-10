@@ -8,7 +8,7 @@ new function () {
 	eval(this.imports);
 
 	//A null object implementation
-    let nullLoggerInstance;
+	let nullLoggerInstance;
 	const NullLogger = Base.extend({
 		debug(){},
 		error(){}
@@ -19,16 +19,16 @@ new function () {
 	});
 
 	const Animal = Base.extend({
-    	$properties: {
-    		id  : null,
-    		name: null
-    	},
+	$properties: {
+		id  : null,
+		name: null
+	},
 
-	    constructor(name) {
-	        this.name = name;
-	        Animal.count++;
-	        this.id = Animal.count;
-	    }
+	constructor(name) {
+	this.name = name;
+	Animal.count++;
+	this.id = Animal.count;
+	}
 	}, {
 		count: 0
 	});
