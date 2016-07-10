@@ -67,9 +67,19 @@ let LoggingHandler = CallbackHandler.extend(Logging, {
 let context = new Context();
 context.addHandlers(new LoggingHandler());
 ```
+```JavaScript
+it("returns the property value", () => {
+    Logging(context).level
+        .should.equal("debug");
+});
 
+it("sets and returns values", () => {
+    Logging(context).level = "error";
 
-
+    Logging(context).level
+        .should.equal("error");
+});
+```
 ###getters and setters
 
 ```JavaScript
@@ -88,6 +98,19 @@ let context = new Context();
 context.addHandlers(new LoggingHandler());
 ```
 
+```JavaScript
+it("returns the property value", () => {
+    Logging(context).level
+        .should.equal("debug");
+});
+
+it("sets and returns values", () => {
+    Logging(context).level = "error";
+
+    Logging(context).level
+        .should.equal("error");
+});
+```
 #StrictProtocol
 
 StrictProtocols have a very simular bevahior to Protocols, 
