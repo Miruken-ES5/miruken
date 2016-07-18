@@ -40,7 +40,7 @@ Using `imports` states that *names* of package(s) to be available in your closur
 For example:
 
     new function() {
-        base2.package({
+        base2.package(this, {
             name: "logging",
             imports: "miruken"
         });
@@ -56,7 +56,7 @@ Using `exports` states that *classes* defined in the closure to be available for
 For example:
 
     new function() {
-        base2.package({
+        base2.package(this, {
             name: "logging",
             imports: "miruken"
         });
@@ -107,7 +107,7 @@ Once you create the name, you can import as shown above.
 
     new function() {
 
-        base2.package({
+        base2.package(this, {
             name    : "company.security.cookies",
             imports : "miruken,company.security,company.http"
         });
