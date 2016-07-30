@@ -5,8 +5,8 @@
 
 The concept of a Protocol is inspired by protocols in Objective-C and is loosely comparable to interfaces in C# or Java.
 
-I say protocols are loosly comparable to interfaces because in Miruken objects are not required to implement all the functions of a Protocol.
-Objects can choose to only implement one or more functions from the Protocal and the full implementation can be spread across many objects.
+I say protocols are loosly comparable to interfaces because in Miruken objects are not required to implement all the members of a Protocol.
+Objects can implement one or more functions from the Protocal and the full implementation can be spread across many objects.
 
 A Protocol describes a set of expected behaviors by defining functions and properties. 
 Parameters included in the Protocol definition are not actually used, but are very helpful in describing how the Protocol should be called.
@@ -40,10 +40,10 @@ When the debug method is called within our context
 Logging(context).debug("message");
 ```
 
-the debug method on ObservableLoggingHandler will be called and `debugCalled` will equal true.
+the debug method on ObservableLoggingHandler will be called.
 
 Notice that ObservableLoggingHandler does not explicitly implement the Logging Protocol.
-It is ismply a CallbackHandler with a debug method.
+It is simply a CallbackHandler with a debug method.
 It was chosen to handle the call to debug because Miruken matches
 Protocol methods based on the method name.
 
