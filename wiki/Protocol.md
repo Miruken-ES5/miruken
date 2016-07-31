@@ -100,7 +100,7 @@ describe("Protocols with properties", () => {
         Logging(handler).level
             .should.equal("error");
     });
-};
+});
 ```
 
 ###getters and setters
@@ -119,21 +119,23 @@ let LoggingHandler = CallbackHandler.extend(Logging, {
     set level(value) { logLevel = value; }
 });
 
-let context = new Context();
-context.addHandlers(new LoggingHandler());
 ```
 
 ```JavaScript
-it("returns the property value", () => {
-    Logging(context).level
-        .should.equal("debug");
-});
+describe("Protocols with getter and setter properties", () => {
+    var handler = new LoggingHandler();
 
-it("sets and returns values", () => {
-    Logging(context).level = "error";
+    it("returns the property value", () => {
+        Logging(handler).level
+            .should.equal("debug");
+    });
 
-    Logging(context).level
-        .should.equal("error");
+    it("sets and returns values", () => {
+        Logging(context).level = "error";
+
+        Logging(handler).level
+            .should.equal("error");
+    });
 });
 ```
 #StrictProtocol
