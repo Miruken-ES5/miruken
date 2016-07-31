@@ -21,7 +21,8 @@ let Logging = Protocol.extend({
 	debug(message) {}
 });
 ```
-and then lets create a [CallbackHandler](CallbackHandler.md) to implement the Logging Protocol and add it to a [Context](Context.md).
+
+and then lets implement the Logging Protocol using a [CallbackHandler](CallbackHandler.md)
 
 ```JavaScript
 let debugCalled = false;
@@ -30,26 +31,39 @@ let ObservableLoggingHandler = CallbackHandler.extend({
 		debugCalled = true;
 	}
 });  
-
-let context = new Context();
-context.addHandlers(new ObservableLoggingHandler());
-```
-When the debug method is called within our context
-
-```JavaScript
-Logging(context).debug("message");
 ```
 
+To call a method on a Protocol you need to pass a Delegate into the Protocol 
+and then call the method.
+
+For example here I am passing in an instance of the ObservableLoggingHandler,
+and when the debug method is called on the protocol
 the debug method on ObservableLoggingHandler will be called.
 
+```JavaScript
+let handler = new ObservableLoggingHandler();
+Logging(handler).debug("message");
+```
 Notice that ObservableLoggingHandler does not explicitly implement the Logging Protocol.
 It is simply a CallbackHandler with a debug method.
 It was chosen to handle the call to debug because Miruken matches
 Protocol methods based on the method name.
 
+Obviously, this is a very simple example so it may be easy to miss how powerful Protocols and CallbackHandlers really are.
+In real life applications, CallbackHandlers are added to Contexts that contain many different CallbackHandlers and then contexts are passed into the protocols.
+
+```JavaScript
+var context = new Context();
+context.addHandler(new ObservableLoggingHandler());
+Logging(context).debug("message");
+
+```
+
 ##Properties
 
 ###$properties
+
+Properties work similarly to methods.  First define a Protocol with properties.
 
 ```JavaScript
 let Logging  = Protocol.extend({
@@ -57,30 +71,41 @@ let Logging  = Protocol.extend({
         level: null
     }
 });
+```
 
+and then create a CallbackHandler that implements the properties.
+
+```JavaScript
 let LoggingHandler = CallbackHandler.extend(Logging, {
     $properties: {
         level: "debug" 
     }
 });
-
-let context = new Context();
-context.addHandlers(new LoggingHandler());
 ```
+
+Now we can use unit tests to test that the properties work as expected.
+
 ```JavaScript
-it("returns the property value", () => {
-    Logging(context).level
-        .should.equal("debug");
-});
+describe("Protocols with properties", () => {
+    let handler = new LoggingHandler();
 
-it("sets and returns values", () => {
-    Logging(context).level = "error";
+    it("returns the property value", () => {
+        Logging(handler).level
+            .should.equal("debug");
+    });
 
-    Logging(context).level
-        .should.equal("error");
-});
+    it("sets and returns values", () => {
+        Logging(handler).level = "error";
+
+        Logging(handler).level
+            .should.equal("error");
+    });
+};
 ```
+
 ###getters and setters
+
+Protocols also support properties using getter and setter methods.
 
 ```JavaScript
 let Logging  = Protocol.extend({
@@ -204,3 +229,4 @@ Returns true if the object implements the Protocol.
 ObservableLoggingHandler.conformsTo(Logging)
     .should.be.true;
 ```
+
