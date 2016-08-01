@@ -1,14 +1,14 @@
 new function() {
 
-	base2.package({
-		name    : "logging",
+	base2.package(this, {
+		name    : "implementDemo",
 		imports : "miruken",
 		exports : "Logger"
 	});
 
 	eval(this.imports);
 
-	const Logger = new Base.extend({
+	const Logger = Base.extend({
 	}, {
 	});
 
