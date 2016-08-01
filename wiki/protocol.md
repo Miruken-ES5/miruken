@@ -3,40 +3,41 @@
 **Namespace**
 >miruken
 
+A Protocol describes a set of expected methods and properties.  Protocols are only definitions.
+The actual implementation is done in CallbackHandlers.
+
 The concept of a Protocol is inspired by protocols in Objective-C and is loosely comparable to interfaces in C# or Java.
 
-I say protocols are loosly comparable to interfaces because in Miruken objects are not required to implement all the members of a Protocol.
-Objects can implement one or more functions from the Protocal and the full implementation can be spread across many objects.
+I say protocols are loosly comparable to interfaces because in Miruken CallbackHandlers are not required to implement all the members of a Protocol.
+CallbackHandlers can implement one or more functions from the Protocal and the full implementation can be spread across many objects.
 
-A Protocol describes a set of expected behaviors by defining functions and properties. 
-Parameters included in the Protocol definition are not actually used, but are very helpful in describing how the Protocol should be called.
-Protocols are only definitions.
-The actual implementaion is done in CallbackHandlers.
 
 ##Methods
 As an example lets create a Logging Protocol with a debug method.
 
 ```JavaScript
 let Logging = Protocol.extend({
-	debug(message) {}
+    debug(message) {}
 });
 ```
 
-and then lets implement the Logging Protocol using a [CallbackHandler](CallbackHandler.md)
+Parameters included in the Protocol definition are not actually used, but are very helpful in describing how the Protocol should be called.
+
+Now lets implement the Logging Protocol using a [CallbackHandler](CallbackHandler.md)
 
 ```JavaScript
 let debugCalled = false;
 let ObservableLoggingHandler = CallbackHandler.extend({
-	debug(message) {
-		debugCalled = true;
-	}
+    debug(message) {
+            debugCalled = true;
+    }
 });  
 ```
 
-To call a method on a Protocol you need to pass a Delegate into the Protocol 
+To execute a method on a Protocol you need to pass a Delegate into the Protocol 
 and then call the method.
 
-For example here I am passing in an instance of the ObservableLoggingHandler,
+For example, here I am passing an instance of the ObservableLoggingHandler, into the Logging Protocol
 and when the debug method is called on the protocol
 the debug method on ObservableLoggingHandler will be called.
 
@@ -143,7 +144,7 @@ describe("Protocols with getter and setter properties", () => {
 StrictProtocols have a very simular bevahior to Protocols, 
 but give you more control over which CallbackHandlers are given a chance to handle the method call.
 Only CallbackHandlers that explicitly implement the StrictProtocol will be given a chance to handle the method call.
-A CallbackHandler can explicitly implement an interface by passing it in to the extend method before the object literal
+A CallbackHandler can explicitly implement a Protocol by passing it in to the extend method before the object literal
 that defines the behavior.
 
 Here is a new Loggin Protocol and this time it extends from StrictProtocol.
@@ -163,8 +164,8 @@ let ObservableLoggingHandler = CallbackHandler.extend(Logging, {
     }
 });   
 
-let context = new Context();
-context.addHandlers(new ObservableLoggingHandler());
+Logging.adoptedBy(ObservableLoggingHandler)
+    .should.be.true;
 ```
 
 ##Benefits of Protocols
