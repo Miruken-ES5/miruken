@@ -2,19 +2,20 @@
 **Namespace**
 >miruken.callback 
 
-CallbackHandlers play a key role in the polymorphic behavior of miruken.  They are where you implement the lion's share of your business logic.
-To say it another way, you can have many different CallbackHandlers registered in miruken, and the right one will be chosen at runtime base on
+CallbackHandlers are where you implement the business logic for your Protocols.
+They play a key role in the polymorphic behavior of miruken because 
+you can have multiple implementations of the same protocol, and the appropriate implementation will be chosen at runtime base on
 the current application context.
 
 It is often said that the difference between a **framework** and a **library** is that a library is something you call in your code and a framework
-is something that calls your code.  Miruken is definatly a framework.  Miruken calls your code, and the code that it calls resides in 
+is something that calls your code.  Miruken is definately a framework.  Miruken calls your code, and the code that it calls resides in 
 CallbackHandlers.
 
-Through out this explaination of Callbackhandler we will be using a very simple Logging Protocol.
+Throughout this explaination of Callbackhandlers we will be using a very simple Logging Protocol.
 
 ```Javascript
 
-let Logging = Protocol.extend({
+const Logging = Protocol.extend({ 
     debug(message){}
 });
 
@@ -40,7 +41,7 @@ literal that is passed in as the second parameter.
 ###Explicit Protocol Adoption
 
 Explicit Protocol adoption is done by passing one or more protocols into the extend method, and then implementing
-one or more of the members on each protocol. You do not have to implement all the members of a protocol.  The full
+one or more of the members of each protocol. You do not have to implement all the members of a protocol.  The full
 implementation can be spread across many CallbackHandlers if it makes sense for your application.
 
 ```Javascript
@@ -60,7 +61,7 @@ describe("LoggingHandler", () => {
 ```
 ###Implicit Protocol Implementations
 
-Implicit Protocol implementation does not require you to pass in the protocols. 
+Implicit Protocol implementation does not require you to pass in the Protocols to the extend method.
 At runtime methods will be matched by method name, but will be ignored by StrictProtocols and strict method execution.
 
 ```Javascript
@@ -72,7 +73,7 @@ let LoggingHandler = CallbackHandler.extend({
 });
 
 describe("LoggingHandler", () => {
-    it("explicitly adopts the Loggin Protocol", () => {
+    it("implicitly implements the Loggin Protocol", () => {
         Logging.adoptedBy(LoggingHandler).should.be.false;
     });
 });
@@ -118,7 +119,7 @@ let NullLoggingHandler = CallbackHandler.extend(Logging, {
 
 ```
 
-Also, handy in Production would be an HttpLoggingHandler that sends errors to the server to be logged.
+Also, handy in production would be an HttpLoggingHandler that sends errors to the server to be logged.
 Lets add error to the Logging Protocol and implement http error logging. 
 
 ```Javascript
@@ -145,8 +146,8 @@ let HttpLoggingHandler = CallbackHandler.extend(Logging, {
 
 ####Directly
 
-CallbackHandlers have a toDelegate() method, so they can be passed directly into a Protocol.
-And this is very usefull for unit testing of your CallbackHandlers.
+CallbackHandlers have a toDelegate() method, so they can be passed directly into a Protocol and then executed.
+This is very usefull for unit testing of your CallbackHandlers.
 
 ```JavaScript
 
@@ -162,7 +163,7 @@ the context will be passed in to the protocol.
 
 ```JavaScript
 
-let contexg  = new Context(new ObservableLoggingHandler());
+let context = new Context(new ObservableLoggingHandler());
 Logging(handler).debug("My Message");
 
 ```
@@ -181,12 +182,20 @@ if (env = "PROD") {
 Calling `Logging(context).debug("My debug message")` would call the debug method on the NullLoggingHandler, but calling
 `Logging(context).error("Something really bad happened")` would call the error method on the HttpLoggingHandler.
 
+If a Protocol member is called that has no implementation, an error will be thrown. 
+For example, if debug is called, but no CallbackHandler is found that implement debug, you will see an error in the console with the following message:
+
+```
+CallbackHandler has no method 'debug'
+```
+
 ###Composition With $composer
-We just saw that CallbackHandlers are most often executed through a Protocol within a context, but what happens 
-when you want to call a Protocol from within another protocol? What context should you use? That is where the $composer comes in.  
 $composer represents the current execution context.
 
-As an example, lets create an Http Protocol that posts messages to the server.
+We just saw that CallbackHandlers are most often executed through a Protocol within a context, but what happens 
+when you want to call a Protocol from within another Protocol? What context should you use? That is where the $composer comes in.  
+
+As an example, lets create an Http Protocol whose implementation will post messages to the server.
 
 ```JavaScript
 const Http = Protocol.extend({
@@ -210,3 +219,8 @@ let HttpLoggingHandler = CallbackHandler.extend(Logging, {
 
 
 ```
+
+###$NOT_HANDLED
+
+If for any reason your CallbackHandler cannot handle the request, you can always `return $NOT_HANDLED;`
+and miruken will continue looking for another CallbackHandler that can handle the request. 
