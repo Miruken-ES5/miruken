@@ -167,7 +167,7 @@ the context will be passed in to the protocol.
 ```JavaScript
 
 let context = new Context(new ObservableLoggingHandler());
-Logging(handler).debug("My Message");
+Logging(context).debug("My Message");
 
 ```
 
