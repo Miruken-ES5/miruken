@@ -33,9 +33,9 @@ let LoggingHandler = CallbackHandler.extend(Logging, {
 
 ```
 
-Here we are creating a LoggingHandler and there are several things to notice.  CallbackHandlers extend from CallbackHandler.
-They can explicitly adopt a Protocol by passing in that Protocol to the extend function. Here LoggingHandler explicitly 
-adopts the Logging protocol by passing Logging in to extend. The implementation for the debug method is done with an object
+Here we are creating a LoggingHandler and there are three things to notice.  First, CallbackHandlers extend from CallbackHandler.
+Second, they can explicitly adopt a Protocol by passing in that Protocol to the extend function. Here LoggingHandler explicitly 
+adopts the Logging protocol by passing Logging in to extend. Third, the implementation for the debug method is done with an object
 literal that is passed in as the second parameter. 
 
 ###Explicit Protocol Adoption
@@ -59,10 +59,13 @@ describe("LoggingHandler", () => {
 });
 
 ```
+
+You can see in the test above that Logging is adopted by LoggingHandler.
+
 ###Implicit Protocol Implementations
 
 Implicit Protocol implementation does not require you to pass in the Protocols to the extend method.
-At runtime methods will be matched by method name, but will be ignored by StrictProtocols and strict method execution.
+At runtime methods will be matched by method name only and will be ignored by StrictProtocols and strict method execution.
 
 ```Javascript
 
@@ -98,7 +101,7 @@ We could also create an ObservableLoggingHandler to use during unit testing.
 
 ```Javascript
 let debugCalled = false;
-let NullLoggingHandler = CallbackHandler.extend(Logging, {
+let ObservableLoggingHandler = CallbackHandler.extend(Logging, {
     debug(message) {
         debugCalled = true; 
     };
@@ -107,11 +110,11 @@ let NullLoggingHandler = CallbackHandler.extend(Logging, {
 ```
  
 During development and debugging you will probably want a ConsoleLoggingHandler that just
-logs out to the browser console..
+logs messages out to the browser console.
 
 ```Javascript
 
-let NullLoggingHandler = CallbackHandler.extend(Logging, {
+let ConsoleLoggingHandler = CallbackHandler.extend(Logging, {
     debug(message) {
         console.log(message);
     };
@@ -172,28 +175,34 @@ Now in the setup portion of our application we could set up different loggers de
 
 ```JavaScript
 
-if (env = "PROD") {
-    rootContext.addHandler(new NullLoggingHandler());
-    rootContext.addHandler(new HttpLoggingHandler());
+switch (env) {
+    case "DEV":
+        rootContext.addHandler(new ConsoleLoggingHandler());
+    case "PROD":
+        rootContext.addHandler(new NullLoggingHandler());
+        rootContext.addHandler(new HttpLoggingHandler());
+        break;
+    default:
+        rootContext.addHandler(new NullLoggingHandler());
 }
 
 ```
 
-Calling `Logging(context).debug("My debug message")` would call the debug method on the NullLoggingHandler, but calling
+In prod, calling `Logging(context).debug("My debug message")` would call the debug method on the NullLoggingHandler, but calling
 `Logging(context).error("Something really bad happened")` would call the error method on the HttpLoggingHandler.
 
 If a Protocol member is called that has no implementation, an error will be thrown. 
-For example, if debug is called, but no CallbackHandler is found that implement debug, you will see an error in the console with the following message:
+For example, if debug is called, but no CallbackHandler is found that implements debug, you will see an error in the console with the following message:
 
 ```
-CallbackHandler has no method 'debug'
+"CallbackHandler has no method 'debug'"
 ```
 
 ###Composition With $composer
 $composer represents the current execution context.
 
 We just saw that CallbackHandlers are most often executed through a Protocol within a context, but what happens 
-when you want to call a Protocol from within another Protocol? What context should you use? That is where the $composer comes in.  
+when you want to call a Protocol from within a CallbackHandler? What context should you use? That is where the $composer comes in.  
 
 As an example, lets create an Http Protocol whose implementation will post messages to the server.
 
