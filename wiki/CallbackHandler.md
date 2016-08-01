@@ -128,7 +128,7 @@ let Logging = Protocol.extend({
     error(message){}
 });
 
-let HttplLoggingHandler = CallbackHandler.extend(Logging, {
+let HttpLoggingHandler = CallbackHandler.extend(Logging, {
     error(message) {
         return $http.post("/api/log", {
             level  : "error",
@@ -138,6 +138,7 @@ let HttplLoggingHandler = CallbackHandler.extend(Logging, {
 });
 
 ```
+*$http is the http provider in angular*
 
 ###Executing CallbackHandler Methods
 
@@ -180,6 +181,32 @@ if (env = "PROD") {
 Calling `Logging(context).debug("My debug message")` would call the debug method on the NullLoggingHandler, but calling
 `Logging(context).error("Something really bad happened")` would call the error method on the HttpLoggingHandler.
 
-###Composition
-$composer
+###Composition With $composer
+We just saw that CallbackHandlers are most often executed through a Protocol within a context, but what happens 
+when you want to call a Protocol from within another protocol? What context should you use? That is where the $composer comes in.  
+$composer represents the current execution context.
 
+As an example, lets create an Http Protocol that posts messages to the server.
+
+```JavaScript
+const Http = Protocol.extend({
+    post(url, data){}
+});
+
+```
+
+Now we can use the Http Protocol and $composer inside of the HttpLoggingHandler instead of $Http.
+
+```Javascript
+
+let HttpLoggingHandler = CallbackHandler.extend(Logging, {
+    error(message) {
+        return Http($composer).post("/api/log", {
+            level  : "error",
+            message: message
+        });
+    };
+});
+
+
+```
