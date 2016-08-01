@@ -10,11 +10,19 @@ It is often said that the difference between a **framework** and a **library** i
 is something that calls your code.  Miruken is definatly a framework.  Miruken calls your code, and the code that it calls resides in 
 CallbackHandlers.
 
+Through out this explaination of Callbackhandler we will be using a very simple Logging Protocol.
+
 ```Javascript
 
 let Logging = Protocol.extend({
     debug(message){}
 });
+
+```
+
+Now lets create a very simple LoggingHandler to discuss.
+ 
+```Javascript
 
 let LoggingHandler = CallbackHandler.extend(Logging, {
     debug(message) {
@@ -26,8 +34,51 @@ let LoggingHandler = CallbackHandler.extend(Logging, {
 
 Here we are creating a LoggingHandler and there are several things to notice.  CallbackHandlers extend from CallbackHandler.
 They can explicitly adopt a Protocol by passing in that Protocol to the extend function. Here LoggingHandler explicitly 
-adopts the Logging protocol by passing Logging in to extend. The implementation for the debug method is done on an object
+adopts the Logging protocol by passing Logging in to extend. The implementation for the debug method is done with an object
 literal that is passed in as the second parameter. 
+
+###Explicit Protocol Adoption
+
+Explicit Protocol adoption is done by passing one or more protocols into the extend method, and then implementing
+one or more of the members on each protocol. You do not have to implement all the members of a protocol.  The full
+implementation can be spread across many CallbackHandlers if it makes sense for your application.
+
+```Javascript
+
+let LoggingHandler = CallbackHandler.extend(Logging, {
+    debug(message) {
+        //log message here 
+    };
+});
+
+describe("LoggingHandler", () => {
+    it("explicitly adopts the Loggin Protocol", () => {
+        Logging.adoptedBy(LoggingHandler).should.be.true;
+    });
+});
+
+```
+###Implicit Protocol Implementations
+
+Implicit Protocol implementation does not require you to pass in the protocols. 
+At runtime methods will be matched by method name, but will be ignored by StrictProtocols and strict method execution.
+
+```Javascript
+
+let LoggingHandler = CallbackHandler.extend({
+    debug(message) {
+        //log message here 
+    };
+});
+
+describe("LoggingHandler", () => {
+    it("explicitly adopts the Loggin Protocol", () => {
+        Logging.adoptedBy(LoggingHandler).should.be.false;
+    });
+});
+```
+ 
+See the [Protocol](Protocol.md) documentation for more information on StrictProtocols.
 
 ###Polymorphism
 You can create multiple implementations for Protocols in your application.
@@ -129,5 +180,6 @@ if (env = "PROD") {
 Calling `Logging(context).debug("My debug message")` would call the debug method on the NullLoggingHandler, but calling
 `Logging(context).error("Something really bad happened")` would call the error method on the HttpLoggingHandler.
 
+###Composition
 $composer
 
