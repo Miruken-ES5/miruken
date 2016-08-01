@@ -1,18 +1,9 @@
 describe("Protocol CallbackHandler and Context", () => {
 
+    eval(base2.namespace);
     eval(miruken.namespace);
     eval(miruken.callback.namespace);
     eval(miruken.context.namespace);
-
-    let Logging = Protocol.extend({
-            debug(message) {}
-    });
-
-    let ConsoleLoggingHandler = CallbackHandler.extend(Logging, {
-        debug(message) {
-                console.log(`Debug: ${message}`);
-        }
-    });   
 
     describe("Protocol", () => {
 
@@ -24,24 +15,33 @@ describe("Protocol CallbackHandler and Context", () => {
             let debugCalled = false;
             let ObservableLoggingHandler = CallbackHandler.extend({
                 debug(message) {
-                        debugCalled = true;
+                    debugCalled = true;
                 }
             });   
 
-            let context = new Context();
-            context.addHandlers(new ObservableLoggingHandler());
+            var handler = new ObservableLoggingHandler();
 
             describe("will match the first callback handler found with method name", () => {
                 it("will be called", () => {
-                        Logging(context).debug("message");
-                        debugCalled.should.be.true;
+                    Logging(handler).debug("message");
+                    debugCalled.should.be.true;
                 });
             });
 
             describe("parameter count is not taken into consideration", () => {
                 it("will still be called", () => {
-                        Logging(context).debug("message", "something else");
-                        debugCalled.should.be.true;
+                    Logging(handler).debug("message", "something else");
+                    debugCalled.should.be.true;
+                });
+            });
+
+            describe("adding CallbackHandler to a context", () => {
+                it("will still be called", () => {
+                    let context = new Context();
+                    context.addHandlers(new ObservableLoggingHandler());
+
+                    Logging(context).debug("message", "something else");
+                    debugCalled.should.be.true;
                 });
             });
         });
@@ -102,6 +102,71 @@ describe("Protocol CallbackHandler and Context", () => {
 
                     Logging(context).level
                         .should.equal("error");
+                });
+            });
+
+            describe("protocols take a delegate as the first parmeter", () => {
+                let Logging = Protocol.extend({
+                    debug() {}
+                });
+
+                describe("the delegate is optional", () => {
+                    it("uses a noop when not supplied", () => {
+                        Logging().debug();
+                    });
+
+                    it("uses a noop when null", () => {
+                        Logging(null).debug();
+                    });
+                    
+                    it("but it will fail if strict is true", () => {
+                        (() => {
+                            Logging(null, true).dubug();
+                        }).should.throw(Error);
+                    });
+                });
+
+                describe("the delegate can be an object", () => {
+                    it("must define the desired method ", () => {
+                        let debugCalled = false;
+                        Logging({
+                            debug(){
+                                debugCalled = true; 
+                            }
+                        }).debug();
+                        
+                        debugCalled.should.be.true;
+                    });
+
+                    it("throws", () => {
+                        Logging({
+                            error(){
+                            }
+                        }).debug();
+                    });
+
+                    it("requires the object to adopt the protocol when strict is true", () => {
+                        let debugCalled = false;
+                        let Logger = Base.extend({
+                            debug(){
+                                debugCalled = true;
+                            }
+                        });
+
+                        Logging(new Logger(), true).debug();
+
+                        //(() => {
+                        //    Logging(new Logger(), true).debug();
+                        //}).should.throw(Error);
+
+                        //debugCalled.should.be.true;
+                    });
+                    
+                    it("but it will fail if strict is true", () => {
+                        (() => {
+                            Logging(null, true).dubug();
+                        }).should.throw(Error);
+                    });
                 });
             });
         });
@@ -206,37 +271,4 @@ describe("Protocol CallbackHandler and Context", () => {
         });
 
     });
-
-    describe("CallbackHandler", () => {
-        let Logging = StrictProtocol.extend({
-            debug(message) {}
-        });
-    });
-
-    describe("Context", () => {
-
-        let context = new Context();
-        context.addHandlers([new ConsoleLoggingHandler()]);
-
-        it("$Strict requires the CallbackHandler to explicitly handle the protocol", () => {
-
-            Logging(context.$strict()).debug("Foo bar baz");
-        });
-        
-        it("$Strict requires the CallbackHandler to explicitly handle the protocol", () => {
-            Logging(context.$strict()).debug("Foo bar baz");
-        });
-        
-        //Protocols
-                //match on name and number of parameters
-
-        //StrictProtocols
-
-        //$Composer
-
-        //aspect
-        //filter
-
-    });
-
 });
