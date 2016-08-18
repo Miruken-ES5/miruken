@@ -102,7 +102,7 @@ new function () {
                 .then(function (context) {
                     context.modalResult.then(function (result) {
                         if (result && result.button != 'Cancel') {
-                            var controller = context.resolve(sampleApp.ModalReturningInputController);
+                            var controller = ViewRegion(context).controller;
                             alert(format('Hello, %1!', controller.name));
                         }
                     });
