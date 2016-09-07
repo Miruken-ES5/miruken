@@ -57,7 +57,7 @@ grunt.initConfig({
       },
       debug: {
         files: {
-           'debug/miruken-tests.js':  ['test/validate/validatejs-test.js']
+           'debug/miruken-tests.js':  ['test/callback-test.js']
            //'debug/miruken-tests.js':     ['test/**/*.js']
         }
       }

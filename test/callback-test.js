@@ -2074,6 +2074,13 @@ describe("CallbackHandler", function () {
             });
         });
 
+        it("should tag batcher", function () {
+            var handler = new EmailHandler,
+                batch   = handler.$batch("Batch Me!"),
+                batcher = batch.resolve(Batcher);
+            expect(batcher.tag).equals("Batch Me!");
+        });
+        
         it("should work with filters", function () {
             var count   = 0,
                 handler = new EmailHandler,
