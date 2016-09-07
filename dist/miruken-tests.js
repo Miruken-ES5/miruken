@@ -2029,7 +2029,7 @@ new function () { // closure
             },
             Composition, function (composable, composer) {
                 var callback = composable.callback;
-                return callback && $handle.dispatch(this, callback, null, composer);
+                return !!(callback && $handle.dispatch(this, callback, null, composer));
             }
         ],
         /**
@@ -2465,8 +2465,8 @@ new function () { // closure
 
     function _delegateInvocation(delegate, type, protocol, methodName, args, strict) {
         var broadcast  = false,
-            useResolve = false,
-            bestEffort = false,
+            bestEffort = false,            
+            useResolve = protocol.conformsTo(Resolving),
             handler    = delegate.handler;
 
         var semantics = new InvocationSemantics;
@@ -2474,8 +2474,7 @@ new function () { // closure
             strict     = !!(strict | semantics.getOption(InvocationOptions.Strict));
             broadcast  = semantics.getOption(InvocationOptions.Broadcast);
             bestEffort = semantics.getOption(InvocationOptions.BestEffort);
-            useResolve = semantics.getOption(InvocationOptions.Resolve)
-                      || protocol.conformsTo(Resolving);
+            useResolve = useResolve || semantics.getOption(InvocationOptions.Resolve);
         }
         
         var handleMethod = useResolve
