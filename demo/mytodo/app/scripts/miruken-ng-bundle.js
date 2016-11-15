@@ -5,6 +5,7 @@ module.exports = require('./ng.js');
 var miruken = require('../miruken');
               require('../ioc');
               require('../mvc');
+              require('../error');
 
 new function () { // closure
 
@@ -26,8 +27,9 @@ new function () { // closure
      */
     miruken.package(this, {
         name:    "ng",
-        imports: "miruken,miruken.callback,miruken.context,miruken.validate,miruken.ioc,miruken.mvc",
-        exports: "Runner,Directive,Filter,RegionDirective,DynamicControllerDirective," +
+        imports: "miruken,miruken.callback,miruken.context,miruken.validate,miruken.ioc," +
+                 "miruken.mvc,miruken.error",
+        exports: "Runner,Directive,Filter,UiRouter,RegionDirective,DynamicControllerDirective," +
                  "PartialRegion,UseModelValidation,DigitsOnly,InhibitFocus,TrustFilter," +
                  "$appContext,$envContext,$rootContext"
     });
@@ -96,7 +98,64 @@ new function () { // closure
          */
         filter: function (input) { return input; }
     });
-    
+
+    /**
+     * Adapts the [Angular ui-router] (https://github.com/angular-ui/ui-router)
+     * to support conventional MVC semantics
+     * @class Router
+     * @extends Base     
+     */
+    var UiRouter = Base.extend({
+        constructor: function ($scope, params, state) {
+            var _this  = this;            
+            $scope.loaded = function () {
+                delete $scope.loaded;
+                _this.executeController(this.context.newChild(), params, state);
+            };
+        },
+        executeController: function (context, params, state) {
+            this.resolveController(context, params, state).then(function (ctrl) {
+                var action = params.action || "index",
+                    method = ctrl[action];
+                return $isFunction(method)
+                    ? method.call(ctrl, params)
+                    : Promise.reject(ctrl + " missing action " + action);
+            })
+            .catch(function (err) { Errors(context).handleError(err, "ui-router"); });
+        },
+        resolveController: function (context, params, state) {
+            var controller = params.controller;
+            if (controller == null || controller.length === 0) {
+                return Promise.reject("Controller could not be determined for state " + state.current.name);
+            }            
+            controllerName = this.inferControllerName(controller);
+            return Promise.resolve(context.resolve(controllerName)).then(function (ctrl) {
+                if (ctrl) { return ctrl; }
+                if (controllerName != controller) {
+                    return Promise.resolve(context.resolve(controller)).then(function (ctrl) {
+                        return ctrl ? ctrl : Promise.reject(controllerName + " could not be resolved");
+                    });
+                }
+                return Promise.reject(controller + " Controller could not be resolved");
+            });
+        },
+        inferControllerName: function (controller) {
+            return controller.endsWith("Controller") ? controller : controller + "Controller";
+        }
+    }, {
+        $inject:  ["$scope", "$stateParams", "$state"],
+        route: function (urlPattern, options) {
+            var route = {
+                url:          urlPattern,
+                template:     this.template,
+                controller:   this                
+            };
+            if (options) { route.params = options; }
+            return route;
+        },
+        template: "<div region>{{ ::loaded() }}</div>"
+    });
+
     /**
      * Represents an area to render a view in.
      * @class PartialRegion
@@ -123,16 +182,13 @@ new function () { // closure
                 get controllerContext() { return _controller && _controller.context; },
                 present: function (presentation) {
                     var composer = $composer,
-                        template,   templateUrl,
-                        controller, controllerAs;
+                        template,  templateUrl;
                     
                     if ($isString(presentation)) {
                         templateUrl = presentation;
                     } else if (presentation) {
-                        template     = presentation.template,
-                        templateUrl  = presentation.templateUrl,
-                        controller   = presentation.controller;
-                        controllerAs = presentation.controllerAs || "ctrl";
+                        template     = presentation.template;
+                        templateUrl  = presentation.templateUrl;
                     }
                     
                     if (template) {
@@ -152,28 +208,9 @@ new function () { // closure
                             parentScope    = isModal ? composer.resolve("$scope") : scope;
                         _partialScope      = (parentScope || scope).$new();
                         var partialContext = _partialScope.context;
-                        _controller        = null;
-
-                        if (controller) {
-                            if ($isString(controller)) {
-                                var parts   = controller.split(" ");
-                                _controller = $controller(parts[0], { $scope: _partialScope });
-                                if (parts.length > 1) {
-                                    controllerAs = parts[parts.length - 1];
-                                }
-                            } else {
-                                _controller = composer
-                                    .$$provide(["$scope", _partialScope, Context, partialContext])
-                                    .resolve(controller);
-                            }
-
-                            if ($isPromise(_controller)) {
-                                return _controller.then(function (ctrl) {
-                                    _controller = ctrl;
-                                    return compile();
-                                });
-                            }
-                        }
+                        
+                        _controller = composer.resolve(Controller);                        
+                        return compile();
 
                         function compile() {
                             if (_controller) {
@@ -181,7 +218,7 @@ new function () { // closure
                                     _controller         = pcopy(_controller);
                                     _controller.context = partialContext;
                                 }
-                                _partialScope[controllerAs] = _controller;
+                                _partialScope["ctrl"] = _controller;
                             }
                             
                             var content = $compile(template)(_partialScope);
@@ -214,8 +251,6 @@ new function () { // closure
                                 return ctx;
                             });                        
                         }
-                        
-                        return compile();
                     }
                     
                     function animateContent(container, content, partialContext, $q) {
@@ -526,7 +561,8 @@ new function () { // closure
      * @param  {Array}    exports  - exported members
      */
     function _registerContents(package, module, exports) {
-        var container = Container($appContext);
+        var unknown   = exports.slice(),
+            container = Container($appContext);
         Array2.forEach(exports, function (name) {
             var member = package[name];
             if (!member || !member.prototype || $isProtocol(member)) {
@@ -546,15 +582,18 @@ new function () { // closure
                 }
                 name = name.charAt(0).toLowerCase() + name.slice(1);
                 module.directive(name, deps);
+                Array2.remove(unknown, name);
             } else if (memberProto instanceof Controller) {
                 var controller = new ComponentModel;
-                controller.key = member;
+                controller.key = [member, name];
+                controller.implementation = member;                
                 controller.lifestyle = new ContextualLifestyle;
                 container.addComponent(controller);
                 var deps = _ngDependencies(controller);
                 deps.unshift("$scope", "$injector");
                 deps.push(Shim(member, deps.slice()));
                 module.controller(name, deps);
+                Array2.remove(unknown, name);                
             } else if (memberProto instanceof Filter) {
                 var filter = new ComponentModel;
                 filter.key = member;
@@ -571,10 +610,11 @@ new function () { // closure
                 }
                 name = name.charAt(0).toLowerCase() + name.slice(1);
                 module.filter(name, deps);
+                Array2.remove(unknown, name);                
             }
         });
         container.register(
-            $classes.fromPackage(package, exports).basedOn(Resolving)
+            $classes.fromPackage(package, unknown).basedOn(Resolving)
                 .withKeys.mostSpecificService()
         );             
     }
@@ -698,7 +738,7 @@ new function () { // closure
 }
 
 }).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
-},{"../ioc":10,"../miruken":12,"../mvc":17}],3:[function(require,module,exports){
+},{"../error":6,"../ioc":10,"../miruken":12,"../mvc":17}],3:[function(require,module,exports){
 /*
   base2 - copyright 2007-2009, Dean Edwards
   http://code.google.com/p/base2/
@@ -3929,8 +3969,11 @@ new function () { // closure
         return false;
     }
 
-    function _matchString(match) {
-        return $isString(match) && this.constraint == match;
+    function _matchString(match, variance) {
+        if (!$isString(match)) { return false;}
+        return variance === Variance.Invariant
+            ? this.constraint == match
+            : this.constraint.toLowerCase() == match.toLowerCase();
     }
 
     function _matchRegExp(match, variance) {
@@ -3970,7 +4013,7 @@ new function () { // closure
     function _flattenPrune(array) {
        var i       = 0,
            flatten = function (result, item) {
-               if (Array2.like(item)) {
+               if ($isArray(item)) {
                    Array2.reduce(item, flatten, result);
                } else if (item != null) {
                    result[i++] = item;
@@ -6923,7 +6966,7 @@ new function () { // closure
      */
     base2.package(this, {
         name:    "miruken",
-        version: "1.0.0",
+        version: "1.0.3",
         exports: "Enum,Flags,Variance,Protocol,StrictProtocol,Delegate,Miruken,MetaStep,MetaMacro," +
                  "Initializing,Disposing,DisposingMixin,Resolving,Invoking,Parenting,Starting,Startup," +
                  "Facet,Interceptor,InterceptorSelector,ProxyBuilder,Modifier,ArrayManager,IndexedList," +
