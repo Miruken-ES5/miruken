@@ -543,7 +543,7 @@ describe("TransientLifestyle", function () {
             container = Container(context);
         context.addHandlers(new IoContainer, new ValidationCallbackHandler);
         
-        it("should resolve diferent instance for TransientLifestyle", function (done) {
+        it("should resolve different instance for TransientLifestyle", function (done) {
             container.register($component(V12).transient());
             Promise.all([container.resolve(Engine), container.resolve(Engine)])
                 .spread(function (engine1, engine2) {
@@ -555,18 +555,21 @@ describe("TransientLifestyle", function () {
 });
 
 describe("ContextualLifestyle", function () {
-    var Controller = Base.extend($inferProperties, $contextual, {
+    var Controller = Base.extend($inferProperties, $contextual, Disposing, {
         $inject: [$optional(Context)],
         constructor: function (context) {
             this.context = context;
         },
         initialize: function () {
             Object.defineProperty(this, "initialized", { value: !!this.context });
-        }
+        },
+        dispose: function () {
+            this.disposed = true;
+        }        
     });
     
     describe("#resolve", function () {
-        it("should resolve diferent instance per context for ContextualLifestyle", function (done) {
+        it("should resolve different instance per context for ContextualLifestyle", function (done) {
             var context   = new Context,
                 container = Container(context);
             context.addHandlers(new IoContainer, new ValidationCallbackHandler);
@@ -643,6 +646,34 @@ describe("ContextualLifestyle", function () {
                 done();
             });
         });
+
+
+        it("should reject changing component Context", function (done) {
+            const context   = new Context(),
+                  container = Container(context);
+            context.addHandlers(new IoContainer(), new ValidationCallbackHandler());
+            container.register($component(Controller).contextual());
+            Promise.resolve(container.resolve(Controller)).then(function (controller) {
+                expect(function () {
+                    controller.context = context.newChild();
+                }).to.throw(Error, "Container managed instances cannot change context");
+                done();
+            });
+        });
+
+        it("should dispose component when Context cleared", function (done) {
+            const context   = new Context(),
+                  container = Container(context);
+            context.addHandlers(new IoContainer(), new ValidationCallbackHandler());
+            container.register($component(Controller).contextual());
+            Promise.resolve(container.resolve(Controller)).then(function (controller) {
+                expect(controller.disposed).to.not.be.true;
+                controller.context = null;
+                expect(controller.disposed).to.be.true;
+                controller.context = context.newChild();                
+                done();
+            });
+        });        
     });
 
     describe("#dispose", function () {

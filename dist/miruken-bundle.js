@@ -2128,15 +2128,12 @@ new function () { // closure
             });
         },
         handleCallback: function (callback, greedy, composer) {
-            var handled = greedy
-                ? (this.handler.handleCallback(callback, true, composer)
+            var handled = this.base(callback, greedy, composer);
+            return !!(greedy
+                ? handled | (this.handler.handleCallback(callback, true, composer)
                    | this.cascadeToHandler.handleCallback(callback, true, composer))
-                : (this.handler.handleCallback(callback, false, composer)
-                   || this.cascadeToHandler.handleCallback(callback, false, composer));
-            if (!handled || greedy) {
-                handled = this.base(callback, greedy, composer) || handled;
-            }
-            return !!handled;
+                : handled || (this.handler.handleCallback(callback, false, composer)
+                   || this.cascadeToHandler.handleCallback(callback, false, composer)));
         }
     });
 
@@ -2185,7 +2182,7 @@ new function () { // closure
                     var index = 0;
                     Array2.flatten(arguments).forEach(function (handler) {
                         if (handler) {
-                            _handlers.splice(atIndex + index++, handler.toCallbackHandler());
+                            _handlers.splice(atIndex + index++, 0,  handler.toCallbackHandler());
                         }
                     });
                     return this;                    
@@ -2214,18 +2211,17 @@ new function () { // closure
                     return this;
                 },
                 handleCallback: function (callback, greedy, composer) {
-                    var handled = false,
-                        count   = _handlers.length;
+                    var handled = this.base(callback, greedy, composer);
+                    if (handled && !greedy) { return true; }
+                    var count   = _handlers.length;
                     for (var idx = 0; idx < count; ++idx) {
                         var handler = _handlers[idx];
                         if (handler.handleCallback(callback, greedy, composer)) {
-                            if (!greedy) {
-                                return true;
-                            }
+                            if (!greedy) { return true; }
                             handled = true;
                         }
                     }
-                    return this.base(callback, greedy, composer) || handled;
+                    return handled;
                 }
             });
             this.addHandlers(arguments);
@@ -3329,7 +3325,8 @@ new function () { // closure
     miruken.package(this, {
         name:    "context",
         imports: "miruken,miruken.graph,miruken.callback",
-        exports: "ContextState,ContextObserver,Context,ContextualHelper,$contextual"
+        exports: "ContextState,ContextObserver,Context,ContextualHelper," +
+                 "ContextualMixin,$contextual"
     });
 
     eval(this.imports);
@@ -3606,7 +3603,7 @@ new function () { // closure
      * @class ContextualMixin
      * @private
      */
-    var ContextualMixin = Object.freeze({
+    var ContextualMixin = {
         /**
          * The context associated with the receiver.
          * @property {miruken.context.Context} context
@@ -3620,7 +3617,7 @@ new function () { // closure
                 this.__context.removeHandlers(this);
             if (context) {
                 this.__context = context;
-                context.addHandlers(this);
+                context.insertHandlers(0, this);
             } else {
                 delete this.__context;
             }
@@ -3642,7 +3639,7 @@ new function () { // closure
                 this.__context.end();
             }
         }
-    });
+    };
 
     /**
      * Metamacro to make classes contextual.<br/>
@@ -5453,15 +5450,16 @@ new function () { // closure
         trackInstance: function (instance) {
             if (instance && $isFunction(instance.dispose)) {
                 var lifestyle = this;
-                instance.extend({
+                return $decorate(instance, {
                     dispose: function (disposing) {
-                        if (disposing || lifestyle.disposeInstance(instance, true)) {
+                        if (disposing || lifestyle.disposeInstance(this, true)) {
                             this.base();
-                            this.dispose = this.base;
+                            delete this.dispose;
                         }
                     }
                 });
             }
+            return instance;
         },
         /**
          * Disposes the component instance.
@@ -5503,12 +5501,16 @@ new function () { // closure
         constructor: function (instance) {
             this.extend({
                 resolve: function (factory) {
-                    return instance ? instance : factory(function (object) {
-                        if (!instance && object) {
-                            instance = object;
-                            this.trackInstance(instance);
-                        }
-                    }.bind(this));
+                    if (instance == null) {
+                        return factory(function (object) {
+                            if (!instance && object) {
+                                instance = this.trackInstance(object);
+                                return instance;
+                            }
+                        }.bind(this));
+                    }
+                    instance = this.trackInstance(instance);
+                    return instance;                    
                 },
                 disposeInstance: function (object, disposing) {
                     // Singletons cannot be disposed directly
@@ -5544,24 +5546,42 @@ new function () { // closure
                             instance = _cache[id];
                         return instance ? instance : factory(function (object) {
                             if (object && !_cache[id]) {
-                                _cache[id] = instance = object;
-                                this.trackInstance(instance);
-                                ContextualHelper.bindContext(instance, context);
-                                context.onEnded(function () {
-                                    instance.context = null;
-                                    this.disposeInstance(instance);
-                                    delete _cache[id];
-                                }.bind(this));
+                                instance = this.trackInstance(object);
+                                instance = this.setContext(object, instance, context);
+                                _cache[id] = instance;
+                                context.onEnded(function () { instance.context = null; });
                             }
+                            return instance;
                         }.bind(this));
                     }
                 },
+                setContext: function (object, instance, context) {
+                    var lifestyle = this,
+                        property  = _getPropertyDescriptor(instance, "context");
+                    if (!(property && property.set)) {
+                        instance = object === instance
+                                 ? $decorate(object, ContextualMixin)
+                                 : instance.extend(ContextualMixin);
+                    }
+                    ContextualHelper.bindContext(instance, context, true);
+                    return instance.extend({
+                        set context(value) {
+                            if (value == null) {
+                                this.base(null);
+                                lifestyle.disposeInstance(instance);
+                            } else if (value !== context) {
+                                throw new Error("Container managed instances cannot change context");
+                            }
+                        }
+                    });
+                },                
                 disposeInstance: function (instance, disposing) {
                     if (!disposing) {  // Cannot be disposed directly
                         for (contextId in _cache) {
                             if (_cache[contextId] === instance) {
                                 this.base(instance, disposing);
                                 delete _cache[contextId];
+                                delete instance.context;                                
                                 return true;
                             } 
                         }
@@ -6064,7 +6084,7 @@ new function () { // closure
                 function createComponent(dependencies) {
                     var component = factory.call(composer, dependencies);
                     if ($isFunction(configure)) {
-                        configure(component, dependencies);
+                        component = configure(component, dependencies) || component;
                     }
                     return applyPolicies(0);
                     function applyPolicies(index) {
@@ -6206,6 +6226,14 @@ new function () { // closure
         module.exports = exports = this.package;
     }
 
+    function _getPropertyDescriptor(object, key) {
+        var source = object, descriptor;
+        while (source && !(
+            descriptor = Object.getOwnPropertyDescriptor(source, key))
+              ) source = Object.getPrototypeOf(source);
+        return descriptor;
+    }
+    
     eval(this.exports);
 
 }
@@ -6459,7 +6487,7 @@ new function () { // closure
          * @property {number} Invariant
          */        
         Invariant: 3
-        });
+    });
     
     /**
      * Declares methods and properties independent of a class.

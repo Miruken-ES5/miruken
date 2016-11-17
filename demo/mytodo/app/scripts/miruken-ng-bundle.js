@@ -51,7 +51,7 @@ new function () { // closure
                             new miruken.validate.ValidationCallbackHandler,
                             new miruken.validate.ValidateJsCallbackHandler,
                             new miruken.error.ErrorCallbackHandler);
-
+    
     angular.module("ng").run(["$rootElement", "$rootScope", "$injector",
                               "$templateRequest", "$controller", "$compile", "$q",
         function ($rootElement, $rootScope, $injector, $templates, $controller, $compile, $q) {
@@ -162,7 +162,6 @@ new function () { // closure
      * @constructor
      * @param {Element}  name         -  partial name
      * @param {Element}  container    -  html container element
-     * @param {Scope}    scope        -  partial scope
      * @param {Element}  content      -  initial html content
      * @param {Object}   $templates   -  angular $templateRequest service
      * @param {Object}   $controller  -  angular $controller service
@@ -173,23 +172,29 @@ new function () { // closure
      * @uses miruken.context.$contextual
      */
     var PartialRegion = Base.extend(ViewRegion, $contextual, {
-        constructor: function (name, container, scope, $templates, $controller, $compile, $q) {
-            var _controller, _partialScope;
+        constructor: function (name, container, $templates, $controller, $compile, $q) {
+            var _controller;
             this.extend({
                 get name() { return name; },
                 get container() { return container; },
                 get controller() { return _controller; },
                 get controllerContext() { return _controller && _controller.context; },
-                present: function (presentation) {
+                show: function (view) {
                     var composer = $composer,
                         template,  templateUrl;
                     
-                    if ($isString(presentation)) {
-                        templateUrl = presentation;
-                    } else if (presentation) {
-                        template     = presentation.template;
-                        templateUrl  = presentation.templateUrl;
+                    if ($isString(view)) {
+                        templateUrl = view;
+                    } else if (view) {
+                        template     = view.template;
+                        templateUrl  = view.templateUrl;
                     }
+                    
+                    var controller = composer.resolve(Controller);
+                    if (controller == null) {
+                        return $q.reject(new Error("A Controller could not be inferred"));
+                    }                    
+                    _controller = controller;
                     
                     if (template) {
                         return replaceContent(template);
@@ -198,62 +203,45 @@ new function () { // closure
                             return replaceContent(template);
                         });
                     } else {
-                        return $q.reject(new Error("A template or templateUrl must be specified"));
+                        return $q.reject(new Error("A view template or templateUrl must be specified"));
                     }
                     
                     function replaceContent(template) {
-                        var oldScope       = _partialScope,
-                            modalPolicy    = new ModalPolicy,
+                        var modalPolicy    = new ModalPolicy(),
                             isModal        = composer.handle(modalPolicy, true),
-                            parentScope    = isModal ? composer.resolve("$scope") : scope;
-                        _partialScope      = (parentScope || scope).$new();
-                        var partialContext = _partialScope.context;
+                            partialContext = _controller.context;                            
+                            partialScope   = partialContext.resolve("$scope");
                         
-                        _controller = composer.resolve(Controller);                        
-                        return compile();
-
-                        function compile() {
-                            if (_controller) {
-                                if (_controller.context !== partialContext) {
-                                    _controller         = pcopy(_controller);
-                                    _controller.context = partialContext;
-                                }
-                                _partialScope["ctrl"] = _controller;
-                            }
-                            
-                            var content = $compile(template)(_partialScope);
-                            
-                            if (isModal) {
-                                var provider = modalPolicy.style || ModalProviding;
-                                return $q.when(provider(composer)
-                                	.showModal(container, content, modalPolicy, partialContext))
-                                	.then(function (ctx) {
-                                        if (_controller && $isFunction(_controller.viewLoaded)) {
-                                            _controller.viewLoaded();
-                                        }
-                                        return ctx;
-                                    });
-                            }
-                            
-                            partialContext.onEnding(function (context) {
-                                if (context === _partialScope.context) {
-                                    _controller = null;
-                                }
-                            });
-                            
-                            return animateContent(container, content, partialContext, $q).then(function (ctx) {
-                                if (oldScope) {
-                                    oldScope.$destroy();
-                                }
+                        partialScope["ctrl"] = _controller;
+                        
+                        var content = $compile(template)(partialScope);
+                        
+                        if (isModal) {
+                            var provider = modalPolicy.style || ModalProviding;
+                            return $q.when(provider(composer)
+                                	       .showModal(container, content, modalPolicy, partialContext))
+                                .then(function (ctx) {
+                                    if (_controller && $isFunction(_controller.viewLoaded)) {
+                                        _controller.viewLoaded();
+                                    }
+                                    return ctx;
+                                });
+                        }
+                        
+                        partialContext.onEnding(function (context) {
+                            _controller = null;
+                        });
+                        
+                        return animateContent(container, content, partialScope, partialContext, $q)
+                            .then(function (ctx) {
                                 if (_controller && $isFunction(_controller.viewLoaded)) {
                                     _controller.viewLoaded();
                                 }
                                 return ctx;
-                            });                        
-                        }
+                            });
                     }
                     
-                    function animateContent(container, content, partialContext, $q) {
+                    function animateContent(container, content, partialScope, partialContext, $q) {
                         var fadePolicy = new FadePolicy,
                             fade       = composer.handle(fadePolicy, true);
 
@@ -263,14 +251,12 @@ new function () { // closure
                         }
 
                         partialContext.onEnding(function (context) {
-                            if (context === _partialScope.context) {
-                                container.html("");
-                            }
+                            container.html("");
                         });
                         
                         container.html(content);
-                        if (!_partialScope.$$phase) {
-                            _partialScope.$digest();
+                        if (!partialScope.$$phase) {
+                            partialScope.$digest();
                         }
                         return $q.when(partialContext);
                     }
@@ -296,7 +282,7 @@ new function () { // closure
                     var name    = attr.region,
                         context = scope.context,
                         owner   = context.resolve(Controller),
-                        partial = new PartialRegion(name, element, scope, $templates, $controller, $compile, $q);
+                        partial = new PartialRegion(name, element, $templates, $controller, $compile, $q);
                     context.onEnded(function () {
                         scope.$destroy();
                         element.remove();
@@ -2868,15 +2854,12 @@ new function () { // closure
             });
         },
         handleCallback: function (callback, greedy, composer) {
-            var handled = greedy
-                ? (this.handler.handleCallback(callback, true, composer)
+            var handled = this.base(callback, greedy, composer);
+            return !!(greedy
+                ? handled | (this.handler.handleCallback(callback, true, composer)
                    | this.cascadeToHandler.handleCallback(callback, true, composer))
-                : (this.handler.handleCallback(callback, false, composer)
-                   || this.cascadeToHandler.handleCallback(callback, false, composer));
-            if (!handled || greedy) {
-                handled = this.base(callback, greedy, composer) || handled;
-            }
-            return !!handled;
+                : handled || (this.handler.handleCallback(callback, false, composer)
+                   || this.cascadeToHandler.handleCallback(callback, false, composer)));
         }
     });
 
@@ -2925,7 +2908,7 @@ new function () { // closure
                     var index = 0;
                     Array2.flatten(arguments).forEach(function (handler) {
                         if (handler) {
-                            _handlers.splice(atIndex + index++, handler.toCallbackHandler());
+                            _handlers.splice(atIndex + index++, 0,  handler.toCallbackHandler());
                         }
                     });
                     return this;                    
@@ -2954,18 +2937,17 @@ new function () { // closure
                     return this;
                 },
                 handleCallback: function (callback, greedy, composer) {
-                    var handled = false,
-                        count   = _handlers.length;
+                    var handled = this.base(callback, greedy, composer);
+                    if (handled && !greedy) { return true; }
+                    var count   = _handlers.length;
                     for (var idx = 0; idx < count; ++idx) {
                         var handler = _handlers[idx];
                         if (handler.handleCallback(callback, greedy, composer)) {
-                            if (!greedy) {
-                                return true;
-                            }
+                            if (!greedy) { return true; }
                             handled = true;
                         }
                     }
-                    return this.base(callback, greedy, composer) || handled;
+                    return handled;
                 }
             });
             this.addHandlers(arguments);
@@ -4050,7 +4032,7 @@ new function () { // closure
 }
 
 }).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
-},{"./miruken.js":12,"bluebird":23}],5:[function(require,module,exports){
+},{"./miruken.js":12,"bluebird":24}],5:[function(require,module,exports){
 var miruken = require('./miruken.js');
               require('./graph.js');
               require('./callback.js');
@@ -4069,7 +4051,8 @@ new function () { // closure
     miruken.package(this, {
         name:    "context",
         imports: "miruken,miruken.graph,miruken.callback",
-        exports: "ContextState,ContextObserver,Context,ContextualHelper,$contextual"
+        exports: "ContextState,ContextObserver,Context,ContextualHelper," +
+                 "ContextualMixin,$contextual"
     });
 
     eval(this.imports);
@@ -4346,7 +4329,7 @@ new function () { // closure
      * @class ContextualMixin
      * @private
      */
-    var ContextualMixin = Object.freeze({
+    var ContextualMixin = {
         /**
          * The context associated with the receiver.
          * @property {miruken.context.Context} context
@@ -4360,7 +4343,7 @@ new function () { // closure
                 this.__context.removeHandlers(this);
             if (context) {
                 this.__context = context;
-                context.addHandlers(this);
+                context.insertHandlers(0, this);
             } else {
                 delete this.__context;
             }
@@ -4382,7 +4365,7 @@ new function () { // closure
                 this.__context.end();
             }
         }
-    });
+    };
 
     /**
      * Metamacro to make classes contextual.<br/>
@@ -4887,7 +4870,7 @@ new function() { // closure
 
 }
 
-},{"./callback.js":4,"./miruken.js":12,"bluebird":23}],7:[function(require,module,exports){
+},{"./callback.js":4,"./miruken.js":12,"bluebird":24}],7:[function(require,module,exports){
 var miruken = require('./miruken.js');
 
 new function () { // closure
@@ -5288,7 +5271,7 @@ require('./error.js');
 require('./validate');
 require('./ioc');
 
-},{"./callback.js":4,"./context.js":5,"./error.js":6,"./graph.js":7,"./ioc":10,"./miruken.js":12,"./validate":20}],9:[function(require,module,exports){
+},{"./callback.js":4,"./context.js":5,"./error.js":6,"./graph.js":7,"./ioc":10,"./miruken.js":12,"./validate":21}],9:[function(require,module,exports){
 var miruken = require('../miruken.js'),
     Promise = require('bluebird');
               require('./ioc.js');
@@ -5720,7 +5703,7 @@ new function () { // closure
     eval(this.exports);
 }
 
-},{"../miruken.js":12,"./ioc.js":11,"bluebird":23}],10:[function(require,module,exports){
+},{"../miruken.js":12,"./ioc.js":11,"bluebird":24}],10:[function(require,module,exports){
 module.exports = require('./ioc.js');
 require('./fluent.js');
 
@@ -6193,15 +6176,16 @@ new function () { // closure
         trackInstance: function (instance) {
             if (instance && $isFunction(instance.dispose)) {
                 var lifestyle = this;
-                instance.extend({
+                return $decorate(instance, {
                     dispose: function (disposing) {
-                        if (disposing || lifestyle.disposeInstance(instance, true)) {
+                        if (disposing || lifestyle.disposeInstance(this, true)) {
                             this.base();
-                            this.dispose = this.base;
+                            delete this.dispose;
                         }
                     }
                 });
             }
+            return instance;
         },
         /**
          * Disposes the component instance.
@@ -6243,12 +6227,16 @@ new function () { // closure
         constructor: function (instance) {
             this.extend({
                 resolve: function (factory) {
-                    return instance ? instance : factory(function (object) {
-                        if (!instance && object) {
-                            instance = object;
-                            this.trackInstance(instance);
-                        }
-                    }.bind(this));
+                    if (instance == null) {
+                        return factory(function (object) {
+                            if (!instance && object) {
+                                instance = this.trackInstance(object);
+                                return instance;
+                            }
+                        }.bind(this));
+                    }
+                    instance = this.trackInstance(instance);
+                    return instance;                    
                 },
                 disposeInstance: function (object, disposing) {
                     // Singletons cannot be disposed directly
@@ -6284,24 +6272,42 @@ new function () { // closure
                             instance = _cache[id];
                         return instance ? instance : factory(function (object) {
                             if (object && !_cache[id]) {
-                                _cache[id] = instance = object;
-                                this.trackInstance(instance);
-                                ContextualHelper.bindContext(instance, context);
-                                context.onEnded(function () {
-                                    instance.context = null;
-                                    this.disposeInstance(instance);
-                                    delete _cache[id];
-                                }.bind(this));
+                                instance = this.trackInstance(object);
+                                instance = this.setContext(object, instance, context);
+                                _cache[id] = instance;
+                                context.onEnded(function () { instance.context = null; });
                             }
+                            return instance;
                         }.bind(this));
                     }
                 },
+                setContext: function (object, instance, context) {
+                    var lifestyle = this,
+                        property  = _getPropertyDescriptor(instance, "context");
+                    if (!(property && property.set)) {
+                        instance = object === instance
+                                 ? $decorate(object, ContextualMixin)
+                                 : instance.extend(ContextualMixin);
+                    }
+                    ContextualHelper.bindContext(instance, context, true);
+                    return instance.extend({
+                        set context(value) {
+                            if (value == null) {
+                                this.base(null);
+                                lifestyle.disposeInstance(instance);
+                            } else if (value !== context) {
+                                throw new Error("Container managed instances cannot change context");
+                            }
+                        }
+                    });
+                },                
                 disposeInstance: function (instance, disposing) {
                     if (!disposing) {  // Cannot be disposed directly
                         for (contextId in _cache) {
                             if (_cache[contextId] === instance) {
                                 this.base(instance, disposing);
                                 delete _cache[contextId];
+                                delete instance.context;                                
                                 return true;
                             } 
                         }
@@ -6804,7 +6810,7 @@ new function () { // closure
                 function createComponent(dependencies) {
                     var component = factory.call(composer, dependencies);
                     if ($isFunction(configure)) {
-                        configure(component, dependencies);
+                        component = configure(component, dependencies) || component;
                     }
                     return applyPolicies(0);
                     function applyPolicies(index) {
@@ -6946,11 +6952,19 @@ new function () { // closure
         module.exports = exports = this.package;
     }
 
+    function _getPropertyDescriptor(object, key) {
+        var source = object, descriptor;
+        while (source && !(
+            descriptor = Object.getOwnPropertyDescriptor(source, key))
+              ) source = Object.getPrototypeOf(source);
+        return descriptor;
+    }
+    
     eval(this.exports);
 
 }
 
-},{"../callback.js":4,"../context.js":5,"../miruken.js":12,"../validate":20,"bluebird":23}],12:[function(require,module,exports){
+},{"../callback.js":4,"../context.js":5,"../miruken.js":12,"../validate":21,"bluebird":24}],12:[function(require,module,exports){
 (function (global){
 require('./base2.js');
 var Promise = require('bluebird');
@@ -7199,7 +7213,7 @@ new function () { // closure
          * @property {number} Invariant
          */        
         Invariant: 3
-        });
+    });
     
     /**
      * Declares methods and properties independent of a class.
@@ -9308,10 +9322,10 @@ new function () { // closure
 }
 
 }).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
-},{"./base2.js":3,"bluebird":23}],13:[function(require,module,exports){
+},{"./base2.js":3,"bluebird":24}],13:[function(require,module,exports){
 var miruken = require('../miruken.js'),
     Promise = require('bluebird');
-              require('../mvc/view.js');
+              require('./view.js');
 
 new function () { // closure
 
@@ -9443,9 +9457,9 @@ new function () { // closure
     
 }
 
-},{"../miruken.js":12,"../mvc/view.js":19,"bluebird":23}],14:[function(require,module,exports){
+},{"../miruken.js":12,"./view.js":20,"bluebird":24}],14:[function(require,module,exports){
 var miruken = require('../miruken.js');
-              require('../mvc/controller.js');
+              require('./controller.js');
 
 new function () { // closure
 
@@ -9545,11 +9559,12 @@ new function () { // closure
 
 }
 
-},{"../miruken.js":12,"../mvc/controller.js":15}],15:[function(require,module,exports){
+},{"../miruken.js":12,"./controller.js":15}],15:[function(require,module,exports){
 var miruken = require('../miruken.js');
               require('../callback.js');
               require('../context.js');
               require('../validate');
+var Promise = require('bluebird');
 
 new function () { // closure
 
@@ -9566,10 +9581,12 @@ new function () { // closure
     miruken.package(this, {
         name:    "mvc",
         imports: "miruken,miruken.callback,miruken.context,miruken.validate",
-        exports: "Controller,MasterDetail,MasterDetailAware"
+        exports: "Controller"
     });
 
     eval(this.imports);
+
+    var globalFilters = new Array2(), ioChain;
     
     /**
      * Base class for controllers.
@@ -9582,14 +9599,37 @@ new function () { // closure
      */
     var Controller = CallbackHandler.extend(
         $contextual, $validateThat, Validating, {
+
+        get io() {
+            var _this = this,
+                io = ioChain || this.context;
+            if (!io) { return; }
+            if (this._filters) {
+                io = this._filters.reduce(function (result, filter) {
+                    return $isFunction(filter) ? filter.call(_this, result) : result;
+                }, io);
+            }
+            io = globalFilters.reduce(function (result, filter) {
+                return $isFunction(filter) ? filter.call(_this, result) : result;
+            }, io);
+            return io;
+        },
         validate: function (target, scope) {
             return _validateController(this, target, 'validate', scope);
         },
         validateAsync: function (target, scope) {
             return _validateController(this, target, 'validateAsync', scope);
+        },
+        next: function (controller){
+            return Promise.resolve(this.io.resolve(controller));
+        },            
+        get filters() {
+            return this._filters || (this._filters = new Array2());
         }
+    }, {
+        get globalFilters() { return globalFilters; }
     });
-
+    
     function _validateController(controller, target, method, scope) {
         var context = controller.context;
         if (!context) {
@@ -9599,6 +9639,123 @@ new function () { // closure
         return validator[method].call(validator, target || controller, scope);
     }
 
+    eval(this.exports);
+    
+}
+
+},{"../callback.js":4,"../context.js":5,"../miruken.js":12,"../validate":21,"bluebird":24}],16:[function(require,module,exports){
+var miruken = require('../miruken.js'),
+    Promise = require('bluebird');
+
+new function () {
+
+	miruken.package(this, {
+		name:   'mvc',
+		imports: 'miruken',
+		exports: 'GreenSockFadeProvider'
+	});
+
+	eval(this.imports);
+
+	var outTime = .4,
+		inTime  = .8;
+
+	var BaseAnimationProvider = Base.extend(FadeProviding, {
+		handle: function(container, content, context){
+				
+			var _current = container.children(),
+			    _removed = false;
+
+				if (context) {
+                	context.onEnding(function(_context){
+                		if(context === _context && !_removed){
+                			_removed = true;
+                			this.animateOut(content, container).then(function(){
+                				content.remove();
+                			});
+                		}
+            		}.bind(this));
+				}
+
+			    if(!container.__miruken_animate_out){
+			    	if(_current.length){
+			    		return this.animateOut(_current, container).then(function(){
+				    		return this.animateIn(content, container);
+				    	}.bind(this));	
+			    	} else {
+			    		return this.animateIn(content, container);
+			    	}
+			    } else {
+			    	return container.__miruken_animate_out(content, container).then(function(){
+			    		_removed = true;
+			    		return this.animateIn(content, container).then(function(){
+			    			return container.__miruken_animate_out = function(){
+			    				this.animateOut(content, container);
+			    			}	
+			    		}.bind(this));
+			    	}.bind(this));
+			    }
+		}
+	});
+
+	var GreenSockFadeProvider = BaseAnimationProvider.extend(FadeProviding, {
+		animateIn: function(content, container){
+			return new Promise(function(resolve){
+	    		content.css('opacity', 0);
+    			container.html(content);
+			    TweenMax.to(content, inTime, {
+                	opacity: 1,
+                	onComplete: resolve
+            	})
+	    	});
+		},
+		animateOut: function(content, container){
+			return new Promise(function(resolve){
+	    		TweenMax.to(content, outTime, {
+	    			opacity: 0,
+	    			onComplete: resolve
+	    		});
+	    	});
+		}
+	});
+
+	eval(this.exports);
+
+}
+
+},{"../miruken.js":12,"bluebird":24}],17:[function(require,module,exports){
+module.exports = require('./model.js');
+require('./view.js');
+require('./controller.js');
+require('./components.js');
+require('./master-detail.js');
+require('./bootstrap.js');
+require('./greenSock.js');
+
+
+},{"./bootstrap.js":13,"./components.js":14,"./controller.js":15,"./greenSock.js":16,"./master-detail.js":18,"./model.js":19,"./view.js":20}],18:[function(require,module,exports){
+var miruken = require('../miruken.js');
+
+new function () { // closure
+
+    /**
+     * Package providing Model-View-Controller abstractions.<br/>
+     * Requires the {{#crossLinkModule "miruken"}}{{/crossLinkModule}},
+     * {{#crossLinkModule "callback"}}{{/crossLinkModule}},
+     * {{#crossLinkModule "context"}}{{/crossLinkModule}} and 
+     * {{#crossLinkModule "validate"}}{{/crossLinkModule}} modules.
+     * @module miruken
+     * @submodule mvc
+     * @namespace miruken.mvc
+     */
+    miruken.package(this, {
+        name:    "mvc",
+        imports: "miruken",
+        exports: "MasterDetail,MasterDetailAware"
+    });
+
+    eval(this.imports);
+    
     /**
      * Protocol for managing master-detail relationships.
      * @class MasterDetail
@@ -9733,96 +9890,7 @@ new function () { // closure
     
 }
 
-},{"../callback.js":4,"../context.js":5,"../miruken.js":12,"../validate":20}],16:[function(require,module,exports){
-var miruken = require('../miruken.js'),
-    Promise = require('bluebird');
-
-new function () {
-
-	miruken.package(this, {
-		name:   'mvc',
-		imports: 'miruken',
-		exports: 'GreenSockFadeProvider'
-	});
-
-	eval(this.imports);
-
-	var outTime = .4,
-		inTime  = .8;
-
-	var BaseAnimationProvider = Base.extend(FadeProviding, {
-		handle: function(container, content, context){
-				
-			var _current = container.children(),
-			    _removed = false;
-
-				if (context) {
-                	context.onEnding(function(_context){
-                		if(context === _context && !_removed){
-                			_removed = true;
-                			this.animateOut(content, container).then(function(){
-                				content.remove();
-                			});
-                		}
-            		}.bind(this));
-				}
-
-			    if(!container.__miruken_animate_out){
-			    	if(_current.length){
-			    		return this.animateOut(_current, container).then(function(){
-				    		return this.animateIn(content, container);
-				    	}.bind(this));	
-			    	} else {
-			    		return this.animateIn(content, container);
-			    	}
-			    } else {
-			    	return container.__miruken_animate_out(content, container).then(function(){
-			    		_removed = true;
-			    		return this.animateIn(content, container).then(function(){
-			    			return container.__miruken_animate_out = function(){
-			    				this.animateOut(content, container);
-			    			}	
-			    		}.bind(this));
-			    	}.bind(this));
-			    }
-		}
-	});
-
-	var GreenSockFadeProvider = BaseAnimationProvider.extend(FadeProviding, {
-		animateIn: function(content, container){
-			return new Promise(function(resolve){
-	    		content.css('opacity', 0);
-    			container.html(content);
-			    TweenMax.to(content, inTime, {
-                	opacity: 1,
-                	onComplete: resolve
-            	})
-	    	});
-		},
-		animateOut: function(content, container){
-			return new Promise(function(resolve){
-	    		TweenMax.to(content, outTime, {
-	    			opacity: 0,
-	    			onComplete: resolve
-	    		});
-	    	});
-		}
-	});
-
-	eval(this.exports);
-
-}
-
-},{"../miruken.js":12,"bluebird":23}],17:[function(require,module,exports){
-module.exports = require('./model.js');
-require('./view.js');
-require('./controller.js');
-require('./components.js');
-require('./bootstrap.js');
-require('./greenSock.js');
-
-
-},{"./bootstrap.js":13,"./components.js":14,"./controller.js":15,"./greenSock.js":16,"./model.js":18,"./view.js":19}],18:[function(require,module,exports){
+},{"../miruken.js":12}],19:[function(require,module,exports){
 var miruken = require('../miruken.js');
               require('../callback.js');
               require('../context.js');
@@ -10040,7 +10108,7 @@ new function () { // closure
     
 }
 
-},{"../callback.js":4,"../context.js":5,"../miruken.js":12,"../validate":20}],19:[function(require,module,exports){
+},{"../callback.js":4,"../context.js":5,"../miruken.js":12,"../validate":21}],20:[function(require,module,exports){
 var miruken = require('../miruken.js');
               require('../callback.js');
               require('../context.js');
@@ -10099,12 +10167,12 @@ new function () { // closure
          */            
         get controllerContext() {},        
         /**
-         * Renders new presentation in the region.
-         * @method present
-         * @param    {Any}      presentation  -  presentation options
+         * Renders new view in the region.
+         * @method show
+         * @param    {Any}      view  -  view details
          * @returns  {Promise}  promise for the rendering.
          */                                        
-        present: function (presentation) {}
+        show: function (view) {}
     });
 
     /**
@@ -10169,12 +10237,12 @@ new function () { // closure
     
 }
 
-},{"../callback.js":4,"../context.js":5,"../miruken.js":12,"../validate":20,"./model.js":18}],20:[function(require,module,exports){
+},{"../callback.js":4,"../context.js":5,"../miruken.js":12,"../validate":21,"./model.js":19}],21:[function(require,module,exports){
 module.exports = require('./validate.js');
 require('./validatejs.js');
 
 
-},{"./validate.js":21,"./validatejs.js":22}],21:[function(require,module,exports){
+},{"./validate.js":22,"./validatejs.js":23}],22:[function(require,module,exports){
 var miruken = require('../miruken.js'),
     Promise = require('bluebird');
               require('../callback.js');
@@ -10585,7 +10653,7 @@ new function () { // closure
 
 }
 
-},{"../callback.js":4,"../miruken.js":12,"bluebird":23}],22:[function(require,module,exports){
+},{"../callback.js":4,"../miruken.js":12,"bluebird":24}],23:[function(require,module,exports){
 var miruken    = require('../miruken.js'),
     validate   = require('./validate.js'),
     validatejs = require("validate.js"),
@@ -10837,7 +10905,7 @@ new function () { // closure
 
 }
 
-},{"../callback.js":4,"../miruken.js":12,"./validate.js":21,"bluebird":23,"validate.js":25}],23:[function(require,module,exports){
+},{"../callback.js":4,"../miruken.js":12,"./validate.js":22,"bluebird":24,"validate.js":26}],24:[function(require,module,exports){
 (function (process,global){
 /* @preserve
  * The MIT License (MIT)
@@ -15732,7 +15800,7 @@ module.exports = ret;
 },{"./es5.js":14}]},{},[4])(4)
 });                    ;if (typeof window !== 'undefined' && window !== null) {                               window.P = window.Promise;                                                     } else if (typeof self !== 'undefined' && self !== null) {                             self.P = self.Promise;                                                         }
 }).call(this,require('_process'),typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
-},{"_process":24}],24:[function(require,module,exports){
+},{"_process":25}],25:[function(require,module,exports){
 // shim for using process in browser
 var process = module.exports = {};
 
@@ -15914,7 +15982,7 @@ process.chdir = function (dir) {
 };
 process.umask = function() { return 0; };
 
-},{}],25:[function(require,module,exports){
+},{}],26:[function(require,module,exports){
 /*!
  * validate.js 0.10.0
  *
