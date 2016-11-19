@@ -1,11 +1,14 @@
 (function e(t,n,r){function s(o,u){if(!n[o]){if(!t[o]){var a=typeof require=="function"&&require;if(!u&&a)return a(o,!0);if(i)return i(o,!0);var f=new Error("Cannot find module '"+o+"'");throw f.code="MODULE_NOT_FOUND",f}var l=n[o]={exports:{}};t[o][0].call(l.exports,function(e){var n=t[o][1][e];return s(n?n:e)},l,l.exports,e,t,n,r)}return n[o].exports}var i=typeof require=="function"&&require;for(var o=0;o<r.length;o++)s(r[o]);return s})({1:[function(require,module,exports){
 module.exports = require('./ng.js');
-},{"./ng.js":2}],2:[function(require,module,exports){
+require('./region.js');
+require('./route.js');
+
+
+},{"./ng.js":2,"./region.js":3,"./route.js":4}],2:[function(require,module,exports){
 (function (global){
 var miruken = require('../miruken');
               require('../ioc');
               require('../mvc');
-              require('../error');
 
 new function () { // closure
 
@@ -19,7 +22,6 @@ new function () { // closure
      * {{#crossLinkModule "callback"}}{{/crossLinkModule}},
      * {{#crossLinkModule "context"}}{{/crossLinkModule}},
      * {{#crossLinkModule "validate"}}{{/crossLinkModule}},
-     * {{#crossLinkModule "error"}}{{/crossLinkModule}} and
      * {{#crossLinkModule "ioc"}}{{/crossLinkModule}} modules.
      * @module miruken
      * @submodule ng
@@ -27,10 +29,10 @@ new function () { // closure
      */
     miruken.package(this, {
         name:    "ng",
-        imports: "miruken,miruken.callback,miruken.context,miruken.validate,miruken.ioc," +
-                 "miruken.mvc,miruken.error",
-        exports: "Runner,Directive,Filter,UiRouter,RegionDirective,DynamicControllerDirective," +
-                 "PartialRegion,UseModelValidation,DigitsOnly,InhibitFocus,TrustFilter," +
+        imports: "miruken,miruken.callback,miruken.context,miruken.validate," +
+                 "miruken.ioc,miruken.mvc",
+        exports: "Runner,Directive,Filter,DynamicControllerDirective," +
+                 "UseModelValidation,DigitsOnly,InhibitFocus,TrustFilter," +
                  "$appContext,$envContext,$rootContext"
     });
 
@@ -53,11 +55,11 @@ new function () { // closure
                             new miruken.error.ErrorCallbackHandler);
     
     angular.module("ng").run(["$rootElement", "$rootScope", "$injector",
-                              "$templateRequest", "$controller", "$compile", "$q",
-        function ($rootElement, $rootScope, $injector, $templates, $controller, $compile, $q) {
+                              "$templateRequest", "$compile", "$q",
+        function ($rootElement, $rootScope, $injector, $templates, $compile, $q) {
             _instrumentScopes($rootScope, $injector);
-            var appRegion = new PartialRegion("root", $rootElement, $rootScope, $templates, $controller, $compile, $q);
-            $appContext.addHandlers(appRegion, new BootstrapProvider, new GreenSockFadeProvider);
+            var appRegion = new miruken.ng.PartialRegion("root", $rootElement, $templates, $compile, $q);
+            $appContext.addHandlers(appRegion, new BootstrapProvider);
             _provideInjector(appContainer, $injector);
     }]);
     
@@ -97,204 +99,6 @@ new function () { // closure
          * @returns {Any} transformed output.
          */
         filter: function (input) { return input; }
-    });
-
-    /**
-     * Adapts the [Angular ui-router] (https://github.com/angular-ui/ui-router)
-     * to support conventional MVC semantics
-     * @class Router
-     * @extends Base     
-     */
-    var UiRouter = Base.extend({
-        constructor: function ($scope, params, state) {
-            var _this  = this;            
-            $scope.loaded = function () {
-                delete $scope.loaded;
-                _this.executeController(this.context.newChild(), params, state);
-            };
-        },
-        executeController: function (context, params, state) {
-            this.resolveController(context, params, state).then(function (ctrl) {
-                var action = params.action || "index",
-                    method = ctrl[action];
-                return $isFunction(method)
-                    ? method.call(ctrl, params)
-                    : Promise.reject(ctrl + " missing action " + action);
-            })
-            .catch(function (err) { Errors(context).handleError(err, "ui-router"); });
-        },
-        resolveController: function (context, params, state) {
-            var controller = params.controller;
-            if (controller == null || controller.length === 0) {
-                return Promise.reject("Controller could not be determined for state " + state.current.name);
-            }            
-            controllerName = this.inferControllerName(controller);
-            return Promise.resolve(context.resolve(controllerName)).then(function (ctrl) {
-                if (ctrl) { return ctrl; }
-                if (controllerName != controller) {
-                    return Promise.resolve(context.resolve(controller)).then(function (ctrl) {
-                        return ctrl ? ctrl : Promise.reject(controllerName + " could not be resolved");
-                    });
-                }
-                return Promise.reject(controller + " Controller could not be resolved");
-            });
-        },
-        inferControllerName: function (controller) {
-            return controller.endsWith("Controller") ? controller : controller + "Controller";
-        }
-    }, {
-        $inject:  ["$scope", "$stateParams", "$state"],
-        route: function (urlPattern, options) {
-            var route = {
-                url:          urlPattern,
-                template:     this.template,
-                controller:   this                
-            };
-            if (options) { route.params = options; }
-            return route;
-        },
-        template: "<div region>{{ ::loaded() }}</div>"
-    });
-
-    /**
-     * Represents an area to render a view in.
-     * @class PartialRegion
-     * @constructor
-     * @param {Element}  name         -  partial name
-     * @param {Element}  container    -  html container element
-     * @param {Element}  content      -  initial html content
-     * @param {Object}   $templates   -  angular $templateRequest service
-     * @param {Object}   $controller  -  angular $controller service
-     * @param {Object}   $compile     -  angular $compile service
-     * @param {Object}   $q           -  angular $q service
-     * @extends Base
-     * @uses miruken.mvc.ViewRegion
-     * @uses miruken.context.$contextual
-     */
-    var PartialRegion = Base.extend(ViewRegion, $contextual, {
-        constructor: function (name, container, $templates, $controller, $compile, $q) {
-            var _controller;
-            this.extend({
-                get name() { return name; },
-                get container() { return container; },
-                get controller() { return _controller; },
-                get controllerContext() { return _controller && _controller.context; },
-                show: function (view) {
-                    var composer = $composer,
-                        template,  templateUrl;
-                    
-                    if ($isString(view)) {
-                        templateUrl = view;
-                    } else if (view) {
-                        template     = view.template;
-                        templateUrl  = view.templateUrl;
-                    }
-                    
-                    var controller = composer.resolve(Controller);
-                    if (controller == null) {
-                        return $q.reject(new Error("A Controller could not be inferred"));
-                    }                    
-                    _controller = controller;
-                    
-                    if (template) {
-                        return replaceContent(template);
-                    } else if (templateUrl) {
-                        return $templates(templateUrl, true).then(function (template) {
-                            return replaceContent(template);
-                        });
-                    } else {
-                        return $q.reject(new Error("A view template or templateUrl must be specified"));
-                    }
-                    
-                    function replaceContent(template) {
-                        var modalPolicy    = new ModalPolicy(),
-                            isModal        = composer.handle(modalPolicy, true),
-                            partialContext = _controller.context;                            
-                            partialScope   = partialContext.resolve("$scope");
-                        
-                        partialScope["ctrl"] = _controller;
-                        
-                        var content = $compile(template)(partialScope);
-                        
-                        if (isModal) {
-                            var provider = modalPolicy.style || ModalProviding;
-                            return $q.when(provider(composer)
-                                	       .showModal(container, content, modalPolicy, partialContext))
-                                .then(function (ctx) {
-                                    if (_controller && $isFunction(_controller.viewLoaded)) {
-                                        _controller.viewLoaded();
-                                    }
-                                    return ctx;
-                                });
-                        }
-                        
-                        partialContext.onEnding(function (context) {
-                            _controller = null;
-                        });
-                        
-                        return animateContent(container, content, partialScope, partialContext, $q)
-                            .then(function (ctx) {
-                                if (_controller && $isFunction(_controller.viewLoaded)) {
-                                    _controller.viewLoaded();
-                                }
-                                return ctx;
-                            });
-                    }
-                    
-                    function animateContent(container, content, partialScope, partialContext, $q) {
-                        var fadePolicy = new FadePolicy,
-                            fade       = composer.handle(fadePolicy, true);
-
-                        if (fade) {   
-                            return FadeProviding(composer).handle(container, content, partialContext)
-                                .then(function () { return partialContext; });
-                        }
-
-                        partialContext.onEnding(function (context) {
-                            container.html("");
-                        });
-                        
-                        container.html(content);
-                        if (!partialScope.$$phase) {
-                            partialScope.$digest();
-                        }
-                        return $q.when(partialContext);
-                    }
-                }
-            });
-        }
-    });
-
-    /**
-     * Angular directive marking a view region.
-     * @class RegionDirective
-     * @constructor
-     * @extends miruken.ng.Directive     
-     */
-    var RegionDirective = Directive.extend({
-        restrict:   "A",
-        scope:      true,        
-        priority:   -1000,
-        $inject:    ["$templateRequest", "$controller", "$compile", "$q"],
-        constructor: function ($templates, $controller, $compile, $q) {
-            this.extend({
-                link: function (scope, element, attr) {
-                    var name    = attr.region,
-                        context = scope.context,
-                        owner   = context.resolve(Controller),
-                        partial = new PartialRegion(name, element, $templates, $controller, $compile, $q);
-                    context.onEnded(function () {
-                        scope.$destroy();
-                        element.remove();
-                        partial.context = null;
-                    });
-                    partial.context = context;                    
-                    if (owner && $isFunction(owner.viewRegionCreated)) {
-                        owner.viewRegionCreated(partial);
-                    }                    
-                }
-            }); 
-        }
     });
 
     /**
@@ -724,7 +528,206 @@ new function () { // closure
 }
 
 }).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
-},{"../error":6,"../ioc":10,"../miruken":12,"../mvc":17}],3:[function(require,module,exports){
+},{"../ioc":12,"../miruken":14,"../mvc":19}],3:[function(require,module,exports){
+var miruken = require('../miruken');
+              require('../context');
+              require('../mvc');
+
+new function () { // closure
+
+    /**
+     * Package providing [Angular](https://angularjs.org) integration.<br/>
+     * Requires the {{#crossLinkModule "miruken"}}{{/crossLinkModule}},
+     * {{#crossLinkModule "context"}}{{/crossLinkModule}},
+     * @module miruken
+     * @submodule ng
+     * @namespace miruken.ng
+     */
+    miruken.package(this, {
+        name:    "ng",
+        imports: "miruken,miruken.context,miruken.mvc",
+        exports: "PartialRegion,RegionDirective"
+    });
+
+    eval(this.imports);
+
+    var PartialRegion = Base.extend(ViewRegion, $contextual, {
+        constructor: function (name, container, $templates, $compile, $q, $timeout) {
+            var _partialScope;
+            this.extend({
+                get name() { return name; },
+                show: function (view) {
+                    var composer = $composer,
+                        template,  templateUrl;
+                    
+                    if ($isString(view)) {
+                        templateUrl = view;
+                    } else if (view) {
+                        template     = view.template;
+                        templateUrl  = view.templateUrl;
+                    }
+                    
+                    var controller = composer.resolve(Controller);
+                    if (controller == null) {
+                        return $q.reject(new Error("A Controller could not be inferred"));
+                    }                    
+                    
+                    if (template) {
+                        return replaceContent(template);
+                    } else if (templateUrl) {
+                        return $templates(templateUrl, true).then(function (template) {
+                            return replaceContent(template);
+                        });
+                    } else {
+                        return $q.reject(new Error("A view template or templateUrl must be specified"));
+                    }
+                    
+                    function replaceContent(template) {
+                        var modalPolicy  = new ModalPolicy(),
+                            isModal      = composer.handle(modalPolicy, true),
+                            context      = controller.context;                            
+                            scope        = context.resolve("$scope"),
+                            partialScope = scope.$new();
+                        
+                        partialScope["ctrl"] = controller;
+                        var content = $compile(template)(partialScope);
+                        if (_partialScope) {
+                            _partialScope.$destroy();
+                        }
+                        _partialScope = partialScope;
+                        
+                        return $timeout(function () {
+                            if (isModal) {
+                                var provider = modalPolicy.style || ModalProviding;
+                                return $q.when(provider(composer)
+                                         .showModal(container, content, modalPolicy, context));
+                            }                            
+                            container.html(content);
+                            return context;
+                        });
+                    }                    
+                }
+            });
+        }
+    });
+
+    /**
+     * Angular directive marking a view region.
+     * @class RegionDirective
+     * @constructor
+     * @extends miruken.ng.Directive     
+     */
+    var RegionDirective = Directive.extend({
+        restrict:   "A",
+        scope:      false,        
+        priority:   -1000,
+        $inject:    ["$templateRequest", "$compile", "$q", "$timeout"],
+        constructor: function ($templates, $compile, $q, $timeout) {
+            this.extend({
+                link: function (scope, element, attr) {
+                    var name    = attr.region,
+                        context = scope.context,
+                        owner   = context.resolve(Controller),
+                        partial = new PartialRegion(name, element, $templates, $compile, $q, $timeout);
+                    context.addHandlers(partial);
+                    if (owner && $isFunction(owner.viewRegionCreated)) {
+                        owner.viewRegionCreated(partial);
+                    }                    
+                }
+            }); 
+        }
+    });
+
+    eval(this.exports);
+    
+}
+
+},{"../context":7,"../miruken":14,"../mvc":19}],4:[function(require,module,exports){
+var miruken = require('../miruken');
+              require('../mvc');
+              require('../error');
+
+new function () { // closure
+
+    miruken.package(this, {
+        name:    "ng",
+        imports: "miruken,miruken.error,miruken.mvc",
+        exports: "UiRouter"
+    });
+
+    eval(this.imports);
+
+    /**
+     * Adapts the [Angular ui-router] (https://github.com/angular-ui/ui-router)
+     * to support conventional MVC routing semantics
+     * @class UiRouter
+     * @extends Base     
+     */
+    var UiRouter = Base.extend({
+        executeController: function (context, params, state) {
+            this.resolveController(context, params, state).then(function (ctrl) {
+                var action = params.action || "index",
+                    method = ctrl[action];
+                return $isFunction(method)
+                     ? method.call(ctrl, params)
+                     : Promise.reject(ctrl + " missing action " + action);
+            })
+            .catch(function (err) { Errors(context).handleError(err, "ui-router"); });
+        },
+        resolveController: function (context, params, state) {
+            var controller = params.controller;
+            if (controller == null || controller.length === 0) {
+                return Promise.reject("Controller could not be determined for state " + state.current.name);
+            }            
+            controllerName = this.inferControllerName(controller);
+            var findController = context.resolve(controllerName);
+            return Promise.resolve(findController).then(function (ctrl) {
+                if (ctrl) { return ctrl; }
+                if (controllerName != controller) {
+                    findController = context.resolve(controller);
+                    return Promise.resolve(findController).then(function (ctrl) {
+                        return ctrl ? ctrl : Promise.reject(controllerName + " could not be resolved");
+                    });
+                }
+                return Promise.reject(controller + " Controller could not be resolved");
+            });
+        },
+        inferControllerName: function (controller) {
+            return controller.endsWith("Controller") ? controller : controller + "Controller";
+        }
+    }, {
+        route: function (urlPattern, options) {
+            var router = new UiRouter(),
+                route  = {
+                    url:     urlPattern,
+                    router:  router,
+                    onEnter: ["$rootScope", "$rootElement", function ($rootScope, $rootElement) {
+                        var success = $rootScope.$on("$stateChangeSuccess", function (event, state, params) {
+                            success();
+                            var scope   = event.targetScope,
+                                context = scope.context,
+                                region  = params.region;
+                            if ($isString(region) && region.length > 0) {
+                                var regionElement = $rootElement.find("[region='" + region+ "']");
+                                if (!regionElement) {
+                                    throw new Error(format("UiRouter cannot find region element '%1'.", region));
+                                }
+                                context = regionElement.scope().context;
+                            }
+                            router.executeController(context, params, state);                                  
+                        });
+                    }]
+                };
+            if (options) { route.params = options; }
+            return route;
+        }
+    });
+
+    eval(this.exports);
+    
+}
+
+},{"../error":8,"../miruken":14,"../mvc":19}],5:[function(require,module,exports){
 /*
   base2 - copyright 2007-2009, Dean Edwards
   http://code.google.com/p/base2/
@@ -2100,7 +2103,7 @@ if (typeof exports !== 'undefined') {
 
 }; ////////////////////  END: CLOSURE  /////////////////////////////////////
 
-},{}],4:[function(require,module,exports){
+},{}],6:[function(require,module,exports){
 (function (global){
 var miruken = require('./miruken.js'),
     Promise = require('bluebird');
@@ -4032,7 +4035,7 @@ new function () { // closure
 }
 
 }).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
-},{"./miruken.js":12,"bluebird":24}],5:[function(require,module,exports){
+},{"./miruken.js":14,"bluebird":26}],7:[function(require,module,exports){
 var miruken = require('./miruken.js');
               require('./graph.js');
               require('./callback.js');
@@ -4724,7 +4727,7 @@ new function () { // closure
 
 }
 
-},{"./callback.js":4,"./graph.js":7,"./miruken.js":12}],6:[function(require,module,exports){
+},{"./callback.js":6,"./graph.js":9,"./miruken.js":14}],8:[function(require,module,exports){
 var miruken = require('./miruken.js'),
     Promise = require('bluebird');
               require('./callback.js');
@@ -4870,7 +4873,7 @@ new function() { // closure
 
 }
 
-},{"./callback.js":4,"./miruken.js":12,"bluebird":24}],7:[function(require,module,exports){
+},{"./callback.js":6,"./miruken.js":14,"bluebird":26}],9:[function(require,module,exports){
 var miruken = require('./miruken.js');
 
 new function () { // closure
@@ -5262,7 +5265,7 @@ new function () { // closure
 
 }
 
-},{"./miruken.js":12}],8:[function(require,module,exports){
+},{"./miruken.js":14}],10:[function(require,module,exports){
 module.exports = require('./miruken.js');
 require('./graph.js');
 require('./callback.js');
@@ -5271,7 +5274,7 @@ require('./error.js');
 require('./validate');
 require('./ioc');
 
-},{"./callback.js":4,"./context.js":5,"./error.js":6,"./graph.js":7,"./ioc":10,"./miruken.js":12,"./validate":21}],9:[function(require,module,exports){
+},{"./callback.js":6,"./context.js":7,"./error.js":8,"./graph.js":9,"./ioc":12,"./miruken.js":14,"./validate":23}],11:[function(require,module,exports){
 var miruken = require('../miruken.js'),
     Promise = require('bluebird');
               require('./ioc.js');
@@ -5703,12 +5706,12 @@ new function () { // closure
     eval(this.exports);
 }
 
-},{"../miruken.js":12,"./ioc.js":11,"bluebird":24}],10:[function(require,module,exports){
+},{"../miruken.js":14,"./ioc.js":13,"bluebird":26}],12:[function(require,module,exports){
 module.exports = require('./ioc.js');
 require('./fluent.js');
 
 
-},{"./fluent.js":9,"./ioc.js":11}],11:[function(require,module,exports){
+},{"./fluent.js":11,"./ioc.js":13}],13:[function(require,module,exports){
 var miruken = require('../miruken.js'),
     Promise = require('bluebird');
               require('../callback.js'),
@@ -6964,7 +6967,7 @@ new function () { // closure
 
 }
 
-},{"../callback.js":4,"../context.js":5,"../miruken.js":12,"../validate":21,"bluebird":24}],12:[function(require,module,exports){
+},{"../callback.js":6,"../context.js":7,"../miruken.js":14,"../validate":23,"bluebird":26}],14:[function(require,module,exports){
 (function (global){
 require('./base2.js');
 var Promise = require('bluebird');
@@ -7235,14 +7238,14 @@ new function () { // closure
         constructor: function (delegate, strict) {
             if ($isNothing(delegate)) {
                 delegate = new Delegate;
+            } else if ($isFunction(delegate.toDelegate)) {
+                delegate = delegate.toDelegate();
+                if ((delegate instanceof Delegate) === false) {
+                    throw new TypeError(format(
+                        "%1.toDelegate did not return a valid Delegate.", delegate));
+                }
             } else if ((delegate instanceof Delegate) === false) {
-                if ($isFunction(delegate.toDelegate)) {
-                    delegate = delegate.toDelegate();
-                    if ((delegate instanceof Delegate) === false) {
-                        throw new TypeError(format(
-                            "Invalid delegate: %1 is not a Delegate nor does it have a 'toDelegate' method that returned one.", delegate));
-                    }
-                } else if ($isArray(delegate)) {
+                if ($isArray(delegate)) {
                     delegate = new ArrayDelegate(delegate);
                 } else {
                     delegate = new ObjectDelegate(delegate);
@@ -9322,7 +9325,7 @@ new function () { // closure
 }
 
 }).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
-},{"./base2.js":3,"bluebird":24}],13:[function(require,module,exports){
+},{"./base2.js":5,"bluebird":26}],15:[function(require,module,exports){
 var miruken = require('../miruken.js'),
     Promise = require('bluebird');
               require('./view.js');
@@ -9457,7 +9460,7 @@ new function () { // closure
     
 }
 
-},{"../miruken.js":12,"./view.js":20,"bluebird":24}],14:[function(require,module,exports){
+},{"../miruken.js":14,"./view.js":22,"bluebird":26}],16:[function(require,module,exports){
 var miruken = require('../miruken.js');
               require('./controller.js');
 
@@ -9559,7 +9562,7 @@ new function () { // closure
 
 }
 
-},{"../miruken.js":12,"./controller.js":15}],15:[function(require,module,exports){
+},{"../miruken.js":14,"./controller.js":17}],17:[function(require,module,exports){
 var miruken = require('../miruken.js');
               require('../callback.js');
               require('../context.js');
@@ -9586,7 +9589,8 @@ new function () { // closure
 
     eval(this.imports);
 
-    var globalFilters = new Array2(), ioChain;
+    var globalPrepare = new Array2(),
+        globalExecute = new Array2();
     
     /**
      * Base class for controllers.
@@ -9601,18 +9605,27 @@ new function () { // closure
         $contextual, $validateThat, Validating, {
 
         get io() {
-            var _this = this,
-                io = ioChain || this.context;
-            if (!io) { return; }
-            if (this._filters) {
-                io = this._filters.reduce(function (result, filter) {
-                    return $isFunction(filter) ? filter.call(_this, result) : result;
-                }, io);
+            var io = Controller.io || this.context;
+            io     = _assemble(io, this._prepare, this);
+            io     = _assemble(io, globalPrepare, this);
+            var execute = this._execute;
+            if ((!execute || execute.length === 0) &&
+                (globalExecute.length === 0)) {
+                return io;
             }
-            io = globalFilters.reduce(function (result, filter) {
-                return $isFunction(filter) ? filter.call(_this, result) : result;
-            }, io);
-            return io;
+            var controller = this,
+                executor   = io.decorate({
+                    toDelegate: function () {
+                        var ex = _assemble(this, execute, controller);
+                        ex = _assemble(ex, globalExecute, controller);
+                        delete executor.toDelegate;
+                        return ex.toDelegate();
+                    }
+                });
+            return executor;
+        },
+        get ifValid() {
+            return this.io.$validAsync(this);
         },
         validate: function (target, scope) {
             return _validateController(this, target, 'validate', scope);
@@ -9620,15 +9633,29 @@ new function () { // closure
         validateAsync: function (target, scope) {
             return _validateController(this, target, 'validateAsync', scope);
         },
-        next: function (controller){
-            return Promise.resolve(this.io.resolve(controller));
+        next: function (controller, action) {
+            return Promise.resolve(this.io.resolve(controller))
+                .then(function (ctrl) { return action(ctrl); });
         },            
-        get filters() {
-            return this._filters || (this._filters = new Array2());
-        }
+        get prepare() {
+            return this._prepare || (this._prepare = new Array2());
+        },
+        get execute() {
+            return this._execute || (this._execute = new Array2());
+        }            
     }, {
-        get globalFilters() { return globalFilters; }
+        io: undefined,
+        get prepare() { return globalPrepare; },
+        get execute() { return globalExecute; }        
     });
+
+    function _assemble(handler, builders, context) {
+        return handler && builders
+             ?  builders.reduce(function (result, builder) {
+                    return $isFunction(builder) ? builder.call(context, result) : result;
+                }, handler)
+            : handler;
+    }
     
     function _validateController(controller, target, method, scope) {
         var context = controller.context;
@@ -9643,7 +9670,7 @@ new function () { // closure
     
 }
 
-},{"../callback.js":4,"../context.js":5,"../miruken.js":12,"../validate":21,"bluebird":24}],16:[function(require,module,exports){
+},{"../callback.js":6,"../context.js":7,"../miruken.js":14,"../validate":23,"bluebird":26}],18:[function(require,module,exports){
 var miruken = require('../miruken.js'),
     Promise = require('bluebird');
 
@@ -9723,7 +9750,7 @@ new function () {
 
 }
 
-},{"../miruken.js":12,"bluebird":24}],17:[function(require,module,exports){
+},{"../miruken.js":14,"bluebird":26}],19:[function(require,module,exports){
 module.exports = require('./model.js');
 require('./view.js');
 require('./controller.js');
@@ -9733,7 +9760,7 @@ require('./bootstrap.js');
 require('./greenSock.js');
 
 
-},{"./bootstrap.js":13,"./components.js":14,"./controller.js":15,"./greenSock.js":16,"./master-detail.js":18,"./model.js":19,"./view.js":20}],18:[function(require,module,exports){
+},{"./bootstrap.js":15,"./components.js":16,"./controller.js":17,"./greenSock.js":18,"./master-detail.js":20,"./model.js":21,"./view.js":22}],20:[function(require,module,exports){
 var miruken = require('../miruken.js');
 
 new function () { // closure
@@ -9890,7 +9917,7 @@ new function () { // closure
     
 }
 
-},{"../miruken.js":12}],19:[function(require,module,exports){
+},{"../miruken.js":14}],21:[function(require,module,exports){
 var miruken = require('../miruken.js');
               require('../callback.js');
               require('../context.js');
@@ -10108,7 +10135,7 @@ new function () { // closure
     
 }
 
-},{"../callback.js":4,"../context.js":5,"../miruken.js":12,"../validate":21}],20:[function(require,module,exports){
+},{"../callback.js":6,"../context.js":7,"../miruken.js":14,"../validate":23}],22:[function(require,module,exports){
 var miruken = require('../miruken.js');
               require('../callback.js');
               require('../context.js');
@@ -10136,6 +10163,15 @@ new function () { // closure
     eval(this.imports);
 
     /**
+     * Protocol for representing a layer in a 
+     * See {{#crossLink "miruken.mvc.ViewRegion"}}{{/crossLink}.
+     * @class ViewLayer
+     * @extends Protocol
+     */
+    var ViewLayer = Protocol.extend(Disposing, {
+    });
+    
+    /**
      * Protocol for rendering a view on the screen.
      * @class ViewRegion
      * @extends StrictProtocol
@@ -10147,30 +10183,10 @@ new function () { // closure
          */
         get name() {},
         /**
-         * Gets the regions context.
-         * @property {miruken.context.Context} context
-         */
-        get context() {},        
-        /**
-         * Gets the regions container element.
-         * @property {DOMElement} container
-         */
-        get container() {},        
-        /**
-         * Gets the regions controller.
-         * @property {miruken.mvc.Controller} controller
-         */            
-        get controller() {},
-        /**
-         * Gets the regions controller context.
-         * @property {miruken.context.Context} controllerContext
-         */            
-        get controllerContext() {},        
-        /**
          * Renders new view in the region.
          * @method show
          * @param    {Any}      view  -  view details
-         * @returns  {Promise}  promise for the rendering.
+         * @returns  {Promise}  promise for the layer.
          */                                        
         show: function (view) {}
     });
@@ -10237,12 +10253,12 @@ new function () { // closure
     
 }
 
-},{"../callback.js":4,"../context.js":5,"../miruken.js":12,"../validate":21,"./model.js":19}],21:[function(require,module,exports){
+},{"../callback.js":6,"../context.js":7,"../miruken.js":14,"../validate":23,"./model.js":21}],23:[function(require,module,exports){
 module.exports = require('./validate.js');
 require('./validatejs.js');
 
 
-},{"./validate.js":22,"./validatejs.js":23}],22:[function(require,module,exports){
+},{"./validate.js":24,"./validatejs.js":25}],24:[function(require,module,exports){
 var miruken = require('../miruken.js'),
     Promise = require('bluebird');
               require('../callback.js');
@@ -10653,7 +10669,7 @@ new function () { // closure
 
 }
 
-},{"../callback.js":4,"../miruken.js":12,"bluebird":24}],23:[function(require,module,exports){
+},{"../callback.js":6,"../miruken.js":14,"bluebird":26}],25:[function(require,module,exports){
 var miruken    = require('../miruken.js'),
     validate   = require('./validate.js'),
     validatejs = require("validate.js"),
@@ -10905,7 +10921,7 @@ new function () { // closure
 
 }
 
-},{"../callback.js":4,"../miruken.js":12,"./validate.js":22,"bluebird":24,"validate.js":26}],24:[function(require,module,exports){
+},{"../callback.js":6,"../miruken.js":14,"./validate.js":24,"bluebird":26,"validate.js":28}],26:[function(require,module,exports){
 (function (process,global){
 /* @preserve
  * The MIT License (MIT)
@@ -15800,7 +15816,7 @@ module.exports = ret;
 },{"./es5.js":14}]},{},[4])(4)
 });                    ;if (typeof window !== 'undefined' && window !== null) {                               window.P = window.Promise;                                                     } else if (typeof self !== 'undefined' && self !== null) {                             self.P = self.Promise;                                                         }
 }).call(this,require('_process'),typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
-},{"_process":25}],25:[function(require,module,exports){
+},{"_process":27}],27:[function(require,module,exports){
 // shim for using process in browser
 var process = module.exports = {};
 
@@ -15982,7 +15998,7 @@ process.chdir = function (dir) {
 };
 process.umask = function() { return 0; };
 
-},{}],26:[function(require,module,exports){
+},{}],28:[function(require,module,exports){
 /*!
  * validate.js 0.10.0
  *
@@ -17122,4 +17138,4 @@ process.umask = function() { return 0; };
         typeof module !== 'undefined' ? /* istanbul ignore next */ module : null,
         typeof define !== 'undefined' ? /* istanbul ignore next */ define : null);
 
-},{}]},{},[8,17,1]);
+},{}]},{},[10,19,1]);

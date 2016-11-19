@@ -6509,14 +6509,14 @@ new function () { // closure
         constructor: function (delegate, strict) {
             if ($isNothing(delegate)) {
                 delegate = new Delegate;
+            } else if ($isFunction(delegate.toDelegate)) {
+                delegate = delegate.toDelegate();
+                if ((delegate instanceof Delegate) === false) {
+                    throw new TypeError(format(
+                        "%1.toDelegate did not return a valid Delegate.", delegate));
+                }
             } else if ((delegate instanceof Delegate) === false) {
-                if ($isFunction(delegate.toDelegate)) {
-                    delegate = delegate.toDelegate();
-                    if ((delegate instanceof Delegate) === false) {
-                        throw new TypeError(format(
-                            "Invalid delegate: %1 is not a Delegate nor does it have a 'toDelegate' method that returned one.", delegate));
-                    }
-                } else if ($isArray(delegate)) {
+                if ($isArray(delegate)) {
                     delegate = new ArrayDelegate(delegate);
                 } else {
                     delegate = new ObjectDelegate(delegate);

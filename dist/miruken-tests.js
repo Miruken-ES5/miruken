@@ -6509,14 +6509,14 @@ new function () { // closure
         constructor: function (delegate, strict) {
             if ($isNothing(delegate)) {
                 delegate = new Delegate;
+            } else if ($isFunction(delegate.toDelegate)) {
+                delegate = delegate.toDelegate();
+                if ((delegate instanceof Delegate) === false) {
+                    throw new TypeError(format(
+                        "%1.toDelegate did not return a valid Delegate.", delegate));
+                }
             } else if ((delegate instanceof Delegate) === false) {
-                if ($isFunction(delegate.toDelegate)) {
-                    delegate = delegate.toDelegate();
-                    if ((delegate instanceof Delegate) === false) {
-                        throw new TypeError(format(
-                            "Invalid delegate: %1 is not a Delegate nor does it have a 'toDelegate' method that returned one.", delegate));
-                    }
-                } else if ($isArray(delegate)) {
+                if ($isArray(delegate)) {
                     delegate = new ArrayDelegate(delegate);
                 } else {
                     delegate = new ObjectDelegate(delegate);
@@ -8860,7 +8860,8 @@ new function () { // closure
 
     eval(this.imports);
 
-    var globalFilters = new Array2(), ioChain;
+    var globalPrepare = new Array2(),
+        globalExecute = new Array2();
     
     /**
      * Base class for controllers.
@@ -8875,18 +8876,27 @@ new function () { // closure
         $contextual, $validateThat, Validating, {
 
         get io() {
-            var _this = this,
-                io = ioChain || this.context;
-            if (!io) { return; }
-            if (this._filters) {
-                io = this._filters.reduce(function (result, filter) {
-                    return $isFunction(filter) ? filter.call(_this, result) : result;
-                }, io);
+            var io = Controller.io || this.context;
+            io     = _assemble(io, this._prepare, this);
+            io     = _assemble(io, globalPrepare, this);
+            var execute = this._execute;
+            if ((!execute || execute.length === 0) &&
+                (globalExecute.length === 0)) {
+                return io;
             }
-            io = globalFilters.reduce(function (result, filter) {
-                return $isFunction(filter) ? filter.call(_this, result) : result;
-            }, io);
-            return io;
+            var controller = this,
+                executor   = io.decorate({
+                    toDelegate: function () {
+                        var ex = _assemble(this, execute, controller);
+                        ex = _assemble(ex, globalExecute, controller);
+                        delete executor.toDelegate;
+                        return ex.toDelegate();
+                    }
+                });
+            return executor;
+        },
+        get ifValid() {
+            return this.io.$validAsync(this);
         },
         validate: function (target, scope) {
             return _validateController(this, target, 'validate', scope);
@@ -8894,15 +8904,29 @@ new function () { // closure
         validateAsync: function (target, scope) {
             return _validateController(this, target, 'validateAsync', scope);
         },
-        next: function (controller){
-            return Promise.resolve(this.io.resolve(controller));
+        next: function (controller, action) {
+            return Promise.resolve(this.io.resolve(controller))
+                .then(function (ctrl) { return action(ctrl); });
         },            
-        get filters() {
-            return this._filters || (this._filters = new Array2());
-        }
+        get prepare() {
+            return this._prepare || (this._prepare = new Array2());
+        },
+        get execute() {
+            return this._execute || (this._execute = new Array2());
+        }            
     }, {
-        get globalFilters() { return globalFilters; }
+        io: undefined,
+        get prepare() { return globalPrepare; },
+        get execute() { return globalExecute; }        
     });
+
+    function _assemble(handler, builders, context) {
+        return handler && builders
+             ?  builders.reduce(function (result, builder) {
+                    return $isFunction(builder) ? builder.call(context, result) : result;
+                }, handler)
+            : handler;
+    }
     
     function _validateController(controller, target, method, scope) {
         var context = controller.context;
@@ -9410,6 +9434,15 @@ new function () { // closure
     eval(this.imports);
 
     /**
+     * Protocol for representing a layer in a 
+     * See {{#crossLink "miruken.mvc.ViewRegion"}}{{/crossLink}.
+     * @class ViewLayer
+     * @extends Protocol
+     */
+    var ViewLayer = Protocol.extend(Disposing, {
+    });
+    
+    /**
      * Protocol for rendering a view on the screen.
      * @class ViewRegion
      * @extends StrictProtocol
@@ -9421,30 +9454,10 @@ new function () { // closure
          */
         get name() {},
         /**
-         * Gets the regions context.
-         * @property {miruken.context.Context} context
-         */
-        get context() {},        
-        /**
-         * Gets the regions container element.
-         * @property {DOMElement} container
-         */
-        get container() {},        
-        /**
-         * Gets the regions controller.
-         * @property {miruken.mvc.Controller} controller
-         */            
-        get controller() {},
-        /**
-         * Gets the regions controller context.
-         * @property {miruken.context.Context} controllerContext
-         */            
-        get controllerContext() {},        
-        /**
          * Renders new view in the region.
          * @method show
          * @param    {Any}      view  -  view details
-         * @returns  {Promise}  promise for the rendering.
+         * @returns  {Promise}  promise for the layer.
          */                                        
         show: function (view) {}
     });
