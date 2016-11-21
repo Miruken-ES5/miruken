@@ -9,6 +9,7 @@ require('./route.js');
 var miruken = require('../miruken');
               require('../ioc');
               require('../mvc');
+              require('../error');
 
 new function () { // closure
 
@@ -23,14 +24,14 @@ new function () { // closure
      * {{#crossLinkModule "context"}}{{/crossLinkModule}},
      * {{#crossLinkModule "validate"}}{{/crossLinkModule}},
      * {{#crossLinkModule "ioc"}}{{/crossLinkModule}} modules.
+     * {{#crossLinkModule "error"}}{{/crossLinkModule}} modules.
      * @module miruken
      * @submodule ng
      * @namespace miruken.ng
      */
     miruken.package(this, {
         name:    "ng",
-        imports: "miruken,miruken.callback,miruken.context,miruken.validate," +
-                 "miruken.ioc,miruken.mvc",
+        imports: "miruken,miruken.callback,miruken.context,miruken.ioc,miruken.mvc",
         exports: "Runner,Directive,Filter,DynamicControllerDirective," +
                  "UseModelValidation,DigitsOnly,InhibitFocus,TrustFilter," +
                  "$appContext,$envContext,$rootContext"
@@ -49,16 +50,18 @@ new function () { // closure
     mirukenModule.constant("$rootContext", $rootContext);
     Object.defineProperty(this.package, "ngModule", { value: mirukenModule });
     
-    $appContext.addHandlers(appContainer, 
+    $appContext.addHandlers(appContainer,
+                            new NavigateCallbackHandler(),
                             new miruken.validate.ValidationCallbackHandler,
                             new miruken.validate.ValidateJsCallbackHandler,
                             new miruken.error.ErrorCallbackHandler);
     
     angular.module("ng").run(["$rootElement", "$rootScope", "$injector",
-                              "$templateRequest", "$compile", "$q",
-        function ($rootElement, $rootScope, $injector, $templates, $compile, $q) {
+                              "$templateRequest", "$compile", "$q", "$timeout",
+        function ($rootElement, $rootScope, $injector, $templates, $compile, $q, $timeout) {
             _instrumentScopes($rootScope, $injector);
-            var appRegion = new miruken.ng.PartialRegion("root", $rootElement, $templates, $compile, $q);
+            var appRegion = new miruken.ng.PartialRegion(
+                "app", $rootElement, $templates, $compile, $q, $timeout);
             $appContext.addHandlers(appRegion, new BootstrapProvider);
             _provideInjector(appContainer, $injector);
     }]);
@@ -528,7 +531,7 @@ new function () { // closure
 }
 
 }).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
-},{"../ioc":12,"../miruken":14,"../mvc":19}],3:[function(require,module,exports){
+},{"../error":8,"../ioc":12,"../miruken":14,"../mvc":19}],3:[function(require,module,exports){
 var miruken = require('../miruken');
               require('../context');
               require('../mvc');
@@ -665,59 +668,61 @@ new function () { // closure
      */
     var UiRouter = Base.extend({
         executeController: function (context, params, state) {
-            this.resolveController(context, params, state).then(function (ctrl) {
-                var action = params.action || "index",
-                    method = ctrl[action];
-                return $isFunction(method)
-                     ? method.call(ctrl, params)
-                     : Promise.reject(ctrl + " missing action " + action);
-            })
-            .catch(function (err) { Errors(context).handleError(err, "ui-router"); });
-        },
-        resolveController: function (context, params, state) {
             var controller = params.controller;
             if (controller == null || controller.length === 0) {
-                return Promise.reject("Controller could not be determined for state " + state.current.name);
+                return Promise.reject("Controller could not be determined for state "
+                                      + state.current.name);
             }            
-            controllerName = this.inferControllerName(controller);
-            var findController = context.resolve(controllerName);
-            return Promise.resolve(findController).then(function (ctrl) {
-                if (ctrl) { return ctrl; }
-                if (controllerName != controller) {
-                    findController = context.resolve(controller);
-                    return Promise.resolve(findController).then(function (ctrl) {
-                        return ctrl ? ctrl : Promise.reject(controllerName + " could not be resolved");
-                    });
-                }
-                return Promise.reject(controller + " Controller could not be resolved");
-            });
+        
+            var navigate = Navigate(context.unwind()),
+                action   = params.action || "index",
+                execute  = function (ctrl) {
+                    var method = ctrl[action];
+                    return $isFunction(method)
+                         ? method.call(ctrl, params)
+                         : Promise.reject(new Error(ctrl + " missing action " + action));
+                },
+                controllerName = this.inferControllerName(controller);
+
+            return navigate.to(controllerName, execute)
+                .catch (function (err) {
+                    return err instanceof ControllerNotFound
+                         ? navigate.to(controller, execute)
+                         : Promise.reject(err);
+                })
+                .catch(function (err) {
+                    Errors(context).handleError(err, "ui-router");
+                });        
         },
         inferControllerName: function (controller) {
             return controller.endsWith("Controller") ? controller : controller + "Controller";
         }
     }, {
-        route: function (urlPattern, options) {
-            var router = new UiRouter(),
-                route  = {
-                    url:     urlPattern,
-                    router:  router,
-                    onEnter: ["$rootScope", "$rootElement", function ($rootScope, $rootElement) {
-                        var success = $rootScope.$on("$stateChangeSuccess", function (event, state, params) {
-                            success();
-                            var scope   = event.targetScope,
-                                context = scope.context,
-                                region  = params.region;
-                            if ($isString(region) && region.length > 0) {
-                                var regionElement = $rootElement.find("[region='" + region+ "']");
-                                if (!regionElement) {
-                                    throw new Error(format("UiRouter cannot find region element '%1'.", region));
-                                }
-                                context = regionElement.scope().context;
-                            }
-                            router.executeController(context, params, state);                                  
+        use: function ($stateProvider) {
+            return $stateProvider.state("mvc", {
+                abstract:   true,
+                template:   "<div region='route'></div>",
+                controller: ["$scope", function ($scope) {
+                    var router  = $scope.router,
+                        context = $scope.context;
+                    if (!router) {
+                        $scope.router = router = new UiRouter();
+                        $scope.$on("$stateChangeSuccess", function(event, toState, toParams) {
+                            router.executeController(context, toParams, toState);                        
                         });
-                    }]
-                };
+                    }
+                }]
+            });
+        },
+        mvc: function ($stateProvider) {
+            return this.use($stateProvider)
+                .state("mvc.default-id",
+                       this.route("/{controller}/{action}/{id}"))
+                .state("mvc.default",
+                       this.route("/{controller}/{action}"));            
+        },
+        route: function (urlPattern, options) {
+            var route  = { url: urlPattern };
             if (options) { route.params = options; }
             return route;
         }
@@ -9584,14 +9589,30 @@ new function () { // closure
     miruken.package(this, {
         name:    "mvc",
         imports: "miruken,miruken.callback,miruken.context,miruken.validate",
-        exports: "Controller"
+        exports: "Controller,ControllerNotFound,Navigate,NavigateCallbackHandler"
     });
 
     eval(this.imports);
 
     var globalPrepare = new Array2(),
         globalExecute = new Array2();
-    
+
+    /**
+     * Protocol to navigate controllrs.
+     * @class Navigate
+     * @extends miruken.StrictProtocol
+     */    
+    var Navigate = StrictProtocol.extend({
+        /**
+         * Executes `action` on the resolved `controller`.
+         * @method to
+         * @param   {Any}       controller  -  controller key
+         * @param   {Function}  action      -  controller action
+         * @returns {Promise} promise for navigation context.
+         */        
+        to: function(controller, action, push) {}
+    });
+
     /**
      * Base class for controllers.
      * @class Controller
@@ -9628,14 +9649,13 @@ new function () { // closure
             return this.io.$validAsync(this);
         },
         validate: function (target, scope) {
-            return _validateController(this, target, 'validate', scope);
+            return _validate.call(this, target, 'validate', scope);
         },
         validateAsync: function (target, scope) {
-            return _validateController(this, target, 'validateAsync', scope);
+            return _validate.call(this, target, 'validateAsync', scope);
         },
         next: function (controller, action) {
-            return Promise.resolve(this.io.resolve(controller))
-                .then(function (ctrl) { return action(ctrl); });
+            return Navigate(this.io).to(controller, action);
         },            
         get prepare() {
             return this._prepare || (this._prepare = new Array2());
@@ -9649,6 +9669,54 @@ new function () { // closure
         get execute() { return globalExecute; }        
     });
 
+    function ControllerNotFound(controller) {
+        this.message    = format("The controller '%1' could not be resolved", controller);
+        this.controller = controller;
+        
+        if (Error.captureStackTrace) {
+            Error.captureStackTrace(this, this.constructor);
+        } else {
+            Error.call(this);
+        }
+    }
+    ControllerNotFound.prototype             = new Error;
+    ControllerNotFound.prototype.constructor = ControllerNotFound;
+    
+    /**
+     * Default navigation implementation.
+     * @class NavigateCallbackHandler
+     * @constructor
+     * @extends miruken.callback.CompositeCallbackHandler
+     * @uses miruken.mvc.Navigate
+     */    
+    var NavigateCallbackHandler = CompositeCallbackHandler.extend(Navigate, {
+        to: function(controller, action, push) {
+            var composer = $composer;
+            if (action == null || composer == null) { return null };
+
+            var context   = composer.resolve(Context),
+                initiator = composer.resolve(Controller),
+                ctx       = push ? context.newChild() : context;
+
+            var oldIO = Controller.io;   
+            return Promise.resolve(context.resolve(controller))
+                .then(function (ctrl) {
+                    if (!ctrl) {
+                        return Promise.reject(new ControllerNotFound(controller));
+                    }
+                    if (composer !== context) {
+                        Controller.io = ctx.next(composer);
+                    } 
+                    if (initiator != null && initiator.context == ctx)
+                        initiator.context = null;                   
+                    return action(ctrl);
+                })
+                .finally(function () {
+                    Controller.io = oldIO;
+                });
+        }
+    });
+    
     function _assemble(handler, builders, context) {
         return handler && builders
              ?  builders.reduce(function (result, builder) {
@@ -9657,15 +9725,15 @@ new function () { // closure
             : handler;
     }
     
-    function _validateController(controller, target, method, scope) {
-        var context = controller.context;
+    function _validate(target, method, scope) {
+        var context = this.context;
         if (!context) {
             throw new Error("Validation requires a context to be available.");
         }
         var validator = Validator(context);
-        return validator[method].call(validator, target || controller, scope);
+        return validator[method].call(validator, target || this, scope);
     }
-
+    
     eval(this.exports);
     
 }
