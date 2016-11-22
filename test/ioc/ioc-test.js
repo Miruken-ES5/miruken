@@ -827,7 +827,7 @@ describe("IoContainer", function () {
                 expect(engine.policies).to.eql(["Policy1", "Policy2", "Policy3"]);
                 done();
             });
-        });        
+        });
 
         it("should apply policies array container-wide", function (done) {
             var context   = new Context,
@@ -1183,6 +1183,25 @@ describe("IoContainer", function () {
                 done();
             });
         });        
+
+        it("should set ComponentModel explicitly", function (done) {
+            container.register($component(V12).policies(ComponentModelAwarePolicy.Explicit));
+            Promise.resolve(container.resolve(Engine)).then(function (engine) {
+                expect(engine.componentModel).to.be.defined;
+                expect(engine.componentModel.implementation).to.equal(V12);
+                done();
+            });            
+        });
+
+        it("should set ComponentModel implicitly", function (done) {
+            var Controller = Base.extend(ComponentModelAware);
+            container.register($component(Controller));
+            Promise.resolve(container.resolve(Controller)).then(function (controller) {
+                expect(controller.componentModel).to.be.defined;
+                expect(controller.componentModel.implementation).to.equal(Controller);
+                done();
+            });            
+        });
         
         it("should apply policies after creation", function (done) {
             container.register($component(V12).policies(new Policy1, new Policy2, new Policy3));

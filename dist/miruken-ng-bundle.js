@@ -345,6 +345,8 @@ new function () { // closure
         $provide($rootContext, "$scope", $rootScope);        
     }
 
+    var _controllerPolicies = [ ComponentModelAwarePolicy.Explicit ];
+    
     /**
      * @function _registerContents
      * Registers the package controllers, filters, directives and any conforming
@@ -381,7 +383,7 @@ new function () { // closure
                 controller.key = [member, name];
                 controller.implementation = member;                
                 controller.lifestyle = new ContextualLifestyle;
-                container.addComponent(controller);
+                container.addComponent(controller, _controllerPolicies);
                 var deps = _ngDependencies(controller);
                 deps.unshift("$scope", "$injector");
                 deps.push(Shim(member, deps.slice()));
@@ -555,10 +557,9 @@ new function () { // closure
     eval(this.imports);
 
     var PartialRegion = Base.extend(ViewRegion, $contextual, {
-        constructor: function (name, container, $templates, $compile, $q, $timeout) {
+        constructor: function (tag, container, $templates, $compile, $q, $timeout) {
             var _partialScope;
             this.extend({
-                get name() { return name; },
                 show: function (view) {
                     var composer = $composer,
                         template,  templateUrl;
@@ -582,7 +583,7 @@ new function () { // closure
                             return replaceContent(template);
                         });
                     } else {
-                        return $q.reject(new Error("A view template or templateUrl must be specified"));
+                        return $q.reject(new Error("A template or templateUrl must be specified"));
                     }
                     
                     function replaceContent(template) {
@@ -628,16 +629,20 @@ new function () { // closure
         constructor: function ($templates, $compile, $q, $timeout) {
             this.extend({
                 link: function (scope, element, attr) {
-                    var name    = attr.region,
+                    var tag     = attr.region,
                         context = scope.context,
                         owner   = context.resolve(Controller),
-                        partial = new PartialRegion(name, element, $templates, $compile, $q, $timeout);
-                    context.addHandlers(partial);
+                        region  = this.createRegion(tag, element, $templates, $compile, $q, $timeout);
+                    context.addHandlers(region);
                     if (owner && $isFunction(owner.viewRegionCreated)) {
-                        owner.viewRegionCreated(partial);
+                        owner.viewRegionCreated(region);
                     }                    
                 }
             }); 
+        },
+        createRegion: function (tag, element, $templates, $compile, $q, $timeout)
+        {
+            return new PartialRegion(tag, element, $templates, $compile, $q, $timeout);
         }
     });
 
@@ -655,76 +660,168 @@ new function () { // closure
     miruken.package(this, {
         name:    "ng",
         imports: "miruken,miruken.error,miruken.mvc",
-        exports: "UiRouter"
+        exports: "RouteRegion,RouteRegionDirective,UiRouter"
     });
 
     eval(this.imports);
-
+    
+    var RouteRegion = PartialRegion.extend({
+        constructor: function () {
+            this.base.apply(this, arguments);
+            this.extend({
+                show: function (view) {
+                    var composer = $composer,
+                        route    = composer.resolve(Route),
+                        layer    = this.base(view);                        
+                    if (route) { return layer; }
+                    var navigate = composer.resolve(Navigation);
+                    if (!navigate) { return layer; }
+                    navigate.view = view;
+                    return layer.then(function (result) {
+                        Routing(composer).selectRoute(navigate);                                
+                        return result;
+                    });
+                }
+            });
+        }
+    });
+    
     /**
      * Adapts the [Angular ui-router] (https://github.com/angular-ui/ui-router)
      * to support conventional MVC routing semantics
      * @class UiRouter
-     * @extends Base     
+     * @extends Router
      */
-    var UiRouter = Base.extend({
-        executeController: function (context, params, state) {
-            var controller = params.controller;
-            if (controller == null || controller.length === 0) {
-                return Promise.reject("Controller could not be determined for state "
-                                      + state.current.name);
-            }            
-        
-            var navigate = Navigate(context.unwind()),
-                action   = params.action || "index",
-                execute  = function (ctrl) {
-                    var method = ctrl[action];
-                    return $isFunction(method)
-                         ? method.call(ctrl, params)
-                         : Promise.reject(new Error(ctrl + " missing action " + action));
-                },
-                controllerName = this.inferControllerName(controller);
-
-            return navigate.to(controllerName, execute)
-                .catch (function (err) {
-                    return err instanceof ControllerNotFound
-                         ? navigate.to(controller, execute)
-                         : Promise.reject(err);
-                })
-                .catch(function (err) {
-                    Errors(context).handleError(err, "ui-router");
-                });        
-        },
-        inferControllerName: function (controller) {
-            return controller.endsWith("Controller") ? controller : controller + "Controller";
-        }
-    }, {
-        use: function ($stateProvider) {
-            return $stateProvider.state("mvc", {
-                abstract:   true,
-                template:   "<div region='route'></div>",
-                controller: ["$scope", function ($scope) {
-                    var router  = $scope.router,
-                        context = $scope.context;
-                    if (!router) {
-                        $scope.router = router = new UiRouter();
-                        $scope.$on("$stateChangeSuccess", function(event, toState, toParams) {
-                            router.executeController(context, toParams, toState);                        
-                        });
+    var UiRouter = Router.extend({
+        constructor: function (prefix, $state, $urlMatcherFactory) {
+            var _urls = {};            
+            prefix = prefix + ".";
+            this.extend({
+                selectRoute: function (navigation) {
+                    var states = $state.get();
+                    for (var i = 0; i < states.length; ++i) {
+                        var state = states[i],
+                            route = state.name;
+                        if (!state.abstract && route.indexOf(prefix) === 0) {
+                            var url = _urls[route];
+                            if (!url) {
+                                url = $urlMatcherFactory.compile(state.url);
+                                _urls[route] = url;
+                            }
+                            var params = Object.create(state.params || null);
+                            if (this.matchesRoute(navigation, url, params)) {
+                                $state.go(route, params, { notify: false });
+                                return;
+                            }
+                        }
                     }
-                }]
+                }
             });
         },
-        mvc: function ($stateProvider) {
-            return this.use($stateProvider)
-                .state("mvc.default-id",
-                       this.route("/{controller}/{action}/{id}"))
-                .state("mvc.default",
-                       this.route("/{controller}/{action}"));            
+        matchesRoute: function (navigation, url, params) {
+            var urlParams = url.params,
+                navAction = navigation.action.toLowerCase(),
+                action    = params.action;
+            
+            if ((action == null || navAction == null ||
+                 action.toLowerCase() !== navAction) && !("action" in urlParams)) {
+                return false;
+            }
+            params.action = navAction;
+            
+            var navController = navigation.controller,
+                controller    = params.controller;
+            if (controller) {
+                if ($isFunction(controller) && !(navController instanceof controller)) {
+                    return false;
+                } else if (!$isString(controller)) {
+                    return false;
+                }
+                var key  = this.extractControllerKey(controller),
+                    keys = Array2.filter(navController.componentModel.key, $isString);
+                if (!Array2.some(keys, function (k) {
+                    return this.extractControllerKey(k) === key;
+                })) {
+                    return false;
+                };
+                params.controller = key;
+            } else if (!("controller" in urlParams)) {
+                return false;
+            } else {
+                var keys = Array2.filter(navController.componentModel.key, $isString);
+                if (keys.length === 0) { return false; }
+                params.controller = this.extractControllerKey(keys[0]);
+            }
+
+            var args    = navigation.args;
+                urlKeys = Object.getOwnPropertyNames(urlParams); 
+            if (args && args.length === 1) {
+                args = args[0];
+            }
+            for (var i = 0; i < urlKeys.length; ++i) {
+                var urlKey = urlKeys[i];
+                if (!(urlKey in params)) {
+                    if (args && (urlKey in args)) {
+                        params[urlKey] = args[urlKey];                        
+                    } else {
+                        return false;
+                    }
+                }
+            }
+            return true;
+        }
+    }, {
+        install: function (prefix) {
+            return {
+                name:       prefix,
+                abstract:   true,
+                template:   "<div route-region></div>",
+                controller: ["$scope", "$state", "$urlMatcherFactory",
+                             function ($scope, $state, $urlMatcherFactory) {
+                    var first   = true,
+                        context = $scope.context;            
+                    context.addHandlers(new UiRouter(prefix, $state, $urlMatcherFactory));
+                    $scope.$on("$stateChangeSuccess", function (event, toState, toParams) {
+                        var route = new Route({
+                                name:    toState.name,
+                                pattern: toState.url,
+                                params:  toParams
+                            }),
+                            locals = [Route, route];
+                        
+                        if (first) {
+                            // stub initiator on first call                            
+                            locals.push(Controller, new Controller());
+                        }
+
+                        var ctx = context.$$provide(locals);
+                        Routing(ctx.unwind()).routeTo(route)
+                        	.then(function () { first = false; })
+                            .catch(function (err) {
+                                Errors(ctx).handleError(err, "ui-router");
+                            });
+                    });
+                }]
+            };
         },
         route: function (urlPattern, options) {
-            var route  = { url: urlPattern };
+            var route = { url: urlPattern };
             if (options) { route.params = options; }
             return route;
+        }
+    });
+
+    /**
+     * Specialized {{#crossLink "miruken.ng.RegionDirective"}}{{/crossLink}}
+     * for hosting routed content.
+     * @class RouteRegionDirective
+     * @constructor
+     * @extends miruken.ng.RegionDirective     
+     */    
+    var RouteRegionDirective = RegionDirective.extend({
+        createRegion: function (tag, element, $templates, $compile, $q, $timeout)
+        {
+            return new RouteRegion(tag, element, $templates, $compile, $q, $timeout);
         }
     });
 
@@ -4040,7 +4137,7 @@ new function () { // closure
 }
 
 }).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
-},{"./miruken.js":14,"bluebird":26}],7:[function(require,module,exports){
+},{"./miruken.js":14,"bluebird":27}],7:[function(require,module,exports){
 var miruken = require('./miruken.js');
               require('./graph.js');
               require('./callback.js');
@@ -4878,7 +4975,7 @@ new function() { // closure
 
 }
 
-},{"./callback.js":6,"./miruken.js":14,"bluebird":26}],9:[function(require,module,exports){
+},{"./callback.js":6,"./miruken.js":14,"bluebird":27}],9:[function(require,module,exports){
 var miruken = require('./miruken.js');
 
 new function () { // closure
@@ -5279,7 +5376,7 @@ require('./error.js');
 require('./validate');
 require('./ioc');
 
-},{"./callback.js":6,"./context.js":7,"./error.js":8,"./graph.js":9,"./ioc":12,"./miruken.js":14,"./validate":23}],11:[function(require,module,exports){
+},{"./callback.js":6,"./context.js":7,"./error.js":8,"./graph.js":9,"./ioc":12,"./miruken.js":14,"./validate":24}],11:[function(require,module,exports){
 var miruken = require('../miruken.js'),
     Promise = require('bluebird');
               require('./ioc.js');
@@ -5711,7 +5808,7 @@ new function () { // closure
     eval(this.exports);
 }
 
-},{"../miruken.js":14,"./ioc.js":13,"bluebird":26}],12:[function(require,module,exports){
+},{"../miruken.js":14,"./ioc.js":13,"bluebird":27}],12:[function(require,module,exports){
 module.exports = require('./ioc.js');
 require('./fluent.js');
 
@@ -5742,7 +5839,8 @@ new function () { // closure
         exports: "Container,Registration,ComponentPolicy,Lifestyle,TransientLifestyle," +
                  "SingletonLifestyle,ContextualLifestyle,DependencyModifier,DependencyModel," +
                  "DependencyManager,ComponentModel,ComponentBuilder,ComponentModelError," +
-                 "IoContainer,DependencyResolution,DependencyResolutionError," +
+                 "ComponentModelAware,ComponentModelAwarePolicy,IoContainer," +
+                 "DependencyResolution,DependencyResolutionError," +
                  "$component,$$composer,$container"
     });
 
@@ -5838,7 +5936,7 @@ new function () { // closure
      * Protocol for defining policies for components.
      * @class ComponentPolicy
      * @extends miruken.Protocol
-     */                
+     */
     var ComponentPolicy = Protocol.extend({
         /**
          * Applies the policy to the component model.
@@ -5851,10 +5949,11 @@ new function () { // closure
          * Notifies the creation of a component.
          * @method componentCreated
          * @param  {Object} component                           -  component instance
+         * @param  {miruken.ioc.ComponentModel} componentModel  -  component model
          * @param  {Object} dependencies                        -  resolved dependencies
          * @param  {miruken.callback.CallbackHandler} composer  -  composition handler
          */        
-        componentCreated: function (component, dependencies, composer) {}
+        componentCreated: function (component, componentModel, dependencies, composer) {}
     });
 
     /**
@@ -6383,6 +6482,40 @@ new function () { // closure
             }
         }        
     });
+
+    /**
+     * Marker Protocol for injecting
+     * {{#crossLink "miruken.ioc.ComponentModel"}}{{/crossLink}}.
+     * @class ComponentModelAware
+     * @extends miruken.Protocol
+     */    
+    var ComponentModelAware = Protocol.extend({
+        set componentModel(value) {}
+    });
+    
+    /**
+     * Injects {{#crossLink "miruken.ioc.ComponentModel"}}{{/crossLink}}
+     * into created components.
+     * @class ComponentModelAwarePolicy
+     * @uses miruken.ioc.ComponentPolicy
+     * @extends Base
+     */
+    var ComponentModelAwarePolicy = Base.extend(ComponentPolicy, {
+        constructor: function (implicit) {
+            this.extend({
+                componentCreated: function (component, componentModel) {
+                    if (!implicit || ComponentModelAware.adoptedBy(component)) {
+                        component.componentModel = componentModel;
+                    }
+                }        
+            });
+        }
+    }, {
+        init: function () {
+            this.Implicit = new this(true);
+            this.Explicit = new this(false)
+        }
+    });
     
     /**
      * Builds {{#crossLink "miruken.ioc.ComponentModel"}}{{/crossLink}} using fluent api.
@@ -6729,7 +6862,11 @@ new function () { // closure
     ComponentModelError.prototype             = new Error;
     ComponentModelError.prototype.constructor = ComponentModelError;
 
-    var DEFAULT_POLICIES = [ new InjectionPolicy, new InitializationPolicy ];
+    var DEFAULT_POLICIES = [
+        new InjectionPolicy(),
+        ComponentModelAwarePolicy.Implicit,
+        new InitializationPolicy()
+    ];
     
     /**
      * Default Inversion of Control {{#crossLink "miruken.ioc.Container"}}{{/crossLink}}.
@@ -6771,13 +6908,7 @@ new function () { // closure
             }.bind(this));
         },
         registerHandler: function (componentModel, policies) {
-            var key       = componentModel.key,
-                clazz     = componentModel.implementation,
-                lifestyle = componentModel.lifestyle || new SingletonLifestyle,
-                factory   = componentModel.factory,
-                burden    = componentModel.burden;
-            key = componentModel.invariant ? $eq(key) : key;
-            return _registerHandler(this, key, clazz, lifestyle, factory, burden, policies); 
+            return _registerHandler(componentModel, this, policies); 
         },
         invoke: function (fn, dependencies, ctx) {
             var inject  = fn.$inject || fn.inject,
@@ -6801,7 +6932,13 @@ new function () { // closure
         }
     });
 
-    function _registerHandler(container, key, clazz, lifestyle, factory, burden, policies) {
+    function _registerHandler(componentModel, container, policies) {
+        var key       = componentModel.key,
+            clazz     = componentModel.implementation,
+            lifestyle = componentModel.lifestyle || new SingletonLifestyle,
+            factory   = componentModel.factory,
+            burden    = componentModel.burden;
+        key = componentModel.invariant ? $eq(key) : key;        
         return $provide(container, key, function handler(resolution, composer) {
             if (!(resolution instanceof DependencyResolution)) {
                 resolution = new DependencyResolution(resolution.key);
@@ -6825,7 +6962,8 @@ new function () { // closure
                         for (var i = index; i < policies.length; ++i) {
                             var policy = policies[i];
                             if ($isFunction(policy.componentCreated)) {
-                                var result = policy.componentCreated(component, dependencies, composer);
+                                var result = policy.componentCreated(
+                                    component, componentModel, dependencies, composer);
                                 if ($isPromise(result)) {
                                     return result.then(function () {
                                         return applyPolicies(i + 1);
@@ -6972,7 +7110,7 @@ new function () { // closure
 
 }
 
-},{"../callback.js":6,"../context.js":7,"../miruken.js":14,"../validate":23,"bluebird":26}],14:[function(require,module,exports){
+},{"../callback.js":6,"../context.js":7,"../miruken.js":14,"../validate":24,"bluebird":27}],14:[function(require,module,exports){
 (function (global){
 require('./base2.js');
 var Promise = require('bluebird');
@@ -9330,7 +9468,7 @@ new function () { // closure
 }
 
 }).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
-},{"./base2.js":5,"bluebird":26}],15:[function(require,module,exports){
+},{"./base2.js":5,"bluebird":27}],15:[function(require,module,exports){
 var miruken = require('../miruken.js'),
     Promise = require('bluebird');
               require('./view.js');
@@ -9465,7 +9603,7 @@ new function () { // closure
     
 }
 
-},{"../miruken.js":14,"./view.js":22,"bluebird":26}],16:[function(require,module,exports){
+},{"../miruken.js":14,"./view.js":23,"bluebird":27}],16:[function(require,module,exports){
 var miruken = require('../miruken.js');
               require('./controller.js');
 
@@ -9589,7 +9727,7 @@ new function () { // closure
     miruken.package(this, {
         name:    "mvc",
         imports: "miruken,miruken.callback,miruken.context,miruken.validate",
-        exports: "Controller,ControllerNotFound,Navigate,NavigateCallbackHandler"
+        exports: "Controller,ControllerNotFound,Navigate,Navigation,NavigateCallbackHandler"
     });
 
     eval(this.imports);
@@ -9598,21 +9736,62 @@ new function () { // closure
         globalExecute = new Array2();
 
     /**
-     * Protocol to navigate controllrs.
+     * Captures a navigation context.
+     * @class Navigation
+     * @extends Base
+     */        
+    var Navigation = Base.extend({
+        controller: undefined,
+        action:     undefined,
+        args:       undefined
+    });
+    
+    /**
+     * Protocol to navigate controllers.
      * @class Navigate
      * @extends miruken.StrictProtocol
-     */    
+     */
     var Navigate = StrictProtocol.extend({
         /**
          * Executes `action` on the resolved `controller`.
          * @method to
          * @param   {Any}       controller  -  controller key
          * @param   {Function}  action      -  controller action
-         * @returns {Promise} promise for navigation context.
+         * @returns {Promise} promise when navigation complete.
          */        
         to: function(controller, action, push) {}
     });
-
+    
+    var $currentController = MetaMacro.extend({
+        inflate: function (step, metadata, target, definition) {
+            if (!Controller) { return; }
+            Array2.forEach(Object.getOwnPropertyNames(definition), function (key) {
+                if (key === "contructor" || key === "initialize") { return; }
+                var member = Object.getOwnPropertyDescriptor(definition, key);
+                if ($isFunction(member.value)) {
+                    var method = member.value;
+                    (function (action) {
+                        member.value = function () {
+                            var io   = Controller.io,
+                                args = Array.prototype.slice.call(arguments);
+                            if (io) {
+                                Controller.io = io.$$provide([Navigation, new Navigation({
+                                    controller: this,
+                                    action:     action,
+                                    args:       args
+                                })]);
+                            }
+                            return method.apply(this, args);
+                        };
+                    })(key);
+                }
+                Object.defineProperty(definition, key, member);
+            });
+        },
+        shouldInherit: True,
+        isActive: True
+    });
+        
     /**
      * Base class for controllers.
      * @class Controller
@@ -9623,7 +9802,7 @@ new function () { // closure
      * @uses miruken.validate.Validating
      */
     var Controller = CallbackHandler.extend(
-        $contextual, $validateThat, Validating, {
+        $contextual, $currentController, $validateThat, Validating, {
 
         get io() {
             var io = Controller.io || this.context;
@@ -9664,11 +9843,17 @@ new function () { // closure
             return this._execute || (this._execute = new Array2());
         }            
     }, {
-        io: undefined,
         get prepare() { return globalPrepare; },
         get execute() { return globalExecute; }        
     });
 
+    /**
+     * Represents the failure to resolve a `controller`.
+     * @class ControllerNotFound
+     * @constructor
+     * @param  {Any}  controller  -  controller key
+     * @extends Error
+     */    
     function ControllerNotFound(controller) {
         this.message    = format("The controller '%1' could not be resolved", controller);
         this.controller = controller;
@@ -9681,7 +9866,7 @@ new function () { // closure
     }
     ControllerNotFound.prototype             = new Error;
     ControllerNotFound.prototype.constructor = ControllerNotFound;
-    
+     
     /**
      * Default navigation implementation.
      * @class NavigateCallbackHandler
@@ -9691,28 +9876,32 @@ new function () { // closure
      */    
     var NavigateCallbackHandler = CompositeCallbackHandler.extend(Navigate, {
         to: function(controller, action, push) {
-            var composer = $composer;
-            if (action == null || composer == null) { return null };
-
-            var context   = composer.resolve(Context),
+            if (action == null) {
+                return Promise.reject(new Error("Missing action"));
+            };
+            
+            var composer  = $composer,
+                context   = composer.resolve(Context),
                 initiator = composer.resolve(Controller),
                 ctx       = push ? context.newChild() : context;
 
-            var oldIO = Controller.io;   
+            var oldIO = Controller.io;
             return Promise.resolve(context.resolve(controller))
                 .then(function (ctrl) {
                     if (!ctrl) {
                         return Promise.reject(new ControllerNotFound(controller));
-                    }
-                    if (composer !== context) {
-                        Controller.io = ctx.next(composer);
-                    } 
-                    if (initiator != null && initiator.context == ctx)
-                        initiator.context = null;                   
+                    }                    
+                    Controller.io = composer !== context ? ctx.next(composer) : ctx;
+                    if ((ctrl != initiator) && (initiator != null) && (initiator.context == ctx))
+                        initiator.context = null;                    
                     return action(ctrl);
                 })
                 .finally(function () {
-                    Controller.io = oldIO;
+                    if (oldIO) {
+                        Controller.io = oldIO;
+                    } else {
+                        delete Controller.io;
+                    }
                 });
         }
     });
@@ -9738,7 +9927,7 @@ new function () { // closure
     
 }
 
-},{"../callback.js":6,"../context.js":7,"../miruken.js":14,"../validate":23,"bluebird":26}],18:[function(require,module,exports){
+},{"../callback.js":6,"../context.js":7,"../miruken.js":14,"../validate":24,"bluebird":27}],18:[function(require,module,exports){
 var miruken = require('../miruken.js'),
     Promise = require('bluebird');
 
@@ -9818,7 +10007,7 @@ new function () {
 
 }
 
-},{"../miruken.js":14,"bluebird":26}],19:[function(require,module,exports){
+},{"../miruken.js":14,"bluebird":27}],19:[function(require,module,exports){
 module.exports = require('./model.js');
 require('./view.js');
 require('./controller.js');
@@ -9826,9 +10015,10 @@ require('./components.js');
 require('./master-detail.js');
 require('./bootstrap.js');
 require('./greenSock.js');
+require('./route.js');
 
 
-},{"./bootstrap.js":15,"./components.js":16,"./controller.js":17,"./greenSock.js":18,"./master-detail.js":20,"./model.js":21,"./view.js":22}],20:[function(require,module,exports){
+},{"./bootstrap.js":15,"./components.js":16,"./controller.js":17,"./greenSock.js":18,"./master-detail.js":20,"./model.js":21,"./route.js":22,"./view.js":23}],20:[function(require,module,exports){
 var miruken = require('../miruken.js');
 
 new function () { // closure
@@ -10203,7 +10393,129 @@ new function () { // closure
     
 }
 
-},{"../callback.js":6,"../context.js":7,"../miruken.js":14,"../validate":23}],22:[function(require,module,exports){
+},{"../callback.js":6,"../context.js":7,"../miruken.js":14,"../validate":24}],22:[function(require,module,exports){
+(function (global){
+var miruken = require('../miruken.js');
+var Promise = require('bluebird');
+
+new function () { // closure
+
+    /**
+     * Package providing Model-View-Controller abstractions.<br/>
+     * Requires the {{#crossLinkModule "miruken"}}{{/crossLinkModule}},
+     * @module miruken
+     * @submodule mvc
+     * @namespace miruken.mvc
+     */
+    miruken.package(this, {
+        name:    "mvc",
+        imports: "miruken,miruken.error",
+        exports: "Route,Routing,Router"
+    });
+
+    eval(this.imports);
+
+    /**
+     * Route definition.
+     * @class Route
+     * @extends Base
+     */    
+    var Route = Base.extend({
+        name:    undefined,
+        pattern: undefined,
+        params:  undefined
+    });
+    
+    /**
+     * Protocol for routing.
+     * @class Routing
+     * @extends Protocol
+     */
+    var Routing = StrictProtocol.extend({
+        /**
+         * Navigates to the specified `route`.
+         * @method routeTo
+         * @param    {miruken.mvc.Route}  route  -  route
+         * @returns  {Promise} navigation promise.
+         */
+        routeTo: function (route) {},
+        /**
+         * Selects the route matching `navigation`.
+         * @method selectRoute
+         * @param    {miruken.mvc.Navigation}  navigation  -  navigation
+         */
+        selectRoute: function (navigation) {}
+    });
+
+    var controllerKeyRegExp = /(.*)controller$/i;
+    
+    /**
+     * Base class for routing.
+     * @class Router
+     * @constructor
+     * @extends Base
+     * @uses miruken.mvc.Routing
+     */    
+    var Router = Base.extend(Routing, {
+        routeTo: function (route) {
+            var name   = route.name,
+                params = route.params;
+            if (params == null) {
+                return Promise.reject(new Error(format(
+                    "Missing params route '%1'", name)));
+            }
+            var controller = params.controller;
+            if (controller == null) {
+                return Promise.reject(new Error(format(
+                    "Missing controller for route '%1'", name)));
+            }
+            var composer = global.$composer,
+                navigate = Navigate(composer),
+                action   = params.action || "index",
+                execute  = function (ctrl) {
+                    var property = this.findActionMethod(ctrl, action),
+                        method   = property && ctrl[property];
+                    return $isFunction(method) ? method.call(ctrl, params)
+                         : Promise.reject(new Error(format(
+                             "%1 missing action '%2' for route '%3'",
+                             ctrl, action, name)));
+                }.bind(this),
+                controllerKey = this.expandControllerKey(controller);
+
+            return navigate.to(controllerKey, execute)
+                .catch (function (err) {
+                    return (err instanceof ControllerNotFound)
+                        && (controllerKey !== controller)
+                         ? navigate.to(controller, execute)
+                         : Promise.reject(err);
+                });
+        },
+        extractControllerKey: function (controller) {
+            var matches = controller.match && controller.match(controllerKeyRegExp);
+            return matches ? matches[1].toLowerCase() : controller;
+        },
+        expandControllerKey: function (controller) {
+            return controller.match && !controller.match(controllerKeyRegExp)
+                 ? controller + "Controller"
+                 : controller;
+        },
+        findActionMethod: function (controller, action) {
+            if (action in controller) { return action; }
+            action = action.toLowerCase();
+            for (var property in controller) {
+                if (action === property.toLowerCase()) {
+                    return property;
+                }
+            }
+        }
+    });
+    
+    eval(this.exports);
+    
+}
+
+}).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
+},{"../miruken.js":14,"bluebird":27}],23:[function(require,module,exports){
 var miruken = require('../miruken.js');
               require('../callback.js');
               require('../context.js');
@@ -10246,16 +10558,11 @@ new function () { // closure
      */
     var ViewRegion = StrictProtocol.extend({
         /**
-         * Gets the regions name.
-         * @property {string} name
-         */
-        get name() {},
-        /**
-         * Renders new view in the region.
+         * Renders `view` in the region.
          * @method show
-         * @param    {Any}      view  -  view details
+         * @param    {Any}      view  -  view
          * @returns  {Promise}  promise for the layer.
-         */                                        
+         */
         show: function (view) {}
     });
 
@@ -10321,12 +10628,12 @@ new function () { // closure
     
 }
 
-},{"../callback.js":6,"../context.js":7,"../miruken.js":14,"../validate":23,"./model.js":21}],23:[function(require,module,exports){
+},{"../callback.js":6,"../context.js":7,"../miruken.js":14,"../validate":24,"./model.js":21}],24:[function(require,module,exports){
 module.exports = require('./validate.js');
 require('./validatejs.js');
 
 
-},{"./validate.js":24,"./validatejs.js":25}],24:[function(require,module,exports){
+},{"./validate.js":25,"./validatejs.js":26}],25:[function(require,module,exports){
 var miruken = require('../miruken.js'),
     Promise = require('bluebird');
               require('../callback.js');
@@ -10737,7 +11044,7 @@ new function () { // closure
 
 }
 
-},{"../callback.js":6,"../miruken.js":14,"bluebird":26}],25:[function(require,module,exports){
+},{"../callback.js":6,"../miruken.js":14,"bluebird":27}],26:[function(require,module,exports){
 var miruken    = require('../miruken.js'),
     validate   = require('./validate.js'),
     validatejs = require("validate.js"),
@@ -10989,7 +11296,7 @@ new function () { // closure
 
 }
 
-},{"../callback.js":6,"../miruken.js":14,"./validate.js":24,"bluebird":26,"validate.js":28}],26:[function(require,module,exports){
+},{"../callback.js":6,"../miruken.js":14,"./validate.js":25,"bluebird":27,"validate.js":29}],27:[function(require,module,exports){
 (function (process,global){
 /* @preserve
  * The MIT License (MIT)
@@ -15884,7 +16191,7 @@ module.exports = ret;
 },{"./es5.js":14}]},{},[4])(4)
 });                    ;if (typeof window !== 'undefined' && window !== null) {                               window.P = window.Promise;                                                     } else if (typeof self !== 'undefined' && self !== null) {                             self.P = self.Promise;                                                         }
 }).call(this,require('_process'),typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
-},{"_process":27}],27:[function(require,module,exports){
+},{"_process":28}],28:[function(require,module,exports){
 // shim for using process in browser
 var process = module.exports = {};
 
@@ -16066,7 +16373,7 @@ process.chdir = function (dir) {
 };
 process.umask = function() { return 0; };
 
-},{}],28:[function(require,module,exports){
+},{}],29:[function(require,module,exports){
 /*!
  * validate.js 0.10.0
  *
