@@ -8922,13 +8922,21 @@ new function () { // closure
      */
     var Navigate = StrictProtocol.extend({
         /**
-         * Executes `action` on the resolved `controller`.
+         * Transitions to next `action` on `controller`.
+         * @method next
+         * @param   {Any}       controller  -  controller key
+         * @param   {Function}  action      -  controller action
+         * @returns {Promise} promise when transition complete.
+         */        
+        next: function (controller, action) {},
+        /**
+         * Transitions to next `action` on `controller` in a new context.
          * @method to
          * @param   {Any}       controller  -  controller key
          * @param   {Function}  action      -  controller action
-         * @returns {Promise} promise when navigation complete.
+         * @returns {Promise} promise when transition complete.
          */        
-        to: function(controller, action, push) {}
+        push: function (controller, action) {}        
     });
     
     var $currentController = MetaMacro.extend({
@@ -9002,9 +9010,6 @@ new function () { // closure
         validateAsync: function (target, scope) {
             return _validate.call(this, target, 'validateAsync', scope);
         },
-        next: function (controller, action) {
-            return Navigate(this.io).to(controller, action);
-        },            
         get prepare() {
             return this._prepare || (this._prepare = new Array2());
         },
@@ -9013,7 +9018,22 @@ new function () { // closure
         }            
     }, {
         get prepare() { return globalPrepare; },
-        get execute() { return globalExecute; }        
+        get execute() { return globalExecute; },
+        coerce: function (source) {
+            var controller = this;
+            if (source instanceof Controller) {
+                source = source.io;
+            }
+            var navigate = Navigate(source);
+            return {
+                next: function (action) {
+                    return navigate.next(controller, action);
+                },
+                push: function (action) {
+                    return navigate.push(controller, action);
+                }
+            };
+        }
     });
 
     /**
@@ -9044,7 +9064,13 @@ new function () { // closure
      * @uses miruken.mvc.Navigate
      */    
     var NavigateCallbackHandler = CompositeCallbackHandler.extend(Navigate, {
-        to: function(controller, action, push) {
+        next: function (controller, action, push) {
+            return this.to(controller, action, false);
+        },
+        push: function (controller, action, push) {
+            return this.to(controller, action, true);            
+        },        
+        to: function (controller, action, push) {
             if (action == null) {
                 return Promise.reject(new Error("Missing action"));
             };
@@ -9602,12 +9628,12 @@ new function () { // closure
      */
     var Routing = StrictProtocol.extend({
         /**
-         * Navigates to the specified `route`.
+         * Handles to the specified `route`.
          * @method routeTo
          * @param    {miruken.mvc.Route}  route  -  route
          * @returns  {Promise} navigation promise.
          */
-        routeTo: function (route) {},
+        handleRoute: function (route) {},
         /**
          * Selects the route matching `navigation`.
          * @method selectRoute
@@ -9626,7 +9652,7 @@ new function () { // closure
      * @uses miruken.mvc.Routing
      */    
     var Router = Base.extend(Routing, {
-        routeTo: function (route) {
+        handleRoute: function (route) {
             var name   = route.name,
                 params = route.params;
             if (params == null) {
@@ -9642,7 +9668,7 @@ new function () { // closure
                 navigate = Navigate(composer),
                 action   = params.action || "index",
                 execute  = function (ctrl) {
-                    var property = this.findActionMethod(ctrl, action),
+                    var property = this.selectActionMethod(ctrl, action),
                         method   = property && ctrl[property];
                     return $isFunction(method) ? method.call(ctrl, params)
                          : Promise.reject(new Error(format(
@@ -9651,7 +9677,7 @@ new function () { // closure
                 }.bind(this),
                 controllerKey = this.expandControllerKey(controller);
 
-            return navigate.to(controllerKey, execute)
+            return navigate.next(controllerKey, execute)
                 .catch (function (err) {
                     return (err instanceof ControllerNotFound)
                         && (controllerKey !== controller)
@@ -9668,7 +9694,7 @@ new function () { // closure
                  ? controller + "Controller"
                  : controller;
         },
-        findActionMethod: function (controller, action) {
+        selectActionMethod: function (controller, action) {
             if (action in controller) { return action; }
             action = action.toLowerCase();
             for (var property in controller) {
