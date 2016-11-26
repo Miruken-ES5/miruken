@@ -8939,28 +8939,26 @@ new function () { // closure
         push: function (controller, action) {}        
     });
     
-    var $currentController = MetaMacro.extend({
+    var $navigation = MetaMacro.extend({
         inflate: function (step, metadata, target, definition) {
             if (!Controller) { return; }
             Array2.forEach(Object.getOwnPropertyNames(definition), function (key) {
-                if (key === "contructor" || key === "initialize") { return; }
+                if (key === "constructor") { return; }
                 var member = Object.getOwnPropertyDescriptor(definition, key);
                 if ($isFunction(member.value)) {
                     var method = member.value;
-                    (function (action) {
-                        member.value = function () {
-                            var io   = Controller.io,
-                                args = Array.prototype.slice.call(arguments);
-                            if (io) {
-                                Controller.io = io.$$provide([Navigation, new Navigation({
-                                    controller: this,
-                                    action:     action,
-                                    args:       args
-                                })]);
-                            }
-                            return method.apply(this, args);
-                        };
-                    })(key);
+                    member.value = function () {
+                        var io = Controller.io || this.context;
+                        if (io && key !== "initialize") {
+                            io = io.$$provide([Navigation, new Navigation({
+                                controller: this,
+                                action:     key,
+                                args:       Array.prototype.slice.call(arguments)
+                            })]);
+                        }
+                        _bindIo.call(this, io);
+                        return method.apply(this, arguments);
+                    };
                 }
                 Object.defineProperty(definition, key, member);
             });
@@ -8968,7 +8966,7 @@ new function () { // closure
         shouldInherit: True,
         isActive: True
     });
-        
+
     /**
      * Base class for controllers.
      * @class Controller
@@ -8979,52 +8977,20 @@ new function () { // closure
      * @uses miruken.validate.Validating
      */
     var Controller = CallbackHandler.extend(
-        $contextual, $currentController, $validateThat, Validating, {
-
-        get io() {
-            var io = Controller.io || this.context;
-            io     = _assemble(io, this._prepare, this);
-            io     = _assemble(io, globalPrepare, this);
-            var execute = this._execute;
-            if ((!execute || execute.length === 0) &&
-                (globalExecute.length === 0)) {
-                return io;
-            }
-            var controller = this,
-                executor   = io.decorate({
-                    toDelegate: function () {
-                        var ex = _assemble(this, execute, controller);
-                        ex = _assemble(ex, globalExecute, controller);
-                        delete executor.toDelegate;
-                        return ex.toDelegate();
-                    }
-                });
-            return executor;
-        },
+        $contextual, $navigation, $validateThat, Validating, {
         get ifValid() {
             return this.io.$validAsync(this);
         },
         validate: function (target, scope) {
-            return _validate.call(this, target, 'validate', scope);
+            return _validate.call(this, target, "validate", scope);
         },
         validateAsync: function (target, scope) {
-            return _validate.call(this, target, 'validateAsync', scope);
-        },
-        get prepare() {
-            return this._prepare || (this._prepare = new Array2());
-        },
-        get execute() {
-            return this._execute || (this._execute = new Array2());
-        }            
+            return _validate.call(this, target, "validateAsync", scope);
+        }
     }, {
-        get prepare() { return globalPrepare; },
-        get execute() { return globalExecute; },
         coerce: function (source) {
-            var controller = this;
-            if (source instanceof Controller) {
-                source = source.io;
-            }
-            var navigate = Navigate(source);
+            var controller = this,
+                navigate   = Navigate(source);
             return {
                 next: function (action) {
                     return navigate.next(controller, action);
@@ -9033,7 +8999,9 @@ new function () { // closure
                     return navigate.push(controller, action);
                 }
             };
-        }
+        },
+        get prepare() { return globalPrepare; },
+        get execute() { return globalExecute; }        
     });
 
     /**
@@ -9100,6 +9068,23 @@ new function () { // closure
                 });
         }
     });
+
+    function _bindIo(io) {
+        if (!io) { return; }
+        io = _assemble(io, globalPrepare, this);
+        if (globalExecute.length === 0) {
+            this.io = io;
+            return;
+        }
+        var controller = this,
+            executor   = this.io = io.decorate({
+            toDelegate: function () {
+                var ex = _assemble(this, globalExecute, controller);
+                delete executor.toDelegate;
+                return ex.toDelegate();
+            }
+        });
+    }
     
     function _assemble(handler, builders, context) {
         return handler && builders
