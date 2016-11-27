@@ -19,7 +19,7 @@ new function () { // closure
     miruken.package(this, {
         name:    "mvc",
         imports: "miruken,miruken.callback",
-        exports: "ViewLayer,ViewRegion,ViewRegionAware,PresentationPolicy," +
+        exports: "ViewRegion,ViewRegionAware,PresentationPolicy," +
                  "RegionPolicy,ModalPolicy,ModalProviding,ButtonClicked"
     });
 
@@ -31,7 +31,7 @@ new function () { // closure
      * @class ViewLayer
      * @extends Protocol
      */
-    var ViewLayer = Protocol.extend(Disposing);
+    var ViewLayer = Protocol.extend(Disposing,);
     
     /**
      * Protocol for rendering a view on the screen.

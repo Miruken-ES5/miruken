@@ -2011,11 +2011,11 @@ new function () { // closure
                     var implied  = new _Node(key),
                         delegate = this.delegate;
                     if (delegate && implied.match($classOf(delegate), Variance.Contravariant)) {
-                        resolution.resolve($decorated(delegate, true));
+                        resolution.resolve(delegate);
                         resolved = true;
                     }
                     if ((!resolved || many) && implied.match($classOf(this), Variance.Contravariant)) {
-                        resolution.resolve($decorated(this, true));
+                        resolution.resolve(this, true);
                         resolved = true;
                     }
                 }
@@ -3593,9 +3593,16 @@ new function () { // closure
             function makeNotifier() {
                 return new ContextObserver(_observers ? _observers.copy() : null);
             }
+        },
+        resolveContext: function (resolution) {
+            var decoratee = this.decoratee;
+            return decoratee ? decoratee.resolve(resolution.key) : this;
         }
     });
-
+    $provide(Context, Context, function (resolution) {
+        return this.resolveContext(resolution);
+    });
+    
     /**
      * Mixin to provide the minimal functionality to support contextual based operations.<br/>
      * This is an alternatve to the delegate model of communication, but with less coupling 
@@ -5568,12 +5575,13 @@ new function () { // closure
                     ContextualHelper.bindContext(instance, context, true);
                     return instance.extend({
                         set context(value) {
+                            if (value == context) { return; }
                             if (value == null) {
-                                this.base(null);
+                                this.base(value);
                                 lifestyle.disposeInstance(instance);
-                            } else if (value !== context) {
-                                throw new Error("Container managed instances cannot change context");
+                                return;
                             }
+                            throw new Error("Container managed instances cannot change context");
                         }
                     });
                 },                
@@ -7679,10 +7687,10 @@ new function () { // closure
      */
     var DisposingMixin = Module.extend({
         dispose: function (object) {
-            if ($isFunction(object._dispose)) {
-                var result = object._dispose();
-                object.dispose = Undefined;  // dispose once
-                return result;
+            var dispose = object._dispose;
+            if ($isFunction(dispose)) {
+                object.dispose = Undefined;  // dispose once                
+                return dispose.call(object);
             }
         }
     });
