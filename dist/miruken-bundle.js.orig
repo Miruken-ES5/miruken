@@ -14212,6 +14212,7 @@ module.exports = ret;
 // shim for using process in browser
 var process = module.exports = {};
 
+<<<<<<< HEAD
 // cached from whatever global is present so that test runners that stub it
 // don't break things.  But we need to wrap it in a try catch in case it is
 // wrapped in strict mode code which doesn't define any globals.  It's inside a
@@ -14298,6 +14299,12 @@ function runClearTimeout(marker) {
 
 
 }
+=======
+// cached from whatever global is present so that test runners that stub it don't break things.
+var cachedSetTimeout = setTimeout;
+var cachedClearTimeout = clearTimeout;
+
+>>>>>>> develop
 var queue = [];
 var draining = false;
 var currentQueue;
@@ -14322,7 +14329,11 @@ function drainQueue() {
     if (draining) {
         return;
     }
+<<<<<<< HEAD
     var timeout = runTimeout(cleanUpNextTick);
+=======
+    var timeout = cachedSetTimeout(cleanUpNextTick);
+>>>>>>> develop
     draining = true;
 
     var len = queue.length;
@@ -14339,7 +14350,11 @@ function drainQueue() {
     }
     currentQueue = null;
     draining = false;
+<<<<<<< HEAD
     runClearTimeout(timeout);
+=======
+    cachedClearTimeout(timeout);
+>>>>>>> develop
 }
 
 process.nextTick = function (fun) {
@@ -14351,7 +14366,11 @@ process.nextTick = function (fun) {
     }
     queue.push(new Item(fun, args));
     if (queue.length === 1 && !draining) {
+<<<<<<< HEAD
         runTimeout(drainQueue);
+=======
+        cachedSetTimeout(drainQueue, 0);
+>>>>>>> develop
     }
 };
 

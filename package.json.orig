@@ -1,7 +1,14 @@
 {
   "name": "miruken",
+<<<<<<< HEAD
   "version": "1.0.3",
   "description": "",
+=======
+  "version": "0.0.87",
+  "description": "Framework for true object-oriented view management",
+  "license": "MIT",
+  "repository": "miruken/MirukenJS",
+>>>>>>> develop
   "dependencies": {
     "bluebird": "^2.10.2",
     "validate.js": "^0.10.0"

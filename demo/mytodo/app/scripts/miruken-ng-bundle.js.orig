@@ -1,4 +1,870 @@
 (function e(t,n,r){function s(o,u){if(!n[o]){if(!t[o]){var a=typeof require=="function"&&require;if(!u&&a)return a(o,!0);if(i)return i(o,!0);var f=new Error("Cannot find module '"+o+"'");throw f.code="MODULE_NOT_FOUND",f}var l=n[o]={exports:{}};t[o][0].call(l.exports,function(e){var n=t[o][1][e];return s(n?n:e)},l,l.exports,e,t,n,r)}return n[o].exports}var i=typeof require=="function"&&require;for(var o=0;o<r.length;o++)s(r[o]);return s})({1:[function(require,module,exports){
+module.exports = require('./ng.js');
+require('./region.js');
+require('./route.js');
+
+
+},{"./ng.js":2,"./region.js":3,"./route.js":4}],2:[function(require,module,exports){
+(function (global){
+var miruken = require('../miruken');
+              require('../ioc');
+              require('../mvc');
+              require('../error');
+
+new function () { // closure
+
+    if (typeof angular === "undefined") {
+        throw new Error("angular not found.  Did you forget to include angular.js first?");
+    }
+
+    /**
+     * Package providing [Angular](https://angularjs.org) integration.<br/>
+     * Requires the {{#crossLinkModule "miruken"}}{{/crossLinkModule}},
+     * {{#crossLinkModule "callback"}}{{/crossLinkModule}},
+     * {{#crossLinkModule "context"}}{{/crossLinkModule}},
+     * {{#crossLinkModule "validate"}}{{/crossLinkModule}},
+     * {{#crossLinkModule "ioc"}}{{/crossLinkModule}} modules.
+     * {{#crossLinkModule "error"}}{{/crossLinkModule}} modules.
+     * @module miruken
+     * @submodule ng
+     * @namespace miruken.ng
+     */
+    miruken.package(this, {
+        name:    "ng",
+        imports: "miruken,miruken.callback,miruken.context,miruken.ioc,miruken.mvc",
+        exports: "Runner,Directive,Filter,DynamicControllerDirective," +
+                 "UseModelValidation,DigitsOnly,InhibitFocus,TrustFilter," +
+                 "$appContext,$envContext,$rootContext"
+    });
+
+    eval(this.imports);
+
+    var $appContext   = new Context,
+        $envContext   = $appContext.newChild(),
+        $rootContext  = $envContext.newChild(),
+        appContainer  = new IoContainer,
+        mirukenModule = angular.module("miruken.ng", []);
+
+    mirukenModule.constant("$appContext",  $appContext);
+    mirukenModule.constant("$envContext",  $envContext);                
+    mirukenModule.constant("$rootContext", $rootContext);
+    Object.defineProperty(this.package, "ngModule", { value: mirukenModule });
+    
+    $appContext.addHandlers(appContainer,
+                            new NavigateCallbackHandler(),
+                            new miruken.validate.ValidationCallbackHandler,
+                            new miruken.validate.ValidateJsCallbackHandler,
+                            new miruken.error.ErrorCallbackHandler);
+    
+    angular.module("ng").run(["$rootElement", "$rootScope", "$injector",
+                              "$templateRequest", "$compile", "$q", "$timeout",
+        function ($rootElement, $rootScope, $injector, $templates, $compile, $q, $timeout) {
+            _instrumentScopes($rootScope, $injector);
+            var appRegion = new miruken.ng.PartialRegion(
+                "app", $rootElement, $templates, $compile, $q, $timeout);
+            $appContext.addHandlers(appRegion, new BootstrapProvider);
+            _provideInjector(appContainer, $injector);
+    }]);
+    
+    /**
+     * Marks a class to be called during the run phase of an Angular module setup.<br/>
+     * See [Angular Module Loading & Dependencies](https://docs.angularjs.org/guide/module)
+     * @class Runner
+     * @extends Base     
+     */
+    var Runner = Base.extend({
+        /**
+         * Executed during the run phase of an Angular module.
+         * @method run
+         */            
+        run: function () {}
+    });
+
+    /**
+     * Marks a class as an
+     * [Angular Directive Definition Object] (https://docs.angularjs.org/guide/module)
+     * @class Directive
+     * @extends Base     
+     */
+    var Directive = Base.extend();
+
+    /**
+     * Marks a class as an
+     * [Angular Filter] (https://docs.angularjs.org/guide/filter)
+     * @class Filter
+     * @extends Base     
+     */
+    var Filter = Base.extend({
+        /**
+         * Transforms input from one value to another.
+         * @method filter
+         * @param   {Any} input  -  any input
+         * @returns {Any} transformed output.
+         */
+        filter: function (input) { return input; }
+    });
+
+    /**
+     * Angular directive to allow controller expressions.
+     * @class DynamicControllerDirective
+     * @constructor
+     * @extends miruken.ng.Directive     
+     */
+    var DynamicControllerDirective = Directive.extend({
+        restrict: "A",
+        terminal: true,
+        priority: 100000,
+        $inject:  [ "$parse", "$compile" ],
+        constructor: function ($parse, $compile) {
+            this.extend({
+                link: function (scope, elem, attrs) {
+                    var name = $parse(elem.attr("dynamic-controller"))(scope);
+                    if (scope.src) {
+                        elem.attr("src", "'" + scope.src + "'");
+                    }
+                    elem.removeAttr("dynamic-controller");
+                    elem.attr("ng-controller", name);
+                    $compile(elem)(scope);
+                }
+            });
+        }
+    });
+    
+    /**
+     * Angular directive enabling model validation.
+     * @class UseModelValidation
+     * @constructor
+     * @extends miruken.ng.Directive     
+     */
+    var UseModelValidation = Directive.extend({
+        restrict: "A",
+        require:  "ngModel",
+        link: function (scope, elm, attrs, ctrl) {
+            var context = scope.context,
+                model   = attrs["useModelValidation"] || undefined;
+            ctrl.$validators.modelValidationHook = $debounce(function () {
+                Validating(context).validateAsync(model).finally(function() {
+                    scope.$evalAsync();
+                });
+                return true;
+            }, 100, false, true);
+        }
+    });
+
+    /**
+     * Angular directive restricting digit input.
+     * @class DigitsOnly
+     * @constructor
+     * @extends miruken.ng.Directive     
+     */
+    var DigitsOnly = Directive.extend({
+        restrict: "A",
+        require:  "?ngModel",
+        link: function (scope, elm, attrs, modelCtrl) {
+            modelCtrl.$parsers.push(function (inputValue) {
+                if (!modelCtrl) {
+                    return;
+                }
+                if (inputValue == undefined) {
+                    return "";
+                }
+                var strippedInput = inputValue.replace(/[^0-9]/g, "");
+                if (strippedInput != inputValue) {
+                    modelCtrl.$setViewValue(strippedInput);
+                    modelCtrl.$render();
+                }
+                return strippedInput;
+            });
+        }
+    });
+
+    /**
+     * Angular directive preventing an element from receiving focus.
+     * @class InhibitFocus
+     * @constructor
+     * @extends miruken.ng.Directive     
+     */    
+    var InhibitFocus = Directive.extend({
+        restrict: "A",
+        link: function (scope, elm, attrs) {
+            elm.bind("click", function () {
+                elm.blur();
+            });
+        }
+    });
+
+    /**
+     * Angular filter to trust content.<br/>
+     * See [Angular String Contextual Escaping](https://docs.angularjs.org/api/ng/service/$sce)
+     * 
+     * @class TrustFilter
+     * @constructor
+     * @extends miruken.ng.Filter     
+     */        
+    var TrustFilter = Filter.extend({
+        $inject: ["$sce"],
+        constructor: function ($sce) {
+            this.extend({
+                filter: function (input) {
+                    return $sce.trustAsHtml(input);
+                }
+            });
+        }
+    });
+    
+    Package.implement({
+        init: function () {
+            this.base();
+            var parent = this.parent,
+                module = this.ngModule;
+            if (module) {
+                var name = String2.slice(this, 7, -1),  // [base2.xyz]
+                    exists;
+                try {
+                    angular.module(name);
+                    exists = true;
+                } catch (e) {
+                    // doesn't exist
+                }
+                if (exists) {
+                    throw new Error(format("The Angular module '%1' already exists.", name));
+                }
+                if (module.indexOf(mirukenModule.name) < 0) {
+                    module = module.slice();
+                    module.push(mirukenModule.name);
+                }
+                module = angular.module(name, module);
+            } else if (parent) {
+                module = parent.ngModule;
+            }
+            if (module) {
+                Object.defineProperty(this, "ngModule", { value: module });
+            }
+            if ((parent === base2) && !(this.name in global)) {
+                global[this.name] = this;
+            }
+        },
+        exported: function (exports) {
+            this.base(exports);
+            var module = this.ngModule;
+            if (module && $isFunction(module.config)) {
+                var package   = this,
+                    container = Container($appContext),
+                    runners   = [], starters = [];
+                _registerContents(this, module, exports);
+                module.config(["$injector", function ($injector) {
+                    _installPackage(package, module, exports, $injector, runners, starters);
+                }]);
+                module.run(["$rootScope", "$injector", "$q", "$log", function ($rootScope, $injector, $q, $log) {
+                    if (package.parent === base2 && !(package.name in $rootScope)) {
+                        $rootScope[package.name] = package;
+                    }
+                   _provideInjector(appContainer, $injector);
+                   Array2.forEach(runners, function (runner) {
+                       $injector.invoke(runner);
+                   });
+                   container.register(starters);
+                   $q.when(container.resolveAll(Starting)).then(function (starters) {
+                       Array2.invoke(starters, "start");
+                   }, function (error) {
+                       $log.error(format("Startup for package %1 failed: %2", package, error.message));
+                   });
+              }]);
+            }
+        }
+    });
+
+    CallbackHandler.implement({
+        /**
+         * Schedules the $digest to run after callback is handled.
+         * @method $ngApply
+         * @returns {miruken.callback.CallbackHandler}  $digest aspect.
+         * @for miruken.callback.CallbackHandler
+         */
+        $ngApply: function() {
+            return this.aspect(null, function(_, composer) {
+                var scope = composer.resolve("$scope");
+                if (scope && !scope.$$phase) {
+                    scope.$apply();
+                }
+            });
+        },
+        /**
+         * Schedules the $digest to run at some time in the future after callback is handled.
+         * @method $ngApplyAsync
+         * @param  {number}   [delay]  -  optional delay
+         * @returns {miruken.callback.CallbackHandler}  $digest aspect.
+         * @for miruken.callback.CallbackHandler
+         */                                                                
+        $ngApplyAsync: function(delay) {
+            return this.aspect(null, function(_, composer) {
+                var scope = composer.resolve("$scope");
+                if (scope) {
+                    if (delay) {
+                        setTimeout(scope.$evalAsync.bind(scope), delay);
+                    } else {
+                        scope.$evalAsync();
+                    }
+                }
+            });
+        }        
+    });
+    
+    /**
+     * @function _instrumentScopes
+     * Instruments angular scopes with miruken contexts.
+     * @param  {Scope}   $rootScope  -  angular's root scope
+     */
+    function _instrumentScopes($rootScope)
+    {
+        var scopeProto   = $rootScope.constructor.prototype,
+            newScope     = scopeProto.$new,
+            destroyScope = scopeProto.$destroy;
+        scopeProto.$new = function (isolate, parent) {
+            var childScope   = newScope.call(this, isolate, parent),
+                parentScope  = childScope.$parent,
+                childContext = parentScope && parentScope.context
+                             ? parentScope.context.newChild()
+                             : new Context;
+            $provide(childContext, "$scope", childScope);
+            childContext.onEnded(function (context) {
+                childScope.$destroy();
+            });
+            childScope.context = childContext;            
+            return childScope;
+        };
+        scopeProto.$destroy = function () {
+            var context = this.context;
+            if (context !== $rootContext) {
+                context.end();
+                delete this.context;
+            }
+            destroyScope.call(this);
+        };
+        $rootScope.rootContext = $rootScope.context = $rootContext;
+        $provide($rootContext, "$scope", $rootScope);        
+    }
+
+    var _controllerPolicies = [ ComponentModelAwarePolicy.Explicit ];
+    
+    /**
+     * @function _registerContents
+     * Registers the package controllers, filters, directives and any conforming
+     * {{#crossLink "miruken.callback.Resolving"}}{{/crossLink}} comoponent.
+     * @param  {Package}  package  - module package
+     * @param  {Module}   module   - angular module
+     * @param  {Array}    exports  - exported members
+     */
+    function _registerContents(package, module, exports) {
+        var unknown   = exports.slice(),
+            container = Container($appContext);
+        Array2.forEach(exports, function (name) {
+            var member = package[name];
+            if (!member || !member.prototype || $isProtocol(member)) {
+                return;
+            }
+            var memberProto = member.prototype;
+            name = memberProto.$name || name;
+            if (memberProto instanceof Directive) {
+                var directive = new ComponentModel;
+                directive.key = member;
+                container.addComponent(directive);
+                var deps = _ngDependencies(directive);
+                deps.unshift("$rootScope", "$injector");
+                deps.push(Shim(member, deps.slice()));
+                if (/Directive$/.test(name)) {
+                    name = name.substring(0, name.length - 9);
+                }
+                name = name.charAt(0).toLowerCase() + name.slice(1);
+                module.directive(name, deps);
+                Array2.remove(unknown, name);
+            } else if (memberProto instanceof Controller) {
+                var controller = new ComponentModel;
+                controller.key = [member, name];
+                controller.implementation = member;                
+                controller.lifestyle = new ContextualLifestyle;
+                container.addComponent(controller, _controllerPolicies);
+                var deps = _ngDependencies(controller);
+                deps.unshift("$scope", "$injector");
+                deps.push(Shim(member, deps.slice()));
+                module.controller(name, deps);
+                Array2.remove(unknown, name);                
+            } else if (memberProto instanceof Filter) {
+                var filter = new ComponentModel;
+                filter.key = member;
+                container.addComponent(filter);
+                var deps = _ngDependencies(filter);
+                deps.unshift("$rootScope", "$injector");
+                var shim = Shim(member, deps.slice());
+                deps.push(function () {
+                    var instance = shim.apply(null, arguments);
+                    return instance.filter.bind(instance);
+                });
+                if (/Filter$/.test(name)) {
+                    name = name.substring(0, name.length - 6);
+                }
+                name = name.charAt(0).toLowerCase() + name.slice(1);
+                module.filter(name, deps);
+                Array2.remove(unknown, name);                
+            }
+        });
+        container.register(
+            $classes.fromPackage(package, unknown).basedOn(Resolving)
+                .withKeys.mostSpecificService()
+        );             
+    }
+
+    /**
+     * @function _installPackage
+     * Registers the package Installers, Runners and Starters.
+     * @param  {Package}   package   -  module package
+     * @param  {Module}    module    -  angular module
+     * @param  {Array}     exports   -  exported members
+     * @param  {Injector}  injector  -  module injector
+     * @param  {Array}     runners   -  collects runners
+     * @param  {Array}     starters  -  collects starters
+     */
+    function _installPackage(package, module, exports, injector, runners, starters) {
+        var container = Container($appContext);
+        Array2.forEach(exports, function (name) {
+            var member = package[name];
+            if (!member) {
+                return;
+            }
+            var memberProto = member.prototype;
+            if (memberProto instanceof Installer || memberProto instanceof Runner) {
+                var deps      = (memberProto.$inject || member.$inject || []).slice(),
+                    moduleIdx = deps.indexOf("$module");
+                if (moduleIdx >= 0) {
+                    deps.splice(moduleIdx, 1);
+                }
+                deps.push(function () {
+                    var args = arguments;
+                    if (moduleIdx >= 0) {
+                        args = Array.prototype.slice.call(arguments, 0);
+                        args.splice(moduleIdx, 0, module);
+                    }
+                    var component = member.new.apply(member, args);
+                    if (component instanceof Installer) {
+                        container.register(component);
+                    } else {
+                        component.run();
+                    }
+                });
+                if (memberProto instanceof Installer) {
+                    injector.invoke(deps);
+                } else {
+                    runners.push(deps);
+                }
+            }
+        });
+        starters.push($classes.fromPackage(package).basedOn(Starting).withKeys.self());
+    }
+
+    /**
+     * @function Shim
+     * Resolves the component from the container.
+     * @param    {Function}  component   -  component key
+     * @param    {Array}     deps        -  angular dependency keys
+     * @returns  {Function}  component constructor shim.  
+     */
+    function Shim(component, deps) {
+        return function($scope, $injector) {
+            var context    = $scope.context,
+                parameters = Array2.combine(deps, arguments);
+            _provideLiteral(context, parameters);
+            if ($injector) {
+                _provideInjector(context, $injector);
+            }
+            var instance = context.resolve($instant(component));
+            for (var key in $scope) {
+                if ($scope[key] === this) {
+                    $scope[key] = instance;
+                    break;
+                }
+            }
+            return instance;
+        };
+    }
+
+    /**
+     * @function _provideLiteral
+     * Provides all keys from the object literal.
+     * @param  {Object}  owner    -  owning instance
+     * @param  {Object}  literal  -  object literal
+     */
+    function _provideLiteral(owner, literal) {
+        $provide(owner, null, function (resolution) {
+            var key = Modifier.unwrap(resolution.key);
+            return literal[key];
+        });
+    }
+
+    /**
+     * @function _provideInjector
+     * Attaches the supplied injector to owners $providers.
+     * @param  {Object}    owner     -  owning instance
+     * @param  {Injector}  injector  -  angular injector
+     */
+    function _provideInjector(owner, injector) {
+        $provide(owner, null, function (resolution) {
+            var key = Modifier.unwrap(resolution.key);
+            if ($isString(key) && injector.has(key)) {
+                return injector.get(key);
+            }
+        });
+    }
+
+    /**
+     * @function _ngDependencies
+     * Extracts the string dependencies for the component.
+     * @param    {Function}  controller  -  controller class
+     * @returns  {Array} angular dependencies
+     */
+    function _ngDependencies(componentModel) {
+        var deps = componentModel.getDependencies();
+        return deps ? Array2.filter(Array2.map(deps,
+                          function (dep) { return dep.dependency; }),
+                          function (dep) { return $isString(dep); })
+                    : [];
+    }
+
+    eval(this.exports);
+}
+
+}).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
+},{"../error":8,"../ioc":12,"../miruken":14,"../mvc":17}],3:[function(require,module,exports){
+var miruken = require('../miruken');
+              require('../mvc');
+
+new function () { // closure
+
+    /**
+     * Package providing [Angular](https://angularjs.org) integration.<br/>
+     * Requires the {{#crossLinkModule "miruken"}}{{/crossLinkModule}},
+     * {{#crossLinkModule "mvc"}}{{/crossLinkModule}},
+     * @module miruken
+     * @submodule ng
+     * @namespace miruken.ng
+     */
+    miruken.package(this, {
+        name:    "ng",
+        imports: "miruken,miruken.mvc",
+        exports: "PartialRegion,RegionDirective"
+    });
+
+    eval(this.imports);
+
+    var PartialRegion = Base.extend(ViewRegion, {
+        constructor: function (tag, container, $templates, $compile, $q, $timeout) {
+            var _partialScope, _layers = [];
+            this.extend({
+                show: function (view) {
+                    var composer   = $composer,
+                        navigation = composer.resolve(Navigation);
+                    
+                    if (!(navigation && navigation.controller)) {
+                        return $q.reject(new Error("A Controller could not be inferred"));
+                    }
+                    
+                    var template, templateUrl,
+                        controller = navigation.controller;
+                    
+                    if ($isString(view)) {
+                        templateUrl = view;
+                    } else if (view) {
+                        template     = view.template;
+                        templateUrl  = view.templateUrl;
+                    }
+
+                    if (template) {
+                        return replaceContent(template);
+                    } else if (templateUrl) {
+                        return $templates(templateUrl, true).then(function (template) {
+                            return replaceContent(template);
+                        });
+                    } else {
+                        return $q.reject(new Error("A template or templateUrl must be specified"));
+                    }
+                    
+                    function replaceContent(template) {
+                        var policy = new RegionPolicy();
+                        composer.handle(policy, true);
+                        
+                        if (_layers.length === 0 || policy.push) {
+                            var Layer = Base.extend(ViewLayer, DisposingMixin, {
+                                transitionTo: function (controller, template, policy, composer) {
+                                    var context = controller.context,
+                                        content = this._replaceContent(controller, context, template);
+                                    return $timeout(function () {
+                                        var modal = policy.modal;                                        
+                                        if (modal) {
+                                            var provider = modal.style || ModalProviding;
+                                            return $q.when(provider(composer)
+                                                .showModal(container, content, modal, context));
+                                        }                            
+                                        container.html(content);
+                                        return this;
+                                    }.bind(this));
+                                },
+                                transitionFrom: function () {
+                                    if (this._content) {
+                                        this._content.remove();
+                                        this._content = null;
+                                    }
+                                    if (this._layerScope) {
+                                        this._layerScope.$destroy();
+                                        this._layerScope = null;                                        
+                                    }
+                                },
+                                _replaceContent: function (controller, context, template) {
+                                    var scope      = context.resolve("$scope"),                                    
+                                        layerScope = scope.$new();
+                                    layerScope["ctrl"] = controller;
+                                    this._content = $compile(template)(layerScope);
+                                    if (this._layerScope) {
+                                        this._layerScope.$destroy();
+                                    }
+                                    this._layerScope = layerScope;
+                                    return this._content;
+                                },
+                                _dispose: function () {
+                                    var index = _layers.indexOf(this);
+                                    if (index < 0) { return; }
+                                    _layers.splice(index, 1);
+                                    this.transitionFrom();
+                                }
+                            });
+                            
+                            var layer = new Layer();
+                            _layers.push(layer);
+                            controller.context.onEnding(function () {
+                                layer.dispose();
+                            });
+                        }
+
+                        var activeLayer = _layers.slice(-1)[0];
+                        return activeLayer.transitionTo(controller, template, policy, composer);
+                    }
+                }
+            });
+        }
+    });
+
+    /**
+     * Angular directive marking a view region.
+     * @class RegionDirective
+     * @constructor
+     * @extends miruken.ng.Directive     
+     */
+    var RegionDirective = Directive.extend({
+        restrict:   "A",
+        scope:      false,        
+        priority:   -1000,
+        $inject:    ["$templateRequest", "$compile", "$q", "$timeout"],
+        constructor: function ($templates, $compile, $q, $timeout) {
+            this.extend({
+                link: function (scope, element, attr) {
+                    var tag     = attr.region,
+                        context = scope.context,
+                        owner   = context.resolve(Controller),
+                        region  = this.createRegion(tag, element, $templates, $compile, $q, $timeout);
+                    context.addHandlers(region);
+                    if (owner && $isFunction(owner.viewRegionCreated)) {
+                        owner.viewRegionCreated(region);
+                    }                    
+                }
+            }); 
+        },
+        createRegion: function (tag, element, $templates, $compile, $q, $timeout)
+        {
+            return new PartialRegion(tag, element, $templates, $compile, $q, $timeout);
+        }
+    });
+
+    eval(this.exports);
+    
+}
+
+},{"../miruken":14,"../mvc":17}],4:[function(require,module,exports){
+var miruken = require('../miruken');
+              require('../mvc');
+              require('../error');
+
+new function () { // closure
+
+    miruken.package(this, {
+        name:    "ng",
+        imports: "miruken,miruken.error,miruken.mvc",
+        exports: "RouteRegion,RouteRegionDirective,UiRouter"
+    });
+
+    eval(this.imports);
+    
+    var RouteRegion = PartialRegion.extend({
+        constructor: function () {
+            this.base.apply(this, arguments);
+            this.extend({
+                show: function (view) {
+                    var composer = $composer,
+                        route    = composer.resolve(Route),
+                        layer    = this.base(view);                        
+                    if (route) { return layer; }
+                    var navigate = composer.resolve(Navigation);
+                    if (!navigate) { return layer; }
+                    return layer.then(function (result) {
+                        Routing(composer).selectRoute(navigate);                                
+                        return result;
+                    });
+                }
+            });
+        }
+    });
+    
+    /**
+     * Adapts the [Angular ui-router] (https://github.com/angular-ui/ui-router)
+     * to support conventional MVC routing semantics
+     * @class UiRouter
+     * @extends Router
+     */
+    var UiRouter = Router.extend({
+        constructor: function (prefix, $state, $urlMatcherFactory) {
+            var _urls = {};            
+            prefix = prefix + ".";
+            this.extend({
+                selectRoute: function (navigation) {
+                    var states = $state.get();
+                    for (var i = 0; i < states.length; ++i) {
+                        var state = states[i],
+                            route = state.name;
+                        if (!state.abstract && route.indexOf(prefix) === 0) {
+                            var url = _urls[route];
+                            if (!url) {
+                                url = $urlMatcherFactory.compile(state.url);
+                                _urls[route] = url;
+                            }
+                            var params = Object.create(state.params || null);
+                            if (this.matchesRoute(navigation, url, params)) {
+                                $state.go(route, params, { notify: false });
+                                return;
+                            }
+                        }
+                    }
+                }
+            });
+        },
+        matchesRoute: function (navigation, url, params) {
+            var urlParams = url.params,
+                navAction = navigation.action.toLowerCase(),
+                action    = params.action;
+            
+            if ((action == null || navAction == null ||
+                 action.toLowerCase() !== navAction) && !("action" in urlParams)) {
+                return false;
+            }
+            params.action = navAction;
+            
+            var navController = navigation.controller,
+                controller    = params.controller;
+            if (controller) {
+                if ($isFunction(controller) && !(navController instanceof controller)) {
+                    return false;
+                } else if (!$isString(controller)) {
+                    return false;
+                }
+                var key  = this.extractControllerKey(controller),
+                    keys = Array2.filter(navController.componentModel.key, $isString);
+                if (!Array2.some(keys, function (k) {
+                    return this.extractControllerKey(k) === key;
+                })) {
+                    return false;
+                };
+                params.controller = key;
+            } else if (!("controller" in urlParams)) {
+                return false;
+            } else {
+                var keys = Array2.filter(navController.componentModel.key, $isString);
+                if (keys.length === 0) { return false; }
+                params.controller = this.extractControllerKey(keys[0]);
+            }
+
+            var args    = navigation.args;
+                urlKeys = Object.getOwnPropertyNames(urlParams); 
+            if (args && args.length === 1) {
+                args = args[0];
+            }
+            for (var i = 0; i < urlKeys.length; ++i) {
+                var urlKey = urlKeys[i];
+                if (!(urlKey in params)) {
+                    if (args && (urlKey in args)) {
+                        params[urlKey] = args[urlKey];                        
+                    } else {
+                        return false;
+                    }
+                }
+            }
+            return true;
+        }
+    }, {
+        install: function (prefix) {
+            return {
+                name:       prefix,
+                abstract:   true,
+                template:   "<div route-region></div>",
+                controller: ["$scope", "$state", "$urlMatcherFactory",
+                             function ($scope, $state, $urlMatcherFactory) {
+                    var first   = true,
+                        context = $scope.context;            
+                    context.addHandlers(new UiRouter(prefix, $state, $urlMatcherFactory));
+                    $scope.$on("$stateChangeSuccess", function (event, toState, toParams) {
+                        var route = new Route({
+                                name:    toState.name,
+                                pattern: toState.url,
+                                params:  toParams
+                            }),
+                            locals = [Route, route];
+                        
+                        if (first) {
+                            // stub initiator on first call                            
+                            locals.push(Controller, new Controller());
+                        }
+
+                        var ctx = context.$$provide(locals);
+                        Routing(ctx.unwind()).handleRoute(route)
+                        	.then(function () { first = false; })
+                            .catch(function (err) {
+                                Errors(ctx).handleError(err, "ui-router");
+                            });
+                    });
+                }]
+            };
+        },
+        route: function (urlPattern, options) {
+            var route = { url: urlPattern };
+            if (options) { route.params = options; }
+            return route;
+        }
+    });
+
+    /**
+     * Specialized {{#crossLink "miruken.ng.RegionDirective"}}{{/crossLink}}
+     * for hosting routed content.
+     * @class RouteRegionDirective
+     * @constructor
+     * @extends miruken.ng.RegionDirective     
+     */    
+    var RouteRegionDirective = RegionDirective.extend({
+        createRegion: function (tag, element, $templates, $compile, $q, $timeout)
+        {
+            return new RouteRegion(tag, element, $templates, $compile, $q, $timeout);
+        }
+    });
+
+    eval(this.exports);
+    
+}
+
+},{"../error":8,"../miruken":14,"../mvc":17}],5:[function(require,module,exports){
 /*
   base2 - copyright 2007-2009, Dean Edwards
   http://code.google.com/p/base2/
@@ -1374,7 +2240,7 @@ if (typeof exports !== 'undefined') {
 
 }; ////////////////////  END: CLOSURE  /////////////////////////////////////
 
-},{}],2:[function(require,module,exports){
+},{}],6:[function(require,module,exports){
 (function (global){
 var miruken = require('./miruken.js'),
     Promise = require('bluebird');
@@ -3306,7 +4172,7 @@ new function () { // closure
 }
 
 }).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
-},{"./miruken.js":10,"bluebird":14}],3:[function(require,module,exports){
+},{"./miruken.js":14,"bluebird":25}],7:[function(require,module,exports){
 var miruken = require('./miruken.js');
               require('./graph.js');
               require('./callback.js');
@@ -4005,7 +4871,7 @@ new function () { // closure
 
 }
 
-},{"./callback.js":2,"./graph.js":5,"./miruken.js":10}],4:[function(require,module,exports){
+},{"./callback.js":6,"./graph.js":9,"./miruken.js":14}],8:[function(require,module,exports){
 var miruken = require('./miruken.js'),
     Promise = require('bluebird');
               require('./callback.js');
@@ -4151,7 +5017,7 @@ new function() { // closure
 
 }
 
-},{"./callback.js":2,"./miruken.js":10,"bluebird":14}],5:[function(require,module,exports){
+},{"./callback.js":6,"./miruken.js":14,"bluebird":25}],9:[function(require,module,exports){
 var miruken = require('./miruken.js');
 
 new function () { // closure
@@ -4543,7 +5409,7 @@ new function () { // closure
 
 }
 
-},{"./miruken.js":10}],6:[function(require,module,exports){
+},{"./miruken.js":14}],10:[function(require,module,exports){
 module.exports = require('./miruken.js');
 require('./graph.js');
 require('./callback.js');
@@ -4552,7 +5418,7 @@ require('./error.js');
 require('./validate');
 require('./ioc');
 
-},{"./callback.js":2,"./context.js":3,"./error.js":4,"./graph.js":5,"./ioc":8,"./miruken.js":10,"./validate":11}],7:[function(require,module,exports){
+},{"./callback.js":6,"./context.js":7,"./error.js":8,"./graph.js":9,"./ioc":12,"./miruken.js":14,"./validate":22}],11:[function(require,module,exports){
 var miruken = require('../miruken.js'),
     Promise = require('bluebird');
               require('./ioc.js');
@@ -4984,12 +5850,12 @@ new function () { // closure
     eval(this.exports);
 }
 
-},{"../miruken.js":10,"./ioc.js":9,"bluebird":14}],8:[function(require,module,exports){
+},{"../miruken.js":14,"./ioc.js":13,"bluebird":25}],12:[function(require,module,exports){
 module.exports = require('./ioc.js');
 require('./fluent.js');
 
 
-},{"./fluent.js":7,"./ioc.js":9}],9:[function(require,module,exports){
+},{"./fluent.js":11,"./ioc.js":13}],13:[function(require,module,exports){
 var miruken = require('../miruken.js'),
     Promise = require('bluebird');
               require('../callback.js'),
@@ -6287,7 +7153,7 @@ new function () { // closure
 
 }
 
-},{"../callback.js":2,"../context.js":3,"../miruken.js":10,"../validate":11,"bluebird":14}],10:[function(require,module,exports){
+},{"../callback.js":6,"../context.js":7,"../miruken.js":14,"../validate":22,"bluebird":25}],14:[function(require,module,exports){
 (function (global){
 require('./base2.js');
 var Promise = require('bluebird');
@@ -8645,12 +9511,1089 @@ new function () { // closure
 }
 
 }).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
-},{"./base2.js":1,"bluebird":14}],11:[function(require,module,exports){
+},{"./base2.js":5,"bluebird":25}],15:[function(require,module,exports){
+var miruken = require('../miruken.js'),
+    Promise = require('bluebird');
+              require('./view.js');
+
+new function () { // closure
+
+    miruken.package(this, {
+        name:    "mvc",
+        imports: "miruken,miruken.mvc",
+        exports: "Bootstrap,BootstrapProvider"
+    });
+
+    eval(this.imports);
+
+    /**
+     * Marker for Bootstrap providers.
+     * @class Bootstrap
+     * @extends miruken.mvc.ModalProviding
+     */    
+    var Bootstrap = ModalProviding.extend();
+    
+    /**
+     * Bootstrap provider.
+     * @class BootstrapProvider
+     * @extends Base
+     * @uses miruken.mvc.Bootstrap
+     */    
+    var BootstrapProvider = Base.extend(Bootstrap, {
+        tabContent: function () {
+            return "<div>Hello</div>";
+        },
+        showModal: function (container, content, policy, context) {
+            var promise = new Promise(function (resolve, reject) {
+                if (policy.chrome) {    
+                    $('body').append(_buildChrome(policy));
+                    $('.modal-body').append(content);
+                } else {
+                    $('body').append(content);
+                }
+                
+                function close(result) {
+                    if (resolve) {
+                        resolve(result);
+                        resolve = null;
+                        modal.modal('hide');
+                    }
+                }
+                
+                if (context) {
+                    context.onEnding(close);
+                }
+                
+                var modal = $('.modal').modal()
+                    .on('hidden.bs.modal', function (e) {
+                        modal.remove();
+                        $('.modal-backdrop').remove();
+                        $('body').removeClass('modal-open');
+                        context.end();
+                    });
+                
+                $('.modal .js-close').click(function (e) {
+                    var result;
+                    if (e.target.innerText != '\u00d7') {
+                        var index = $(e.target).index();
+                        if (policy.buttons && policy.buttons.length > index) {
+                            result = new ButtonClicked(policy.buttons[index], index);
+                        }
+                    }
+                    close(result)
+                });
+            });
+            return context.decorate({
+                get modalResult() { return promise; }
+            });
+        }
+    });
+
+    function _buildChrome(policy) {
+        var chrome = ''; 
+        chrome += format('<div class="modal fade" role="dialog" %1>', policy.forceClose ? 'data-backdrop="static"' : '');
+        chrome +=     '<div class="modal-dialog" role="document">';
+        chrome +=         '<div class="modal-content">';
+        
+        chrome = _buildHeader(chrome, policy);
+        
+        chrome +=             '<div class="modal-body">';
+        chrome +=             '</div>';
+        
+        chrome = _buildFooter(chrome, policy);
+        
+        chrome +=         '</div>';
+        chrome +=     '</div>';
+        chrome += '</div>';
+        
+        return chrome;
+    }
+
+    function _buildHeader(chrome, policy) {
+        if (policy.header || policy.title) {
+            chrome += '<div class="modal-header">';
+            
+            if (!policy.forceClose) {
+                chrome += '<button type="button" class="close js-close">&times;</button>';
+            }
+            
+            chrome += format('<h4 class="modal-title"> %1 &nbsp</h4>', policy.title);
+            chrome += '</div>';
+        }
+        return chrome;
+    }
+
+    function _buildFooter(chrome, policy) {
+        if (policy.footer || policy.buttons) {
+            chrome += '<div class="modal-footer text-right">';
+            if (policy.buttons) {
+                Array2.forEach(policy.buttons, function (button) {
+                    if ($isString(button)) {
+                        chrome += format('<button class="btn btn-default btn-sm js-close">%1</button>', button);
+                    } else if ($isObject(button)) {
+                        chrome += format('<button class="btn js-close %1">%2</button>', button.css, button.text);
+                    }
+                });
+            } else {
+                chrome += '<button class="btn btn-primary btn-sm js-close">Close</button>';
+            }
+            chrome += '</div>';
+        }
+        return chrome;
+    }
+
+    eval(this.exports);
+    
+}
+
+},{"../miruken.js":14,"./view.js":21,"bluebird":25}],16:[function(require,module,exports){
+var miruken = require('../miruken.js');
+              require('../callback.js');
+              require('../context.js');
+              require('../validate');
+var Promise = require('bluebird');
+
+new function () { // closure
+
+    /**
+     * Package providing Model-View-Controller abstractions.<br/>
+     * Requires the {{#crossLinkModule "miruken"}}{{/crossLinkModule}},
+     * {{#crossLinkModule "callback"}}{{/crossLinkModule}},
+     * {{#crossLinkModule "context"}}{{/crossLinkModule}} and 
+     * {{#crossLinkModule "validate"}}{{/crossLinkModule}} modules.
+     * @module miruken
+     * @submodule mvc
+     * @namespace miruken.mvc
+     */
+    miruken.package(this, {
+        name:    "mvc",
+        imports: "miruken,miruken.callback,miruken.context,miruken.validate",
+        exports: "Controller,ControllerNotFound,Navigate,Navigation,NavigateCallbackHandler"
+    });
+
+    eval(this.imports);
+
+    var globalPrepare = new Array2(),
+        globalExecute = new Array2();
+
+    /**
+     * Captures a navigation context.
+     * @class Navigation
+     * @extends Base
+     */        
+    var Navigation = Base.extend({
+        controller: undefined,
+        action:     undefined,
+        args:       undefined
+    });
+    
+    /**
+     * Protocol to navigate controllers.
+     * @class Navigate
+     * @extends miruken.StrictProtocol
+     */
+    var Navigate = StrictProtocol.extend({
+        /**
+         * Transitions to next `action` on `controller`.
+         * @method next
+         * @param   {Any}       controller  -  controller key
+         * @param   {Function}  action      -  controller action
+         * @returns {Promise} promise when transition complete.
+         */        
+        next: function (controller, action) {},
+        /**
+         * Transitions to next `action` on `controller` in a new context.
+         * @method to
+         * @param   {Any}       controller  -  controller key
+         * @param   {Function}  action      -  controller action
+         * @returns {Promise} promise when transition complete.
+         */        
+        push: function (controller, action) {}        
+    });
+    
+    var $navigation = MetaMacro.extend({
+        inflate: function (step, metadata, target, definition) {
+            if (!Controller) { return; }
+            Array2.forEach(Object.getOwnPropertyNames(definition), function (key) {
+                if (key === "constructor" || key === "dispose" ||
+                    key.lastIndexOf("_", 0) === 0) {
+                    return;
+                }
+                var member = Object.getOwnPropertyDescriptor(definition, key);
+                if ($isFunction(member.value)) {
+                    var method = member.value;
+                    member.value = function () {
+                        var io = Controller.io || this.context;
+                        if (io && key !== "initialize") {
+                            io = io.$$provide([Navigation, new Navigation({
+                                controller: this,
+                                action:     key,
+                                args:       Array.prototype.slice.call(arguments)
+                            })]);
+                        }
+                        _bindIo.call(this, io);
+                        return method.apply(this, arguments);
+                    };
+                }
+                Object.defineProperty(definition, key, member);
+            });
+        },
+        shouldInherit: True,
+        isActive: True
+    });
+
+    /**
+     * Base class for controllers.
+     * @class Controller
+     * @constructor
+     * @extends miruken.callback.CallbackHandler
+     * @uses miruken.context.$contextual
+     * @uses miruken.validate.$validateThat
+     * @uses miruken.validate.Validating
+     */
+    var Controller = CallbackHandler.extend($contextual, $navigation,
+                                            $validateThat, Validating,
+                                            DisposingMixin, {
+        get ifValid() {
+            return this.io.$validAsync(this);
+        },
+        validate: function (target, scope) {
+            return _validate.call(this, target, "validate", scope);
+        },
+        validateAsync: function (target, scope) {
+            return _validate.call(this, target, "validateAsync", scope);
+        },
+        _dispose: function () {
+            this.context = null;
+            delete this.io;
+        }
+    }, {
+        coerce: function (source) {
+            var controller = this,
+                navigate   = Navigate(source);
+            return {
+                next: function (action) {
+                    return navigate.next(controller, action);
+                },
+                push: function (action) {
+                    return navigate.push(controller, action);
+                }
+            };
+        },
+        get prepare() { return globalPrepare; },
+        get execute() { return globalExecute; }        
+    });
+
+    /**
+     * Represents the failure to resolve a `controller`.
+     * @class ControllerNotFound
+     * @constructor
+     * @param  {Any}  controller  -  controller key
+     * @extends Error
+     */    
+    function ControllerNotFound(controller) {
+        this.message    = format("The controller '%1' could not be resolved", controller);
+        this.controller = controller;
+        
+        if (Error.captureStackTrace) {
+            Error.captureStackTrace(this, this.constructor);
+        } else {
+            Error.call(this);
+        }
+    }
+    ControllerNotFound.prototype             = new Error;
+    ControllerNotFound.prototype.constructor = ControllerNotFound;
+     
+    /**
+     * Default navigation implementation.
+     * @class NavigateCallbackHandler
+     * @constructor
+     * @extends miruken.callback.CompositeCallbackHandler
+     * @uses miruken.mvc.Navigate
+     */    
+    var NavigateCallbackHandler = CompositeCallbackHandler.extend(Navigate, {
+        next: function (controller, action, push) {
+            return this.to(controller, action, false);
+        },
+        push: function (controller, action, push) {
+            return this.to(controller, action, true);            
+        },        
+        to: function (controller, action, push) {
+            if (action == null) {
+                return Promise.reject(new Error("Missing action"));
+            };
+            
+            var composer  = $composer,
+                context   = composer.resolve(Context),
+                initiator = composer.resolve(Controller),
+                ctx       = push ? context.newChild() : context;
+
+            var oldIO = Controller.io;
+            return Promise.resolve(context.resolve(controller))
+                .then(function (ctrl) {
+                    if (!ctrl) {
+                        return Promise.reject(new ControllerNotFound(controller));
+                    }                    
+                    Controller.io = composer !== context ? ctx.next(composer) : ctx;
+                    try {
+                        if ((ctrl != initiator) && (initiator != null) &&
+                            (initiator.context == ctx)) {
+                            initiator.context = null;
+                        }
+                        return action(ctrl);
+                    } finally {
+                        if (oldIO) {
+                            Controller.io = oldIO;
+                        } else {
+                            delete Controller.io;
+                        }
+                    }
+                });
+        }
+    });
+
+    function _bindIo(io) {
+        if (!io) { return; }
+        io = _assemble(io, globalPrepare, this);
+        if (globalExecute.length === 0) {
+            this.io = io;
+            return;
+        }
+        var controller = this,
+            executor   = this.io = io.decorate({
+            toDelegate: function () {
+                var ex = _assemble(this, globalExecute, controller);
+                delete executor.toDelegate;
+                return ex.toDelegate();
+            }
+        });
+    }
+    
+    function _assemble(handler, builders, context) {
+        return handler && builders
+             ?  builders.reduce(function (result, builder) {
+                    return $isFunction(builder) ? builder.call(context, result) : result;
+                }, handler)
+            : handler;
+    }
+    
+    function _validate(target, method, scope) {
+        var context = this.context;
+        if (!context) {
+            throw new Error("Validation requires a context to be available.");
+        }
+        var validator = Validator(context);
+        return validator[method].call(validator, target || this, scope);
+    }
+    
+    eval(this.exports);
+    
+}
+
+},{"../callback.js":6,"../context.js":7,"../miruken.js":14,"../validate":22,"bluebird":25}],17:[function(require,module,exports){
+module.exports = require('./model.js');
+require('./view.js');
+require('./controller.js');
+require('./master-detail.js');
+require('./bootstrap.js');
+require('./route.js');
+
+
+},{"./bootstrap.js":15,"./controller.js":16,"./master-detail.js":18,"./model.js":19,"./route.js":20,"./view.js":21}],18:[function(require,module,exports){
+var miruken = require('../miruken.js');
+
+new function () { // closure
+
+    /**
+     * Package providing Model-View-Controller abstractions.<br/>
+     * Requires the {{#crossLinkModule "miruken"}}{{/crossLinkModule}},
+     * {{#crossLinkModule "callback"}}{{/crossLinkModule}},
+     * {{#crossLinkModule "context"}}{{/crossLinkModule}} and 
+     * {{#crossLinkModule "validate"}}{{/crossLinkModule}} modules.
+     * @module miruken
+     * @submodule mvc
+     * @namespace miruken.mvc
+     */
+    miruken.package(this, {
+        name:    "mvc",
+        imports: "miruken",
+        exports: "MasterDetail,MasterDetailAware"
+    });
+
+    eval(this.imports);
+    
+    /**
+     * Protocol for managing master-detail relationships.
+     * @class MasterDetail
+     * @extends miruken.Protocol     
+     */    
+    var MasterDetail = Protocol.extend({
+        /**
+         * Gets the selected detail.
+         * @method getSelectedDetail
+         * @param   {Function} detailClass  -  type of detail
+         * @returns {Object} selected detail.  Could be a Promise.
+         */
+        getSelectedDetail: function (detailClass) {},
+        /**
+         * Gets the selected details.
+         * @method getSelectedDetails
+         * @param   {Function} detailClass  -  type of detail
+         * @returns {Object}  selected details.  Could be a Promise.
+         */
+        getSelectedDetails: function (detailClass) {},
+        /**
+         * Selects the detail
+         * @method selectDetail
+         * @param   {Object} detail  -  selected detail
+         */
+        selectDetail: function (detail) {},
+        /**
+         * Unselects the detail
+         * @method deselectDetail
+         * @param   {Object} detail  -  unselected detail
+         */
+        deselectDetail: function (detail) {},
+        /**
+         * Determines if a previous detail exists.
+         * @method hasPreviousDetail
+         * @param   {Function} detailClass  -  type of detail
+         * @returns {boolean} true if a previous detail exists.
+         */
+        hasPreviousDetail: function (detailClass) {},
+        /**
+         * Determines if a next detail exists.
+         * @method hasNextDetail.
+         * @param   {Function} detailClass  -  type of detail
+         * @returns {boolean} true if a next detail exists.
+         */
+        hasNextDetail: function (detailClass) {},
+        /**
+         * Gets the previous detail.
+         * @method getPreviousDetail
+         * @param   {Function} detailClass  -  type of detail
+         * @returns {Object}  previous detail or undefined..
+         */
+        getPreviousDetail: function (detailClass) {},
+        /**
+         * Gets the next detail.
+         * @method getNextDetail
+         * @param   {Function} detailClass  -  type of detail
+         * @returns {Object}  next detail or undefined.
+         */
+        getNextDetail: function (detailClass) {},
+        /**
+         * Adds the detail to the master.
+         * @method addDetail
+         * @param   {Object} detail  -  added detail
+         */
+        addDetail: function (detail) {},
+        /**
+         * Updates the detail in the master.
+         * @method updateDetail
+         * @param   {Object} detail  -  updated detail
+         */
+        updateDetail: function (detail) {},
+        /**
+         * Removes the detail from the master.
+         * @method removeDetail
+         * @param   {Object}  detail   -  removed detail
+         * @param   {boolean} deleteIt -  true to delete it
+         */
+        removeDetail: function (detail, deleteIt) {}
+    });
+    
+    /**
+     * Protocol for receiving master-detail notifications.
+     * @class MasterDetailAware
+     * @extends miruken.Protocol     
+     */    
+    var MasterDetailAware = Protocol.extend({
+        /**
+         * Informs the master has changed.
+         * @method masterChanged
+         * @param  {Object}  master  -  master
+         */
+        masterChanged: function (master) {},
+        /**
+         * Informs a detail was selected.
+         * @method detailSelected
+         * @param  {Object}  detail  -  selected detail
+         * @param  {Object}  master  -  master
+         */
+        detailSelected: function (detail, master) {},
+        /**
+         * Informs a detail was unselected.
+         * @method detailUnselected
+         * @param  {Object} detail  -  unselected detail
+         * @param  {Object} master  -  master
+         */
+        detailUnselected: function (detail, master) {},
+        /**
+         * Informs a detail was added to the master.
+         * @method detailAdded
+         * @param  {Object} detail  -  added detail
+         * @param  {Object} master  -  master
+         */
+        detailAdded: function (detail, master) {},
+        /**
+         * Informs a detail was updated in the master.
+         * @method detailUpdated
+         * @param  {Object} detail  -  updated detail
+         * @param  {Object} master  -  master
+         */
+        detailUpdated: function (detail, master) {},
+        /**
+         * Informs a detail was removed from the master.
+         * @method detailRemoved
+         * @param  {Object} detail  -  removed detail
+         * @param  {Object} master  -  master
+         */
+        detailRemoved: function (detail, master) {}
+    });
+
+    eval(this.exports);
+    
+}
+
+},{"../miruken.js":14}],19:[function(require,module,exports){
+var miruken = require('../miruken.js');
+              require('../callback.js');
+              require('../context.js');
+              require('../validate');
+
+new function () { // closure
+
+    /**
+     * Package providing Model-View-Controller abstractions.<br/>
+     * Requires the {{#crossLinkModule "miruken"}}{{/crossLinkModule}},
+     * {{#crossLinkModule "callback"}}{{/crossLinkModule}},
+     * {{#crossLinkModule "context"}}{{/crossLinkModule}} and 
+     * {{#crossLinkModule "validate"}}{{/crossLinkModule}} modules.
+     * @module miruken
+     * @submodule mvc
+     * @namespace miruken.mvc
+     */
+    miruken.package(this, {
+        name:    "mvc",
+        imports: "miruken,miruken.validate",
+        exports: "Model"
+    });
+
+    eval(this.imports);
+
+    /**
+     * Base class for modelling concepts using one or more 
+     * {{#crossLink "miruken.$properties"}}{{/crossLink}}
+     * <pre>
+     *    var Child = Model.extend({
+     *       $properties: {
+     *           firstName: { validate: { presence: true } },
+     *           lastNane:  { validate: { presence: true } },
+     *           sibling:   { map: Child },
+     *           age:       { validate {
+     *                            numericality: {
+     *                                onlyInteger:       true,
+     *                                lessThanOrEqualTo: 12
+     *                            }
+     *                      }}
+     *       }
+     *    })
+     * </pre>
+     * @class Model
+     * @constructor
+     * @param  {Object}  [data]   -  json structured data
+     * @param  {Object}  options  -  mapping options
+     * @extends Base
+     */
+    var Model = Base.extend(
+        $inferProperties, $validateThat, {
+        constructor: function (data, options) {
+            this.fromData(data, options);
+        },
+        /**
+         * Maps json structured data into the model.
+         * @method fromData
+         * @param   {Object}  data     -  json structured data
+         * @param   {Object}  options  -  mapping options
+         */
+        fromData: function (data, options) {
+            if ($isNothing(data)) {
+                return this;
+            }
+            var meta        = this.$meta,
+                descriptors = meta && meta.getDescriptor(),
+                dynamic     = options && options.dynamic;
+            if (descriptors) {
+                for (var key in descriptors) {
+                    var descriptor = descriptors[key];
+                    if (descriptor && descriptor.root && descriptor.map) {
+                        this[key] = descriptor.map(data); 
+                    }
+                }
+            }
+            for (var key in data) {
+                var descriptor = descriptors && descriptors[key],
+                    mapper     = descriptor  && descriptor.map;
+                if ((mapper && descriptor.root) || (descriptor && descriptor.ignore)) {
+                    continue;  // ignore or already rooted
+                }
+                var value = data[key];
+                if (value === undefined) {
+                    continue;
+                }
+                if (key in this) {
+                    this[key] = Model.map(value, mapper, options);
+                } else {
+                    var lkey  = key.toLowerCase(),
+                        found = false;
+                    for (var k in this) {
+                        if (k.toLowerCase() === lkey) {
+                            descriptor = descriptors && descriptors[k];
+                            mapper     = descriptor  && descriptor.map;                            
+                            this[k]    = Model.map(value, mapper, options);
+                            found      = true;
+                            break;
+                        }
+                    }
+                    if (!found && dynamic) {
+                        this[key] = value;
+                    }
+                }
+            }
+            return this;
+        },
+        /**
+         * Maps the model into json structured data.
+         * @method toData
+         * @param   {Object}  spec    -  filters data to map
+         * @param   {Object}  [data]  -  receives mapped data
+         * @returns {Object} json structured data.
+         */                        
+        toData: function (spec, data) {
+            data = data || {};
+            var meta        = this.$meta,
+                descriptors = meta && meta.getDescriptor();
+            if (descriptors) {
+                var all = !$isObject(spec);
+                for (var key in descriptors) {
+                    if (all || (key in spec)) {
+                        var keyValue   = this[key];
+                        if (keyValue === undefined) {
+                            continue;
+                        }
+                        var descriptor = descriptors[key],
+                            keySpec    = all ? spec : spec[key];
+                        if (!(all || keySpec) || descriptor.ignore) {
+                            continue;
+                        }
+                        if (descriptor.root) {
+                            if (keyValue) {
+                                if ($isFunction(keyValue.toData)) {
+                                    keyValue.toData(keySpec, data);
+                                } else if ($isFunction(keyValue.toJSON)) {
+                                    var json = keyValue.toJSON();
+                                    for(var k in json) data[k] = json[k];
+                                }
+                            }
+                        } else if ($isArray(keyValue)) {
+                            data[key] = Array2.map(keyValue, function (elem) {
+                                if (elem) {
+                                    if ($isFunction(elem.toData)) {
+                                        return elem.toData(keySpec);
+                                    } else if ($isFunction(elem.toJSON)) {
+                                        return elem.toJSON();
+                                    }
+                                    return elem;
+                                }
+                            });
+                        } else {
+                            if (keyValue) {
+                                if ($isFunction(keyValue.toData)) {
+                                    keyValue = keyValue.toData(keySpec);
+                                } else if ($isFunction(keyValue.toJSON)) {
+                                    keyValue = keyValue.toJSON();
+                                }
+                            }
+                            data[key] = keyValue
+                        }
+                    }
+                }
+            }            
+            return data;
+        },
+        toJSON: function() { return this.toData(); },
+        /**
+         * Merges specified data into another model.
+         * @method mergeInto
+         * @param   {miruken.mvc.Model}  model  -  model to receive data
+         * @returns {boolean} true if model could be merged into. 
+         */            
+        mergeInto: function (model) {
+            if (!(model instanceof this.constructor)) {
+                return false;
+            }
+            var meta        = this.$meta,
+                descriptors = meta && meta.getDescriptor();
+            for (var key in descriptors) {
+                var keyValue = this[key];
+                if (keyValue !== undefined && this.hasOwnProperty(key)) {
+                    var modelValue = model[key];
+                    if (modelValue === undefined || !model.hasOwnProperty(key)) {
+                        model[key] = keyValue;
+                    } else if ($isFunction(keyValue.mergeInto)) {
+                        keyValue.mergeInto(modelValue);
+                    }
+                }
+            }
+            return true;
+        }
+    }, {
+        /**
+         * Maps the model value into json using a mapper function.
+         * @method map
+         * @static
+         * @param   {Any}      value      -  model value
+         * @param   {Fnction}  mapper     -  mapping function or class
+         * @param   {Object}   [options]  -  mapping options
+         * @returns {Object} json structured data.
+         */                                
+        map: function (value, mapper, options) {
+            return $isArray(value)
+                ? Array2.map(value, function (elem) {
+                    return Model.map(elem, mapper, options)
+                })
+            : (mapper ? mapper(value, options) : value);
+        },
+        coerce: function () {
+            return this.new.apply(this, arguments);
+        }
+    });
+    
+    eval(this.exports);
+    
+}
+
+},{"../callback.js":6,"../context.js":7,"../miruken.js":14,"../validate":22}],20:[function(require,module,exports){
+(function (global){
+var miruken = require('../miruken.js');
+var Promise = require('bluebird');
+
+new function () { // closure
+
+    /**
+     * Package providing Model-View-Controller abstractions.<br/>
+     * Requires the {{#crossLinkModule "miruken"}}{{/crossLinkModule}},
+     * @module miruken
+     * @submodule mvc
+     * @namespace miruken.mvc
+     */
+    miruken.package(this, {
+        name:    "mvc",
+        imports: "miruken",
+        exports: "Route,Routing,Router"
+    });
+
+    eval(this.imports);
+
+    /**
+     * Route definition.
+     * @class Route
+     * @extends Base
+     */    
+    var Route = Base.extend({
+        name:    undefined,
+        pattern: undefined,
+        params:  undefined
+    });
+    
+    /**
+     * Protocol for routing.
+     * @class Routing
+     * @extends Protocol
+     */
+    var Routing = StrictProtocol.extend({
+        /**
+         * Handles to the specified `route`.
+         * @method routeTo
+         * @param    {miruken.mvc.Route}  route  -  route
+         * @returns  {Promise} navigation promise.
+         */
+        handleRoute: function (route) {},
+        /**
+         * Selects the route matching `navigation`.
+         * @method selectRoute
+         * @param    {miruken.mvc.Navigation}  navigation  -  navigation
+         */
+        selectRoute: function (navigation) {}
+    });
+
+    var controllerKeyRegExp = /(.*)controller$/i;
+    
+    /**
+     * Base class for routing.
+     * @class Router
+     * @constructor
+     * @extends Base
+     * @uses miruken.mvc.Routing
+     */    
+    var Router = Base.extend(Routing, {
+        handleRoute: function (route) {
+            var name   = route.name,
+                params = route.params;
+            if (params == null) {
+                return Promise.reject(new Error(format(
+                    "Missing params route '%1'", name)));
+            }
+            var controller = params.controller;
+            if (controller == null) {
+                return Promise.reject(new Error(format(
+                    "Missing controller for route '%1'", name)));
+            }
+            var composer = global.$composer,
+                navigate = Navigate(composer),
+                action   = params.action || "index",
+                execute  = function (ctrl) {
+                    var property = this.selectActionMethod(ctrl, action),
+                        method   = property && ctrl[property];
+                    return $isFunction(method) ? method.call(ctrl, params)
+                         : Promise.reject(new Error(format(
+                             "%1 missing action '%2' for route '%3'",
+                             ctrl, action, name)));
+                }.bind(this),
+                controllerKey = this.expandControllerKey(controller);
+
+            return navigate.next(controllerKey, execute)
+                .catch (function (err) {
+                    return (err instanceof ControllerNotFound)
+                        && (controllerKey !== controller)
+                         ? navigate.to(controller, execute)
+                         : Promise.reject(err);
+                });
+        },
+        extractControllerKey: function (controller) {
+            var matches = controller.match && controller.match(controllerKeyRegExp);
+            return matches ? matches[1].toLowerCase() : controller;
+        },
+        expandControllerKey: function (controller) {
+            return controller.match && !controller.match(controllerKeyRegExp)
+                 ? controller + "Controller"
+                 : controller;
+        },
+        selectActionMethod: function (controller, action) {
+            if (action in controller) { return action; }
+            action = action.toLowerCase();
+            for (var property in controller) {
+                if (action === property.toLowerCase()) {
+                    return property;
+                }
+            }
+        }
+    });
+    
+    eval(this.exports);
+    
+}
+
+}).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
+},{"../miruken.js":14,"bluebird":25}],21:[function(require,module,exports){
+var miruken = require('../miruken.js');
+              require('../callback.js');
+              require('../context.js');
+              require('../validate');
+              require('./model.js');
+
+new function () { // closure
+
+    /**
+     * Package providing Model-View-Controller abstractions.<br/>
+     * Requires the {{#crossLinkModule "miruken"}}{{/crossLinkModule}},
+     * {{#crossLinkModule "callback"}}{{/crossLinkModule}},
+     * {{#crossLinkModule "context"}}{{/crossLinkModule}} and 
+     * {{#crossLinkModule "validate"}}{{/crossLinkModule}} modules.
+     * @module miruken
+     * @submodule mvc
+     * @namespace miruken.mvc
+     */
+    miruken.package(this, {
+        name:    "mvc",
+        imports: "miruken,miruken.callback",
+        exports: "ViewLayer,ViewRegion,ViewRegionAware,PresentationPolicy," +
+                 "RegionPolicy,ModalPolicy,ModalProviding,ButtonClicked"
+    });
+
+    eval(this.imports);
+
+    /**
+     * Protocol for representing a layer in a 
+     * See {{#crossLink "miruken.mvc.ViewRegion"}}{{/crossLink}.
+     * @class ViewLayer
+     * @extends Protocol
+     */
+    var ViewLayer = Protocol.extend(Disposing);
+    
+    /**
+     * Protocol for rendering a view on the screen.
+     * @class ViewRegion
+     * @extends StrictProtocol
+     */
+    var ViewRegion = StrictProtocol.extend({
+        /**
+         * Renders `view` in the region.
+         * @method show
+         * @param    {Any}      view  -  view
+         * @returns  {Promise}  promise for the layer.
+         */
+        show: function (view) {}
+    });
+
+    /**
+     * Protocol for communicating
+     * {{#crossLink "miruken.callback.CallbackHandler"}}{{/crossLink}} lifecycle.
+     * @class ViewRegionAware
+     * @extends Protocol
+     */
+    var ViewRegionAware = Protocol.extend({
+        viewRegionCreated: function (viewRegion) {}
+    });
+    
+    /**
+     * Base class for presentation policies.
+     * @class PresentationPolicy
+     * @extends miruken.mvc.Model
+     */
+    var PresentationPolicy = Model.extend();
+
+    /**
+     * Policy for describing modal presentation.
+     * @class ModalPolicy
+     * @extends miruken.mvc.PresentationPolicy
+     */
+    var ModalPolicy = PresentationPolicy.extend({
+        $properties: {
+            title:      "",
+            style:      null,
+            chrome:     true,
+            header:     false,
+            footer:     false,
+            forceClose: false,
+            buttons:    null
+        }
+    });
+
+    /**
+     * Policy for controlling regions.
+     * @class RegionPolicy
+     * @extends miruken.mvc.PresentationPolicy
+     */
+    var RegionPolicy = PresentationPolicy.extend({
+        $properties: {
+            tag:   undefined,
+            push:  false,
+            modal: undefined
+        }
+    });
+    
+    /**
+     * Represents the clicking of a button.
+     * @class ButtonClicked
+     * @constructor
+     * @param  {Any}     button       -  clicked button
+     * @param  {number}  buttonIndex  -  index of clicked button 
+     * @extends Base
+     */
+    var ButtonClicked = Base.extend({
+        constructor: function (button, buttonIndex) {
+            this.extend({
+                /**
+                 * Gets the clicked button.
+                 * @property {Any} button
+                 */                                
+                get button() { return button; },
+                /**
+                 * Gets the clicked button index.
+                 * @property {number} button index
+                 */                                
+                get buttonIndex() { return buttonIndex; }
+            });
+        }
+    });
+
+    /**
+     * Protocol for interacting with a modal provider.
+     * @class ModalProviding
+     * @extends StrictProtocol
+     */
+    var ModalProviding = StrictProtocol.extend({
+        /**
+         * Presents the content in a modal dialog.
+         * @method showModal
+         * @param   {Element}                  container  -  element modal bound to
+         * @param   {Element}                  content    -  modal content element
+         * @param   {miruken.mvc.ModalPolicy}  policy     -  modal policy options
+         * @param   {miruken.context.Context}  context    -  modal context
+         * @returns {Promise} promise representing the modal result.
+         */
+        showModal: function (container, content, policy, context) {}
+    });
+    
+    CallbackHandler.implement({
+        /**
+         * Applies the presentation policy to the handler.
+         * @method presenting
+         * @returns {miruken.callback.CallbackHandler} presenting handler.
+         * @for miruken.callback.CallbackHandler
+         */
+        presenting: function (policy) {
+            return policy ? this.decorate({
+                $handle: [PresentationPolicy, function (presenting) {
+                    return policy.mergeInto(presenting);
+                }]
+            }) : this;
+        },
+        /**
+         * Targets the tagged region with `tag`.
+         * @method region
+         * @param  {Any}  tag  -  region tag
+         * @returns {miruken.callback.CallbackHandler} tag handler.
+         * @for miruken.callback.CallbackHandler
+         */                                                                
+        region: function (tag) {
+            return this.presenting(new RegionPolicy({tag: tag}));
+        },
+        /**
+         * Presents the next view in a new layer. 
+         * @method pushLayer
+         * @returns {miruken.callback.CallbackHandler} push handler.
+         * @for miruken.callback.CallbackHandler
+         */                                                                
+        pushLayer: function () {
+            return this.presenting(new RegionPolicy({push: true}));
+        },
+        /**
+         * Configures modal presentation options.
+         * @method modal
+         * @param {Object}  options  -  modal options
+         * @returns {miruken.callback.CallbackHandler} modal handler.
+         * @for miruken.callback.CallbackHandler
+         */
+        modal: function (modal) {
+            return this.presenting(new RegionPolicy({
+                modal: new ModalPolicy(modal)
+            }));
+        },        
+    });
+    
+    eval(this.exports);
+    
+}
+
+},{"../callback.js":6,"../context.js":7,"../miruken.js":14,"../validate":22,"./model.js":19}],22:[function(require,module,exports){
 module.exports = require('./validate.js');
 require('./validatejs.js');
 
 
-},{"./validate.js":12,"./validatejs.js":13}],12:[function(require,module,exports){
+},{"./validate.js":23,"./validatejs.js":24}],23:[function(require,module,exports){
 var miruken = require('../miruken.js'),
     Promise = require('bluebird');
               require('../callback.js');
@@ -9061,7 +11004,7 @@ new function () { // closure
 
 }
 
-},{"../callback.js":2,"../miruken.js":10,"bluebird":14}],13:[function(require,module,exports){
+},{"../callback.js":6,"../miruken.js":14,"bluebird":25}],24:[function(require,module,exports){
 var miruken    = require('../miruken.js'),
     validate   = require('./validate.js'),
     validatejs = require("validate.js"),
@@ -9313,7 +11256,7 @@ new function () { // closure
 
 }
 
-},{"../callback.js":2,"../miruken.js":10,"./validate.js":12,"bluebird":14,"validate.js":16}],14:[function(require,module,exports){
+},{"../callback.js":6,"../miruken.js":14,"./validate.js":23,"bluebird":25,"validate.js":27}],25:[function(require,module,exports){
 (function (process,global){
 /* @preserve
  * The MIT License (MIT)
@@ -14208,10 +16151,11 @@ module.exports = ret;
 },{"./es5.js":14}]},{},[4])(4)
 });                    ;if (typeof window !== 'undefined' && window !== null) {                               window.P = window.Promise;                                                     } else if (typeof self !== 'undefined' && self !== null) {                             self.P = self.Promise;                                                         }
 }).call(this,require('_process'),typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
-},{"_process":15}],15:[function(require,module,exports){
+},{"_process":26}],26:[function(require,module,exports){
 // shim for using process in browser
 var process = module.exports = {};
 
+<<<<<<< HEAD
 // cached from whatever global is present so that test runners that stub it
 // don't break things.  But we need to wrap it in a try catch in case it is
 // wrapped in strict mode code which doesn't define any globals.  It's inside a
@@ -14298,6 +16242,12 @@ function runClearTimeout(marker) {
 
 
 }
+=======
+// cached from whatever global is present so that test runners that stub it don't break things.
+var cachedSetTimeout = setTimeout;
+var cachedClearTimeout = clearTimeout;
+
+>>>>>>> develop
 var queue = [];
 var draining = false;
 var currentQueue;
@@ -14322,7 +16272,11 @@ function drainQueue() {
     if (draining) {
         return;
     }
+<<<<<<< HEAD
     var timeout = runTimeout(cleanUpNextTick);
+=======
+    var timeout = cachedSetTimeout(cleanUpNextTick);
+>>>>>>> develop
     draining = true;
 
     var len = queue.length;
@@ -14339,7 +16293,11 @@ function drainQueue() {
     }
     currentQueue = null;
     draining = false;
+<<<<<<< HEAD
     runClearTimeout(timeout);
+=======
+    cachedClearTimeout(timeout);
+>>>>>>> develop
 }
 
 process.nextTick = function (fun) {
@@ -14351,7 +16309,11 @@ process.nextTick = function (fun) {
     }
     queue.push(new Item(fun, args));
     if (queue.length === 1 && !draining) {
+<<<<<<< HEAD
         runTimeout(drainQueue);
+=======
+        cachedSetTimeout(drainQueue, 0);
+>>>>>>> develop
     }
 };
 
@@ -14390,7 +16352,7 @@ process.chdir = function (dir) {
 };
 process.umask = function() { return 0; };
 
-},{}],16:[function(require,module,exports){
+},{}],27:[function(require,module,exports){
 /*!
  * validate.js 0.10.0
  *
@@ -15530,4 +17492,4 @@ process.umask = function() { return 0; };
         typeof module !== 'undefined' ? /* istanbul ignore next */ module : null,
         typeof define !== 'undefined' ? /* istanbul ignore next */ define : null);
 
-},{}]},{},[6]);
+},{}]},{},[10,17,1]);
