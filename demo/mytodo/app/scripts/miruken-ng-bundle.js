@@ -560,15 +560,21 @@ new function () { // closure
             var _partialScope, _layers = [];
             this.extend({
                 show: function (view) {
-                    var composer   = $composer,
-                        navigation = composer.resolve(Navigation);
-                    
+                    var composer = $composer,
+                        policy   = new RegionPolicy();
+
+                    if (composer.handle(policy, true) &&
+                        (policy.tag && !$equals(policy.tag, tag))) {
+                        return $NOT_HANDLED;
+                    }
+
+                    var navigation = composer.resolve(Navigation);                    
                     if (!(navigation && navigation.controller)) {
                         return $q.reject(new Error("A Controller could not be inferred"));
                     }
                     
-                    var template, templateUrl,
-                        controller = navigation.controller;
+                    var controller = navigation.controller,
+                        template, templateUrl;
                     
                     if ($isString(view)) {
                         templateUrl = view;
@@ -578,44 +584,44 @@ new function () { // closure
                     }
 
                     if (template) {
-                        return renderContent(template);
+                        return renderTemplate(template);
                     } else if (templateUrl) {
                         if (templateUrl.lastIndexOf(".") < 0) {
                             templateUrl = templateUrl + ".html";
                         }
                         return $templates(templateUrl, true).then(function (template) {
-                            return renderContent(template);
+                            return renderTemplate(template);
                         });
                     } else {
                         return $q.reject(new Error("A template or templateUrl must be specified"));
                     }
                     
-                    function renderContent(template) {
-                        var policy = new RegionPolicy();
-                        composer.handle(policy, true);
-                        
+                    function renderTemplate(template) {
                         var modal = policy.modal,
                             push  = modal || _layers.length === 0 || policy.push;
                         
                         if (push) {
                             var Layer = Base.extend(ViewLayer, DisposingMixin, {
                                 transitionTo: function (controller, template, policy, composer) {
-                                    var _this   = this,
-                                        content = this._expandTemplate(template, controller);
+                                    var content = this._expandTemplate(template, controller);
                                     if (modal) {
                                         var provider     = modal.style || ModalProviding,
-                                            modalContext = this._layerScope.context;
+                                            modalContext = this._layerScope.context,
                                             modalResult  = $q.when(provider(composer)
                                                 .showModal(container, content, modal, modalContext));
-                                        return Promise.resolve($decorate(_this, {
+                                        return Promise.resolve($decorate(this, {
                                             modalResult: modalResult
                                         }));
-                                    }
+                                    }                                    
                                     return $timeout(function () {
-                                        this._content = content;                                        
-                                        container.html(content);
-                                        return _this;
-                                    });
+                                        if (this._content) {
+                                            this._content.replaceWith(content);
+                                        } else {
+                                            container.html(content);
+                                        }
+                                        this._content = content;
+                                        return this;
+                                    }.bind(this));
                                 },
                                 transitionFrom: function () {
                                     if (this._content) {
@@ -4182,6 +4188,7 @@ new function () { // closure
 
 }).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
 },{"./miruken.js":14,"bluebird":25}],7:[function(require,module,exports){
+(function (global){
 var miruken = require('./miruken.js');
               require('./graph.js');
               require('./callback.js');
@@ -4492,11 +4499,11 @@ new function () { // closure
          */        
         get context() { return this.__context; },
         set context(context) {
-            if (this.__context === context) {
-                return;
+            var field = this.__context;
+            if (field === context) { return; }
+            if (field) {
+                field.removeHandlers(this);
             }
-            if (this.__context)
-                this.__context.removeHandlers(this);
             if (context) {
                 this.__context = context;
                 context.insertHandlers(0, this);
@@ -4510,16 +4517,28 @@ new function () { // closure
          * @readOnly
          */        
         get isActiveContext() {
-            return this.__context && (this.__context.state === ContextState.Active);
+            var field = this.__context;
+            return field && (field.state === ContextState.Active);
+        },
+        /**
+         * Ends the callers context.
+         * @method endCallingContext
+         */
+        endCallingContext: function () {
+            var composer = global.$composer;
+            if (!composer) { return; }
+            var context = composer.resolve(Context);
+            if (context && (context !== this.context)) {
+                context.End();
+            }
         },
         /**
          * Ends the receivers context.
          * @method endContext
-         */                
+         */
         endContext: function () {
-            if (this.__context) {
-                this.__context.end();
-            }
+            var field = this.__context;
+            if (field) { field.end(); }
         }
     };
 
@@ -4880,6 +4899,7 @@ new function () { // closure
 
 }
 
+}).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
 },{"./callback.js":6,"./graph.js":9,"./miruken.js":14}],8:[function(require,module,exports){
 var miruken = require('./miruken.js'),
     Promise = require('bluebird');
@@ -9563,9 +9583,6 @@ new function () { // closure
      * @uses miruken.mvc.Bootstrap
      */    
     var BootstrapProvider = Base.extend(Bootstrap, {
-        tabContent: function () {
-            return "<div>Hello</div>";
-        },
         showModal: function (container, content, policy, context) {
             return new Promise(function (resolve, reject) {
                 if (policy.chrome) {    
@@ -9853,7 +9870,7 @@ new function () { // closure
                 .then(function (ctrl) {
                     if (!ctrl) {
                         return Promise.reject(new ControllerNotFound(controller));
-                    }                    
+                    }
                     try {
                         if (push) {
                             composer = composer.pushLayer();

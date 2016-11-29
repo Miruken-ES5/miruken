@@ -3305,6 +3305,7 @@ new function () { // closure
 
 }).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
 },{"./miruken.js":10,"bluebird":23}],3:[function(require,module,exports){
+(function (global){
 var miruken = require('./miruken.js');
               require('./graph.js');
               require('./callback.js');
@@ -3615,11 +3616,11 @@ new function () { // closure
          */        
         get context() { return this.__context; },
         set context(context) {
-            if (this.__context === context) {
-                return;
+            var field = this.__context;
+            if (field === context) { return; }
+            if (field) {
+                field.removeHandlers(this);
             }
-            if (this.__context)
-                this.__context.removeHandlers(this);
             if (context) {
                 this.__context = context;
                 context.insertHandlers(0, this);
@@ -3633,16 +3634,28 @@ new function () { // closure
          * @readOnly
          */        
         get isActiveContext() {
-            return this.__context && (this.__context.state === ContextState.Active);
+            var field = this.__context;
+            return field && (field.state === ContextState.Active);
+        },
+        /**
+         * Ends the callers context.
+         * @method endCallingContext
+         */
+        endCallingContext: function () {
+            var composer = global.$composer;
+            if (!composer) { return; }
+            var context = composer.resolve(Context);
+            if (context && (context !== this.context)) {
+                context.End();
+            }
         },
         /**
          * Ends the receivers context.
          * @method endContext
-         */                
+         */
         endContext: function () {
-            if (this.__context) {
-                this.__context.end();
-            }
+            var field = this.__context;
+            if (field) { field.end(); }
         }
     };
 
@@ -4003,6 +4016,7 @@ new function () { // closure
 
 }
 
+}).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
 },{"./callback.js":2,"./graph.js":5,"./miruken.js":10}],4:[function(require,module,exports){
 var miruken = require('./miruken.js'),
     Promise = require('bluebird');
@@ -8686,9 +8700,6 @@ new function () { // closure
      * @uses miruken.mvc.Bootstrap
      */    
     var BootstrapProvider = Base.extend(Bootstrap, {
-        tabContent: function () {
-            return "<div>Hello</div>";
-        },
         showModal: function (container, content, policy, context) {
             return new Promise(function (resolve, reject) {
                 if (policy.chrome) {    
@@ -8976,7 +8987,7 @@ new function () { // closure
                 .then(function (ctrl) {
                     if (!ctrl) {
                         return Promise.reject(new ControllerNotFound(controller));
-                    }                    
+                    }
                     try {
                         if (push) {
                             composer = composer.pushLayer();
