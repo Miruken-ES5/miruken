@@ -2574,7 +2574,7 @@ new function () { // closure
          */                        
         defer: function (callback) {
             var deferred = new Deferred(callback);
-            this.handle(deferred, false, global.$composer);
+            this.handle(deferred, false);
             return deferred.callbackResult;            
         },
         /**
@@ -2587,7 +2587,7 @@ new function () { // closure
          */                                
         deferAll: function (callback) {
             var deferred = new Deferred(callback, true);
-            this.handle(deferred, true, global.$composer);
+            this.handle(deferred, true);
             return deferred.callbackResult;
         },
         /**
@@ -2600,7 +2600,7 @@ new function () { // closure
          */                                
         resolve: function (key) {
             var resolution = (key instanceof Resolution) ? key : new Resolution(key);
-            if (this.handle(resolution, false, global.$composer)) {
+            if (this.handle(resolution, false)) {
                 return resolution.callbackResult;
             }
         },
@@ -2614,9 +2614,7 @@ new function () { // closure
          */                                        
         resolveAll: function (key) {
             var resolution = (key instanceof Resolution) ? key : new Resolution(key, true);
-            return this.handle(resolution, true, global.$composer)
-                 ? resolution.callbackResult
-                 : [];
+            return this.handle(resolution, true) ? resolution.callbackResult : [];
         },
         /**
          * Looks up the key.
@@ -2627,7 +2625,7 @@ new function () { // closure
          */                                        
         lookup: function (key) {
             var lookup = (key instanceof Lookup) ? key : new Lookup(key);
-            if (this.handle(lookup, false, global.$composer)) {
+            if (this.handle(lookup, false)) {
                 return lookup.callbackResult;
             }
         },
@@ -2640,7 +2638,7 @@ new function () { // closure
          */                                                
         lookupAll: function (key) {
             var lookup = (key instanceof Lookup) ? key : new Lookup(key, true);
-            return this.handle(lookup, true, global.$composer)
+            return this.handle(lookup, true)
                  ?  lookup.callbackResult
                  : [];
         },
@@ -4990,6 +4988,7 @@ require('./fluent.js');
 
 
 },{"./fluent.js":7,"./ioc.js":9}],9:[function(require,module,exports){
+(function (global){
 var miruken = require('../miruken.js'),
     Promise = require('bluebird');
               require('../callback.js'),
@@ -6079,6 +6078,18 @@ new function () { // closure
                 }                
             })
         },
+        resolve: function (key) {
+            var resolution = (key instanceof Resolution) ? key : new Resolution(key);
+            if (this.handle(resolution, false, global.$composer)) {
+                return resolution.callbackResult;
+            }            
+        },
+        resolveAll: function (key) {
+            var resolution = (key instanceof Resolution) ? key : new Resolution(key, true);
+            return this.handle(resolution, true, global.$composer)
+                 ? resolution.callbackResult
+                 : [];            
+        },       
         register: function (registrations) {
             return Array2.flatten(arguments).map(function (registration) {
                 return registration.register(this, $composer);
@@ -6287,6 +6298,7 @@ new function () { // closure
 
 }
 
+}).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
 },{"../callback.js":2,"../context.js":3,"../miruken.js":10,"../validate":11,"bluebird":14}],10:[function(require,module,exports){
 (function (global){
 require('./base2.js');

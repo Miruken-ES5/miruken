@@ -580,6 +580,9 @@ new function () { // closure
                     if (template) {
                         return replaceContent(template);
                     } else if (templateUrl) {
+                        if (templateUrl.lastIndexOf(".") < 0) {
+                            templateUrl = templateUrl + ".html";
+                        }
                         return $templates(templateUrl, true).then(function (template) {
                             return replaceContent(template);
                         });
@@ -590,22 +593,27 @@ new function () { // closure
                     function replaceContent(template) {
                         var policy = new RegionPolicy();
                         composer.handle(policy, true);
-                        
-                        if (_layers.length === 0 || policy.push) {
+                        var modal = policy.modal;                  
+                        if (modal || _layers.length === 0 || policy.push) {
                             var Layer = Base.extend(ViewLayer, DisposingMixin, {
                                 transitionTo: function (controller, template, policy, composer) {
-                                    var context = controller.context,
-                                        content = this._replaceContent(controller, context, template);
+                                    var _this   = this,
+                                        content = this._replaceContent(controller, template);
+                                    if (modal) {
+                                        var provider     = modal.style || ModalProviding,
+                                            modalContext = this._layerScope.context;
+                                        return $q.when(provider(composer)
+                                            .showModal(container, content, modal, modalContext))
+                                            .then(function (modalResult) {
+                                                return $decorate(_this, {
+                                                    modalResult: modalResult
+                                                });
+                                            });
+                                    }                                                            
                                     return $timeout(function () {
-                                        var modal = policy.modal;                                        
-                                        if (modal) {
-                                            var provider = modal.style || ModalProviding;
-                                            return $q.when(provider(composer)
-                                                .showModal(container, content, modal, context));
-                                        }                            
                                         container.html(content);
-                                        return this;
-                                    }.bind(this));
+                                        return _this;
+                                    });
                                 },
                                 transitionFrom: function () {
                                     if (this._content) {
@@ -617,8 +625,9 @@ new function () { // closure
                                         this._layerScope = null;                                        
                                     }
                                 },
-                                _replaceContent: function (controller, context, template) {
-                                    var scope      = context.resolve("$scope"),                                    
+                                _replaceContent: function (controller, template) {
+                                    var context    = controller.context,
+                                        scope      = context.resolve("$scope"),                                    
                                         layerScope = scope.$new();
                                     layerScope["ctrl"] = controller;
                                     this._content = $compile(template)(layerScope);
@@ -3440,7 +3449,7 @@ new function () { // closure
          */                        
         defer: function (callback) {
             var deferred = new Deferred(callback);
-            this.handle(deferred, false, global.$composer);
+            this.handle(deferred, false);
             return deferred.callbackResult;            
         },
         /**
@@ -3453,7 +3462,7 @@ new function () { // closure
          */                                
         deferAll: function (callback) {
             var deferred = new Deferred(callback, true);
-            this.handle(deferred, true, global.$composer);
+            this.handle(deferred, true);
             return deferred.callbackResult;
         },
         /**
@@ -3466,7 +3475,7 @@ new function () { // closure
          */                                
         resolve: function (key) {
             var resolution = (key instanceof Resolution) ? key : new Resolution(key);
-            if (this.handle(resolution, false, global.$composer)) {
+            if (this.handle(resolution, false)) {
                 return resolution.callbackResult;
             }
         },
@@ -3480,9 +3489,7 @@ new function () { // closure
          */                                        
         resolveAll: function (key) {
             var resolution = (key instanceof Resolution) ? key : new Resolution(key, true);
-            return this.handle(resolution, true, global.$composer)
-                 ? resolution.callbackResult
-                 : [];
+            return this.handle(resolution, true) ? resolution.callbackResult : [];
         },
         /**
          * Looks up the key.
@@ -3493,7 +3500,7 @@ new function () { // closure
          */                                        
         lookup: function (key) {
             var lookup = (key instanceof Lookup) ? key : new Lookup(key);
-            if (this.handle(lookup, false, global.$composer)) {
+            if (this.handle(lookup, false)) {
                 return lookup.callbackResult;
             }
         },
@@ -3506,7 +3513,7 @@ new function () { // closure
          */                                                
         lookupAll: function (key) {
             var lookup = (key instanceof Lookup) ? key : new Lookup(key, true);
-            return this.handle(lookup, true, global.$composer)
+            return this.handle(lookup, true)
                  ?  lookup.callbackResult
                  : [];
         },
@@ -5856,6 +5863,7 @@ require('./fluent.js');
 
 
 },{"./fluent.js":11,"./ioc.js":13}],13:[function(require,module,exports){
+(function (global){
 var miruken = require('../miruken.js'),
     Promise = require('bluebird');
               require('../callback.js'),
@@ -6945,6 +6953,18 @@ new function () { // closure
                 }                
             })
         },
+        resolve: function (key) {
+            var resolution = (key instanceof Resolution) ? key : new Resolution(key);
+            if (this.handle(resolution, false, global.$composer)) {
+                return resolution.callbackResult;
+            }            
+        },
+        resolveAll: function (key) {
+            var resolution = (key instanceof Resolution) ? key : new Resolution(key, true);
+            return this.handle(resolution, true, global.$composer)
+                 ? resolution.callbackResult
+                 : [];            
+        },       
         register: function (registrations) {
             return Array2.flatten(arguments).map(function (registration) {
                 return registration.register(this, $composer);
@@ -7153,6 +7173,7 @@ new function () { // closure
 
 }
 
+}).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
 },{"../callback.js":6,"../context.js":7,"../miruken.js":14,"../validate":22,"bluebird":25}],14:[function(require,module,exports){
 (function (global){
 require('./base2.js');
@@ -9544,7 +9565,7 @@ new function () { // closure
             return "<div>Hello</div>";
         },
         showModal: function (container, content, policy, context) {
-            var promise = new Promise(function (resolve, reject) {
+            return new Promise(function (resolve, reject) {
                 if (policy.chrome) {    
                     $('body').append(_buildChrome(policy));
                     $('.modal-body').append(content);
@@ -9582,9 +9603,6 @@ new function () { // closure
                     }
                     close(result)
                 });
-            });
-            return context.decorate({
-                get modalResult() { return promise; }
             });
         }
     });
@@ -9829,17 +9847,19 @@ new function () { // closure
                 ctx       = push ? context.newChild() : context;
 
             var oldIO = Controller.io;
-            return Promise.resolve(context.resolve(controller))
+            return Promise.resolve(ctx.resolve(controller))
                 .then(function (ctrl) {
                     if (!ctrl) {
                         return Promise.reject(new ControllerNotFound(controller));
                     }                    
-                    Controller.io = composer !== context ? ctx.next(composer) : ctx;
                     try {
-                        if ((ctrl != initiator) && (initiator != null) &&
-                            (initiator.context == ctx)) {
+                        if (push) {
+                            composer = composer.pushLayer();
+                        } else if ((ctrl != initiator) && (initiator != null) &&
+                                   (initiator.context == ctx)) {
                             initiator.context = null;
                         }
+                        Controller.io = composer !== context ? ctx.next(composer) : ctx;                        
                         return action(ctrl);
                     } finally {
                         if (oldIO) {

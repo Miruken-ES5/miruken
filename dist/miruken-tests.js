@@ -2574,7 +2574,7 @@ new function () { // closure
          */                        
         defer: function (callback) {
             var deferred = new Deferred(callback);
-            this.handle(deferred, false, global.$composer);
+            this.handle(deferred, false);
             return deferred.callbackResult;            
         },
         /**
@@ -2587,7 +2587,7 @@ new function () { // closure
          */                                
         deferAll: function (callback) {
             var deferred = new Deferred(callback, true);
-            this.handle(deferred, true, global.$composer);
+            this.handle(deferred, true);
             return deferred.callbackResult;
         },
         /**
@@ -2600,7 +2600,7 @@ new function () { // closure
          */                                
         resolve: function (key) {
             var resolution = (key instanceof Resolution) ? key : new Resolution(key);
-            if (this.handle(resolution, false, global.$composer)) {
+            if (this.handle(resolution, false)) {
                 return resolution.callbackResult;
             }
         },
@@ -2614,9 +2614,7 @@ new function () { // closure
          */                                        
         resolveAll: function (key) {
             var resolution = (key instanceof Resolution) ? key : new Resolution(key, true);
-            return this.handle(resolution, true, global.$composer)
-                 ? resolution.callbackResult
-                 : [];
+            return this.handle(resolution, true) ? resolution.callbackResult : [];
         },
         /**
          * Looks up the key.
@@ -2627,7 +2625,7 @@ new function () { // closure
          */                                        
         lookup: function (key) {
             var lookup = (key instanceof Lookup) ? key : new Lookup(key);
-            if (this.handle(lookup, false, global.$composer)) {
+            if (this.handle(lookup, false)) {
                 return lookup.callbackResult;
             }
         },
@@ -2640,7 +2638,7 @@ new function () { // closure
          */                                                
         lookupAll: function (key) {
             var lookup = (key instanceof Lookup) ? key : new Lookup(key, true);
-            return this.handle(lookup, true, global.$composer)
+            return this.handle(lookup, true)
                  ?  lookup.callbackResult
                  : [];
         },
@@ -4990,6 +4988,7 @@ require('./fluent.js');
 
 
 },{"./fluent.js":7,"./ioc.js":9}],9:[function(require,module,exports){
+(function (global){
 var miruken = require('../miruken.js'),
     Promise = require('bluebird');
               require('../callback.js'),
@@ -6079,6 +6078,18 @@ new function () { // closure
                 }                
             })
         },
+        resolve: function (key) {
+            var resolution = (key instanceof Resolution) ? key : new Resolution(key);
+            if (this.handle(resolution, false, global.$composer)) {
+                return resolution.callbackResult;
+            }            
+        },
+        resolveAll: function (key) {
+            var resolution = (key instanceof Resolution) ? key : new Resolution(key, true);
+            return this.handle(resolution, true, global.$composer)
+                 ? resolution.callbackResult
+                 : [];            
+        },       
         register: function (registrations) {
             return Array2.flatten(arguments).map(function (registration) {
                 return registration.register(this, $composer);
@@ -6287,6 +6298,7 @@ new function () { // closure
 
 }
 
+}).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
 },{"../callback.js":2,"../context.js":3,"../miruken.js":10,"../validate":18,"bluebird":23}],10:[function(require,module,exports){
 (function (global){
 require('./base2.js');
@@ -8678,7 +8690,7 @@ new function () { // closure
             return "<div>Hello</div>";
         },
         showModal: function (container, content, policy, context) {
-            var promise = new Promise(function (resolve, reject) {
+            return new Promise(function (resolve, reject) {
                 if (policy.chrome) {    
                     $('body').append(_buildChrome(policy));
                     $('.modal-body').append(content);
@@ -8716,9 +8728,6 @@ new function () { // closure
                     }
                     close(result)
                 });
-            });
-            return context.decorate({
-                get modalResult() { return promise; }
             });
         }
     });
@@ -8963,17 +8972,19 @@ new function () { // closure
                 ctx       = push ? context.newChild() : context;
 
             var oldIO = Controller.io;
-            return Promise.resolve(context.resolve(controller))
+            return Promise.resolve(ctx.resolve(controller))
                 .then(function (ctrl) {
                     if (!ctrl) {
                         return Promise.reject(new ControllerNotFound(controller));
                     }                    
-                    Controller.io = composer !== context ? ctx.next(composer) : ctx;
                     try {
-                        if ((ctrl != initiator) && (initiator != null) &&
-                            (initiator.context == ctx)) {
+                        if (push) {
+                            composer = composer.pushLayer();
+                        } else if ((ctrl != initiator) && (initiator != null) &&
+                                   (initiator.context == ctx)) {
                             initiator.context = null;
                         }
+                        Controller.io = composer !== context ? ctx.next(composer) : ctx;                        
                         return action(ctrl);
                     } finally {
                         if (oldIO) {
@@ -21509,7 +21520,6 @@ exports.write = function (buffer, value, offset, isLE, mLen, nBytes) {
 
 },{}],56:[function(require,module,exports){
 // shim for using process in browser
-
 var process = module.exports = {};
 
 // cached from whatever global is present so that test runners that stub it
