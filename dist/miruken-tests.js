@@ -9587,7 +9587,13 @@ new function () { // closure
      * @class ViewLayer
      * @extends Protocol
      */
-    var ViewLayer = Protocol.extend(Disposing);
+    var ViewLayer = Protocol.extend(Disposing, {
+        /**
+         * Gets the index of the layer in the region.
+         * @property {int} index
+         */
+        get index() {}
+    });
     
     /**
      * Protocol for rendering a view on the screen.
@@ -9665,12 +9671,12 @@ new function () { // closure
                 /**
                  * Gets the clicked button.
                  * @property {Any} button
-                 */                                
+                 */
                 get button() { return button; },
                 /**
                  * Gets the clicked button index.
                  * @property {number} button index
-                 */                                
+                 */
                 get buttonIndex() { return buttonIndex; }
             });
         }
