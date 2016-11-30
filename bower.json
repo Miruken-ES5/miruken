@@ -1,0 +1,7 @@
+{
+  "name": "Miruken",
+  "version": "2.0.0",
+  "dependencies": {
+    "angular": "1.3.14"
+  }
+}

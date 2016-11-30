@@ -2011,11 +2011,11 @@ new function () { // closure
                     var implied  = new _Node(key),
                         delegate = this.delegate;
                     if (delegate && implied.match($classOf(delegate), Variance.Contravariant)) {
-                        resolution.resolve($decorated(delegate, true));
+                        resolution.resolve(delegate);
                         resolved = true;
                     }
                     if ((!resolved || many) && implied.match($classOf(this), Variance.Contravariant)) {
-                        resolution.resolve($decorated(this, true));
+                        resolution.resolve(this, true);
                         resolved = true;
                     }
                 }
@@ -2574,7 +2574,7 @@ new function () { // closure
          */                        
         defer: function (callback) {
             var deferred = new Deferred(callback);
-            this.handle(deferred, false, global.$composer);
+            this.handle(deferred, false);
             return deferred.callbackResult;            
         },
         /**
@@ -2587,7 +2587,7 @@ new function () { // closure
          */                                
         deferAll: function (callback) {
             var deferred = new Deferred(callback, true);
-            this.handle(deferred, true, global.$composer);
+            this.handle(deferred, true);
             return deferred.callbackResult;
         },
         /**
@@ -2600,7 +2600,7 @@ new function () { // closure
          */                                
         resolve: function (key) {
             var resolution = (key instanceof Resolution) ? key : new Resolution(key);
-            if (this.handle(resolution, false, global.$composer)) {
+            if (this.handle(resolution, false)) {
                 return resolution.callbackResult;
             }
         },
@@ -2614,9 +2614,7 @@ new function () { // closure
          */                                        
         resolveAll: function (key) {
             var resolution = (key instanceof Resolution) ? key : new Resolution(key, true);
-            return this.handle(resolution, true, global.$composer)
-                 ? resolution.callbackResult
-                 : [];
+            return this.handle(resolution, true) ? resolution.callbackResult : [];
         },
         /**
          * Looks up the key.
@@ -2627,7 +2625,7 @@ new function () { // closure
          */                                        
         lookup: function (key) {
             var lookup = (key instanceof Lookup) ? key : new Lookup(key);
-            if (this.handle(lookup, false, global.$composer)) {
+            if (this.handle(lookup, false)) {
                 return lookup.callbackResult;
             }
         },
@@ -2640,7 +2638,7 @@ new function () { // closure
          */                                                
         lookupAll: function (key) {
             var lookup = (key instanceof Lookup) ? key : new Lookup(key, true);
-            return this.handle(lookup, true, global.$composer)
+            return this.handle(lookup, true)
                  ?  lookup.callbackResult
                  : [];
         },
@@ -3307,6 +3305,7 @@ new function () { // closure
 
 }).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
 },{"./miruken.js":10,"bluebird":14}],3:[function(require,module,exports){
+(function (global){
 var miruken = require('./miruken.js');
               require('./graph.js');
               require('./callback.js');
@@ -3593,9 +3592,16 @@ new function () { // closure
             function makeNotifier() {
                 return new ContextObserver(_observers ? _observers.copy() : null);
             }
+        },
+        resolveContext: function (resolution) {
+            var decoratee = this.decoratee;
+            return decoratee ? decoratee.resolve(resolution.key) : this;
         }
     });
-
+    $provide(Context, Context, function (resolution) {
+        return this.resolveContext(resolution);
+    });
+    
     /**
      * Mixin to provide the minimal functionality to support contextual based operations.<br/>
      * This is an alternatve to the delegate model of communication, but with less coupling 
@@ -3610,11 +3616,11 @@ new function () { // closure
          */        
         get context() { return this.__context; },
         set context(context) {
-            if (this.__context === context) {
-                return;
+            var field = this.__context;
+            if (field === context) { return; }
+            if (field) {
+                field.removeHandlers(this);
             }
-            if (this.__context)
-                this.__context.removeHandlers(this);
             if (context) {
                 this.__context = context;
                 context.insertHandlers(0, this);
@@ -3628,16 +3634,28 @@ new function () { // closure
          * @readOnly
          */        
         get isActiveContext() {
-            return this.__context && (this.__context.state === ContextState.Active);
+            var field = this.__context;
+            return field && (field.state === ContextState.Active);
+        },
+        /**
+         * Ends the callers context.
+         * @method endCallingContext
+         */
+        endCallingContext: function () {
+            var composer = global.$composer;
+            if (!composer) { return; }
+            var context = composer.resolve(Context);
+            if (context && (context !== this.context)) {
+                context.End();
+            }
         },
         /**
          * Ends the receivers context.
          * @method endContext
-         */                
+         */
         endContext: function () {
-            if (this.__context) {
-                this.__context.end();
-            }
+            var field = this.__context;
+            if (field) { field.end(); }
         }
     };
 
@@ -3998,6 +4016,7 @@ new function () { // closure
 
 }
 
+}).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
 },{"./callback.js":2,"./graph.js":5,"./miruken.js":10}],4:[function(require,module,exports){
 var miruken = require('./miruken.js'),
     Promise = require('bluebird');
@@ -4983,6 +5002,7 @@ require('./fluent.js');
 
 
 },{"./fluent.js":7,"./ioc.js":9}],9:[function(require,module,exports){
+(function (global){
 var miruken = require('../miruken.js'),
     Promise = require('bluebird');
               require('../callback.js'),
@@ -5568,12 +5588,13 @@ new function () { // closure
                     ContextualHelper.bindContext(instance, context, true);
                     return instance.extend({
                         set context(value) {
+                            if (value == context) { return; }
                             if (value == null) {
-                                this.base(null);
+                                this.base(value);
                                 lifestyle.disposeInstance(instance);
-                            } else if (value !== context) {
-                                throw new Error("Container managed instances cannot change context");
+                                return;
                             }
+                            throw new Error("Container managed instances cannot change context");
                         }
                     });
                 },                
@@ -6071,6 +6092,18 @@ new function () { // closure
                 }                
             })
         },
+        resolve: function (key) {
+            var resolution = (key instanceof Resolution) ? key : new Resolution(key);
+            if (this.handle(resolution, false, global.$composer)) {
+                return resolution.callbackResult;
+            }            
+        },
+        resolveAll: function (key) {
+            var resolution = (key instanceof Resolution) ? key : new Resolution(key, true);
+            return this.handle(resolution, true, global.$composer)
+                 ? resolution.callbackResult
+                 : [];            
+        },       
         register: function (registrations) {
             return Array2.flatten(arguments).map(function (registration) {
                 return registration.register(this, $composer);
@@ -6279,6 +6312,7 @@ new function () { // closure
 
 }
 
+}).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
 },{"../callback.js":2,"../context.js":3,"../miruken.js":10,"../validate":11,"bluebird":14}],10:[function(require,module,exports){
 (function (global){
 require('./base2.js');
@@ -7679,10 +7713,10 @@ new function () { // closure
      */
     var DisposingMixin = Module.extend({
         dispose: function (object) {
-            if ($isFunction(object._dispose)) {
-                var result = object._dispose();
-                object.dispose = Undefined;  // dispose once
-                return result;
+            var dispose = object._dispose;
+            if ($isFunction(dispose)) {
+                object.dispose = Undefined;  // dispose once                
+                return dispose.call(object);
             }
         }
     });

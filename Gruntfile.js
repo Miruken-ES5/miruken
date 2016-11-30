@@ -25,7 +25,7 @@ grunt.initConfig({
         options: {
             spawn: false
             //livereload: true,
-        },
+        }
       },
       mocha: {
         files: ['test/**/*.js'],
@@ -66,7 +66,7 @@ grunt.initConfig({
         dist: {
           files: {
               'dist/miruken-bundle.min.js': ['dist/miruken-bundle.js'],
-              'dist/miruken-ng-bundle.min.js': ['dist/miruken-ng-bundle.js'],
+              'dist/miruken-ng-bundle.min.js': ['dist/miruken-ng-bundle.js']
           }
         }
     },
@@ -112,8 +112,8 @@ grunt.initConfig({
         files: {
           'demo/sampleApp/index.html': 'demo/sampleApp/index.template.html'
         }
-      },
-    },
+      }
+    }
   });
 
   grunt.loadNpmTasks('grunt-contrib-watch');

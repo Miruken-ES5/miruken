@@ -1,0 +1,8 @@
+{
+  "name": "sampleCode",
+  "private": true,
+  "dependencies": {
+    "miruken": "^0.0.87",
+    "system.js": "~0.19.3"
+  }
+}

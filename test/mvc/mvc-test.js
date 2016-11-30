@@ -633,15 +633,17 @@ describe("Controller", function () {
     describe("CallbackHandler", function () {
         describe("#modal", function () {
             it("should define modal policy", function () {
-                var modal = context.modal();
-                expect(modal.handle(new ModalPolicy)).to.be.true;
+                var modal  = context.modal(),
+                    policy = new RegionPolicy(); 
+                expect(modal.handle(policy)).to.be.true;                
+                expect(policy.modal).to.be.instanceOf(ModalPolicy);
             });
 
             it("should specify modal title", function () {
-                var modal   = context.modal({title: 'Hello'}),
-                    options = new ModalPolicy;
-                expect(modal.handle(options)).to.be.true;
-                expect(options.title).to.equal('Hello');
+                var modal  = context.modal({title: 'Hello'}),
+                    policy = new RegionPolicy();
+                expect(modal.handle(policy)).to.be.true;
+                expect(policy.modal.title).to.equal('Hello');
             });
         });
     });
