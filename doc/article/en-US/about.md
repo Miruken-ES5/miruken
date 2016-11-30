@@ -1,3 +1,4 @@
+#About
 The word **Miruken** is Japanese. It means a view of a view. It suggests composition.
 
 Miruken is an application framework that embraces composition and convention to enhance the JavaScript development stack.
