@@ -126,7 +126,6 @@ grunt.initConfig({
   grunt.loadNpmTasks('grunt-browserify');
   grunt.loadNpmTasks('grunt-contrib-copy');
   grunt.loadNpmTasks('grunt-karma');
-  grunt.loadNpmTasks('grunt-contrib-yuidoc');
   grunt.loadNpmTasks('grunt-include-source');
 
   //Making grunt default to force in order not to break the project.
@@ -135,8 +134,7 @@ grunt.initConfig({
   //Test task.
   grunt.registerTask('default', ['browserify:dist','copy:main', 'includeSource']);
   grunt.registerTask('test',   ['concurrent:test']);
-  grunt.registerTask('build',  ['minify','copy:main', 'karma:dist', 'includeSource', 'yuidoc']);
+  grunt.registerTask('build',  ['minify','copy:main', 'karma:dist', 'includeSource']);
   grunt.registerTask('debug',  ['browserify:debug','karma:debug']);
   grunt.registerTask("minify", ['browserify:dist', 'uglify']);
-  grunt.registerTask("docs",   ['yuidoc']);
 };
