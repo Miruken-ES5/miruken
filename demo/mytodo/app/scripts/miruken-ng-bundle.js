@@ -602,6 +602,9 @@ new function () { // closure
                         
                         if (push) {
                             var Layer = Base.extend(ViewLayer, DisposingMixin, {
+                                get index() {
+                                    return _layers.indexOf($decorated(this, true));
+                                },
                                 transitionTo: function (controller, template, policy, composer) {
                                     var content = this._expandTemplate(template, controller);
                                     if (modal) {
@@ -730,7 +733,9 @@ new function () { // closure
                     var navigate = composer.resolve(Navigation);
                     if (!navigate) { return layer; }
                     return layer.then(function (result) {
-                        Routing(composer).selectRoute(navigate);                                
+                        if (result.index === 0) {
+                            Routing(composer).followNavigation(navigate);
+                        }
                         return result;
                     });
                 }
@@ -749,7 +754,7 @@ new function () { // closure
             var _urls = {};            
             prefix = prefix + ".";
             this.extend({
-                selectRoute: function (navigation) {
+                followNavigation: function (navigation) {
                     var states = $state.get();
                     for (var i = 0; i < states.length; ++i) {
                         var state = states[i],
@@ -9879,7 +9884,7 @@ new function () { // closure
                                    (initiator.context == ctx)) {
                             initiator.context = null;
                         }
-                        Controller.io = composer !== context ? ctx.next(composer) : ctx;                        
+                        Controller.io = composer !== context ? ctx.next(composer) : ctx;
                         return action(ctrl);
                     } finally {
                         if (oldIO) {
@@ -10361,11 +10366,11 @@ new function () { // closure
          */
         handleRoute: function (route) {},
         /**
-         * Selects the route matching `navigation`.
-         * @method selectRoute
+         * Follows the route matching `navigation`.
+         * @method followNavigation
          * @param    {miruken.mvc.Navigation}  navigation  -  navigation
          */
-        selectRoute: function (navigation) {}
+        followNavigation: function (navigation) {}
     });
 
     var controllerKeyRegExp = /(.*)controller$/i;
@@ -10470,7 +10475,13 @@ new function () { // closure
      * @class ViewLayer
      * @extends Protocol
      */
-    var ViewLayer = Protocol.extend(Disposing);
+    var ViewLayer = Protocol.extend(Disposing, {
+        /**
+         * Gets the index of the layer in the region.
+         * @property {int} index
+         */
+        get index() {}
+    });
     
     /**
      * Protocol for rendering a view on the screen.
@@ -10548,12 +10559,12 @@ new function () { // closure
                 /**
                  * Gets the clicked button.
                  * @property {Any} button
-                 */                                
+                 */
                 get button() { return button; },
                 /**
                  * Gets the clicked button index.
                  * @property {number} button index
-                 */                                
+                 */
                 get buttonIndex() { return buttonIndex; }
             });
         }
