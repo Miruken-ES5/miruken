@@ -8996,7 +8996,7 @@ new function () { // closure
                                    (initiator.context == ctx)) {
                             initiator.context = null;
                         }
-                        Controller.io = composer !== context ? ctx.next(composer) : ctx;                        
+                        Controller.io = composer !== context ? ctx.next(composer) : ctx;
                         return action(ctrl);
                     } finally {
                         if (oldIO) {
@@ -9478,11 +9478,11 @@ new function () { // closure
          */
         handleRoute: function (route) {},
         /**
-         * Selects the route matching `navigation`.
-         * @method selectRoute
+         * Follows the route matching `navigation`.
+         * @method followNavigation
          * @param    {miruken.mvc.Navigation}  navigation  -  navigation
          */
-        selectRoute: function (navigation) {}
+        followNavigation: function (navigation) {}
     });
 
     var controllerKeyRegExp = /(.*)controller$/i;

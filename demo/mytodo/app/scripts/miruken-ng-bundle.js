@@ -734,7 +734,7 @@ new function () { // closure
                     if (!navigate) { return layer; }
                     return layer.then(function (result) {
                         if (result.index === 0) {
-                            Routing(composer).selectRoute(navigate);
+                            Routing(composer).followNavigation(navigate);
                         }
                         return result;
                     });
@@ -754,7 +754,7 @@ new function () { // closure
             var _urls = {};            
             prefix = prefix + ".";
             this.extend({
-                selectRoute: function (navigation) {
+                followNavigation: function (navigation) {
                     var states = $state.get();
                     for (var i = 0; i < states.length; ++i) {
                         var state = states[i],
@@ -9884,7 +9884,7 @@ new function () { // closure
                                    (initiator.context == ctx)) {
                             initiator.context = null;
                         }
-                        Controller.io = composer !== context ? ctx.next(composer) : ctx;                        
+                        Controller.io = composer !== context ? ctx.next(composer) : ctx;
                         return action(ctrl);
                     } finally {
                         if (oldIO) {
@@ -10366,11 +10366,11 @@ new function () { // closure
          */
         handleRoute: function (route) {},
         /**
-         * Selects the route matching `navigation`.
-         * @method selectRoute
+         * Follows the route matching `navigation`.
+         * @method followNavigation
          * @param    {miruken.mvc.Navigation}  navigation  -  navigation
          */
-        selectRoute: function (navigation) {}
+        followNavigation: function (navigation) {}
     });
 
     var controllerKeyRegExp = /(.*)controller$/i;
