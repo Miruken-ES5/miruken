@@ -103,16 +103,6 @@ grunt.initConfig({
                 themedir:     './documentation/theme'
             }
         }
-    },
-    includeSource: {
-      options: {
-        basePath: 'demo/sampleApp'
-      },
-      app: {
-        files: {
-          'demo/sampleApp/index.html': 'demo/sampleApp/index.template.html'
-        }
-      }
     }
   });
 
@@ -132,9 +122,9 @@ grunt.initConfig({
   grunt.option('force', true);
 
   //Test task.
-  grunt.registerTask('default', ['browserify:dist','copy:main', 'includeSource']);
+  grunt.registerTask('default', ['browserify:dist','copy:main']);
   grunt.registerTask('test',   ['concurrent:test']);
-  grunt.registerTask('build',  ['minify','copy:main', 'karma:dist', 'includeSource']);
+  grunt.registerTask('build',  ['minify','copy:main', 'karma:dist']);
   grunt.registerTask('debug',  ['browserify:debug','karma:debug']);
   grunt.registerTask("minify", ['browserify:dist', 'uglify']);
 };
