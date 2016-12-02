@@ -70,13 +70,6 @@ grunt.initConfig({
           }
         }
     },
-    copy: {
-       main:{
-         files: [
-            {expand: true, flatten: true, src: ['dist/miruken-ng-bundle.js'], dest: 'demo/mytodo/app/scripts/'}
-         ]
-      }
-    },
     karma: {
         dist: {
           configFile: 'karma.conf.js',
@@ -114,7 +107,6 @@ grunt.initConfig({
   grunt.loadNpmTasks('grunt-mocha-test');
   grunt.loadNpmTasks('grunt-env');
   grunt.loadNpmTasks('grunt-browserify');
-  grunt.loadNpmTasks('grunt-contrib-copy');
   grunt.loadNpmTasks('grunt-karma');
   grunt.loadNpmTasks('grunt-include-source');
 
@@ -122,9 +114,9 @@ grunt.initConfig({
   grunt.option('force', true);
 
   //Test task.
-  grunt.registerTask('default', ['browserify:dist','copy:main']);
+  grunt.registerTask('default', ['browserify:dist']);
   grunt.registerTask('test',   ['concurrent:test']);
-  grunt.registerTask('build',  ['minify','copy:main', 'karma:dist']);
+  grunt.registerTask('build',  ['minify', 'karma:dist']);
   grunt.registerTask('debug',  ['browserify:debug','karma:debug']);
   grunt.registerTask("minify", ['browserify:dist', 'uglify']);
 };

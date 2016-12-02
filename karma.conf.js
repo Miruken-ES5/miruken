@@ -15,7 +15,7 @@ module.exports = function(config) {
 
     // list of files / patterns to load in the browser
     files: [
-      'bower_components/angular/angular.js',
+      'node_modules/angular/angular.js',
       'dist/miruken-bundle.js',
       'dist/miruken-ng-bundle.js',
       'dist/miruken-tests.js'
