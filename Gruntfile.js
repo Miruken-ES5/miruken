@@ -70,13 +70,6 @@ grunt.initConfig({
           }
         }
     },
-    copy: {
-       main:{
-         files: [
-            {expand: true, flatten: true, src: ['dist/miruken-ng-bundle.js'], dest: 'demo/mytodo/app/scripts/'}
-         ]
-      }
-    },
     karma: {
         dist: {
           configFile: 'karma.conf.js',
@@ -103,16 +96,6 @@ grunt.initConfig({
                 themedir:     './documentation/theme'
             }
         }
-    },
-    includeSource: {
-      options: {
-        basePath: 'demo/sampleApp'
-      },
-      app: {
-        files: {
-          'demo/sampleApp/index.html': 'demo/sampleApp/index.template.html'
-        }
-      }
     }
   });
 
@@ -124,19 +107,16 @@ grunt.initConfig({
   grunt.loadNpmTasks('grunt-mocha-test');
   grunt.loadNpmTasks('grunt-env');
   grunt.loadNpmTasks('grunt-browserify');
-  grunt.loadNpmTasks('grunt-contrib-copy');
   grunt.loadNpmTasks('grunt-karma');
-  grunt.loadNpmTasks('grunt-contrib-yuidoc');
   grunt.loadNpmTasks('grunt-include-source');
 
   //Making grunt default to force in order not to break the project.
   grunt.option('force', true);
 
   //Test task.
-  grunt.registerTask('default', ['browserify:dist','copy:main', 'includeSource']);
+  grunt.registerTask('default', ['browserify:dist']);
   grunt.registerTask('test',   ['concurrent:test']);
-  grunt.registerTask('build',  ['minify','copy:main', 'karma:dist', 'includeSource', 'yuidoc']);
+  grunt.registerTask('build',  ['minify', 'karma:dist']);
   grunt.registerTask('debug',  ['browserify:debug','karma:debug']);
   grunt.registerTask("minify", ['browserify:dist', 'uglify']);
-  grunt.registerTask("docs",   ['yuidoc']);
 };
