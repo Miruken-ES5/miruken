@@ -8804,6 +8804,7 @@ new function () { // closure
 var miruken = require('../miruken.js');
               require('../callback.js');
               require('../context.js');
+              require('../error.js');
               require('../validate');
 var Promise = require('bluebird');
 
@@ -8821,7 +8822,7 @@ new function () { // closure
      */
     miruken.package(this, {
         name:    "mvc",
-        imports: "miruken,miruken.callback,miruken.context,miruken.validate",
+        imports: "miruken,miruken.callback,miruken.context,miruken.validate,miruken.error",
         exports: "Controller,ControllerNotFound,Navigate,Navigation,NavigateCallbackHandler"
     });
 
@@ -8886,8 +8887,12 @@ new function () { // closure
                                 args:       Array.prototype.slice.call(arguments)
                             })]);
                         }
-                        _bindIo.call(this, io);
-                        return method.apply(this, arguments);
+                        try {
+                            _bindIo.call(this, io);                            
+                            return method.apply(this, arguments);
+                        } catch (exception) {
+                            Errors(io).handleException(exception);
+                        };
                     };
                 }
                 Object.defineProperty(definition, key, member);
@@ -9047,7 +9052,7 @@ new function () { // closure
     
 }
 
-},{"../callback.js":2,"../context.js":3,"../miruken.js":10,"../validate":18,"bluebird":23}],13:[function(require,module,exports){
+},{"../callback.js":2,"../context.js":3,"../error.js":4,"../miruken.js":10,"../validate":18,"bluebird":23}],13:[function(require,module,exports){
 module.exports = require('./model.js');
 require('./view.js');
 require('./controller.js');

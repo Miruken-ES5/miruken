@@ -568,13 +568,12 @@ new function () { // closure
                         return $NOT_HANDLED;
                     }
 
-                    var navigation = composer.resolve(Navigation);                    
-                    if (!(navigation && navigation.controller)) {
+                    var controller = composer.resolve(Controller);                    
+                    if (!controller) {
                         return $q.reject(new Error("A Controller could not be inferred"));
                     }
                     
-                    var controller = navigation.controller,
-                        template, templateUrl;
+                    var template, templateUrl;
                     
                     if ($isString(view)) {
                         templateUrl = view;
@@ -610,8 +609,8 @@ new function () { // closure
                                     if (modal) {
                                         var provider     = modal.style || ModalProviding,
                                             modalContext = this._layerScope.context,
-                                            modalResult  = $q.when(provider(composer)
-                                                .showModal(container, content, modal, modalContext));
+                                            modalResult  = provider(composer)
+                                                .showModal(container, content, modal, modalContext);
                                         return Promise.resolve($decorate(this, {
                                             modalResult: modalResult
                                         }));
@@ -9692,6 +9691,7 @@ new function () { // closure
 var miruken = require('../miruken.js');
               require('../callback.js');
               require('../context.js');
+              require('../error.js');
               require('../validate');
 var Promise = require('bluebird');
 
@@ -9709,7 +9709,7 @@ new function () { // closure
      */
     miruken.package(this, {
         name:    "mvc",
-        imports: "miruken,miruken.callback,miruken.context,miruken.validate",
+        imports: "miruken,miruken.callback,miruken.context,miruken.validate,miruken.error",
         exports: "Controller,ControllerNotFound,Navigate,Navigation,NavigateCallbackHandler"
     });
 
@@ -9774,8 +9774,12 @@ new function () { // closure
                                 args:       Array.prototype.slice.call(arguments)
                             })]);
                         }
-                        _bindIo.call(this, io);
-                        return method.apply(this, arguments);
+                        try {
+                            _bindIo.call(this, io);                            
+                            return method.apply(this, arguments);
+                        } catch (exception) {
+                            Errors(io).handleException(exception);
+                        };
                     };
                 }
                 Object.defineProperty(definition, key, member);
@@ -9935,7 +9939,7 @@ new function () { // closure
     
 }
 
-},{"../callback.js":6,"../context.js":7,"../miruken.js":14,"../validate":22,"bluebird":25}],17:[function(require,module,exports){
+},{"../callback.js":6,"../context.js":7,"../error.js":8,"../miruken.js":14,"../validate":22,"bluebird":25}],17:[function(require,module,exports){
 module.exports = require('./model.js');
 require('./view.js');
 require('./controller.js');
