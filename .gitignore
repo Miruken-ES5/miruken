@@ -1,5 +1,6 @@
 .idea
 .DS_Store
+.orig
 bin/
 gen/
 build/
