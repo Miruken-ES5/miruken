@@ -2015,7 +2015,7 @@ new function () { // closure
                         resolved = true;
                     }
                     if ((!resolved || many) && implied.match($classOf(this), Variance.Contravariant)) {
-                        resolution.resolve(this, true);
+                        resolution.resolve(this);
                         resolved = true;
                     }
                 }
@@ -5589,12 +5589,12 @@ new function () { // closure
                     return instance.extend({
                         set context(value) {
                             if (value == context) { return; }
-                            if (value == null) {
-                                this.base(value);
-                                lifestyle.disposeInstance(instance);
-                                return;
+                            if (value != null) {
+                                throw new Error("Container managed instances cannot change context");                                
                             }
-                            throw new Error("Container managed instances cannot change context");
+                            this.base(value);
+                            lifestyle.disposeInstance(instance);
+                            return;
                         }
                     });
                 },                
@@ -6093,13 +6093,15 @@ new function () { // closure
             })
         },
         resolve: function (key) {
-            var resolution = (key instanceof Resolution) ? key : new Resolution(key);
+            var resolution = key instanceof Resolution ? key
+                           : new DependencyResolution(key);
             if (this.handle(resolution, false, global.$composer)) {
                 return resolution.callbackResult;
             }            
         },
         resolveAll: function (key) {
-            var resolution = (key instanceof Resolution) ? key : new Resolution(key, true);
+            var resolution = key instanceof Resolution ? key
+                           : new DependencyResolution(key, null, true);
             return this.handle(resolution, true, global.$composer)
                  ? resolution.callbackResult
                  : [];            
@@ -6329,7 +6331,7 @@ new function () { // closure
      */
     base2.package(this, {
         name:    "miruken",
-        version: "1.0.3",
+        version: "2.0.2",
         exports: "Enum,Flags,Variance,Protocol,StrictProtocol,Delegate,Miruken,MetaStep,MetaMacro," +
                  "Initializing,Disposing,DisposingMixin,Resolving,Invoking,Parenting,Starting,Startup," +
                  "Facet,Interceptor,InterceptorSelector,ProxyBuilder,Modifier,ArrayManager,IndexedList," +
