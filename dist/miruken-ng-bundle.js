@@ -834,8 +834,7 @@ new function () { // closure
                 template:   "<div route-region></div>",
                 controller: ["$scope", "$state", "$urlMatcherFactory",
                              function ($scope, $state, $urlMatcherFactory) {
-                    var first   = true,
-                        context = $scope.context;            
+                    var context = $scope.context;            
                     context.addHandlers(new UiRouter(prefix, $state, $urlMatcherFactory));
                     $scope.$on("$stateChangeSuccess", function (event, toState, toParams) {
                         var route = new Route({
@@ -845,14 +844,8 @@ new function () { // closure
                             }),
                             locals = [Route, route];
                         
-                        if (first) {
-                            // stub initiator on first call                            
-                            locals.push(Controller, new Controller());
-                        }
-
                         var ctx = context.$$provide(locals);
                         Routing(ctx.unwind()).handleRoute(route)
-                        	.then(function () { first = false; })
                             .catch(function (err) {
                                 Errors(ctx).handleError(err, "ui-router");
                             });
@@ -7218,7 +7211,7 @@ new function () { // closure
      */
     base2.package(this, {
         name:    "miruken",
-        version: "2.0.2",
+        version: "2.0.3",
         exports: "Enum,Flags,Variance,Protocol,StrictProtocol,Delegate,Miruken,MetaStep,MetaMacro," +
                  "Initializing,Disposing,DisposingMixin,Resolving,Invoking,Parenting,Starting,Startup," +
                  "Facet,Interceptor,InterceptorSelector,ProxyBuilder,Modifier,ArrayManager,IndexedList," +
@@ -9890,7 +9883,7 @@ new function () { // closure
                                    (initiator.context == ctx)) {
                             initiator.context = null;
                         }
-                        Controller.io = ctx !== context ? composer
+                        Controller.io = ctx === context ? composer
                                   : ctx.$self().next(composer);
                         return action(ctrl);
                     } finally {
