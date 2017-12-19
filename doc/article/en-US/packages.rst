@@ -1,5 +1,7 @@
+========
 Packages
 ========
+
 Packages is the means to provide inversion of control. The basic package simply has:
 
 1. A name
@@ -7,6 +9,8 @@ Packages is the means to provide inversion of control. The basic package simply 
 3. The list of objects to export
 
 For example:
+
+.. code-block:: js
 
     new function() {
         base2.package(this, {
@@ -35,10 +39,14 @@ For example:
         eval(exports);
     };
 
-##Imports
+Imports
+=======
+
 Using `imports` states that *names* of package(s) to be available in your closure. This is in essence makes classes defined in packages available in the closure. To start, you will need to bring in *miruken*. You will also need to run the `eval` function to actually import those classes.
 
 For example:
+
+.. code-block:: js
 
     new function() {
         base2.package(this, {
@@ -51,10 +59,14 @@ For example:
 
 If you need to import multiple names under the `imports` property, just separate them with a comma. Order does not matter.
 
-##Exports
+Exports
+=======
+
 Using `exports` states that *classes* defined in the closure to be available for other closures. Similar to imports, you need to call the `eval` to actually export the classes.
 
 For example:
+
+.. code-block:: js
 
     new function() {
         base2.package(this, {
@@ -94,7 +106,9 @@ For example:
 
 When you list your objects under the `exports` property, just separate them with a comma. Order does not matter.
 
-##Naming
+Naming
+======
+
 The name is similar to namespace, meaning how would you organize or categorize your objects. The name is used during import to get a collection of objects for a given namespace and make them available for the particular closure.
 
 For example:
@@ -105,6 +119,8 @@ For example:
     name: company.security.cookies
 
 Once you create the name, you can import as shown above.
+
+.. code-block:: js
 
     new function() {
 
@@ -118,12 +134,14 @@ Once you create the name, you can import as shown above.
 
 
 
-##File Separation
+File Separation
+===============
+
 A file can have one object defined for a package or group objects. It is often best practice to keep objects in separate files. If you choose to use separate files for your objects, the name of the package is the same. When you call `eval`, it searches for all the files for a given package name.
 
-For example:
-
 Person.js
+
+.. code-block:: js
 
     new function() {
 
@@ -154,6 +172,8 @@ Person.js
 
 Patient.js
 
+.. code-block:: js
+
     new function() {
         base2.package(this, {
             name    : "person",
@@ -173,6 +193,8 @@ Patient.js
     };
 
 Student.js
+
+.. code-block:: js
 
     new function() {
         base2.package(this, {
