@@ -2,13 +2,13 @@ Delegates
 =========
 Delegates extend from Delegate and implement get, set, and invoke functions.
 
-```JavaScript
+.. code-block:: js
+
     var Delegate = Base.extend({
         get: function (protocol, propertyName, strict) {},
         set: function (protocol, propertyName, propertyValue, strict) {},
         invoke: function (protocol, methodName, args, strict) {}
     });
-```
 
 You could make you own if you wanted to, but almost always you will be using
 one of mirukens build in delegates. There are several objects in Miruken
