@@ -12,7 +12,7 @@ The next nethod transitions to a new view by unwinding the stack and then adding
 
 In this simplified example:
 
-.. code-block:: javascript
+.. code-block:: js
 
     const TeamsController= Controller.extend({
         goToTeam(team) {
@@ -34,7 +34,7 @@ The createTeam method is very simular.  It is calling the createTeam method on t
 
 This example uses push:
 
-.. code-block:: javascript
+.. code-block:: js
 
     const EditTeamController = Controller.extend({
         addPlayer() {
