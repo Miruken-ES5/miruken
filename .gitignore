@@ -5,6 +5,7 @@ bin/
 gen/
 build/
 debug/
+_build/
 *~
 node_modules
 bower_components
