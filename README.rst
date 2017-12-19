@@ -1,5 +1,11 @@
-Miruken-ES5 is the EcmaScript 5 implementation of
-[ the Miruken specification ](https://github.com/miruken/Specification)
+===========
+Miruken-ES5
+===========
+
+	`Full Documentation <http://miruken-es5.readthedocs.io.readthedocs.io/>`_
+
+The EcmaScript 5 implementation of
+`the Miruken specification <https://github.com/miruken/Specification>`_
 
 It runs is current browsers as is and has no need of transpilers.
 
