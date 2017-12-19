@@ -9,8 +9,9 @@ It may be obvious by the name, but Miruken-ES5 packages do not use any or
 the new ES2015 syntax and do not need to be transpiled.
 
 .. toctree::
+   :titlesonly:
+   :caption:  Table of Contents
    :maxdepth: 2
-   :caption: Table of Contents
 
    article/en-US/about.rst
    article/en-US/objects.rst
@@ -20,4 +21,5 @@ the new ES2015 syntax and do not need to be transpiled.
    article/en-US/context.rst
    article/en-US/delegate.rst
    article/en-US/whereCanIGetMiruken.rst
+   article/en-US/mvc/index.rst
 
