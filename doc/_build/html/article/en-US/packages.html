@@ -1,0 +1,342 @@
+
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    
+    <title>Packages &#8212; Miruken-ES5  documentation</title>
+    
+    <link rel="stylesheet" href="../../_static/classic.css" type="text/css" />
+    <link rel="stylesheet" href="../../_static/pygments.css" type="text/css" />
+    
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    '../../',
+        VERSION:     '',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true,
+        SOURCELINK_SUFFIX: '.txt'
+      };
+    </script>
+    <script type="text/javascript" src="../../_static/jquery.js"></script>
+    <script type="text/javascript" src="../../_static/underscore.js"></script>
+    <script type="text/javascript" src="../../_static/doctools.js"></script>
+    <link rel="index" title="Index" href="../../genindex.html" />
+    <link rel="search" title="Search" href="../../search.html" />
+    <link rel="next" title="Protocol" href="protocol.html" />
+    <link rel="prev" title="Objects" href="objects.html" /> 
+  </head>
+  <body>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../../genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="protocol.html" title="Protocol"
+             accesskey="N">next</a> |</li>
+        <li class="right" >
+          <a href="objects.html" title="Objects"
+             accesskey="P">previous</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../../index.html">Miruken-ES5  documentation</a> &#187;</li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <div class="section" id="packages">
+<h1>Packages<a class="headerlink" href="#packages" title="Permalink to this headline">¶</a></h1>
+<p>Packages is the means to provide inversion of control. The basic package simply has:</p>
+<ol class="arabic simple">
+<li>A name</li>
+<li>A list of names to import</li>
+<li>The list of objects to export</li>
+</ol>
+<p>For example:</p>
+<blockquote>
+<div><dl class="docutils">
+<dt>new function() {</dt>
+<dd><dl class="first docutils">
+<dt>base2.package(this, {</dt>
+<dd>name:       “zoo”,
+imports:    “miruken”,
+exports:    “Animal,Eagle,Mouse”</dd>
+</dl>
+<p>});</p>
+<p>eval(imports);</p>
+<p>const Animal = Base.extend({
+});</p>
+<dl class="docutils">
+<dt>const Eagle = Animal.extend({</dt>
+<dd><dl class="first docutils">
+<dt>shriek: function(){</dt>
+<dd>// make a sound</dd>
+</dl>
+<p class="last">}</p>
+</dd>
+</dl>
+<p>});</p>
+<dl class="docutils">
+<dt>const Mouse = Animal.extend({</dt>
+<dd><dl class="first docutils">
+<dt>squeak: function(){</dt>
+<dd>// make a sound</dd>
+</dl>
+<p class="last">}</p>
+</dd>
+</dl>
+<p>});</p>
+<p class="last">eval(exports);</p>
+</dd>
+</dl>
+<p>};</p>
+</div></blockquote>
+<p>##Imports
+Using <cite>imports</cite> states that <em>names</em> of package(s) to be available in your closure. This is in essence makes classes defined in packages available in the closure. To start, you will need to bring in <em>miruken</em>. You will also need to run the <cite>eval</cite> function to actually import those classes.</p>
+<p>For example:</p>
+<blockquote>
+<div><dl class="docutils">
+<dt>new function() {</dt>
+<dd><dl class="first docutils">
+<dt>base2.package(this, {</dt>
+<dd>name: “logging”,
+imports: “miruken”</dd>
+</dl>
+<p>});</p>
+<p class="last">eval(this.imports);</p>
+</dd>
+</dl>
+<p>}</p>
+</div></blockquote>
+<p>If you need to import multiple names under the <cite>imports</cite> property, just separate them with a comma. Order does not matter.</p>
+<p>##Exports
+Using <cite>exports</cite> states that <em>classes</em> defined in the closure to be available for other closures. Similar to imports, you need to call the <cite>eval</cite> to actually export the classes.</p>
+<p>For example:</p>
+<blockquote>
+<div><dl class="docutils">
+<dt>new function() {</dt>
+<dd><dl class="first docutils">
+<dt>base2.package(this, {</dt>
+<dd>name: “logging”,
+imports: “miruken”</dd>
+</dl>
+<p>});</p>
+<p>eval(this.imports);</p>
+<dl class="docutils">
+<dt>const loggingProtocol = Protocol.extend({</dt>
+<dd>debug(){},
+error(){}</dd>
+</dl>
+<p>});</p>
+<dl class="docutils">
+<dt>const NullLogger = Base.extend(loggingProtocol, {</dt>
+<dd>debug(){},
+error(){}</dd>
+</dl>
+<p>});</p>
+<p>let nullLogger = new NullLogger();
+const Logger = Base.extend(loggingProtocol, {</p>
+<blockquote>
+<div><dl class="docutils">
+<dt>debug(message){</dt>
+<dd>console.log(<cite>DEBUG: ${message}</cite>);</dd>
+</dl>
+<p>},
+error(message){</p>
+<blockquote>
+<div>console.log(<cite>ERROR: ${message}</cite>);</div></blockquote>
+<p>}</p>
+</div></blockquote>
+<dl class="docutils">
+<dt>}, {</dt>
+<dd><dl class="first docutils">
+<dt>get NullLogger(){</dt>
+<dd>return nullLogger</dd>
+</dl>
+<p class="last">}</p>
+</dd>
+</dl>
+<p>});</p>
+<p class="last">eval(this.exports);</p>
+</dd>
+</dl>
+<p>}</p>
+</div></blockquote>
+<p>When you list your objects under the <cite>exports</cite> property, just separate them with a comma. Order does not matter.</p>
+<p>##Naming
+The name is similar to namespace, meaning how would you organize or categorize your objects. The name is used during import to get a collection of objects for a given namespace and make them available for the particular closure.</p>
+<p>For example:</p>
+<blockquote>
+<div>name: company.security
+name: company.http
+name: company.accounting
+name: company.security.cookies</div></blockquote>
+<p>Once you create the name, you can import as shown above.</p>
+<blockquote>
+<div><p>new function() {</p>
+<blockquote>
+<div><dl class="docutils">
+<dt>base2.package(this, {</dt>
+<dd>name    : “company.security.cookies”,
+imports : “miruken,company.security,company.http”</dd>
+</dl>
+<p>});</p>
+<p>eval(this.imports);</p>
+</div></blockquote>
+<p>});</p>
+</div></blockquote>
+<p>##File Separation
+A file can have one object defined for a package or group objects. It is often best practice to keep objects in separate files. If you choose to use separate files for your objects, the name of the package is the same. When you call <cite>eval</cite>, it searches for all the files for a given package name.</p>
+<p>For example:</p>
+<p>Person.js</p>
+<blockquote>
+<div><p>new function() {</p>
+<blockquote>
+<div><dl class="docutils">
+<dt>base2.package(this, {</dt>
+<dd>name   : “person”,
+exports: “Person”</dd>
+</dl>
+<p>});</p>
+<p>eval(this.imports);</p>
+<dl class="docutils">
+<dt>const Person = Base.extend({</dt>
+<dd><dl class="first docutils">
+<dt>$properties: {</dt>
+<dd>firstName: null,
+lastName : null,
+gender   : null</dd>
+</dl>
+<p>},
+get fullName(){</p>
+<blockquote>
+<div>return <cite>${this.firstName} ${this.lastName}</cite></div></blockquote>
+<p class="last">}</p>
+</dd>
+<dt>}, {</dt>
+<dd>male          : “MALE”,
+female        : “FEMALE”,
+itsComplicated: “ITSCOMPLICATED”</dd>
+</dl>
+<p>});</p>
+<p>eval(this.exports);</p>
+</div></blockquote>
+<p>};</p>
+</div></blockquote>
+<p>Patient.js</p>
+<blockquote>
+<div><dl class="docutils">
+<dt>new function() {</dt>
+<dd><dl class="first docutils">
+<dt>base2.package(this, {</dt>
+<dd>name    : “person”,
+imports : “person”,
+exports : “Patient”</dd>
+</dl>
+<p>});</p>
+<p>eval(this.imports);</p>
+<dl class="docutils">
+<dt>const Patient = Person.extend({</dt>
+<dd><dl class="first docutils">
+<dt>$properties: {</dt>
+<dd>exams: []</dd>
+</dl>
+<p class="last">}</p>
+</dd>
+</dl>
+<p>});</p>
+<p class="last">eval(this.exports);</p>
+</dd>
+</dl>
+<p>};</p>
+</div></blockquote>
+<p>Student.js</p>
+<blockquote>
+<div><dl class="docutils">
+<dt>new function() {</dt>
+<dd><dl class="first docutils">
+<dt>base2.package(this, {</dt>
+<dd>name    : “person”,
+imports : “person”,
+exports : “Student”</dd>
+</dl>
+<p>});</p>
+<p>eval(this.imports);</p>
+<dl class="docutils">
+<dt>const Student = Person.extend({</dt>
+<dd><dl class="first docutils">
+<dt>$properties: {</dt>
+<dd>grade: 0</dd>
+</dl>
+<p class="last">}</p>
+</dd>
+</dl>
+<p>});S</p>
+<p class="last">eval(this.exports);</p>
+</dd>
+</dl>
+<p>};</p>
+</div></blockquote>
+</div>
+
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+  <h4>Previous topic</h4>
+  <p class="topless"><a href="objects.html"
+                        title="previous chapter">Objects</a></p>
+  <h4>Next topic</h4>
+  <p class="topless"><a href="protocol.html"
+                        title="next chapter">Protocol</a></p>
+  <div role="note" aria-label="source link">
+    <h3>This Page</h3>
+    <ul class="this-page-menu">
+      <li><a href="../../_sources/article/en-US/packages.rst.txt"
+            rel="nofollow">Show Source</a></li>
+    </ul>
+   </div>
+<div id="searchbox" style="display: none" role="search">
+  <h3>Quick search</h3>
+    <form class="search" action="../../search.html" method="get">
+      <div><input type="text" name="q" /></div>
+      <div><input type="submit" value="Go" /></div>
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../../genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="protocol.html" title="Protocol"
+             >next</a> |</li>
+        <li class="right" >
+          <a href="objects.html" title="Objects"
+             >previous</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../../index.html">Miruken-ES5  documentation</a> &#187;</li> 
+      </ul>
+    </div>
+    <div class="footer" role="contentinfo">
+        &#169; Copyright 2017, Miruken.
+      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.6.2.
+    </div>
+  </body>
+</html>

@@ -1,4 +1,5 @@
-#Packages
+Packages
+========
 Packages is the means to provide inversion of control. The basic package simply has:
 
 1. A name

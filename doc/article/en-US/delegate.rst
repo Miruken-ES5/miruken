@@ -1,4 +1,5 @@
-##Delegates
+Delegates
+=========
 Delegates extend from Delegate and implement get, set, and invoke functions.
 
 ```JavaScript
