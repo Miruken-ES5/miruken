@@ -188,7 +188,7 @@ In prod, calling `Logging(context).debug("My debug message")` would call the deb
 If a Protocol member is called that has no implementation, an error will be thrown. 
 For example, if debug is called, but no CallbackHandler is found that implements debug, you will see an error in the console with the following message:
 
-.. code-block::
+.. code-block:: text
 
     "CallbackHandler has no method 'debug'"
 

@@ -10,7 +10,8 @@ release = u''
 exclude_patterns = []
 pygments_style = 'sphinx'
 
-html_theme = 'default'
+html_theme = "sphinx_rtd_theme"
+html_theme_path = ["_themes", ]
 
 todo_include_todos = False
 htmlhelp_basename = 'MirukenES5doc'
