@@ -1,3 +1,4 @@
+.tern-port
 .idea
 .DS_Store
 .orig
@@ -15,3 +16,4 @@ nbproject/
 coverage/
 /lib/merrittbase2.js
 /wiki/Features and Benefits.MD
+.vs/
