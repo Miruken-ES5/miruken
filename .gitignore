@@ -1,3 +1,4 @@
+.tern-port
 .idea
 .DS_Store
 .orig
@@ -5,6 +6,7 @@ bin/
 gen/
 build/
 debug/
+_build/
 *~
 node_modules
 bower_components
@@ -14,3 +16,4 @@ nbproject/
 coverage/
 /lib/merrittbase2.js
 /wiki/Features and Benefits.MD
+.vs/
