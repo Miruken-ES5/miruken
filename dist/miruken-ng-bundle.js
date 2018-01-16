@@ -31,7 +31,8 @@ new function () { // closure
      */
     miruken.package(this, {
         name:    "ng",
-        imports: "miruken,miruken.callback,miruken.context,miruken.ioc,miruken.mvc",
+        imports: "miruken,miruken.callback,miruken.context," +
+            	 "miruken.validate,miruken.ioc,miruken.mvc",
         exports: "Runner,Directive,Filter,DynamicControllerDirective," +
                  "UseModelValidation,DigitsOnly,InhibitFocus,TrustFilter," +
                  "$appContext,$envContext,$rootContext"
@@ -748,11 +749,15 @@ new function () { // closure
      * @class UiRouter
      * @extends Router
      */
-    var UiRouter = Router.extend({
+    var UiRouter = Router.extend(context.$contextual, $inheritStatic, {
         constructor: function (prefix, $state, $urlMatcherFactory) {
             var _urls = {};            
             prefix = prefix + ".";
             this.extend({
+                handleRoute: function (route) {
+                    $state.go(route.name, route.params, { notify: false });
+                    return this.base(route)
+                },
                 followNavigation: function (navigation) {
                     var states = $state.get();
                     for (var i = 0; i < states.length; ++i) {
@@ -827,15 +832,18 @@ new function () { // closure
             return true;
         }
     }, {
-        install: function (prefix) {
+        install: function (prefix, created) {
+            var clazz = this;
             return {
                 name:       prefix,
                 abstract:   true,
                 template:   "<div route-region></div>",
                 controller: ["$scope", "$state", "$urlMatcherFactory",
                              function ($scope, $state, $urlMatcherFactory) {
-                    var context = $scope.context;            
-                    context.addHandlers(new UiRouter(prefix, $state, $urlMatcherFactory));
+                    var context = $scope.context,
+                        router  = clazz.new.call(clazz, prefix, $state, $urlMatcherFactory);
+                    router.context = context;
+                    context.addHandlers(router);
                     $scope.$on("$stateChangeSuccess", function (event, toState, toParams) {
                         var route = new Route({
                                 name:    toState.name,
@@ -850,6 +858,9 @@ new function () { // closure
                                 Errors(ctx).handleError(err, "ui-router");
                             });
                     });
+                    if ($isFunction(created)) {
+                        created(router);                 
+                    }
                 }]
             };
         },
@@ -7211,7 +7222,7 @@ new function () { // closure
      */
     base2.package(this, {
         name:    "miruken",
-        version: "2.0.4",
+        version: "2.0.10",
         exports: "Enum,Flags,Variance,Protocol,StrictProtocol,Delegate,Miruken,MetaStep,MetaMacro," +
                  "Initializing,Disposing,DisposingMixin,Resolving,Invoking,Parenting,Starting,Startup," +
                  "Facet,Interceptor,InterceptorSelector,ProxyBuilder,Modifier,ArrayManager,IndexedList," +
@@ -9799,6 +9810,12 @@ new function () { // closure
         get ifValid() {
             return this.io.$validAsync(this);
         },
+
+        show: function (handler, view) {
+            return handler instanceof CallbackHandler
+                 ? miruken.mvc.ViewRegion(handler).show(view)
+                 : miruken.mvc.ViewRegion(io).show(handler);
+        },
         validate: function (target, scope) {
             return _validate.call(this, target, "validate", scope);
         },
@@ -9917,7 +9934,9 @@ new function () { // closure
     function _assemble(handler, builders, context) {
         return handler && builders
              ?  builders.reduce(function (result, builder) {
-                    return $isFunction(builder) ? builder.call(context, result) : result;
+                 return $isFunction(builder)
+                     ? builder.call(context, result) || result
+                     : result;
                 }, handler)
             : handler;
     }
@@ -16373,10 +16392,6 @@ process.off = noop;
 process.removeListener = noop;
 process.removeAllListeners = noop;
 process.emit = noop;
-process.prependListener = noop;
-process.prependOnceListener = noop;
-
-process.listeners = function (name) { return [] }
 
 process.binding = function (name) {
     throw new Error('process.binding is not supported');
