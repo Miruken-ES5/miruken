@@ -6331,7 +6331,7 @@ new function () { // closure
      */
     base2.package(this, {
         name:    "miruken",
-        version: "2.0.14",
+        version: "2.0.18",
         exports: "Enum,Flags,Variance,Protocol,StrictProtocol,Delegate,Miruken,MetaStep,MetaMacro," +
                  "Initializing,Disposing,DisposingMixin,Resolving,Invoking,Parenting,Starting,Startup," +
                  "Facet,Interceptor,InterceptorSelector,ProxyBuilder,Modifier,ArrayManager,IndexedList," +
@@ -8889,16 +8889,10 @@ new function () { // closure
                  : miruken.mvc.ViewRegion(io).show(handler);
         },
         next: function (controller, handler) {
-            if (!(controller.prototype instanceof Controller)) {
-                throw new TypeError(format("%1 is not a Controller", controller));
-            }
             var io = handler || this.io || this.context;            
             return createTrampoline(controller, io, 'next');
         },
         push: function (controller, handler) {
-            if (!(controller.prototype instanceof Controller)) {
-                throw new TypeError(format("%1 is not a Controller", controller));
-            }
             var io = handler || this.io || this.context;
             return createTrampoline(controller, io, 'next');
         },                                                
@@ -8926,8 +8920,12 @@ new function () { // closure
         },
         bindIO: function (io, controller) {
             io = _assemble(io || controller.context, globalPrepare, controller);
+            if (io == null) {
+                delete controller.io;
+                return;
+            }
             if (globalExecute.length === 0) {
-                this.io = io;
+                controller.io = io;
                 return;
             }
             var executor   = controller.io = io.decorate({
@@ -8945,6 +8943,9 @@ new function () { // closure
     var IGNORE_TRAMPOLINE = [ "base", "constructor", "initialize", "dispose" ];
 
     function createTrampoline(controller, source, action) {
+        if (!(controller.prototype instanceof Controller)) {
+            throw new TypeError(format("%1 is not a Controller", controller));
+        }        
         var trampoline = {},
             navigate   = Navigate(source),
             obj        = controller.prototype;
@@ -9033,10 +9034,12 @@ new function () { // closure
                                    (initiator.context == ctx)) {
                             initiator.context = null;
                         }
+                        Controller.bindIO(composer, ctrl);                        
                         return action(ctrl);
                     } catch (exception) {
-                        var io = ctrl.io || ctrl.context;
-                        return Errors(io).handleException(exception);
+                        return Errors(ctrl.io).handleException(exception);
+                    } finally {
+                        Controller.bindIO(null, ctrl);
                     }
                 });
         }
@@ -9490,9 +9493,9 @@ new function () { // closure
     var Routing = StrictProtocol.extend({
         /**
          * Handles to the specified `route`.
-         * @method routeTo
+         * @method handleRoute
          * @param    {miruken.mvc.Route}  route  -  route
-         * @returns  {Promise} navigation promise.
+         * @returns  {Promise} promise.
          */
         handleRoute: function (route) {},
         /**
@@ -9500,7 +9503,15 @@ new function () { // closure
          * @method followNavigation
          * @param    {miruken.mvc.Navigation}  navigation  -  navigation
          */
-        followNavigation: function (navigation) {}
+        followNavigation: function (navigation) {},
+        /**
+         * Handles to the rejected `route`.
+         * @method rejectRoute
+         * @param    {miruken.mvc.Route}  route  -  route
+         * @param    {Error}              error  -  error
+         * @returns  {Promise} promise.
+         */
+        rejectRoute: function (route, error) {}
     });
 
     var controllerKeyRegExp = /(.*)controller$/i;
@@ -9512,7 +9523,7 @@ new function () { // closure
      * @extends Base
      * @uses miruken.mvc.Routing
      */    
-    var Router = Base.extend(Routing, {
+    var Router = Base.extend(Routing, $inheritStatic, {
         handleRoute: function (route) {
             var name   = route.name,
                 params = route.params;
@@ -9527,11 +9538,11 @@ new function () { // closure
             }
             var composer = global.$composer,
                 navigate = Navigate(composer),
-                action   = params.action || "index",
+                action   = params.action || (params.action = "index"),
                 execute  = function (ctrl) {
                     var property = this.selectActionMethod(ctrl, action),
                         method   = property && ctrl[property];
-                    Controller.bindIO(ctrl.context, ctrl);
+                    Controller.bindIO(composer, ctrl);
                     return $isFunction(method) ? method.call(ctrl, params)
                          : Promise.reject(new Error(format(
                              "%1 missing action '%2' for route '%3'",
@@ -9540,12 +9551,19 @@ new function () { // closure
                 controllerKey = this.expandControllerKey(controller);
 
             return navigate.next(controllerKey, execute)
-                .catch (function (err) {
-                    return (err instanceof ControllerNotFound)
-                        && (controllerKey !== controller)
-                         ? navigate.to(controller, execute)
-                         : Promise.reject(err);
+                .catch(function (err) {
+                    if ((err instanceof ControllerNotFound) &&
+                        (controllerKey !== controller)) {
+                        return navigate.next(controller, execute)
+                        	.catch(function (err) {
+                                return Router(composer).rejectRoute(route, err);                                
+                            });
+                    }
+                    return Router(composer).rejectRoute(route, err);
                 });
+        },
+        rejectRoute: function (route, error) {
+            return Promise.reject(error);
         },
         extractControllerKey: function (controller) {
             var matches = controller.match && controller.match(controllerKeyRegExp);
