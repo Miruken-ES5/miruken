@@ -2767,6 +2767,10 @@ karma-mocha@^0.1.10:
   version "0.1.10"
   resolved "https://registry.yarnpkg.com/karma-mocha/-/karma-mocha-0.1.10.tgz#29ed51d4b121af1373444ec555b20a905bf42b92"
 
+karma-teamcity-reporter@^1.1.0:
+  version "1.1.0"
+  resolved "https://registry.yarnpkg.com/karma-teamcity-reporter/-/karma-teamcity-reporter-1.1.0.tgz#7980f7dc91e6ab0847e122ade0bb34c7c6f42816"
+
 karma@>=0.13:
   version "2.0.0"
   resolved "https://registry.yarnpkg.com/karma/-/karma-2.0.0.tgz#a02698dd7f0f05ff5eb66ab8f65582490b512e58"

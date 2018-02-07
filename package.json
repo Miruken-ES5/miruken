@@ -29,6 +29,7 @@
     "karma-coverage": "^1.1.1",
     "karma-mocha": "^0.1.10",
     "karma-mocha-reporter": "^1.0.2",
+    "karma-teamcity-reporter": "^1.1.0",
     "mocha": "^2.5.3"
   }
 }

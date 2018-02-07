@@ -71,6 +71,11 @@ grunt.initConfig({
         }
     },
     karma: {
+        ci: {
+          configFile: 'karma.conf.js',
+          singleRun:  true,
+          reporters:  ["teamcity"]
+        },
         dist: {
           configFile: 'karma.conf.js',
           singleRun: true
@@ -115,8 +120,9 @@ grunt.initConfig({
 
   //Test task.
   grunt.registerTask('default', ['browserify:dist']);
-  grunt.registerTask('test',   ['concurrent:test']);
-  grunt.registerTask('build',  ['minify', 'karma:dist']);
-  grunt.registerTask('debug',  ['browserify:debug','karma:debug']);
-  grunt.registerTask("minify", ['browserify:dist', 'uglify']);
+  grunt.registerTask('test',    ['concurrent:test']);
+  grunt.registerTask('build',   ['minify', 'karma:dist']);
+  grunt.registerTask('ci',      ['minify', 'karma:ci']);
+  grunt.registerTask('debug',   ['browserify:debug','karma:debug']);
+  grunt.registerTask("minify",  ['browserify:dist', 'uglify']);
 };
