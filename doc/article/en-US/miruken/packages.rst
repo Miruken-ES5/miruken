@@ -66,7 +66,7 @@ Using `exports` states that *classes* defined in the closure to be available for
 
 For example:
 
-.. code-block:: js
+.. code-block:: guess
 
     new function() {
         base2.package(this, {
@@ -141,7 +141,7 @@ A file can have one object defined for a package or group objects. It is often b
 
 Person.js
 
-.. code-block:: js
+.. code-block:: guess
 
     new function() {
 
