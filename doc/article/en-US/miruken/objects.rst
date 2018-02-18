@@ -180,7 +180,7 @@ One of the features of Miruken is `$properties`. As the name implies, it creates
 
 For example:
 
-.. code-block:: js
+.. code-block:: guess
 
     new function() {
 
