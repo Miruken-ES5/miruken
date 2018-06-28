@@ -624,9 +624,7 @@ new function () { // closure
                                                 this.base();
                                             }
                                         });
-                                        modalScope.layer = function () {
-                                            return modalLayer;
-                                        };                                        
+                                        modalScope.layer = modalLayer;
                                         return modalResult.visible.then(function () {
                                             return modalLayer;
                                         });
