@@ -9818,6 +9818,9 @@ new function () { // closure
         validateAsync: function (target, scope) {
             return _validate.call(this, target, "validateAsync", scope);
         },
+        viewRegionCreated: function (tag, regionContext) {
+            this[tag] = regionContext;
+        },
         _dispose: function () {
             this.context = null;
             delete this.io;
@@ -10539,8 +10542,8 @@ new function () { // closure
     miruken.package(this, {
         name:    "mvc",
         imports: "miruken,miruken.callback",
-        exports: "ViewLayer,ViewRegion,ViewRegionAware,PresentationPolicy," +
-                 "RegionPolicy,ModalPolicy,ModalProviding,ButtonClicked"
+        exports: "ViewLayer,ViewRegion,PresentationPolicy,RegionPolicy," +
+                 "ModalPolicy,ModalProviding,ButtonClicked"
     });
 
     eval(this.imports);
@@ -10572,16 +10575,6 @@ new function () { // closure
          * @returns  {Promise}  promise for the layer.
          */
         show: function (view) {}
-    });
-
-    /**
-     * Protocol for communicating
-     * {{#crossLink "miruken.callback.CallbackHandler"}}{{/crossLink}} lifecycle.
-     * @class ViewRegionAware
-     * @extends Protocol
-     */
-    var ViewRegionAware = Protocol.extend({
-        viewRegionCreated: function (viewRegion) {}
     });
     
     /**
