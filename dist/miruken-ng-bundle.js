@@ -607,6 +607,9 @@ new function () { // closure
                                 },
                                 transitionTo: function (controller, template, policy, composer) {
                                     var content = this._expandTemplate(template, controller);
+                                    if (content.length > 1) {
+                                        content = angular.element('<div/>').html(content);
+                                    }
                                     if (modal) {
                                         var provider     = modal.style || ModalProviding,
                                             modalScope   = this._layerScope,
@@ -614,10 +617,21 @@ new function () { // closure
                                             modalResult  = provider(composer)
                                                 .showModal(container, content, modal, modalContext);
                                         modalContext.onEnding(this.dispose.bind(this));
-                                        return Promise.resolve($decorate(this, {
-                                            modalResult: modalResult
-                                        }));
-                                    }                             
+                                        var modalLayer = $decorate(this, {
+                                            modalResult: modalResult.closed,
+                                            _dispose: function () {
+                                                modalContext.end();
+                                                this.base();
+                                            }
+                                        });
+                                        modalScope.layer = function () {
+                                            return modalLayer;
+                                        };                                        
+                                        return modalResult.visible.then(function () {
+                                            return modalLayer;
+                                        });
+                                    }
+                                    this._layerScope.layer = this;                                    
                                     return $timeout(function () {
                                         if (this._content) {
                                             this._content.replaceWith(content);
@@ -698,8 +712,7 @@ new function () { // closure
                 }
             }); 
         },
-        createRegion: function (tag, element, $templates, $compile, $q, $timeout)
-        {
+        createRegion: function (tag, element, $templates, $compile, $q, $timeout) {
             return new PartialRegion(tag, element, $templates, $compile, $q, $timeout);
         }
     });
@@ -881,8 +894,7 @@ new function () { // closure
      */    
     var RouteRegionDirective = RegionDirective.extend({
         scope: false,
-        createRegion: function (tag, element, $templates, $compile, $q, $timeout)
-        {
+        createRegion: function (tag, element, $templates, $compile, $q, $timeout) {
             return new RouteRegion(tag, element, $templates, $compile, $q, $timeout);
         }
     });
@@ -9595,46 +9607,56 @@ new function () { // closure
      */    
     var BootstrapProvider = Base.extend(Bootstrap, {
         showModal: function (container, content, policy, context) {
-            return new Promise(function (resolve, reject) {
-                if (policy.chrome) {    
-                    $('body').append(_buildChrome(policy));
-                    $('.modal-body').append(content);
-                } else {
-                    $('body').append(content);
-                }
-                
-                function close(result) {
-                    if (resolve) {
-                        resolve(result);
-                        resolve = null;
-                        modal.modal('hide');
-                    }
-                }
-                
-                if (context) {
-                    context.onEnding(close);
-                }
-                
-                var modal = $('.modal').modal()
-                    .on('hidden.bs.modal', function (e) {
-                        modal.remove();
-                        $('.modal-backdrop').remove();
-                        $('body').removeClass('modal-open');
-                        context.end();
+            if (policy.chrome) {
+                $('body').append(_buildChrome(policy));
+                $('.modal-body').append(content);
+            } else {
+                $('body').append(content);
+            }
+
+            var modal = $('.modal').modal()
+                .on('hidden.bs.modal', remove);
+
+            function remove() {
+                modal.remove();
+                $('.modal-backdrop').remove();
+                $('body').removeClass('modal-open');
+                context.end();
+            }
+
+            return {
+                visible: new Promise(function (resolve, reject) {
+                    modal.on('shown.bs.modal', function () {
+                        resolve(modal);
                     });
-                
-                $('.modal .js-close').click(function (e) {
-                    var result;
-                    if (e.target.innerText != '\u00d7') {
-                        var index = $(e.target).index();
-                        if (policy.buttons && policy.buttons.length > index) {
-                            result = new ButtonClicked(policy.buttons[index], index);
+                }),
+
+                closed: new Promise(function (resolve, reject) {
+                    function close(result) {
+                        if (resolve) {
+                            resolve(result);
+                            resolve = null;
+                            remove();
                         }
                     }
-                    close(result)
-                });
-            });
-        }
+
+                    if (context) {
+                        context.onEnding(close);
+                    }
+
+                    $('.modal .js-close').click(function (e) {
+                        var result;
+                        if (e.target.innerText != '\u00d7') {
+                            var index = $(e.target).index();
+                            if (policy.buttons && policy.buttons.length > index) {
+                                result = new ButtonClicked(policy.buttons[index], index);
+                            }
+                        }
+                        close(result)
+                    });
+                })
+            };
+        }  
     });
 
     function _buildChrome(policy) {

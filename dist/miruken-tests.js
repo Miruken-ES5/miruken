@@ -8702,46 +8702,56 @@ new function () { // closure
      */    
     var BootstrapProvider = Base.extend(Bootstrap, {
         showModal: function (container, content, policy, context) {
-            return new Promise(function (resolve, reject) {
-                if (policy.chrome) {    
-                    $('body').append(_buildChrome(policy));
-                    $('.modal-body').append(content);
-                } else {
-                    $('body').append(content);
-                }
-                
-                function close(result) {
-                    if (resolve) {
-                        resolve(result);
-                        resolve = null;
-                        modal.modal('hide');
-                    }
-                }
-                
-                if (context) {
-                    context.onEnding(close);
-                }
-                
-                var modal = $('.modal').modal()
-                    .on('hidden.bs.modal', function (e) {
-                        modal.remove();
-                        $('.modal-backdrop').remove();
-                        $('body').removeClass('modal-open');
-                        context.end();
+            if (policy.chrome) {
+                $('body').append(_buildChrome(policy));
+                $('.modal-body').append(content);
+            } else {
+                $('body').append(content);
+            }
+
+            var modal = $('.modal').modal()
+                .on('hidden.bs.modal', remove);
+
+            function remove() {
+                modal.remove();
+                $('.modal-backdrop').remove();
+                $('body').removeClass('modal-open');
+                context.end();
+            }
+
+            return {
+                visible: new Promise(function (resolve, reject) {
+                    modal.on('shown.bs.modal', function () {
+                        resolve(modal);
                     });
-                
-                $('.modal .js-close').click(function (e) {
-                    var result;
-                    if (e.target.innerText != '\u00d7') {
-                        var index = $(e.target).index();
-                        if (policy.buttons && policy.buttons.length > index) {
-                            result = new ButtonClicked(policy.buttons[index], index);
+                }),
+
+                closed: new Promise(function (resolve, reject) {
+                    function close(result) {
+                        if (resolve) {
+                            resolve(result);
+                            resolve = null;
+                            remove();
                         }
                     }
-                    close(result)
-                });
-            });
-        }
+
+                    if (context) {
+                        context.onEnding(close);
+                    }
+
+                    $('.modal .js-close').click(function (e) {
+                        var result;
+                        if (e.target.innerText != '\u00d7') {
+                            var index = $(e.target).index();
+                            if (policy.buttons && policy.buttons.length > index) {
+                                result = new ButtonClicked(policy.buttons[index], index);
+                            }
+                        }
+                        close(result)
+                    });
+                })
+            };
+        }  
     });
 
     function _buildChrome(policy) {
