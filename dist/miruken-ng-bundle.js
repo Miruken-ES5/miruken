@@ -2811,10 +2811,11 @@ new function () { // closure
      * @class Composition
      * @constructor
      * @param   {Object}  callback  -  callback to compose
+     * @param   {Object}  greedy    -  true if handle greedily
      * @extends Base
      */
     var Composition = Base.extend({
-        constructor: function (callback) {
+        constructor: function (callback, greedy) {
             if (callback) {
                 this.extend({
                     /**
@@ -2823,6 +2824,12 @@ new function () { // closure
                      * @readOnly
                      */
                     get callback() { return callback; },
+                    /**
+                     * Gets the greedy flag.
+                     * @property {Boolean} greedy
+                     * @readOnly
+                     */
+                    get greedy() { return greedy; },                    
                     /**
                      * Gets/sets the effective callback result.
                      * @property {Any} callback result
@@ -2846,7 +2853,7 @@ new function () { // closure
     var compositionScope = $decorator({
         handleCallback: function (callback, greedy, composer) {
             if (callback.constructor !== Composition) {
-                callback = new Composition(callback);
+                callback = new Composition(callback, greedy);
             }
             return this.base(callback, greedy, composer);
         }
@@ -2931,8 +2938,9 @@ new function () { // closure
                 return method.invokeResolve(composer);
             },
             Composition, function (composable, composer) {
-                var callback = composable.callback;
-                return !!(callback && $handle.dispatch(this, callback, null, composer));
+                var callback = composable.callback,
+                    greedy   = composable.greedy;
+                return !!(callback && $handle.dispatch(this, callback, null, composer, greedy));
             }
         ],
         /**
