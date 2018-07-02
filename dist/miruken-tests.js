@@ -8710,6 +8710,8 @@ new function () { // closure
      */    
     var BootstrapProvider = Base.extend(Bootstrap, {
         showModal: function (container, content, policy, context) {
+            $('.modal').modal('hide');            
+
             if (policy.chrome) {
                 $('body').append(_buildChrome(policy));
                 $('.modal-body').append(content);
@@ -8737,14 +8739,18 @@ new function () { // closure
                 closed: new Promise(function (resolve, reject) {
                     function close(result) {
                         if (resolve) {
-                            resolve(result);
+                            if (result != null) {
+                                resolve(result);
+                            } else {
+                                reject();
+                            }
                             resolve = null;
                             remove();
                         }
                     }
 
                     if (context) {
-                        context.onEnding(close);
+                        context.onEnding(function () { close(); } );
                     }
 
                     $('.modal .js-close').click(function (e) {
@@ -8948,14 +8954,14 @@ new function () { // closure
 
     var TRAMPOLINE_IGNORE = [ "base", "constructor", "initialize", "dispose" ];
 
-    function createTrampoline(controller, source, action) {
+    function createTrampoline(controller, source, style) {
         if (!(controller.prototype instanceof Controller)) {
             throw new TypeError(format("%1 is not a Controller", controller));
         }        
         var trampoline = {},
             navigate   = Navigate(source),
             obj        = controller.prototype;
-        action = navigate[action];
+        var action = navigate[style];
         do {
             Array2.forEach(Object.getOwnPropertyNames(obj), function (key) {
                 if (TRAMPOLINE_IGNORE.indexOf(key) >= 0 ||
@@ -8971,7 +8977,7 @@ new function () { // closure
                         return ctrl[key].apply(ctrl, args);
                     }, function (io, ctrl) {
                         return io.$$provide([Navigation, new Navigation({
-                            push:       action === "push",
+                            push:       style === "push",
                             controller: ctrl,
                             action:     key,
                             args:       args
@@ -9027,17 +9033,19 @@ new function () { // closure
                 initiator = composer.resolve(Controller),
                 ctx       = push ? context.newChild() : context;
 
+            if (!push && initiator != null && (initiator.context == ctx)) {
+                initiator.context = null;
+            }
+            
             return Promise.resolve(ctx.resolve(controller))
                 .then(function (ctrl) {
                     if (!ctrl) {
                         return Promise.reject(new ControllerNotFound(controller));
                     }
+                    ctx.onEnding(function () { ctrl.dispose(); });
                     try {
                         if (push) {
                             composer = composer.pushLayer();
-                        } else if ((ctrl != initiator) && (initiator != null) &&
-                                   (initiator.context == ctx)) {
-                            initiator.context = null;
                         }
                         var io = ctx === context ? composer
                                : ctx.$self().next(composer);
