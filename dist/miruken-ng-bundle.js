@@ -342,6 +342,16 @@ new function () { // closure
             }
             destroyScope.call(this);
         };
+        // Fill in missing scopes (e.g. pushes)
+        $provide(Context, "$scope", function () {
+            var scope = this.parent.resolve("$scope");
+            if (scope != null) {
+                var childScope = newScope.call(scope);
+                childScope.context = this;
+                $provide(this, "$scope", childScope);
+                return childScope;
+            }
+        });
         $rootScope.rootContext = $rootScope.context = $rootContext;
         $provide($rootContext, "$scope", $rootScope);        
     }
@@ -619,8 +629,8 @@ new function () { // closure
                                             modalResult  = provider(composer)
                                                 .showModal(container, content, modal, modalContext);
                                         var modalLayer = $decorate(this, {
-                                            modalContext: modalContext,
-                                            modalResult: modalResult.closed,
+                                            get modalContext() { return modalContext; },
+                                            get modalResult() { return modalResult.closed; },
                                             _dispose: function () {
                                                 modalContext.end();
                                                 if (navigation && navigation.push) {
