@@ -285,8 +285,8 @@ new function () { // closure
         $ngApply: function() {
             return this.aspect(null, function(_, composer) {
                 var scope = composer.resolve("$scope");
-                if (scope && !scope.$$phase) {
-                    scope.$apply();
+                if (scope && !scope.$root.$$phase) {
+                    scope.$root.$apply();
                 }
             });
         },
@@ -301,10 +301,11 @@ new function () { // closure
             return this.aspect(null, function(_, composer) {
                 var scope = composer.resolve("$scope");
                 if (scope) {
+                    var root = scope.$root;
                     if (delay) {
-                        setTimeout(scope.$evalAsync.bind(scope), delay);
+                        setTimeout(root.$evalAsync.bind(root), delay);
                     } else {
-                        scope.$evalAsync();
+                        root.$evalAsync();
                     }
                 }
             });
